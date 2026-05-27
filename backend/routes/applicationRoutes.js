@@ -3,6 +3,8 @@ const express = require("express");
 const {
   applyJob,
   getMyApplications,
+  getRecruiterApplications,
+  updateApplicationStatus
 } = require(
   "../controllers/applicationController"
 );
@@ -28,6 +30,20 @@ router.get(
   protect,
   authorizeRoles("candidate"),
   getMyApplications
+);
+
+router.get(
+  "/recruiter-applications",
+  protect,
+  authorizeRoles("recruiter"),
+  getRecruiterApplications
+);
+
+router.patch(
+  "/update/:applicationId",
+  protect,
+  authorizeRoles("recruiter"),
+  updateApplicationStatus
 );
 
 module.exports = router;

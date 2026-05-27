@@ -59,7 +59,91 @@ const getMyApplications =
     }
   };
 
+
+const getRecruiterApplications =
+  async (req, res) => {
+    try {
+      const applications =
+        await Application.find()
+          .populate(
+            "candidate",
+            "name email"
+          )
+          .populate(
+            "job",
+            "title company recruiter"
+          );
+
+      const recruiterApplications =
+        applications.filter(
+          (application) =>
+            application.job &&
+            application.job.recruiter.toString() ===
+              req.user.id
+        );
+
+      res.status(200).json({
+        applications:
+          recruiterApplications,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Server Error",
+      });
+    }
+  };
+
+  const updateApplicationStatus =
+  async (req, res) => {
+    try {
+      const { applicationId } =
+        req.params;
+
+      const { status } =
+        req.body;
+
+      const application =
+        await Application.findById(
+          applicationId
+        ).populate("job");
+
+      if (!application) {
+        return res.status(404).json({
+          message:
+            "Application not found",
+        });
+      }
+
+      if (
+        application.job.recruiter.toString() !==
+        req.user.id
+      ) {
+        return res.status(403).json({
+          message:
+            "Access denied",
+        });
+      }
+
+      application.status = status;
+
+      await application.save();
+
+      res.status(200).json({
+        message:
+          "Application status updated",
+        application,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message:
+          "Server Error",
+      });
+    }
+  };
+  
 module.exports = {
   applyJob,
   getMyApplications,
+  getRecruiterApplications,
+  updateApplicationStatus
 };
