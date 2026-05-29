@@ -54,78 +54,104 @@ function RecruiterDashboard() {
     };
 
   return (
-    <div>
-      <h1>
+    <div className="container mt-4">
+      <h1 className="mb-4">
         Recruiter Dashboard
       </h1>
 
-      {applications.map(
-        (application) => (
-          <div
-            key={
-              application._id
-            }
-          >
-            <h2>
-              {
-                application
-                  .candidate
-                  .name
-              }
-            </h2>
-
-            <p>
-              Email:
-              {
-                application
-                  .candidate
-                  .email
-              }
-            </p>
-
-            <p>
-              Job:
-              {
-                application
-                  .job
-                  .title
-              }
-            </p>
-
-            <p>
-              Status:
-              {
-                application
-                  .status
-              }
-            </p>
-
-            <button
-              onClick={() =>
-                handleStatus(
-                  application._id,
-                  "shortlisted"
-                )
+      <div className="row">
+        {applications.map(
+          (application) => (
+            <div
+              className="col-md-4 mb-4"
+              key={
+                application._id
               }
             >
-              Shortlist
-            </button>
+              <div className="card shadow h-100 border-0">
+                <div className="card-body p-4">
+                  <h4 className="card-title">
+                    {
+                      application
+                        .candidate
+                        .name
+                    }
+                  </h4>
 
-            <button
-              onClick={() =>
-                handleStatus(
-                  application._id,
-                  "rejected"
-                )
-              }
-            >
-              Reject
-            </button>
+                  <p>
+                    <strong>
+                      Email:
+                    </strong>{" "}
+                    {
+                      application
+                        .candidate
+                        .email
+                    }
+                  </p>
 
-            <hr />
-          </div>
-        )
-      )}
+                  <p>
+                    <strong>
+                      Job:
+                    </strong>{" "}
+                    {
+                      application
+                        .job
+                        .title
+                    }
+                  </p>
+
+                  <p>
+                    <strong>
+                      Status:
+                    </strong>{" "}
+                    <span
+                      className={`badge ${
+                        application.status ===
+                        "shortlisted"
+                          ? "bg-success"
+                          : application.status ===
+                            "rejected"
+                          ? "bg-danger"
+                          : "bg-warning text-dark"
+                      }`}
+                    >
+                      {
+                        application.status
+                      }
+                    </span>
+                  </p>
+
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-success w-100"
+                      onClick={() =>
+                        handleStatus(
+                          application._id,
+                          "shortlisted"
+                        )
+                      }
+                    >
+                      Shortlist
+                    </button>
+
+                    <button
+                      className="btn btn-danger w-100"
+                      onClick={() =>
+                        handleStatus(
+                          application._id,
+                          "rejected"
+                        )
+                      }
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }

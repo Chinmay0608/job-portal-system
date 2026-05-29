@@ -1,5 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import ProtectedRoute
+from "./components/ProtectedRoute";
+
+import Navbar
+from "./components/Navbar";
+
 import CandidateDashboard
 from "./pages/CandidateDashboard";
 
@@ -16,27 +22,40 @@ import Register from "./pages/Register";
 function App() {
   return (
     <BrowserRouter>
+    <Navbar />
       <Routes>
         <Route
           path="/candidate-dashboard"
           element={
-            <CandidateDashboard />
+            <ProtectedRoute
+              role="candidate"
+            >
+              <CandidateDashboard />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/recruiter-dashboard"
           element={
-            <RecruiterDashboard />
+            <ProtectedRoute
+              role="recruiter"
+            >
+              <RecruiterDashboard />
+            </ProtectedRoute>
           }
         />
 
         <Route
           path="/my-applications"
           element={
-            <MyApplications />
+            <ProtectedRoute
+              role="candidate"
+            >
+              <MyApplications />
+            </ProtectedRoute>
           }
-        /> 
+        />
 
         <Route path="/" element={<Home />} />
 

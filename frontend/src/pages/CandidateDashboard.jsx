@@ -4,12 +4,22 @@ import {
   applyJob,
 } from "../services/jobService";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate }
+from "react-router-dom";
 
 function CandidateDashboard() {
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] =
+    useState([]);
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
+
+  const user =
+    JSON.parse(
+      localStorage.getItem(
+        "user"
+      )
+    );
 
   useEffect(() => {
     fetchJobs();
@@ -51,54 +61,75 @@ function CandidateDashboard() {
     };
 
   return (
-    <div>
-      <h1>
-        Available Jobs
-      </h1>
+    <div className="container mt-5">
 
-      <button
-        onClick={() =>
-          navigate(
-            "/my-applications"
-          )
-        }
-      >
-        My Applications
-      </button>
+      <div className="text-center mb-5">
+        <h1>
+          Available Jobs
+        </h1>
 
-      {jobs.map((job) => (
-        <div key={job._id}>
-          <h2>
-            {job.title}
-          </h2>
+        <h4 className="text-muted">
+          Welcome, {user?.name}
+        </h4>
 
-          <p>
-            Company: {job.company}
-          </p>
+        <button
+          className="btn btn-primary mt-3 px-4"
+          onClick={() =>
+            navigate(
+              "/my-applications"
+            )
+          }
+        >
+          My Applications
+        </button>
+      </div>
 
-          <p>
-            Location: {job.location}
-          </p>
-
-          <p>
-            Salary: ₹{job.salary}
-          </p>
-
-          <button
-            onClick={() =>
-              handleApply(
-                job._id
-              )
-            }
+      <div className="row justify-content-center">
+        {jobs.map((job) => (
+          <div
+            className="col-md-4 mb-4"
+            key={job._id}
           >
-            Apply
-          </button>
+            <div className="card shadow h-100 border-0">
+              <div className="card-body p-4">
+                <h4 className="card-title fw-bold">
+                  {job.title}
+                </h4>
 
-          <hr />
-        </div>
-      ))}
+                <p>
+                  <strong>
+                    Company:
+                  </strong>{" "}
+                  {job.company}
+                </p>
+
+                <p>
+                  <strong>
+                    Location:
+                  </strong>{" "}
+                  {job.location}
+                </p>
+
+                <p className="text-success fw-bold fs-5 mt-3">
+                  ₹{job.salary}
+                </p>
+
+                <button
+                  className="btn btn-primary w-100 mt-3"
+                  onClick={() =>
+                    handleApply(
+                      job._id
+                    )
+                  }
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
 export default CandidateDashboard;
