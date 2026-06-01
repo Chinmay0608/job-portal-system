@@ -1,156 +1,333 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  getRecruiterApplications,
-  updateStatus,
-} from "../services/jobService";
+import { useState, useEffect } from "react";
+import {  createJob, getRecruiterJobs, deleteJob} from "../services/jobService";
 
 function RecruiterDashboard() {
+
   const [
-    applications,
-    setApplications,
-  ] = useState([]);
+    formData,
+    setFormData,
+  ] = useState({
+    title: "",
+    company: "",
+    location: "",
+    salary: "",
+    description: "",
+  });
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
+  const [jobs, setJobs,] = useState([]);
 
-  const fetchApplications =
-    async () => {
-      try {
-        const response =
-          await getRecruiterApplications();
+  const handleChange =
+    (e) => {
 
-        setApplications(
-          response.applications
-        );
-      } catch (error) {
-        console.log(error);
-      }
+      setFormData({
+        ...formData,
+        [e.target.name]:
+          e.target.value,
+      });
     };
 
-  const handleStatus =
-    async (
-      applicationId,
-      status
-    ) => {
-      try {
-        await updateStatus(
-          applicationId,
-          status
+  const handleSubmit =
+  async (e) => {
+
+    e.preventDefault();
+
+    try {
+
+      const response =
+        await createJob(
+          formData
         );
 
-        alert(
-          "Status Updated"
+      alert(
+        response.message
+      );
+
+      fetchJobs();
+
+      setFormData({
+        title: "",
+        company: "",
+        location: "",
+        salary: "",
+        description: "",
+      });
+
+    } catch (error) {
+
+      console.log(
+        error
+      );
+
+      alert(
+        error.response
+          ?.data
+          ?.message ||
+        "Error creating job"
+      );
+    }
+  };
+
+    useEffect(() => {
+  fetchJobs();
+}, []);
+
+const fetchJobs =
+  async () => {
+
+    try {
+
+      const response =
+        await getRecruiterJobs();
+
+      setJobs(
+        response.jobs
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.log(
+        error
+      );
+    }
+  };
+
+  const handleDelete =
+  async (jobId) => {
+
+    try {
+
+      const response =
+        await deleteJob(
+          jobId
         );
 
-        fetchApplications();
-      } catch (error) {
-        console.log(error);
-      }
-    };
+      alert(
+        response.message
+      );
+
+      fetchJobs();
+
+    } catch (
+      error
+    ) {
+
+      console.log(
+        error
+      );
+
+      alert(
+        error.response
+          ?.data
+          ?.message ||
+        "Delete failed"
+      );
+    }
+  };
 
   return (
-    <div className="container mt-4">
-      <h1 className="mb-4">
-        Recruiter Dashboard
-      </h1>
+    <div
+      className="container py-5"
+      style={{
+        marginTop: "90px",
+      }}
+    >
 
-      <div className="row">
-        {applications.map(
-          (application) => (
+      <div
+        className="
+          recruiter-card
+          mx-auto
+        "
+        style={{
+          maxWidth:
+            "620px",
+        }}
+      >
+
+        <h1
+          className="
+            recruiter-title
+          "
+        >
+          Create Job
+        </h1>
+
+        <form
+          onSubmit={
+            handleSubmit
+          }
+        >
+
+          <label className="mb-2 fw-semibold">
+            Job Title
+          </label>
+
+          <input
+            type="text"
+            name="title"
+            placeholder="Enter job title"
+            className="
+              form-control
+              mb-3
+              recruiter-input
+            "
+            value={
+              formData.title
+            }
+            onChange={
+              handleChange
+            }
+            required
+          />
+
+          <label className="mb-2 fw-semibold">
+            Company
+          </label>
+
+          <input
+            type="text"
+            name="company"
+            placeholder="Enter company name"
+            className="
+              form-control
+              mb-3
+              recruiter-input
+            "
+            value={
+              formData.company
+            }
+            onChange={
+              handleChange
+            }
+            required
+          />
+
+          <label className="mb-2 fw-semibold">
+            Location
+          </label>
+
+          <input
+            type="text"
+            name="location"
+            placeholder="Enter location"
+            className="
+              form-control
+              mb-3
+              recruiter-input
+            "
+            value={
+              formData.location
+            }
+            onChange={
+              handleChange
+            }
+            required
+          />
+
+          <label className="mb-2 fw-semibold">
+            Salary
+          </label>
+
+          <input
+            type="number"
+            name="salary"
+            placeholder="Enter salary"
+            className="
+              form-control
+              mb-3
+              recruiter-input
+            "
+            value={
+              formData.salary
+            }
+            onChange={
+              handleChange
+            }
+            required
+          />
+
+          <label className="mb-2 fw-semibold">
+            Description
+          </label>
+
+          <textarea
+            name="description"
+            placeholder="Describe the role..."
+            className="
+              form-control
+              mb-4
+              recruiter-input
+            "
+            rows="5"
+            value={
+              formData.description
+            }
+            onChange={
+              handleChange
+            }
+            required
+          />
+
+          <button
+            className="btn btn-dark w-100 py-3 create-job-btn"
+            type="submit"
+          >
+            Create Job
+          </button>
+
+        </form>
+
+        <hr className="my-5" />
+
+        <h2 className="mb-4 fw-bold">
+          My Posted Jobs
+        </h2>
+
+        <div className="row">
+
+          {jobs.map((job) => (
+
             <div
-              className="col-md-4 mb-4"
-              key={
-                application._id
-              }
+              key={job._id}
+              className="col-12 mb-3"
             >
-              <div className="card shadow h-100 border-0">
-                <div className="card-body p-4">
-                  <h4 className="card-title">
-                    {
-                      application
-                        .candidate
-                        .name
-                    }
-                  </h4>
 
-                  <p>
-                    <strong>
-                      Email:
-                    </strong>{" "}
-                    {
-                      application
-                        .candidate
-                        .email
-                    }
-                  </p>
+              <div className="card p-4 border-0 shadow-sm"
+                style={{
+                  borderRadius:
+                    "20px",
+                }}
+              >
 
-                  <p>
-                    <strong>
-                      Job:
-                    </strong>{" "}
-                    {
-                      application
-                        .job
-                        .title
-                    }
-                  </p>
+                <h4 className="fw-bold">
+                  {job.title}
+                </h4>
 
-                  <p>
-                    <strong>
-                      Status:
-                    </strong>{" "}
-                    <span
-                      className={`badge ${
-                        application.status ===
-                        "shortlisted"
-                          ? "bg-success"
-                          : application.status ===
-                            "rejected"
-                          ? "bg-danger"
-                          : "bg-warning text-dark"
-                      }`}
-                    >
-                      {
-                        application.status
-                      }
-                    </span>
-                  </p>
+                <p>
+                  {job.company}
+                </p>
 
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-success w-100"
-                      onClick={() =>
-                        handleStatus(
-                          application._id,
-                          "shortlisted"
-                        )
-                      }
-                    >
-                      Shortlist
-                    </button>
+                <p>
+                  {job.location}
+                </p>
 
-                    <button
-                      className="btn btn-danger w-100"
-                      onClick={() =>
-                        handleStatus(
-                          application._id,
-                          "rejected"
-                        )
-                      }
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
+                <p className="fw-bold text-success">
+                  ₹{job.salary}
+                </p>
+
+                <button className="btn btn-danger w-100 mt-2"
+                  onClick={() =>
+                    handleDelete(
+                      job._id
+                    )}
+                >
+                  Delete Job
+                </button>
               </div>
             </div>
-          )
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );

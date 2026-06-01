@@ -45,7 +45,98 @@ const getAllJobs = async (req, res) => {
   }
 };
 
+const getRecruiterJobs =
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const jobs =
+        await Job.find({
+          recruiter:
+            req.user.id,
+        });
+
+      res.status(200)
+        .json({
+          jobs,
+        });
+
+    } catch (
+      error
+    ) {
+
+      res.status(500)
+        .json({
+          message:
+            "Server Error",
+        });
+    }
+  };
+
+  const deleteJob =
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const {
+        jobId,
+      } = req.params;
+
+      const job =
+        await Job.findById(
+          jobId
+        );
+
+      if (!job) {
+        return res.status(404)
+          .json({
+            message:
+              "Job not found",
+          });
+      }
+
+      if (
+        job.recruiter.toString() !==
+        req.user.id
+      ) {
+        return res.status(403)
+          .json({
+            message:
+              "Access denied",
+          });
+      }
+
+      await Job.findByIdAndDelete(
+        jobId
+      );
+
+      res.status(200)
+        .json({
+          message:
+            "Job deleted successfully",
+        });
+
+    } catch (
+      error
+    ) {
+
+      res.status(500)
+        .json({
+          message:
+            "Server Error",
+        });
+    }
+  };
+
 module.exports = {
   createJob,
   getAllJobs,
+  getRecruiterJobs,
+  deleteJob,
 };

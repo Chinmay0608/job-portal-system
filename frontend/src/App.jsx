@@ -1,10 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Footer
+from "./Components/Footer";
+
+import RecruiterApplications
+from "./pages/RecruiterApplications";
+
 import ProtectedRoute
-from "./components/ProtectedRoute";
+from "./Components/ProtectedRoute";
 
 import Navbar
-from "./components/Navbar";
+from "./Components/Navbar";
 
 import CandidateDashboard
 from "./pages/CandidateDashboard";
@@ -57,12 +63,24 @@ function App() {
           }
         />
 
+        <Route
+          path="/recruiter-applications"
+          element={
+            <ProtectedRoute
+              role="recruiter"
+            >
+              <RecruiterApplications />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/" element={<Home />} />
 
         <Route path="/login" element={<Login />} />
 
         <Route path="/register" element={<Register />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   );
 }

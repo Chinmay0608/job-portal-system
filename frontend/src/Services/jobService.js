@@ -103,3 +103,65 @@ export const getMyApplications =
 
     return response.data;
   };
+
+export const createJob = async (jobData) => {
+    const token = localStorage.getItem("token");
+
+    const response =
+      await axios.post(
+        `${API_URL}/create`,
+        jobData,
+        {
+          headers: {
+            authorization:
+              token,
+          },
+        }
+      );
+
+    return response.data;
+  };
+
+  export const getRecruiterJobs =
+  async () => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const response =
+      await axios.get(
+        `${API_URL}/my-jobs`,
+        {
+          headers: {
+            authorization:
+              token,
+          },
+        }
+      );
+
+    return response.data;
+  };
+
+  export const deleteJob =
+  async (jobId) => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const response =
+      await axios.delete(
+        `${API_URL}/delete/${jobId}`,
+        {
+          headers: {
+            authorization:
+              token,
+          },
+        }
+      );
+
+    return response.data;
+  };

@@ -1,16 +1,20 @@
-import { Navigate }
-from "react-router-dom";
+import {
+  Navigate,
+} from "react-router-dom";
 
 function ProtectedRoute({
   children,
   role,
 }) {
+
   const user =
     JSON.parse(
       localStorage.getItem(
         "user"
-      )
+      ) || "null"
     );
+
+  /* Not Logged In */
 
   if (!user) {
     return (
@@ -20,13 +24,15 @@ function ProtectedRoute({
     );
   }
 
+  /* Wrong Role */
+
   if (
     role &&
     user.role !== role
   ) {
     return (
       <Navigate
-        to="/login"
+        to="/"
       />
     );
   }
@@ -34,5 +40,4 @@ function ProtectedRoute({
   return children;
 }
 
-export default
-ProtectedRoute;
+export default ProtectedRoute;

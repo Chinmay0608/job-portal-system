@@ -1,32 +1,42 @@
-import { useState } from "react";
-import { loginUser } from "../services/authService";
-import { useNavigate } from "react-router-dom";
+import {
+  useState
+} from "react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  loginUser,
+} from "../services/authService";
 
 function Login() {
-  const navigate = useNavigate();
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      password: "",
-    });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]:
-        e.target.value,
-    });
-  };
+  const navigate =
+    useNavigate();
+
+  const [
+    email,
+    setEmail
+  ] = useState("");
+
+  const [
+    password,
+    setPassword
+  ] = useState("");
 
   const handleSubmit =
     async (e) => {
+
       e.preventDefault();
 
       try {
+
         const response =
-          await loginUser(
-            formData
-          );
+          await loginUser({
+            email,
+            password,
+          });
 
         localStorage.setItem(
           "token",
@@ -40,66 +50,84 @@ function Login() {
           )
         );
 
-        alert("Login Successful");
-
         if (
-            response.user.role ===
-            "recruiter"
+          response.user.role ===
+          "candidate"
         ) {
-            navigate(
-                "/recruiter-dashboard"
-            );
+
+          navigate(
+            "/candidate-dashboard"
+          );
+
         } else {
-            navigate(
-                "/candidate-dashboard"
-            );
+
+          navigate(
+            "/recruiter-dashboard"
+          );
         }
+
       } catch (error) {
-        console.log(error);
 
         alert(
-          "Login Failed"
+          error.response
+            ?.data
+            ?.message ||
+          "Login failed"
         );
       }
     };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="auth-container">
 
-      <form
-        onSubmit={
-          handleSubmit
-        }
-      >
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={
-            handleChange
-          }
-        />
+      <div className="auth-card">
 
-        <br />
-        <br />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={
-            handleChange
-          }
-        />
-
-        <br />
-        <br />
-
-        <button type="submit">
+        <h1 className="auth-title">
           Login
-        </button>
-      </form>
+        </h1>
+
+        <form
+          onSubmit={
+            handleSubmit
+          }
+        >
+
+          <input
+            type="email"
+            placeholder="Email"
+            className="auth-input"
+            value={email}
+            onChange={(e) =>
+              setEmail(
+                e.target.value
+              )
+            }
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            className="auth-input"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+            required
+          />
+
+          <button
+            type="submit"
+            className="auth-btn"
+          >
+            Login
+          </button>
+
+        </form>
+
+      </div>
     </div>
   );
 }

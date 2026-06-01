@@ -100,12 +100,21 @@ function Navbar() {
 
             {user?.role ===
               "recruiter" && (
-              <Link
-                className="dashboard-btn"
-                to="/recruiter-dashboard"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  className="dashboard-btn"
+                  to="/recruiter-dashboard"
+                >
+                  Dashboard
+                </Link>
+
+                <Link
+                  className="dashboard-btn"
+                  to="/recruiter-applications"
+                >
+                  Applicants
+                </Link>
+              </>
             )}
 
             {/* Logout */}
