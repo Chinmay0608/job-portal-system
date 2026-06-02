@@ -4,6 +4,11 @@ import {
   applyJob,
 } from "../services/jobService";
 
+import {
+  uploadResume
+} from
+"../services/userService";
+
 import { useNavigate }
 from "react-router-dom";
 
@@ -11,6 +16,7 @@ function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [search, setSearch] = useState("");
+  const [resumeUploaded,setResumeUploaded] = useState(false);
 
   const navigate = useNavigate();
 
@@ -85,6 +91,50 @@ function CandidateDashboard() {
         )
   );
 
+  const handleResumeUpload =
+    async (e) => {
+
+      const file =
+        e.target.files[0];
+
+      if (!file) return;
+
+      try {
+
+        const response =
+          await uploadResume(
+            file
+          );
+
+        setResumeUploaded(
+          true
+        );
+
+        alert(
+          "Resume uploaded!"
+        );
+
+        console.log(
+          response
+        );
+
+      } catch (error) {
+
+          console.log(error);
+
+          console.log(
+            error.response
+          );
+
+          alert(
+            error.response
+              ?.data
+              ?.message ||
+            error.message
+          );
+        }
+    };
+
   return (
     <div className="container mt-5">
 
@@ -117,6 +167,45 @@ function CandidateDashboard() {
             )
           }
         />
+
+        <div
+          className="resume-card"
+        >
+
+          <h3>
+            Upload Resume
+          </h3>
+
+          <input
+            type="file"
+            accept=".pdf"
+
+            onChange={
+              handleResumeUpload
+            }
+          />
+
+          {
+            resumeUploaded && (
+
+              <p
+                style={{
+                  color:
+                    "green",
+
+                  marginTop:
+                    "10px",
+
+                  fontWeight:
+                    "600",
+                }}
+              >
+                Resume Uploaded ✅
+              </p>
+            )
+          }
+
+        </div>
 
         <h4 className="text-muted">
           Welcome, {user?.name}

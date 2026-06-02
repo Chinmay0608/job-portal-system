@@ -28,7 +28,12 @@ import Register from "./pages/Register";
 function App() {
   return (
     <BrowserRouter>
-    <Navbar />
+      {
+        location.pathname !== "/login" &&
+        location.pathname !== "/register" && (
+          <Navbar />
+        )
+      }
       <Routes>
         <Route
           path="/candidate-dashboard"
@@ -80,7 +85,13 @@ function App() {
 
         <Route path="/register" element={<Register />} />
       </Routes>
-      <Footer />
+      {
+        location.pathname !== "/login" &&
+        location.pathname !== "/register" && (
+          <Footer />
+        )
+      }
+      
     </BrowserRouter>
   );
 }

@@ -1,114 +1,125 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authService";
 
 function Register() {
-  const [formData, setFormData] =
-    useState({
-      name: "",
-      email: "",
-      password: "",
-      role: "candidate",
-    });
+
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "candidate",
+  });
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]:
-        e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit =
-    async (e) => {
-      e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      try {
-        const response =
-          await registerUser(
-            formData
-          );
+    try {
+      const response = await registerUser(formData);
 
-        alert(
-          response.message
-        );
+      alert(response.message);
+      navigate("/login");
 
-        console.log(response);
-      } catch (error) {
-        console.log(error);
-
-        alert(
-          "Registration Failed"
-        );
-      }
-    };
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+        "Registration Failed"
+      );
+    }
+  };
 
   return (
-    <div>
-      <h1>Register</h1>
+    <div className="auth-container">
+      <div className="auth-card">
 
-      <form
-        onSubmit={
-          handleSubmit
-        }
-      >
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          onChange={
-            handleChange
-          }
-        />
+        <h1 className="auth-title">
+          Create Account
+        </h1>
 
-        <br />
-        <br />
+        <p className="auth-subtitle">
+          Start your journey with SkillBridge.
+        </p>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={
-            handleChange
-          }
-        />
+        <form onSubmit={handleSubmit}>
 
-        <br />
-        <br />
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            className="auth-input"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={
-            handleChange
-          }
-        />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            className="auth-input"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-        <br />
-        <br />
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone Number"
+            className="auth-input"
+            value={formData.phone}
+            onChange={handleChange}
+          />
 
-        <select
-          name="role"
-          onChange={
-            handleChange
-          }
-        >
-          <option value="candidate">
-            Candidate
-          </option>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="auth-input"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
 
-          <option value="recruiter">
-            Recruiter
-          </option>
-        </select>
+          <select
+            name="role"
+            className="auth-input"
+            value={formData.role}
+            onChange={handleChange}
+          >
+            <option value="candidate">Candidate</option>
+            <option value="recruiter">Recruiter</option>
+          </select>
 
-        <br />
-        <br />
+          <button
+            type="submit"
+            className="auth-btn"
+          >
+            Register
+          </button>
 
-        <button type="submit">
-          Register
-        </button>
-      </form>
+          <p className="auth-bottom-text">
+            Already have an account?{" "}
+            <span
+              className="auth-link"
+              onClick={() => navigate("/login")}
+            >
+              Login
+            </span>
+          </p>
+
+        </form>
+      </div>
     </div>
   );
 }

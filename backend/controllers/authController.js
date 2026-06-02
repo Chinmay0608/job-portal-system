@@ -87,4 +87,44 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const uploadResume =
+  async (req, res) => {
+
+    try {
+
+      const user =
+        await User
+          .findByIdAndUpdate(
+
+        req.user.id,
+
+        {
+          resume:
+            req.file.path,
+        },
+
+        {
+          returnDocument: "after",
+        }
+      );
+
+      res.status(200)
+        .json({
+          message:
+            "Resume uploaded",
+
+          resume:
+            user.resume,
+        });
+
+    } catch (error) {
+
+      res.status(500)
+        .json({
+          message:
+            "Upload failed",
+        });
+    }
+};
+
+module.exports = { registerUser, loginUser, uploadResume, };
