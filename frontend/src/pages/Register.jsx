@@ -39,15 +39,56 @@ function Register() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <div className="auth-page">
+
+      {/* Left Side */}
+      <div className="auth-left">
+
+        <img
+          src="/undraw_job-hunt_5umi.svg"
+          alt="illustration"
+          className="auth-illustration"
+        />
+
+        <h1 className="brand-heading">
+          Start your career journey.
+        </h1>
+
+        <p className="brand-text">
+          Create your SkillBridge account,
+          connect with recruiters, and
+          discover opportunities built
+          for your future.
+        </p>
+
+        <div className="stats-row">
+          <div className="stat-card">
+            <h2>50K+</h2>
+            <p>Jobs</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>1K+</h2>
+            <p>Recruiters</p>
+          </div>
+
+          <div className="stat-card">
+            <h2>20K+</h2>
+            <p>Candidates</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Right Side Register Card */}
+      <div className="auth-right">
 
         <h1 className="auth-title">
-          Create Account
+          Sign Up
         </h1>
 
         <p className="auth-subtitle">
-          Start your journey with SkillBridge.
+          Start your journey with SkillBridge
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -97,15 +138,20 @@ function Register() {
             value={formData.role}
             onChange={handleChange}
           >
-            <option value="candidate">Candidate</option>
-            <option value="recruiter">Recruiter</option>
+            <option value="candidate">
+              Candidate
+            </option>
+
+            <option value="recruiter">
+              Recruiter
+            </option>
           </select>
 
           <button
             type="submit"
             className="auth-btn"
           >
-            Register
+            Create Account
           </button>
 
           <p className="auth-bottom-text">
@@ -120,6 +166,7 @@ function Register() {
 
         </form>
       </div>
+
     </div>
   );
 }

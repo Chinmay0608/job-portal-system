@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import {  createJob, getRecruiterJobs, deleteJob} from "../services/jobService";
+import {  createJob, getRecruiterJobs, deleteJob, getRecruiterApplications} from "../services/jobService";
 
 function RecruiterDashboard() {
 
@@ -15,6 +15,7 @@ function RecruiterDashboard() {
   });
 
   const [jobs, setJobs,] = useState([]);
+  const [applications, setApplications] = useState([]);
 
   const handleChange =
     (e) => {
@@ -68,8 +69,9 @@ function RecruiterDashboard() {
   };
 
     useEffect(() => {
-  fetchJobs();
-}, []);
+      fetchJobs();
+      fetchApplications();
+    }, []);
 
 const fetchJobs =
   async () => {
@@ -125,6 +127,27 @@ const fetchJobs =
       );
     }
   };
+  const fetchApplications =
+    async () => {
+
+      try {
+
+        const response =
+          await getRecruiterApplications();
+        
+        console.log(response.applications);
+
+        setApplications(
+          response.applications
+        );
+
+      } catch (error) {
+
+        console.log(
+          error
+        );
+      }
+    };
 
   return (
     <div
@@ -327,6 +350,116 @@ const fetchJobs =
               </div>
             </div>
           ))}
+        </div>
+        <hr className="my-5" />
+
+        <h2 className="fw-bold mb-4">
+          Job Applications
+        </h2>
+
+        <div className="row">
+
+          {
+            applications.length === 0 && (
+
+              <p className="text-muted">
+                No applications yet
+              </p>
+            )
+          }
+
+          {
+            applications.map(
+              (application) => (
+
+              <div
+                key={
+                  application._id
+                }
+
+                className="
+                  col-12
+                  mb-3
+                "
+              >
+
+                <div
+                  className="
+                    card
+                    p-4
+                    border-0
+                    shadow-sm
+                  "
+                  style={{
+                    borderRadius:
+                      "20px",
+                  }}
+                >
+
+                  <h5
+                    className="
+                      fw-bold
+                    "
+                  >
+                    {
+                      application
+                        ?.candidate
+                        ?.name
+                    }
+                  </h5>
+
+                  <p>
+                    {
+                      application
+                        ?.candidate
+                        ?.email
+                    }
+                  </p>
+
+                  <p>
+                    Applied for:{" "}
+
+                    <strong>
+                      {
+                        application
+                          ?.job
+                          ?.title
+                      }
+                    </strong>
+                  </p>
+
+                  {
+                    application
+                      ?.candidate
+                      ?.resume && (
+
+                      <a
+                        href={
+                          application
+                            .candidate
+                            .resume
+                        }
+
+                        target="_blank"
+
+                        rel="noreferrer"
+
+                        className="
+                          btn
+                          btn-dark
+                          mt-2
+                        "
+                      >
+                        View Resume
+                      </a>
+                    )
+                  }
+
+                </div>
+
+              </div>
+            ))
+          }
         </div>
       </div>
     </div>

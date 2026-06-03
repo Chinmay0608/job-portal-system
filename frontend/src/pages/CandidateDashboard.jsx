@@ -106,8 +106,18 @@ function CandidateDashboard() {
             file
           );
 
-        setResumeUploaded(
-          true
+        const updatedUser = {
+          ...user,
+
+          resume:
+            response.resume,
+        };
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(
+            updatedUser
+          )
         );
 
         alert(
@@ -120,20 +130,20 @@ function CandidateDashboard() {
 
       } catch (error) {
 
-          console.log(error);
+        console.log(error);
 
-          console.log(
-            error.response
-          );
+        console.log(
+          error.response
+        );
 
-          alert(
-            error.response
-              ?.data
-              ?.message ||
-            error.message
-          );
-        }
-    };
+        alert(
+          error.response
+            ?.data
+            ?.message ||
+          error.message
+        );
+      }
+  };
 
   return (
     <div className="container mt-5">

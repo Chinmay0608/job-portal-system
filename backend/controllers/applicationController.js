@@ -67,7 +67,7 @@ const getRecruiterApplications =
         await Application.find()
           .populate(
             "candidate",
-            "name email"
+            "name email resume"
           )
           .populate(
             "job",

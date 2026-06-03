@@ -104,7 +104,8 @@ const uploadResume =
         },
 
         {
-          returnDocument: "after",
+          returnDocument:
+            "after",
         }
       );
 
@@ -119,12 +120,16 @@ const uploadResume =
 
     } catch (error) {
 
+      console.log(
+        error
+      );
+
       res.status(500)
         .json({
           message:
             "Upload failed",
         });
     }
-};
+  };
 
 module.exports = { registerUser, loginUser, uploadResume, };
