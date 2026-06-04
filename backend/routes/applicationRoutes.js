@@ -17,11 +17,13 @@ const {
 );
 
 const router = express.Router();
+const upload = require("../middleware/uploadMiddleware");
 
 router.post(
   "/apply",
   protect,
   authorizeRoles("candidate"),
+  upload.single("resume"),
   applyJob
 );
 

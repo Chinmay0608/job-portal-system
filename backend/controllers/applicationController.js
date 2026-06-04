@@ -23,6 +23,7 @@ const applyJob = async (req, res) => {
       await Application.create({
         candidate: req.user.id,
         job: jobId,
+        resume: req.file?.path,
       });
 
     res.status(201).json({
@@ -49,8 +50,18 @@ const getMyApplications =
             "title company location salary"
           );
 
+      // Prefix resume paths with full backend URL so frontend opens correctly
+      const host = req.protocol + '://' + req.get('host');
+      const apps = applications.map((app) => {
+        const obj = app.toObject();
+        if (obj.candidate && obj.candidate.resume && !obj.candidate.resume.startsWith('http')) {
+          obj.candidate.resume = host + '/' + obj.candidate.resume;
+        }
+        return obj;
+      });
+
       res.status(200).json({
-        applications,
+        applications: apps,
       });
     } catch (error) {
       res.status(500).json({
@@ -82,9 +93,18 @@ const getRecruiterApplications =
               req.user.id
         );
 
+      // Prefix resume paths with backend URL so links work from frontend
+      const host = req.protocol + '://' + req.get('host');
+      const apps = recruiterApplications.map((app) => {
+        const obj = app.toObject();
+        if (obj.candidate && obj.candidate.resume && !obj.candidate.resume.startsWith('http')) {
+          obj.candidate.resume = host + '/' + obj.candidate.resume;
+        }
+        return obj;
+      });
+
       res.status(200).json({
-        applications:
-          recruiterApplications,
+        applications: apps,
       });
     } catch (error) {
       res.status(500).json({
@@ -94,56 +114,87 @@ const getRecruiterApplications =
   };
 
   const updateApplicationStatus =
-  async (req, res) => {
-    try {
-      const { applicationId } =
-        req.params;
+    async (req, res) => {
 
-      const { status } =
-        req.body;
+      try {
 
-      const application =
-        await Application.findById(
+        const {
           applicationId
-        ).populate("job");
+        } = req.params;
 
-      if (!application) {
-        return res.status(404).json({
+        const {
+          status
+        } = req.body;
+
+        const application =
+          await Application
+            .findById(
+              applicationId
+            )
+            .populate({
+              path : "job",
+              select : "recruiter",
+            });
+
+        if (!application) {
+          return res.status(404).json({
+            message:
+              "Application not found",
+          });
+        }
+
+        if (
+          !application.job
+        ) {
+          return res.status(404).json({
+            message:
+              "Job not found",
+          });
+        }
+
+        console.log(
+          application.job
+        );
+
+        if (
+          application.job.recruiter.toString() !==
+          req.user.id
+        ) {
+          return res.status(403).json({
+            message:
+              "Access denied",
+          });
+        }
+
+        application.status = status;
+
+        // Skip full schema validation when updating status to allow
+        // existing applications that may be missing optional/required
+        // fields (like legacy records without resume) to be updated.
+        await application.save({ validateBeforeSave: false });
+
+        res.status(200).json({
           message:
-            "Application not found",
+            "Application status updated successfully",
+          application,
+        });
+
+      } catch (error) {
+
+        console.log(
+          error
+        );
+
+        res.status(500).json({
+          message:
+            "Server Error",
         });
       }
-
-      if (
-        application.job.recruiter.toString() !==
-        req.user.id
-      ) {
-        return res.status(403).json({
-          message:
-            "Access denied",
-        });
-      }
-
-      application.status = status;
-
-      await application.save();
-
-      res.status(200).json({
-        message:
-          "Application status updated",
-        application,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
-    }
-  };
+    };
   
 module.exports = {
   applyJob,
   getMyApplications,
   getRecruiterApplications,
-  updateApplicationStatus
+  updateApplicationStatus,
 };

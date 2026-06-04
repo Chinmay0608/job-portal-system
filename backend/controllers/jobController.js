@@ -1,4 +1,5 @@
 const Job = require("../models/Job");
+const Application = require("../models/Application");
 
 const createJob = async (req, res) => {
   try {
@@ -134,9 +135,80 @@ const getRecruiterJobs =
     }
   };
 
+const applyJob = async (req,res) => {
+  try {
+
+    const {
+      jobId
+    } = req.body;
+
+    const job =
+      await Job.findById(
+        jobId
+      );
+
+    if (!job) {
+      return res
+        .status(404)
+        .json({
+          message:
+            "Job not found",
+        });
+    }
+
+    const existing =
+      await Application.findOne({
+        candidate:
+          req.user.id,
+        job:
+          jobId,
+      });
+
+    if (existing) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Already applied",
+        });
+    }
+
+    const application =
+      await Application.create({
+        candidate:
+          req.user.id,
+
+        job:
+          jobId,
+
+        /* Cloudinary URL */
+        resume:
+          req.file?.path,
+      });
+
+    res.status(201)
+      .json({
+        message:
+          "Applied Successfully",
+        application,
+      });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500)
+      .json({
+        message:
+          "Server Error",
+      });
+  }
+};
+
 module.exports = {
   createJob,
   getAllJobs,
   getRecruiterJobs,
   deleteJob,
+  applyJob,
 };

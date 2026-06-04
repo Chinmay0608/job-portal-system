@@ -23,7 +23,7 @@ import {
 
 import {
   loginUser,
-} from "../services/authService";
+} from "../Services/authService";
 
 function Login() {
 

@@ -14,7 +14,8 @@ export const getJobs =
   };
 
 export const applyJob =
-  async (jobId) => {
+  async (formData) => {
+
     const token =
       localStorage.getItem(
         "token"
@@ -22,14 +23,15 @@ export const applyJob =
 
     const response =
       await axios.post(
-        "http://localhost:5000/api/applications/apply",
-        {
-          jobId,
-        },
+        "http://localhost:5000/api/jobs/apply",
+        formData,
         {
           headers: {
             authorization:
               token,
+
+            "Content-Type":
+              "multipart/form-data",
           },
         }
       );
@@ -58,7 +60,7 @@ export const getMyApplications =
     return response.data;
   };
 
-  export const getRecruiterApplications =
+ export const getRecruiterApplications =
   async () => {
     const token =
       localStorage.getItem(
@@ -79,11 +81,12 @@ export const getMyApplications =
     return response.data;
   };
 
-  export const updateStatus =
+export const updateStatus =
   async (
     applicationId,
     status
   ) => {
+
     const token =
       localStorage.getItem(
         "token"
@@ -122,7 +125,7 @@ export const createJob = async (jobData) => {
     return response.data;
   };
 
-  export const getRecruiterJobs =
+export const getRecruiterJobs =
   async () => {
 
     const token =
@@ -144,7 +147,7 @@ export const createJob = async (jobData) => {
     return response.data;
   };
 
-  export const deleteJob =
+export const deleteJob =
   async (jobId) => {
 
     const token =

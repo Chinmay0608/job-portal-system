@@ -1,288 +1,200 @@
 import { useEffect, useState } from "react";
-import {
-  getJobs,
-  applyJob,
-} from "../services/jobService";
-
-import {
-  uploadResume
-} from
-"../services/userService";
-
-import { useNavigate }
-from "react-router-dom";
+import { getJobs, applyJob } from "../Services/jobService";
+import { useNavigate } from "react-router-dom";
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [search, setSearch] = useState("");
-  const [resumeUploaded,setResumeUploaded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
 
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  const user =
-    JSON.parse(
-      localStorage.getItem(
-        "user"
-      )
-    );
-
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  useEffect(() => { fetchJobs(); }, []);
 
   const fetchJobs = async () => {
-      try {
-        const response =
-          await getJobs();
-
-        setJobs(
-          response.jobs
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-  const handleApply = async (jobId) => {
     try {
+      const response = await getJobs();
+      setJobs(response.jobs);
+    } catch (error) { console.log(error); }
+  };
 
-      const response =
-        await applyJob(
-          jobId
-        );
+  const handleApplyClick = (job) => {
+    setSelectedJob(job);
+    setShowModal(true);
+  };
 
-      alert(
-        response.message
-      );
+  const submitApplication = async () => {
+    if (!resumeFile) return alert("Please upload resume");
+    try {
+      const formData = new FormData();
+      formData.append("resume", resumeFile);
+      formData.append("jobId", selectedJob._id);
 
-      setAppliedJobs(
-        (prev) => [
-          ...prev,
-          jobId
-        ]
-      );
+      const response = await applyJob(formData);
+      alert(response.message);
 
+      setAppliedJobs((prev) => [...prev, selectedJob._id]);
+      setShowModal(false);
+      setResumeFile(null);
     } catch (error) {
-
-      console.log(
-        error
-      );
-
-      alert(
-        error.response.data
-          .message
-      );
+      console.log(error);
+      alert(error.response?.data?.message || "Application Failed");
     }
   };
 
-  const filteredJobs =
-  jobs.filter(
-    (job) =>
-      job.title
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        ) ||
-      job.company
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
+  const filteredJobs = jobs.filter((job) =>
+    job.title.toLowerCase().includes(search.toLowerCase()) ||
+    job.company.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleResumeUpload =
-    async (e) => {
-
-      const file =
-        e.target.files[0];
-
-      if (!file) return;
-
-      try {
-
-        const response =
-          await uploadResume(
-            file
-          );
-
-        const updatedUser = {
-          ...user,
-
-          resume:
-            response.resume,
-        };
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify(
-            updatedUser
-          )
-        );
-
-        alert(
-          "Resume uploaded!"
-        );
-
-        console.log(
-          response
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-        console.log(
-          error.response
-        );
-
-        alert(
-          error.response
-            ?.data
-            ?.message ||
-          error.message
-        );
-      }
-  };
-
   return (
-    <div className="container mt-5">
+    <div className="dashboard-container">
 
-      <div  className="text-center mb-5"
-        style={{
-          marginTop: "120px",
-        }}
-      >
-        <h1>
-          Available Jobs
-        </h1>
+      {/* Header */}
+      <div className="dashboard-header">
+
+        <div>
+          <h1 className="dashboard-title">
+            Welcome back,
+            {user?.name} 👋
+          </h1>
+
+          <p className="dashboard-subtitle">
+            Find and apply to your
+            dream opportunities
+          </p>
+        </div>
 
         <input
           type="text"
           placeholder="Search jobs or company..."
-          className="
-            form-control
-            mb-4
-            mx-auto
-          "
-          style={{
-            maxWidth: "500px",
-            borderRadius: "14px",
-            padding: "12px",
-          }}
+          className="search-input"
           value={search}
           onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
+            setSearch(e.target.value)
           }
         />
-
-        <div
-          className="resume-card"
-        >
-
-          <h3>
-            Upload Resume
-          </h3>
-
-          <input
-            type="file"
-            accept=".pdf"
-
-            onChange={
-              handleResumeUpload
-            }
-          />
-
-          {
-            resumeUploaded && (
-
-              <p
-                style={{
-                  color:
-                    "green",
-
-                  marginTop:
-                    "10px",
-
-                  fontWeight:
-                    "600",
-                }}
-              >
-                Resume Uploaded ✅
-              </p>
-            )
-          }
-
-        </div>
-
-        <h4 className="text-muted">
-          Welcome, {user?.name}
-        </h4>
       </div>
 
-      <div className="row justify-content-center">
-        {filteredJobs.length ===
-          0 && (
-            <h4 className="text-muted">
-              No jobs found
-            </h4>
+      {/* Jobs */}
+      <div className="jobs-grid">
+
+        {filteredJobs.length === 0 && (
+          <h4 className="text-muted">
+            No jobs found
+          </h4>
         )}
+
         {filteredJobs.map((job) => (
           <div
-            className="col-md-4 mb-4"
+            className="job-card"
             key={job._id}
           >
-            <div className="card shadow-sm h-100 border-0"
-              style={{
-                borderRadius: "24px",
-              }}
+
+            <h3 className="job-title">
+              {job.title}
+            </h3>
+
+            <p className="job-company">
+              {job.company}
+            </p>
+
+            <p className="job-location">
+              📍 {job.location}
+            </p>
+
+            <p className="job-salary">
+              ₹{job.salary}
+            </p>
+
+            <button
+              className={
+                appliedJobs.includes(
+                  job._id
+                )
+                  ? "applied-btn"
+                  : "apply-btn"
+              }
+
+              disabled={
+                appliedJobs.includes(
+                  job._id
+                )
+              }
+
+              onClick={() =>
+                handleApplyClick(job)
+              }
             >
-              <div className="card-body p-4 d-flex flex-column">
-                <h4 className="card-title fw-bold">
-                  {job.title}
-                </h4>
+              {appliedJobs.includes(
+                job._id
+              )
+                ? "Applied"
+                : "Apply"}
+            </button>
 
-                <p>
-                  <strong>
-                    Company:
-                  </strong>{" "}
-                  {job.company}
-                </p>
-
-                <p>
-                  <strong>
-                    Location:
-                  </strong>{" "}
-                  {job.location}
-                </p>
-
-                <p className="text-success fw-bold fs-5 mt-3">
-                  ₹{job.salary}
-                </p>
-
-                <button
-                  className={ appliedJobs.includes(job._id)
-                      ? "btn btn-success w-100 mt-3"
-                      : "btn btn-primary w-100 mt-3"
-                  }
-
-                  disabled={ appliedJobs.includes(job._id)}
-                  onClick={() => handleApply(job._id)}
-                >
-                  {appliedJobs.includes(
-                    job._id
-                  )
-                    ? "Applied"
-                    : "Apply"}
-                </button>
-              </div>
-            </div>
           </div>
         ))}
       </div>
+
+      {/* Apply Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+
+          <div className="apply-modal">
+
+            <h2>
+              Apply for
+              <br />
+              {selectedJob?.title}
+            </h2>
+
+            <p className="modal-subtitle">
+              Upload your resume to
+              continue
+            </p>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="form-control"
+              onChange={(e) =>
+                setResumeFile(
+                  e.target.files[0]
+                )
+              }
+            />
+
+            <div className="modal-buttons">
+
+              <button
+                className="cancel-btn"
+                onClick={() =>
+                  setShowModal(false)
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                className="submit-btn"
+                onClick={
+                  submitApplication
+                }
+              >
+                Submit
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 export default CandidateDashboard;

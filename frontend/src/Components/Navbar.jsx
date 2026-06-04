@@ -3,6 +3,8 @@ import React, {
   useEffect,
 } from "react";
 
+import "./navbar.css";
+
 import {
   Link,
   useNavigate,
@@ -60,12 +62,12 @@ function Navbar() {
   };
 
   return (
-    <nav className="custom-navbar">
+    <nav className="custom-navbar glass-navbar">
 
       {/* Logo */}
 
       <Link
-        className="navbar-brand"
+        className="navbar-brand premium-logo"
         to="/"
       >
         SkillBridge
@@ -79,14 +81,14 @@ function Navbar() {
 
           <>
             <Link
-              className="login-btn"
+              className="login-btn nav-hover"
               to="/login"
             >
               Log In
             </Link>
 
             <Link
-              className="signup-btn"
+              className="signup-btn nav-hover"
               to="/register"
             >
               Sign Up
@@ -123,14 +125,14 @@ function Navbar() {
               "recruiter" && (
               <>
                 <Link
-                  className="dashboard-btn"
+                  className="dashboard-btn nav-hover"
                   to="/recruiter-dashboard"
                 >
                   Dashboard
                 </Link>
 
                 <Link
-                  className="dashboard-btn"
+                  className="dashboard-btn nav-hover"
                   to="/recruiter-applications"
                 >
                   Applicants

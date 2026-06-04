@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import {  createJob, getRecruiterJobs, deleteJob, getRecruiterApplications} from "../services/jobService";
+
+import {
+  createJob,
+  getRecruiterJobs,
+  deleteJob,
+  getRecruiterApplications,
+  updateStatus,
+} from "../Services/jobService";
 
 function RecruiterDashboard() {
 
@@ -14,12 +21,21 @@ function RecruiterDashboard() {
     description: "",
   });
 
-  const [jobs, setJobs,] = useState([]);
-  const [applications, setApplications] = useState([]);
+  const [jobs, setJobs] =
+    useState([]);
+
+  const [
+    applications,
+    setApplications,
+  ] = useState([]);
+
+  useEffect(() => {
+    fetchJobs();
+    fetchApplications();
+  }, []);
 
   const handleChange =
     (e) => {
-
       setFormData({
         ...formData,
         [e.target.name]:
@@ -28,105 +44,66 @@ function RecruiterDashboard() {
     };
 
   const handleSubmit =
-  async (e) => {
+    async (e) => {
 
-    e.preventDefault();
+      e.preventDefault();
 
-    try {
+      try {
 
-      const response =
-        await createJob(
-          formData
+        const response =
+          await createJob(
+            formData
+          );
+
+        alert(
+          response.message
         );
 
-      alert(
-        response.message
-      );
+        fetchJobs();
 
-      fetchJobs();
+        setFormData({
+          title: "",
+          company: "",
+          location: "",
+          salary: "",
+          description: "",
+        });
 
-      setFormData({
-        title: "",
-        company: "",
-        location: "",
-        salary: "",
-        description: "",
-      });
+      } catch (error) {
 
-    } catch (error) {
-
-      console.log(
-        error
-      );
-
-      alert(
-        error.response
-          ?.data
-          ?.message ||
-        "Error creating job"
-      );
-    }
-  };
-
-    useEffect(() => {
-      fetchJobs();
-      fetchApplications();
-    }, []);
-
-const fetchJobs =
-  async () => {
-
-    try {
-
-      const response =
-        await getRecruiterJobs();
-
-      setJobs(
-        response.jobs
-      );
-
-    } catch (
-      error
-    ) {
-
-      console.log(
-        error
-      );
-    }
-  };
-
-  const handleDelete =
-  async (jobId) => {
-
-    try {
-
-      const response =
-        await deleteJob(
-          jobId
+        console.log(
+          error
         );
 
-      alert(
-        response.message
-      );
+        alert(
+          error.response
+            ?.data
+            ?.message ||
+            "Error creating job"
+        );
+      }
+    };
 
-      fetchJobs();
+  const fetchJobs =
+    async () => {
 
-    } catch (
-      error
-    ) {
+      try {
 
-      console.log(
-        error
-      );
+        const response =
+          await getRecruiterJobs();
 
-      alert(
-        error.response
-          ?.data
-          ?.message ||
-        "Delete failed"
-      );
-    }
-  };
+        setJobs(
+          response.jobs
+        );
+
+      } catch (error) {
+
+        console.log(
+          error
+        );
+      }
+    };
+
   const fetchApplications =
     async () => {
 
@@ -134,8 +111,6 @@ const fetchJobs =
 
         const response =
           await getRecruiterApplications();
-        
-        console.log(response.applications);
 
         setApplications(
           response.applications
@@ -149,317 +124,192 @@ const fetchJobs =
       }
     };
 
+  const handleDelete =
+    async (jobId) => {
+
+      try {
+
+        const response =
+          await deleteJob(
+            jobId
+          );
+
+        alert(
+          response.message
+        );
+
+        fetchJobs();
+
+      } catch (error) {
+
+        console.log(
+          error
+        );
+
+        alert(
+          error.response
+            ?.data
+            ?.message ||
+            "Delete failed"
+        );
+      }
+    };
+
+    const handleStatusUpdate =
+      async (
+        applicationId,
+        status
+      ) => {
+
+        try {
+
+          await updateStatus(
+            applicationId,
+            status
+          );
+
+          fetchApplications();
+
+        } catch (error) {
+
+          console.log(error);
+
+          alert(
+            "Failed to update status"
+          );
+        }
+      };
+
   return (
     <div
-      className="container py-5"
+      className="container-fluid recruiter-dashboard"
       style={{
-        marginTop: "90px",
+        marginTop: "110px",
+        padding: "0 40px",
       }}
     >
+      <div className="row g-4">
 
-      <div
-        className="
-          recruiter-card
-          mx-auto
-        "
-        style={{
-          maxWidth:
-            "620px",
-        }}
-      >
+        {/* LEFT SIDE - CREATE JOB */}
+        <div className="col-lg-5">
 
-        <h1
-          className="
-            recruiter-title
-          "
-        >
-          Create Job
-        </h1>
+          <div className="recruiter-card">
 
-        <form
-          onSubmit={
-            handleSubmit
-          }
-        >
+            <h1 className="recruiter-title mb-4">
+              Create Job
+            </h1>
 
-          <label className="mb-2 fw-semibold">
-            Job Title
-          </label>
+            <form onSubmit={handleSubmit}>
 
-          <input
-            type="text"
-            name="title"
-            placeholder="Enter job title"
-            className="
-              form-control
-              mb-3
-              recruiter-input
-            "
-            value={
-              formData.title
-            }
-            onChange={
-              handleChange
-            }
-            required
-          />
+              <input
+                type="text"
+                name="title"
+                placeholder="Job Title"
+                className="form-control mb-3"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
 
-          <label className="mb-2 fw-semibold">
-            Company
-          </label>
+              <input
+                type="text"
+                name="company"
+                placeholder="Company"
+                className="form-control mb-3"
+                value={formData.company}
+                onChange={handleChange}
+                required
+              />
 
-          <input
-            type="text"
-            name="company"
-            placeholder="Enter company name"
-            className="
-              form-control
-              mb-3
-              recruiter-input
-            "
-            value={
-              formData.company
-            }
-            onChange={
-              handleChange
-            }
-            required
-          />
+              <input
+                type="text"
+                name="location"
+                placeholder="Location"
+                className="form-control mb-3"
+                value={formData.location}
+                onChange={handleChange}
+                required
+              />
 
-          <label className="mb-2 fw-semibold">
-            Location
-          </label>
+              <input
+                type="number"
+                name="salary"
+                placeholder="Salary"
+                className="form-control mb-3"
+                value={formData.salary}
+                onChange={handleChange}
+                required
+              />
 
-          <input
-            type="text"
-            name="location"
-            placeholder="Enter location"
-            className="
-              form-control
-              mb-3
-              recruiter-input
-            "
-            value={
-              formData.location
-            }
-            onChange={
-              handleChange
-            }
-            required
-          />
+              <textarea
+                name="description"
+                placeholder="Job Description"
+                className="form-control mb-4"
+                rows="4"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
 
-          <label className="mb-2 fw-semibold">
-            Salary
-          </label>
-
-          <input
-            type="number"
-            name="salary"
-            placeholder="Enter salary"
-            className="
-              form-control
-              mb-3
-              recruiter-input
-            "
-            value={
-              formData.salary
-            }
-            onChange={
-              handleChange
-            }
-            required
-          />
-
-          <label className="mb-2 fw-semibold">
-            Description
-          </label>
-
-          <textarea
-            name="description"
-            placeholder="Describe the role..."
-            className="
-              form-control
-              mb-4
-              recruiter-input
-            "
-            rows="5"
-            value={
-              formData.description
-            }
-            onChange={
-              handleChange
-            }
-            required
-          />
-
-          <button
-            className="btn btn-dark w-100 py-3 create-job-btn"
-            type="submit"
-          >
-            Create Job
-          </button>
-
-        </form>
-
-        <hr className="my-5" />
-
-        <h2 className="mb-4 fw-bold">
-          My Posted Jobs
-        </h2>
-
-        <div className="row">
-
-          {jobs.map((job) => (
-
-            <div
-              key={job._id}
-              className="col-12 mb-3"
-            >
-
-              <div className="card p-4 border-0 shadow-sm"
-                style={{
-                  borderRadius:
-                    "20px",
-                }}
+              <button
+                className="create-job-btn w-100 py-3"
+                type="submit"
               >
+                Create Job
+              </button>
 
-                <h4 className="fw-bold">
-                  {job.title}
-                </h4>
+            </form>
 
-                <p>
-                  {job.company}
-                </p>
-
-                <p>
-                  {job.location}
-                </p>
-
-                <p className="fw-bold text-success">
-                  ₹{job.salary}
-                </p>
-
-                <button className="btn btn-danger w-100 mt-2"
-                  onClick={() =>
-                    handleDelete(
-                      job._id
-                    )}
-                >
-                  Delete Job
-                </button>
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
-        <hr className="my-5" />
 
-        <h2 className="fw-bold mb-4">
-          Job Applications
-        </h2>
+        {/* RIGHT SIDE */}
+        <div className="col-lg-7">
 
-        <div className="row">
+          {/* MY JOBS */}
+          <div className="mb-5">
+            <h2 className="fw-bold mb-4 section-title">
+              My Posted Jobs
+            </h2>
 
-          {
-            applications.length === 0 && (
-
-              <p className="text-muted">
-                No applications yet
-              </p>
-            )
-          }
-
-          {
-            applications.map(
-              (application) => (
-
-              <div
-                key={
-                  application._id
-                }
-
-                className="
-                  col-12
-                  mb-3
-                "
-              >
-
+            <div className="row">
+              {jobs.map((job) => (
                 <div
-                  className="
-                    card
-                    p-4
-                    border-0
-                    shadow-sm
-                  "
-                  style={{
-                    borderRadius:
-                      "20px",
-                  }}
+                  key={job._id}
+                  className="col-md-6 mb-4"
                 >
+                  <div className="job-card">
 
-                  <h5
-                    className="
-                      fw-bold
-                    "
-                  >
-                    {
-                      application
-                        ?.candidate
-                        ?.name
-                    }
-                  </h5>
+                    <h4 className="fw-bold">
+                      {job.title}
+                    </h4>
 
-                  <p>
-                    {
-                      application
-                        ?.candidate
-                        ?.email
-                    }
-                  </p>
+                    <p className="text-muted mb-2">
+                      {job.company}
+                    </p>
 
-                  <p>
-                    Applied for:{" "}
+                    <p>
+                      📍 {job.location}
+                    </p>
 
-                    <strong>
-                      {
-                        application
-                          ?.job
-                          ?.title
+                    <h4 className="salary-text">
+                      ₹{job.salary}
+                    </h4>
+
+                    <button
+                      className="btn btn-danger w-100 mt-3"
+                      onClick={() =>
+                        handleDelete(job._id)
                       }
-                    </strong>
-                  </p>
+                    >
+                      Delete Job
+                    </button>
 
-                  {
-                    application
-                      ?.candidate
-                      ?.resume && (
-
-                      <a
-                        href={
-                          application
-                            .candidate
-                            .resume
-                        }
-
-                        target="_blank"
-
-                        rel="noreferrer"
-
-                        className="
-                          btn
-                          btn-dark
-                          mt-2
-                        "
-                      >
-                        View Resume
-                      </a>
-                    )
-                  }
-
+                  </div>
                 </div>
-
-              </div>
-            ))
-          }
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

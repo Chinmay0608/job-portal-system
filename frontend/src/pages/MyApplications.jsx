@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMyApplications } from "../services/jobService";
+import { getMyApplications } from "../Services/jobService";
 
 function MyApplications() {
   const [applications, setApplications] = useState([]);

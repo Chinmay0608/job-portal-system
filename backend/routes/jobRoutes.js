@@ -1,11 +1,17 @@
 const express =
   require("express");
 
+const upload =
+require(
+  "../middleware/uploadMiddleware"
+);
+
 const {
   createJob,
   getAllJobs,
   getRecruiterJobs,
   deleteJob,
+  applyJob,
 } = require(
   "../controllers/jobController"
 );
@@ -50,6 +56,18 @@ router.delete(
     "recruiter"
   ),
   deleteJob
+);
+
+router.post(
+  "/apply",
+  protect,
+  authorizeRoles(
+    "candidate"
+  ),
+  upload.single(
+    "resume"
+  ),
+  applyJob
 );
 
 module.exports = router;

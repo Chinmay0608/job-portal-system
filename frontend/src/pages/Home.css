@@ -1,0 +1,534 @@
+.landing-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      to bottom,
+      #fafaf9,
+      #f4f4f3
+    );
+  overflow: hidden;
+}
+
+/* ===================
+   HERO SECTION
+=================== */
+
+.hero-section {
+  position: relative;
+
+  min-height: 88vh;
+  padding-top: 120px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  overflow: hidden;
+
+  padding:
+    120px 20px 60px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 850px;
+}
+
+.hero-badge {
+  display: inline-block;
+
+  padding: 12px 20px;
+
+  border-radius: 999px;
+
+  background: white;
+  border: 1px solid #e7e7e7;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  margin-bottom: 30px;
+
+  box-shadow:
+    0 8px 20px
+    rgba(0,0,0,0.04);
+}
+
+.hero-title {
+  font-size: 6rem;
+  font-weight: 900;
+
+  line-height: 1;
+  letter-spacing: -4px;
+
+  color: #07111f;
+}
+
+.hero-title span {
+  color: #ef4444;
+}
+
+.hero-subtitle {
+  margin-top: 28px;
+
+  font-size: 1.2rem;
+  color: #6b7280;
+
+  line-height: 1.8;
+}
+
+/* Buttons */
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  margin-top: 42px;
+}
+
+.hero-primary-btn {
+  border: none;
+  background: #07111f;
+  color: white;
+
+  padding: 16px 30px;
+  border-radius: 18px;
+
+  font-weight: 600;
+  transition: 0.3s ease;
+}
+
+.hero-primary-btn:hover {
+  transform:
+    translateY(-3px);
+}
+
+.hero-secondary-btn {
+  background: white;
+
+  border:
+    1px solid #d1d5db;
+
+  padding: 16px 30px;
+
+  border-radius: 18px;
+
+  font-weight: 600;
+}
+
+/* Stats */
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+
+  margin-top: 70px;
+}
+
+.hero-stats h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #07111f;
+}
+
+.hero-stats p {
+  color: #6b7280;
+}
+
+/* ===================
+   FLOATING SKILLS
+=================== */
+
+.floating-wrapper {
+  position: absolute;
+  inset: 0;
+}
+
+.floating-skill {
+  position: absolute;
+
+  background:
+    rgba(255,255,255,0.85);
+
+  border:
+    1px solid #ececec;
+
+  padding: 18px 28px;
+
+  border-radius: 22px;
+
+  backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,0.05);
+
+  transition:
+    all 0.35s
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+
+  cursor: pointer;
+}
+
+.floating-skill:hover {
+  transform:
+    scale(1.08)
+    translateY(-6px);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(239,68,68,0.15),
+
+    0 20px 50px
+    rgba(239,68,68,0.18);
+
+  color: #ef4444;
+}
+
+/* Positioning */
+
+.skill-0 {
+  top: 18%;
+  left: 12%;
+}
+
+.skill-1 {
+  top: 24%;
+  right: 14%;
+}
+
+.skill-2 {
+  top: 14%;
+  left: 40%;
+}
+
+.skill-3 {
+  bottom: 28%;
+  left: 8%;
+}
+
+.skill-4 {
+  top: 42%;
+  right: 8%;
+}
+
+.skill-5 {
+  bottom: 16%;
+  left: 22%;
+}
+
+.skill-6 {
+  top: 58%;
+  left: 12%;
+}
+
+.skill-7 {
+  bottom: 12%;
+  right: 18%;
+}
+
+.skill-8 {
+  top: 32%;
+  left: 24%;
+}
+
+.skill-9 {
+  top: 64%;
+  right: 28%;
+}
+
+.skill-10 {
+  top: 22%;
+  left: 66%;
+}
+
+.skill-11 {
+  bottom: 26%;
+  right: 8%;
+}
+
+/* ===================
+   TRUST SECTION
+=================== */
+
+.trust-section {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.trust-text {
+  color: #6b7280;
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+
+.company-section {
+  padding: 70px 80px;
+}
+
+.company-strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 80px;
+
+  font-size: 2rem;
+  font-weight: 800;
+
+  color: #c7c7c7;
+}
+
+.company-logo {
+  background: white;
+
+  border: 1px solid #ececec;
+
+  border-radius: 18px;
+
+  padding: 18px 28px;
+
+  font-weight: 700;
+
+  color: #374151;
+
+  transition: 0.3s ease;
+}
+
+.company-logo:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,0.06);
+}
+
+/* ===================
+   CATEGORY SECTION
+=================== */
+
+.categories-section {
+  padding:
+    80px 80px;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 70px;
+}
+
+.section-badge {
+  display: inline-block;
+
+  background: white;
+
+  border:
+    1px solid #e7e7e7;
+
+  padding: 12px 20px;
+
+  border-radius: 999px;
+
+  font-weight: 600;
+
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+
+  color: #07111f;
+}
+
+.section-subtitle {
+  margin-top: 16px;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.categories-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 30px;
+}
+
+.category-card {
+  background: white;
+
+  border:
+    1px solid #ececec;
+
+  border-radius: 28px;
+
+  padding: 34px;
+
+  transition:
+    0.35s ease;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,0.04);
+
+  min-height: 230px;
+}
+
+.category-card:hover {
+  transform:
+    translateY(-8px);
+
+  box-shadow:
+    0 24px 50px
+    rgba(239,68,68,0.10);
+}
+
+.category-card span {
+  font-size: 3rem;
+}
+
+.category-card h3 {
+  margin-top: 18px;
+
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.category-card p {
+  margin-top: 10px;
+  color: #6b7280;
+}
+
+/* ===================
+   WHY SECTION
+=================== */
+
+.why-section {
+  padding:
+    90px 80px;
+}
+
+.why-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 30px;
+}
+
+.why-card {
+  background: white;
+
+  border:
+    1px solid #ececec;
+
+  border-radius: 30px;
+
+  padding: 50px;
+
+  text-align: center;
+
+  transition: 0.35s ease;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,0.04);
+}
+
+.why-card:hover {
+  transform:
+    translateY(-8px);
+
+  box-shadow:
+    0 24px 50px
+    rgba(239,68,68,0.10);
+}
+
+.why-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.why-card h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.why-card p {
+  margin-top: 14px;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ===================
+   CTA SECTION
+=================== */
+
+.cta-section {
+  padding:
+    60px 80px 120px;
+}
+
+.cta-card {
+  background:
+    linear-gradient(
+      135deg,
+      #07111f,
+      #111827
+    );
+
+  color: white;
+
+  border-radius: 40px;
+
+  padding:
+    80px 40px;
+
+  text-align: center;
+}
+
+.cta-card h2 {
+  font-size: 3rem;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.cta-card p {
+  margin-top: 20px;
+  color: #d1d5db;
+  font-size: 1.1rem;
+}
+
+.cta-btn {
+  margin-top: 34px;
+
+  border: none;
+
+  background: white;
+  color: #07111f;
+
+  padding: 18px 34px;
+
+  border-radius: 18px;
+
+  font-weight: 700;
+
+  transition: 0.3s ease;
+}
+
+.cta-btn:hover {
+  transform:
+    translateY(-4px);
+}
