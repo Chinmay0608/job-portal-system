@@ -1,6 +1,51 @@
 import "./Home.css";
 
 function Home() {
+
+  const companies = [
+    {
+      name: "Google",
+      link: "https://www.google.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+    },
+
+    {
+      name: "Microsoft",
+      link: "https://www.microsoft.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+    },
+
+    {
+      name: "Amazon",
+      link: "https://www.amazon.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+    },
+
+    {
+      name: "Netflix",
+      link: "https://www.netflix.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+    },
+
+    {
+      name: "Meta",
+      link: "https://about.meta.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
+    },
+
+    {
+      name: "Adobe",
+      link: "https://www.adobe.com",
+      logo:
+        "https://upload.wikimedia.org/wikipedia/commons/7/7b/Adobe_Systems_logo_and_wordmark.svg",
+    },
+  ];
+
   const tags = [
     "Frontend",
     "Backend",
@@ -89,12 +134,23 @@ function Home() {
         </p>
 
         <div className="company-strip">
-          <span>Google</span>
-          <span>Microsoft</span>
-          <span>Amazon</span>
-          <span>Netflix</span>
-          <span>Meta</span>
-          <span>Adobe</span>
+          {companies.map((company, index) => (
+            <a
+              key={index}
+              href={company.link}
+              target="_blank"
+              rel="noreferrer"
+              className="company-logo-card"
+            >
+              <img
+                src={company.logo}
+                alt={company.name}
+                className="company-logo-img"
+              />
+
+              <span>{company.name}</span>
+            </a>
+          ))}
         </div>
 
       </section>

@@ -7,7 +7,7 @@ function Footer() {
           "#f7f7f5",
         borderTop:
           "1px solid #e5e7eb",
-        marginTop: "180px",
+        marginTop: "0px",
       }}
     >
       <h5 className="fw-bold">
