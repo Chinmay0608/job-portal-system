@@ -78,62 +78,62 @@ const getRecruiterJobs =
   };
 
   const deleteJob =
-  async (
-    req,
-    res
-  ) => {
+    async (
+      req,
+      res
+    ) => {
 
-    try {
+      try {
 
-      const {
-        jobId,
-      } = req.params;
+        const {
+          jobId,
+        } = req.params;
 
-      const job =
-        await Job.findById(
+        const job =
+          await Job.findById(
+            jobId
+          );
+
+        if (!job) {
+          return res.status(404)
+            .json({
+              message:
+                "Job not found",
+            });
+        }
+
+        if (
+          job.recruiter.toString() !==
+          req.user.id
+        ) {
+          return res.status(403)
+            .json({
+              message:
+                "Access denied",
+            });
+        }
+
+        await Job.findByIdAndDelete(
           jobId
         );
 
-      if (!job) {
-        return res.status(404)
+        res.status(200)
           .json({
             message:
-              "Job not found",
+              "Job deleted successfully",
           });
-      }
 
-      if (
-        job.recruiter.toString() !==
-        req.user.id
+      } catch (
+        error
       ) {
-        return res.status(403)
+
+        res.status(500)
           .json({
             message:
-              "Access denied",
+              "Server Error",
           });
       }
-
-      await Job.findByIdAndDelete(
-        jobId
-      );
-
-      res.status(200)
-        .json({
-          message:
-            "Job deleted successfully",
-        });
-
-    } catch (
-      error
-    ) {
-
-      res.status(500)
-        .json({
-          message:
-            "Server Error",
-        });
-    }
-  };
+    };
 
 const applyJob = async (req,res) => {
   try {
@@ -205,10 +205,69 @@ const applyJob = async (req,res) => {
   }
 };
 
+const updateJob =
+  async (req, res) => {
+
+    try {
+
+      const { jobId } =
+        req.params;
+
+      const job =
+        await Job.findById(
+          jobId
+        );
+
+      if (!job) {
+        return res.status(404).json({
+          message:
+            "Job not found",
+        });
+      }
+
+      // recruiter check
+      if (
+        job.recruiter.toString() !==
+        req.user.id
+      ) {
+        return res.status(403).json({
+          message:
+            "Access denied",
+        });
+      }
+
+      const updatedJob =
+        await Job.findByIdAndUpdate(
+          jobId,
+          req.body,
+          {
+            new: true,
+          }
+        );
+
+      res.status(200).json({
+        message:
+          "Job updated successfully",
+        job:
+          updatedJob,
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        message:
+          "Server Error",
+      });
+    }
+  };
+
 module.exports = {
   createJob,
   getAllJobs,
   getRecruiterJobs,
   deleteJob,
   applyJob,
+  updateJob,
 };

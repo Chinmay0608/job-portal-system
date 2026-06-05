@@ -12,6 +12,7 @@ const {
   getRecruiterJobs,
   deleteJob,
   applyJob,
+  updateJob,
 } = require(
   "../controllers/jobController"
 );
@@ -56,6 +57,15 @@ router.delete(
     "recruiter"
   ),
   deleteJob
+);
+
+router.put(
+  "/update/:jobId",
+  protect,
+  authorizeRoles(
+    "recruiter"
+  ),
+  updateJob
 );
 
 router.post(

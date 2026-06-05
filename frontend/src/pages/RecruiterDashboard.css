@@ -1,0 +1,440 @@
+/* ==========================
+   RECRUITER DASHBOARD
+========================== */
+
+.recruiter-dashboard {
+  min-height: 100vh;
+  padding-bottom: 120px;
+}
+
+/* ==========================
+   LEFT SIDE CARD
+========================== */
+
+.recruiter-card {
+  background: rgba(255,255,255,0.75);
+
+  backdrop-filter: blur(20px);
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 34px;
+
+  padding: 34px;
+
+  position: sticky;
+  top: 120px;
+
+  box-shadow:
+    0 20px 50px
+    rgba(0,0,0,0.06);
+
+  transition: 0.35s ease;
+}
+
+.recruiter-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 28px 60px
+    rgba(0,0,0,0.08);
+}
+
+.recruiter-title {
+  font-size: 3rem;
+  font-weight: 900;
+
+  color: #07111f;
+
+  margin-bottom: 10px;
+}
+
+.recruiter-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+
+  margin-bottom: 28px;
+}
+
+/* ==========================
+   FORM INPUTS
+========================== */
+
+.recruiter-card .form-control {
+  border-radius: 18px;
+
+  border: 1px solid #e5e7eb;
+
+  background: #fafafa;
+
+  padding: 16px 20px;
+
+  font-size: 16px;
+
+  transition: 0.3s ease;
+}
+
+.recruiter-card .form-control:focus {
+  border-color: #07111f;
+
+  background: white;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(7,17,31,0.08);
+}
+
+textarea.form-control {
+  resize: none;
+}
+
+/* ==========================
+   CREATE BUTTON
+========================== */
+
+.create-job-btn {
+  border: none;
+
+  border-radius: 18px;
+
+  background: #07111f;
+
+  color: white;
+
+  font-weight: 700;
+  font-size: 16px;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.create-job-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 18px 40px
+    rgba(7,17,31,0.18);
+}
+
+/* ==========================
+   CANCEL BUTTON
+========================== */
+
+.cancel-edit-btn {
+  border: none;
+
+  border-radius: 18px;
+
+  padding: 14px 24px;
+
+  background: #ef4444;
+
+  color: white;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+
+  box-shadow:
+    0 10px 24px
+    rgba(239,68,68,0.18);
+}
+
+.cancel-edit-btn:hover {
+  background: #dc2626;
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 18px 35px
+    rgba(239,68,68,0.25);
+}
+
+.cancel-edit-btn:active {
+  transform: scale(0.98);
+}
+
+/* ==========================
+   SECTION TITLE
+========================== */
+
+.section-title {
+  font-size: 3.4rem;
+  font-weight: 900;
+
+  color: #07111f;
+
+  margin-bottom: 30px;
+}
+
+/* ==========================
+   JOB CARDS
+========================== */
+
+.job-card {
+  background: white;
+
+  border: 1px solid #ececec;
+
+  border-radius: 30px;
+
+  padding: 28px;
+
+  height: 100%;
+
+  transition: 0.35s ease;
+
+  box-shadow:
+    0 8px 22px
+    rgba(0,0,0,0.04);
+}
+
+.job-card:hover {
+  transform:
+    translateY(-8px);
+
+  box-shadow:
+    0 25px 50px
+    rgba(0,0,0,0.08);
+}
+
+.job-card h4 {
+  font-size: 2rem;
+  font-weight: 800;
+
+  color: #07111f;
+
+  margin-bottom: 10px;
+}
+
+.job-card p {
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.salary-text {
+  color: #059669;
+
+  font-size: 2rem;
+  font-weight: 800;
+
+  margin-bottom: 18px;
+}
+
+/* ==========================
+   EDIT BUTTON
+========================== */
+
+.edit-btn {
+  border: none;
+
+  border-radius: 16px;
+
+  background: #07111f;
+
+  color: white;
+
+  font-weight: 700;
+
+  transition: 0.3s ease;
+}
+
+.edit-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(7,17,31,0.18);
+}
+
+/* ==========================
+   DELETE BUTTON
+========================== */
+
+.delete-btn {
+  border: none;
+
+  border-radius: 16px;
+
+  background: #ef4444;
+
+  color: white;
+
+  font-weight: 700;
+
+  transition: 0.3s ease;
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(239,68,68,0.2);
+}
+
+/* ==========================
+   APPLICATION CARD
+========================== */
+
+.application-card {
+  background: white;
+
+  border: 1px solid #ececec;
+
+  border-radius: 30px;
+
+  padding: 28px;
+
+  transition: 0.35s ease;
+
+  box-shadow:
+    0 8px 24px
+    rgba(0,0,0,0.04);
+}
+
+.application-card:hover {
+  transform:
+    translateY(-6px);
+
+  box-shadow:
+    0 22px 45px
+    rgba(0,0,0,0.08);
+}
+
+.application-top {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+}
+
+.candidate-name {
+  font-size: 26px;
+  font-weight: 700;
+
+  color: #07111f;
+}
+
+.candidate-email {
+  color: #6b7280;
+}
+
+.job-applied {
+  margin-top: 18px;
+
+  color: #374151;
+
+  font-size: 16px;
+}
+
+/* ==========================
+   APPLICATION BUTTONS
+========================== */
+
+.application-actions {
+  display: flex;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+
+  margin-top: 24px;
+}
+
+.resume-btn,
+.shortlist-btn,
+.reject-btn {
+  border: none;
+
+  border-radius: 14px;
+
+  padding: 12px 18px;
+
+  font-weight: 600;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition: 0.3s ease;
+}
+
+.resume-btn {
+  background: #07111f;
+  color: white;
+}
+
+.shortlist-btn {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.reject-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.resume-btn:hover,
+.shortlist-btn:hover,
+.reject-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================
+   STATUS BADGES
+========================== */
+
+.status-badge {
+  border-radius: 999px;
+
+  padding: 10px 18px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.shortlisted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 992px) {
+
+  .recruiter-card {
+    position: relative;
+    top: 0;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+  }
+
+  .recruiter-title {
+    font-size: 2.3rem;
+  }
+}

@@ -39,6 +39,32 @@ export const applyJob =
     return response.data;
   };
 
+export const updateJob =
+  async (
+    jobId,
+    jobData
+  ) => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const response =
+      await axios.put(
+        `${API_URL}/update/${jobId}`,
+        jobData,
+        {
+          headers: {
+            authorization:
+              token,
+          },
+        }
+      );
+
+    return response.data;
+  };
+
 export const getMyApplications =
   async () => {
     const token =

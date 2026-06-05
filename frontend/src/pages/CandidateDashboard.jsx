@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { getJobs, applyJob } from "../Services/jobService";
 import { useNavigate } from "react-router-dom";
+import "./CandidateDashboard.css";
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [search, setSearch] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [salaryFilter, setSalaryFilter] = useState("");
+  const [companyFilter,setCompanyFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -46,10 +50,53 @@ function CandidateDashboard() {
     }
   };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.title.toLowerCase().includes(search.toLowerCase()) ||
-    job.company.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredJobs =
+    jobs.filter((job) => {
+
+      const matchesSearch =
+        job.title
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          ) ||
+
+        job.company
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          );
+
+      const matchesLocation =
+        locationFilter === "" ||
+
+        job.location
+          .toLowerCase()
+          .includes(
+            locationFilter.toLowerCase()
+          );
+
+      const matchesCompany =
+        companyFilter === "" ||
+
+        job.company
+          .toLowerCase()
+          .includes(
+            companyFilter.toLowerCase()
+          );
+
+      const matchesSalary =
+        salaryFilter === "" ||
+
+        Number(job.salary) >=
+        Number(salaryFilter);
+
+      return (
+        matchesSearch &&
+        matchesLocation &&
+        matchesCompany &&
+        matchesSalary
+      );
+    });
 
   return (
     <div className="dashboard-container">
@@ -68,16 +115,95 @@ function CandidateDashboard() {
             dream opportunities
           </p>
         </div>
+        <div
+          className="row g-3 mt-4"
+          style={{
+            maxWidth: "1100px",
+          }}
+        >
 
-        <input
-          type="text"
-          placeholder="Search jobs or company..."
-          className="search-input"
-          value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
-        />
+          {/* Search */}
+          <div className="col-md-4">
+            <input
+              type="text"
+              placeholder="Search jobs or company..."
+              className="form-control filter-input"
+              value={search}
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          {/* Location */}
+          <div className="col-md-3">
+            <input
+              type="text"
+              placeholder="Location"
+              className="form-control filter-input"
+              value={locationFilter}
+              onChange={(e) =>
+                setLocationFilter(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          {/* Company */}
+          <div className="col-md-3">
+            <input
+              type="text"
+              placeholder="Company"
+              className="form-control filter-input"
+              value={companyFilter}
+              onChange={(e) =>
+                setCompanyFilter(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          {/* Salary */}
+          <div className="col-md-2">
+            <select
+              className="form-control filter-input"
+              value={salaryFilter}
+              onChange={(e) =>
+                setSalaryFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Salary
+              </option>
+
+              <option value="300000">
+                3 LPA+
+              </option>
+
+              <option value="500000">
+                5 LPA+
+              </option>
+
+              <option value="800000">
+                8 LPA+
+              </option>
+
+              <option value="1000000">
+                10 LPA+
+              </option>
+
+              <option value="1500000">
+                15 LPA+
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Jobs */}

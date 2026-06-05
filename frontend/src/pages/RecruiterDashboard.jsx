@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
+import "./RecruiterDashboard.css";
 
 import {
   createJob,
   getRecruiterJobs,
   deleteJob,
-  getRecruiterApplications,
-  updateStatus,
+  updateJob,
 } from "../Services/jobService";
 
 function RecruiterDashboard() {
@@ -25,13 +25,12 @@ function RecruiterDashboard() {
     useState([]);
 
   const [
-    applications,
-    setApplications,
-  ] = useState([]);
+    editingJob,
+    setEditingJob,
+  ] = useState(null);
 
   useEffect(() => {
     fetchJobs();
-    fetchApplications();
   }, []);
 
   const handleChange =
@@ -50,16 +49,33 @@ function RecruiterDashboard() {
 
       try {
 
-        const response =
-          await createJob(
-            formData
-          );
+        let response;
+
+        if (editingJob) {
+
+          response =
+            await updateJob(
+              editingJob._id,
+              formData
+            );
+
+        } else {
+
+          response =
+            await createJob(
+              formData
+            );
+        }
 
         alert(
           response.message
         );
 
         fetchJobs();
+
+        setEditingJob(
+          null
+        );
 
         setFormData({
           title: "",
@@ -71,15 +87,13 @@ function RecruiterDashboard() {
 
       } catch (error) {
 
-        console.log(
-          error
-        );
+        console.log(error);
 
         alert(
           error.response
             ?.data
             ?.message ||
-            "Error creating job"
+            "Something went wrong"
         );
       }
     };
@@ -98,29 +112,7 @@ function RecruiterDashboard() {
 
       } catch (error) {
 
-        console.log(
-          error
-        );
-      }
-    };
-
-  const fetchApplications =
-    async () => {
-
-      try {
-
-        const response =
-          await getRecruiterApplications();
-
-        setApplications(
-          response.applications
-        );
-
-      } catch (error) {
-
-        console.log(
-          error
-        );
+        console.log(error);
       }
     };
 
@@ -142,9 +134,7 @@ function RecruiterDashboard() {
 
       } catch (error) {
 
-        console.log(
-          error
-        );
+        console.log(error);
 
         alert(
           error.response
@@ -155,59 +145,56 @@ function RecruiterDashboard() {
       }
     };
 
-    const handleStatusUpdate =
-      async (
-        applicationId,
-        status
-      ) => {
-
-        try {
-
-          await updateStatus(
-            applicationId,
-            status
-          );
-
-          fetchApplications();
-
-        } catch (error) {
-
-          console.log(error);
-
-          alert(
-            "Failed to update status"
-          );
-        }
-      };
-
   return (
     <div
-      className="container-fluid recruiter-dashboard"
+      className="
+        container-fluid
+        recruiter-dashboard
+      "
       style={{
-        marginTop: "110px",
-        padding: "0 40px",
+        marginTop:
+          "110px",
+        padding:
+          "0 40px",
       }}
     >
+
       <div className="row g-4">
 
-        {/* LEFT SIDE - CREATE JOB */}
+        {/* LEFT SIDE */}
         <div className="col-lg-5">
 
           <div className="recruiter-card">
 
-            <h1 className="recruiter-title mb-4">
-              Create Job
+            <h1 className="
+              recruiter-title
+              mb-4
+            ">
+              {editingJob
+                ? "Edit Job"
+                : "Create Job"}
             </h1>
 
-            <form onSubmit={handleSubmit}>
+            <form
+              onSubmit={
+                handleSubmit
+              }
+            >
 
               <input
                 type="text"
                 name="title"
                 placeholder="Job Title"
-                className="form-control mb-3"
-                value={formData.title}
-                onChange={handleChange}
+                className="
+                  form-control
+                  mb-3
+                "
+                value={
+                  formData.title
+                }
+                onChange={
+                  handleChange
+                }
                 required
               />
 
@@ -215,9 +202,16 @@ function RecruiterDashboard() {
                 type="text"
                 name="company"
                 placeholder="Company"
-                className="form-control mb-3"
-                value={formData.company}
-                onChange={handleChange}
+                className="
+                  form-control
+                  mb-3
+                "
+                value={
+                  formData.company
+                }
+                onChange={
+                  handleChange
+                }
                 required
               />
 
@@ -225,9 +219,16 @@ function RecruiterDashboard() {
                 type="text"
                 name="location"
                 placeholder="Location"
-                className="form-control mb-3"
-                value={formData.location}
-                onChange={handleChange}
+                className="
+                  form-control
+                  mb-3
+                "
+                value={
+                  formData.location
+                }
+                onChange={
+                  handleChange
+                }
                 required
               />
 
@@ -235,28 +236,81 @@ function RecruiterDashboard() {
                 type="number"
                 name="salary"
                 placeholder="Salary"
-                className="form-control mb-3"
-                value={formData.salary}
-                onChange={handleChange}
+                className="
+                  form-control
+                  mb-3
+                "
+                value={
+                  formData.salary
+                }
+                onChange={
+                  handleChange
+                }
                 required
               />
 
               <textarea
                 name="description"
                 placeholder="Job Description"
-                className="form-control mb-4"
+                className="
+                  form-control
+                  mb-4
+                "
                 rows="4"
-                value={formData.description}
-                onChange={handleChange}
+                value={
+                  formData.description
+                }
+                onChange={
+                  handleChange
+                }
                 required
               />
 
-              <button
-                className="create-job-btn w-100 py-3"
-                type="submit"
-              >
-                Create Job
-              </button>
+              <div className="
+                d-flex
+                gap-2
+              ">
+
+                <button
+                  className="
+                    create-job-btn
+                    w-100
+                    py-3
+                  "
+                  type="submit"
+                >
+                  {editingJob
+                    ? "Update Job"
+                    : "Create Job"}
+                </button>
+
+                {editingJob && (
+
+                  <button
+                    type="button"
+                    className="
+                      cancel-edit-btn
+                    "
+                    onClick={() => {
+
+                      setEditingJob(
+                        null
+                      );
+
+                      setFormData({
+                        title: "",
+                        company: "",
+                        location: "",
+                        salary: "",
+                        description: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
+
+              </div>
 
             </form>
 
@@ -268,15 +322,26 @@ function RecruiterDashboard() {
 
           {/* MY JOBS */}
           <div className="mb-5">
-            <h2 className="fw-bold mb-4 section-title">
+
+            <h2 className="
+              fw-bold
+              mb-4
+              section-title
+            ">
               My Posted Jobs
             </h2>
 
             <div className="row">
-              {jobs.map((job) => (
+
+              {jobs.map(
+                (job) => (
+
                 <div
                   key={job._id}
-                  className="col-md-6 mb-4"
+                  className="
+                    col-md-6
+                    mb-4
+                  "
                 >
                   <div className="job-card">
 
@@ -284,7 +349,10 @@ function RecruiterDashboard() {
                       {job.title}
                     </h4>
 
-                    <p className="text-muted mb-2">
+                    <p className="
+                      text-muted
+                      mb-2
+                    ">
                       {job.company}
                     </p>
 
@@ -292,18 +360,63 @@ function RecruiterDashboard() {
                       📍 {job.location}
                     </p>
 
-                    <h4 className="salary-text">
+                    <h4 className="
+                      salary-text
+                    ">
                       ₹{job.salary}
                     </h4>
 
-                    <button
-                      className="btn btn-danger w-100 mt-3"
-                      onClick={() =>
-                        handleDelete(job._id)
-                      }
-                    >
-                      Delete Job
-                    </button>
+                    <div className="
+                      d-flex
+                      gap-2
+                      mt-3
+                    ">
+
+                      <button
+                        className="
+                          btn
+                          btn-dark
+                          w-50
+                        "
+                        onClick={() => {
+
+                          setEditingJob(
+                            job
+                          );
+
+                          setFormData({
+                            title:
+                              job.title,
+                            company:
+                              job.company,
+                            location:
+                              job.location,
+                            salary:
+                              job.salary,
+                            description:
+                              job.description,
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="
+                          btn
+                          btn-danger
+                          w-50
+                        "
+                        onClick={() =>
+                          handleDelete(
+                            job._id
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
+
+                    </div>
 
                   </div>
                 </div>
