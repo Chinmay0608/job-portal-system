@@ -1,0 +1,245 @@
+/* ==========================
+   PAGE LAYOUT
+========================== */
+
+.applications-page {
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 120px 40px 60px;
+}
+
+/* ==========================
+   HEADER
+========================== */
+
+.applications-header {
+  text-align: center;
+
+  margin-bottom: 50px;
+}
+
+.applications-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+
+  color: #07111f;
+
+  margin-bottom: 10px;
+}
+
+.applications-header p {
+  font-size: 1.1rem;
+
+  color: #6b7280;
+}
+
+/* ==========================
+   GRID
+========================== */
+
+.applications-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(380px, 1fr)
+    );
+
+  gap: 28px;
+}
+
+/* ==========================
+   APPLICATION CARD
+========================== */
+
+.application-card {
+  background: white;
+
+  border-radius: 28px;
+
+  padding: 30px;
+
+  border: 1px solid #ececec;
+
+  box-shadow:
+    0 10px 30px
+    rgba(0,0,0,0.05);
+
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  transition: 0.3s ease;
+}
+
+.application-card:hover {
+  transform:
+    translateY(-8px);
+
+  box-shadow:
+    0 25px 55px
+    rgba(0,0,0,0.08);
+
+  border-color:
+    rgba(239,68,68,0.18);
+}
+
+/* ==========================
+   JOB DETAILS
+========================== */
+
+.job-name {
+  font-size: 2rem;
+  font-weight: 700;
+
+  color: #07111f;
+
+  margin-bottom: 8px;
+}
+
+.company-name {
+  color: #6b7280;
+
+  font-size: 1.05rem;
+
+  margin-bottom: 18px;
+}
+
+.job-location {
+  color: #374151;
+
+  margin-bottom: 12px;
+}
+
+.job-salary {
+  font-size: 1.8rem;
+  font-weight: 700;
+
+  color: #059669;
+}
+
+/* ==========================
+   STATUS
+========================== */
+
+.status-wrapper {
+  margin-top: 24px;
+}
+
+.status-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 18px;
+
+  border-radius: 999px;
+
+  font-weight: 700;
+
+  text-transform: capitalize;
+
+  font-size: 14px;
+}
+
+/* Pending */
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* Shortlisted */
+
+.status-badge.shortlisted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Rejected */
+
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ==========================
+   EMPTY STATE
+========================== */
+
+.empty-applications {
+  grid-column: 1 / -1;
+
+  background: white;
+
+  border-radius: 34px;
+
+  border: 1px solid #ececec;
+
+  padding: 90px 40px;
+
+  text-align: center;
+
+  box-shadow:
+    0 10px 30px
+    rgba(0,0,0,0.04);
+}
+
+.empty-icon {
+  font-size: 5rem;
+
+  margin-bottom: 20px;
+}
+
+.empty-applications h2 {
+  font-size: 2.3rem;
+  font-weight: 800;
+
+  color: #07111f;
+
+  margin-bottom: 12px;
+}
+
+.empty-applications p {
+  color: #6b7280;
+
+  font-size: 1.05rem;
+
+  max-width: 420px;
+
+  margin: 0 auto;
+
+  line-height: 1.7;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 900px) {
+
+  .applications-page {
+    padding:
+      110px 20px 40px;
+  }
+
+  .applications-header h1 {
+    font-size: 2.3rem;
+  }
+
+  .applications-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .job-name {
+    font-size: 1.6rem;
+  }
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./RecruiterDashboard.css";
+import toast from "react-hot-toast";
 
 import {
   createJob,
@@ -67,9 +68,7 @@ function RecruiterDashboard() {
             );
         }
 
-        alert(
-          response.message
-        );
+        toast.success(response.message);
 
         fetchJobs();
 
@@ -89,7 +88,7 @@ function RecruiterDashboard() {
 
         console.log(error);
 
-        alert(
+        toast.error(
           error.response
             ?.data
             ?.message ||
@@ -126,9 +125,7 @@ function RecruiterDashboard() {
             jobId
           );
 
-        alert(
-          response.message
-        );
+        toast.success(response.message);
 
         fetchJobs();
 
@@ -136,7 +133,7 @@ function RecruiterDashboard() {
 
         console.log(error);
 
-        alert(
+        toast.error(
           error.response
             ?.data
             ?.message ||

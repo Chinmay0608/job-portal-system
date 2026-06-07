@@ -4,6 +4,7 @@ import React, {
 } from "react";
 
 import "./navbar.css";
+import toast from "react-hot-toast";
 
 import {
   Link,
@@ -18,14 +19,31 @@ function Navbar() {
 
   useEffect(() => {
 
-    const token =
-      localStorage.getItem(
-        "token"
-      );
+    const checkAuth =
+      () => {
 
-    if (token) {
-      setIsLoggedIn(true);
-    }
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        setIsLoggedIn(
+          !!token
+        );
+      };
+
+    checkAuth();
+
+    window.addEventListener(
+      "storage",
+      checkAuth
+    );
+
+    return () =>
+      window.removeEventListener(
+        "storage",
+        checkAuth
+      );
 
   }, []);
 
@@ -55,9 +73,17 @@ function Navbar() {
       "user"
     );
 
+    setIsLoggedIn(false);
+
+    toast.success(
+      "Logged out successfully"
+    );
+
     navigate(
       "/login",
-      { replace: true }
+      {
+        replace: true
+      }
     );
   };
 

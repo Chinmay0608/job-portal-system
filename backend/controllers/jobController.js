@@ -169,7 +169,7 @@ const applyJob = async (req,res) => {
         .status(400)
         .json({
           message:
-            "Already applied",
+            "You have already applied for this job",
         });
     }
 
