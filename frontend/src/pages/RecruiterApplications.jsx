@@ -5,14 +5,36 @@ import { getRecruiterApplications, updateStatus } from "../Services/jobService";
 
 function RecruiterApplications() {
   const [applications, setApplications] = useState([]);
+  const [loading, setloading,] = useState(true);
 
   useEffect(() => { fetchApplications(); }, []);
 
-  const fetchApplications = async () => {
+  const fetchApplications =
+  async () => {
+
     try {
-      const response = await getRecruiterApplications();
-      setApplications(response.applications);
-    } catch (error) { console.log(error); }
+
+      setLoading(
+        true
+      );
+
+      const response =
+        await getRecruiterApplications();
+
+      setApplications(
+        response.applications
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+    } finally {
+
+      setLoading(
+        false
+      );
+    }
   };
 
   const handleStatusUpdate = async (applicationId, status) => {
@@ -32,7 +54,38 @@ function RecruiterApplications() {
         <p>Review candidates and manage hiring decisions</p>
       </div>
 
-      {applications.length === 0 ? (
+      {
+        loading && (
+
+          <div
+            className="
+              text-center
+              py-5
+            "
+          >
+
+            <div
+              className="
+                spinner-border
+                text-dark
+              "
+              role="status"
+            />
+
+            <p
+              className="
+                mt-3
+                text-muted
+              "
+            >
+              Loading applicants...
+            </p>
+
+          </div>
+        )
+      }
+
+      {!loading && applications.length === 0 ? (
         <div className="empty-applications">
           <div className="empty-icon">👥</div>
           <h2>No applications yet</h2>

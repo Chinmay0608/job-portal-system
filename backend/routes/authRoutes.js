@@ -6,12 +6,20 @@ const {
   registerUser,
   loginUser,
   uploadResume,
-} = require("../controllers/authController");
+  googleLogin,
+} = require(
+  "../controllers/authController"
+);
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post(
+  "/google-login",
+  googleLogin
+);
+
 router.post(
   "/upload-resume",
   protect,

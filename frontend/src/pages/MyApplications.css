@@ -3,11 +3,11 @@
 ========================== */
 
 .applications-page {
-  max-width: 1400px;
+  max-width: 1250px;
 
   margin: 0 auto;
 
-  padding: 120px 40px 60px;
+  padding: 80px 28px 50px;
 }
 
 /* ==========================
@@ -17,20 +17,20 @@
 .applications-header {
   text-align: center;
 
-  margin-bottom: 50px;
+  margin-bottom: 34px;
 }
 
 .applications-header h1 {
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 800;
 
   color: #07111f;
 
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .applications-header p {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
 
   color: #6b7280;
 }
@@ -45,10 +45,10 @@
   grid-template-columns:
     repeat(
       auto-fit,
-      minmax(380px, 1fr)
+      minmax(320px, 1fr)
     );
 
-  gap: 28px;
+  gap: 18px;
 }
 
 /* ==========================
@@ -58,17 +58,17 @@
 .application-card {
   background: white;
 
-  border-radius: 28px;
+  border-radius: 18px;
 
-  padding: 30px;
+  padding: 18px;
 
   border: 1px solid #ececec;
 
   box-shadow:
-    0 10px 30px
-    rgba(0,0,0,0.05);
+    0 8px 22px
+    rgba(0,0,0,0.04);
 
-  min-height: 260px;
+  min-height: 210px;
 
   display: flex;
   flex-direction: column;
@@ -80,14 +80,14 @@
 
 .application-card:hover {
   transform:
-    translateY(-8px);
+    translateY(-5px);
 
   box-shadow:
-    0 25px 55px
-    rgba(0,0,0,0.08);
+    0 18px 35px
+    rgba(0,0,0,0.07);
 
   border-color:
-    rgba(239,68,68,0.18);
+    rgba(239,68,68,0.14);
 }
 
 /* ==========================
@@ -95,30 +95,32 @@
 ========================== */
 
 .job-name {
-  font-size: 2rem;
+  font-size: 1.45rem;
   font-weight: 700;
 
   color: #07111f;
 
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .company-name {
   color: #6b7280;
 
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .job-location {
   color: #374151;
 
-  margin-bottom: 12px;
+  font-size: 0.95rem;
+
+  margin-bottom: 8px;
 }
 
 .job-salary {
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   font-weight: 700;
 
   color: #059669;
@@ -129,7 +131,7 @@
 ========================== */
 
 .status-wrapper {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .status-badge {
@@ -138,15 +140,15 @@
   align-items: center;
   justify-content: center;
 
-  padding: 12px 18px;
+  padding: 7px 14px;
 
   border-radius: 999px;
 
-  font-weight: 700;
+  font-weight: 600;
 
   text-transform: capitalize;
 
-  font-size: 14px;
+  font-size: 12px;
 }
 
 /* Pending */
@@ -179,44 +181,44 @@
 
   background: white;
 
-  border-radius: 34px;
+  border-radius: 24px;
 
   border: 1px solid #ececec;
 
-  padding: 90px 40px;
+  padding: 60px 30px;
 
   text-align: center;
 
   box-shadow:
-    0 10px 30px
+    0 8px 22px
     rgba(0,0,0,0.04);
 }
 
 .empty-icon {
-  font-size: 5rem;
+  font-size: 3.5rem;
 
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .empty-applications h2 {
-  font-size: 2.3rem;
+  font-size: 1.8rem;
   font-weight: 800;
 
   color: #07111f;
 
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .empty-applications p {
   color: #6b7280;
 
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 
-  max-width: 420px;
+  max-width: 380px;
 
   margin: 0 auto;
 
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 /* ==========================
@@ -227,11 +229,11 @@
 
   .applications-page {
     padding:
-      110px 20px 40px;
+      95px 18px 40px;
   }
 
   .applications-header h1 {
-    font-size: 2.3rem;
+    font-size: 1.9rem;
   }
 
   .applications-grid {
@@ -240,6 +242,6 @@
   }
 
   .job-name {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
 }

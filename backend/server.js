@@ -1,7 +1,11 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
-
-require("dotenv").config();
+const userRoutes =
+  require(
+    "./routes/userRoutes"
+  );
 
 const connectDB = require("./config/db");
 
@@ -31,6 +35,11 @@ app.use("/api/jobs", jobRoutes);
 app.use(
   "/api/applications",
   applicationRoutes
+);
+
+app.use(
+  "/api/users",
+  userRoutes
 );
 
 app.get("/", (req, res) => {

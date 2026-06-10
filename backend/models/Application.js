@@ -1,6 +1,6 @@
 const upload =
 require(
-  "../middleware/uploadMiddleware"
+  "../middleware/multer"
 );
 
 const mongoose =
@@ -28,7 +28,8 @@ const applicationSchema =
       /* NEW */
       resume: {
         type: String,
-        required: true,
+        required: false,
+        default: "",
       },
 
       status: {

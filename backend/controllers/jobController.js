@@ -5,6 +5,7 @@ const createJob = async (req, res) => {
   try {
     const {
       title,
+      role,
       company,
       location,
       salary,
@@ -13,6 +14,7 @@ const createJob = async (req, res) => {
 
     const job = await Job.create({
       title,
+      role,
       company,
       location,
       salary,

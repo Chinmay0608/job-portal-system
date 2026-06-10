@@ -12,6 +12,7 @@ function CandidateDashboard() {
   const [locationFilter, setLocationFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -23,71 +24,87 @@ function CandidateDashboard() {
   useEffect(() => { fetchJobs(); fetchAppliedJobs(); }, []);
 
   const fetchJobs = async () => {
-
     try {
-
       setLoading(true);
-
-      const response =
-        await getJobs();
-
-      setJobs(
-        response.jobs
-      );
-
+      const response = await getJobs();
+      setJobs(response.jobs);
     } catch (error) {
-
       console.log(error);
-
-    } finally {
-
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  const fetchAppliedJobs =
-    async () => {
-
-      try {
-
-        const response =
-          await getMyApplications();
-
-        const appliedIds =
-          response.applications.map(
-            (application) =>
-              application.job?._id
-          );
-
-        setAppliedJobs(
-          appliedIds
-        );
-
-      } catch (error) {
-
-        console.log(error);
-      }
-    };
+  const fetchAppliedJobs = async () => {
+    try {
+      const response = await getMyApplications();
+      const appliedIds = response.applications.map((application) => application.job?._id);
+      setAppliedJobs(appliedIds);
+    } catch (error) { console.log(error); }
+  };
 
   const handleApplyClick = (job) => { setSelectedJob(job); setShowModal(true); };
   const handleDetailsClick = (job) => { setSelectedJob(job); setShowDetailsModal(true); };
 
-  const submitApplication = async () => {
-    if (!resumeFile) return toast.error("Please upload resume");
+  const submitApplication =
+  async () => {
+
+    console.log(
+      "Submit clicked"
+    );
+
+    if (!resumeFile)
+      return toast.error(
+        "Please upload resume"
+      );
+
     try {
-      const formData = new FormData();
-      formData.append("resume", resumeFile);
-      formData.append("jobId", selectedJob._id);
 
-      const response = await applyJob(formData);
-      toast.success(response.message);
+      console.log(
+        "Sending request"
+      );
 
-      setAppliedJobs((prev) => [...prev, selectedJob._id]);
-      setShowModal(false);
-      setResumeFile(null);
+      const formData =
+        new FormData();
+
+      formData.append(
+        "resume",
+        resumeFile
+      );
+
+      formData.append(
+        "jobId",
+        selectedJob._id
+      );
+
+      const response =
+        await applyJob(
+          formData
+        );
+
+      console.log(
+        response
+      );
+
+      toast.success(
+        response.message
+      );
+
     } catch (error) {
-      console.log(error);
-      toast.error(error.response?.data?.message || "Application Failed");
+
+      console.log(
+        "ERROR:",
+        error
+      );
+
+      console.log(
+        error.response
+      );
+
+      toast.error(
+        error.response
+          ?.data
+          ?.message ||
+          "Application Failed"
+      );
     }
   };
 
@@ -96,7 +113,8 @@ function CandidateDashboard() {
     const matchesLocation = locationFilter === "" || job.location.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesCompany = companyFilter === "" || job.company.toLowerCase().includes(companyFilter.toLowerCase());
     const matchesSalary = salaryFilter === "" || Number(job.salary) >= Number(salaryFilter);
-    return matchesSearch && matchesLocation && matchesCompany && matchesSalary;
+    const notApplied = !appliedJobs.includes(job._id);
+    return matchesSearch && matchesLocation && matchesCompany && matchesSalary && notApplied;
   });
 
   return (
@@ -124,130 +142,48 @@ function CandidateDashboard() {
         </div>
       </div>
 
-      {/* Jobs */}
+      {/* Jobs Grid */}
       <div className="jobs-grid">
-
         {loading ? (
-
           <>
             {[1, 2, 3, 4, 5, 6].map((item) => (
-
-              <div
-                className="skeleton-card"
-                key={item}
-              >
-
+              <div className="skeleton-card" key={item}>
                 <div className="skeleton skeleton-title"></div>
-
                 <div className="skeleton skeleton-company"></div>
-
                 <div className="skeleton skeleton-location"></div>
-
                 <div className="skeleton skeleton-salary"></div>
-
                 <div className="skeleton-buttons">
-
                   <div className="skeleton skeleton-btn"></div>
-
                   <div className="skeleton skeleton-btn"></div>
-
                 </div>
-
               </div>
             ))}
           </>
-
         ) : filteredJobs.length === 0 ? (
-
           <div className="empty-wrapper">
-
             <div className="empty-state">
-
-              <div className="empty-icon">
-                🔍
-              </div>
-
-              <h2>
-                No matching jobs found
-              </h2>
-
-              <p>
-                Try changing your filters
-                or search keywords.
-              </p>
-
+              <div className="empty-icon">🔍</div>
+              <h2>No matching jobs found</h2>
+              <p>Try changing your filters or search keywords.</p>
             </div>
-
           </div>
-
         ) : (
-
           filteredJobs.map((job) => (
-
-            <div
-              className="job-card"
-              key={job._id}
-            >
-
-              <h3 className="job-title">
-                {job.title}
-              </h3>
-
-              <p className="job-company">
-                {job.company}
-              </p>
-
-              <p className="job-location">
-                📍 {job.location}
-              </p>
-
-              <p className="job-salary">
-                ₹{job.salary}
-              </p>
-
+            <div className="job-card" key={job._id}>
+              <h3 className="job-title">{job.title}</h3>
+              <p className="job-company">{job.company}</p>
+              <p className="job-role">💼 {job.role}</p>
+              <p className="job-location">📍 {job.location}</p>
+              <p className="job-salary">₹{job.salary}</p>
               <div className="job-buttons">
-
-                <button
-                  className="details-btn"
-                  onClick={() =>
-                    handleDetailsClick(job)
-                  }
-                >
-                  View Details
+                <button className="details-btn" onClick={() => handleDetailsClick(job)}>View Details</button>
+                <button className={appliedJobs.includes(job._id) ? "applied-btn" : "apply-btn"} disabled={appliedJobs.includes(job._id)} onClick={() => handleApplyClick(job)}>
+                  {appliedJobs.includes(job._id) ? "Applied" : "Apply"}
                 </button>
-
-                <button
-                  className={
-                    appliedJobs.includes(
-                      job._id
-                    )
-                      ? "applied-btn"
-                      : "apply-btn"
-                  }
-
-                  disabled={
-                    appliedJobs.includes(
-                      job._id
-                    )
-                  }
-
-                  onClick={() =>
-                    handleApplyClick(job)
-                  }
-                >
-                  {appliedJobs.includes(
-                    job._id
-                  )
-                    ? "Applied"
-                    : "Apply"}
-                </button>
-
               </div>
-
             </div>
           ))
         )}
-
       </div>
 
       {/* Job Details Modal */}
@@ -266,6 +202,25 @@ function CandidateDashboard() {
               <p>{selectedJob?.description}</p>
             </div>
             <button className="apply-details-btn" onClick={() => { setShowDetailsModal(false); handleApplyClick(selectedJob); }}>Apply Now</button>
+          </div>
+        </div>
+      )}
+
+      {/* Application Form Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="apply-modal">
+            <button className="close-modal-btn" onClick={() => { setShowModal(false); setResumeFile(null); }}>✕</button>
+            <h2>Apply for {selectedJob?.title}</h2>
+            <p className="modal-subtitle">{selectedJob?.company} · {selectedJob?.location}</p>
+            <div className="form-group">
+              <label htmlFor="resume">Upload Resume</label>
+              <input id="resume" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setResumeFile(e.target.files[0])} />
+            </div>
+            <div className="modal-buttons">
+              <button className="cancel-btn" onClick={() => { setShowModal(false); setResumeFile(null); }}>Cancel</button>
+              <button className="submit-btn" onClick={submitApplication}>Submit Application</button>
+            </div>
           </div>
         </div>
       )}

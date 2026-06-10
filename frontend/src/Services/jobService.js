@@ -27,11 +27,7 @@ export const applyJob =
         formData,
         {
           headers: {
-            authorization:
-              token,
-
-            "Content-Type":
-              "multipart/form-data",
+            authorization: token,
           },
         }
       );
@@ -58,6 +54,35 @@ export const updateJob =
           headers: {
             authorization:
               token,
+          },
+        }
+      );
+
+    return response.data;
+  };
+
+export const updateProfile =
+  async (formData) => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const response =
+      await axios.put(
+
+        "http://localhost:5000/api/users/update-profile",
+
+        formData,
+
+        {
+          headers: {
+            authorization:
+              token,
+
+            "Content-Type":
+              "multipart/form-data",
           },
         }
       );

@@ -9,6 +9,11 @@ function MyApplications() {
     setApplications,
   ] = useState([]);
 
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
   useEffect(() => {
     fetchApplications();
   }, []);
@@ -17,6 +22,10 @@ function MyApplications() {
     async () => {
 
       try {
+
+        setLoading(
+          true
+        );
 
         const response =
           await getMyApplications();
@@ -28,6 +37,12 @@ function MyApplications() {
       } catch (error) {
 
         console.log(error);
+
+      } finally {
+
+        setLoading(
+          false
+        );
       }
     };
 
@@ -48,8 +63,38 @@ function MyApplications() {
       </div>
 
       <div className="applications-grid">
+        {
+          loading && (
 
-        {applications.length === 0 ? (
+            <div
+              className="
+                text-center
+                py-5
+              "
+            >
+
+              <div
+                className="
+                  spinner-border
+                  text-dark
+                "
+                role="status"
+              />
+
+              <p
+                className="
+                  mt-3
+                  text-muted
+                "
+              >
+                Loading applications...
+              </p>
+
+            </div>
+          )
+        }
+
+        {!loading && applications.length === 0 ? (
 
           <div className="empty-applications">
 
