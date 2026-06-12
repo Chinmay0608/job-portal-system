@@ -30,29 +30,41 @@ app.use(
       origin,
       callback
     ) {
-      if (
-        !origin ||
-        allowedOrigins.includes(
-          origin
-        )
-      ) {
-        callback(
+
+      if (!origin) {
+        return callback(
           null,
           true
         );
-      } else {
-        callback(
-          new Error(
-            "Not allowed by CORS"
-          )
+      }
+
+      const isVercel =
+        origin.includes(
+          ".vercel.app"
+        );
+
+      if (
+        allowedOrigins.includes(
+          origin
+        ) ||
+        isVercel
+      ) {
+        return callback(
+          null,
+          true
         );
       }
+
+      return callback(
+        new Error(
+          "Not allowed by CORS"
+        )
+      );
     },
+
     credentials: true,
   })
 );
-
-app.use(express.json());
 
 /* ==========================
    STATIC FILES
