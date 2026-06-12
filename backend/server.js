@@ -24,10 +24,30 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 // Serve uploaded files statically from /uploads
-app.use('/uploads', express.static('uploads'));
+const path =
+  require(
+    "path"
+  );
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(
+      __dirname,
+      "uploads"
+    )
+  )
+);
 
 // Routes
 app.use("/api/auth", authRoutes);
