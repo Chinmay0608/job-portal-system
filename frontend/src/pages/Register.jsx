@@ -72,7 +72,7 @@ function Register() {
       setLoading(true);
 
       const formattedName = trimmedName
-        算.replace(/\s+/g, " ")
+        .replace(/\s+/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
       const response = await registerUser({
