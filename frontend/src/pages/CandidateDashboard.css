@@ -1,7 +1,6 @@
 /* ==========================
    DASHBOARD LAYOUT
 ========================== */
-
 .dashboard-container {
   max-width: 1280px;
   margin: 0 auto;
@@ -27,97 +26,61 @@
 /* ==========================
    FILTERS
 ========================== */
-
 .filter-input {
+  width: 100%;
   border-radius: 14px !important;
   border: 1px solid #e5e7eb !important;
-
   padding: 12px 16px !important;
-
   background: white;
-
-  box-shadow:
-    0 3px 10px
-    rgba(0,0,0,0.03);
-
-  transition: 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
 }
 
 .filter-input:focus {
-  border-color:
-    rgba(239,68,68,0.2) !important;
-
-  box-shadow:
-    0 8px 20px
-    rgba(239,68,68,0.06) !important;
+  outline: none;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.06) !important;
 }
 
 /* ==========================
    JOBS GRID
 ========================== */
-
 .jobs-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(300px, 1fr)
-    );
-
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 18px;
-
   margin-top: 22px;
 }
 
 /* ==========================
    JOB CARD
 ========================== */
-
 .job-card {
   background: white;
-
   border-radius: 18px;
-
   padding: 20px;
-
   border: 1px solid #ececec;
-
-  box-shadow:
-    0 8px 22px
-    rgba(0,0,0,0.04);
-
-  transition: 0.3s ease;
-
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
   min-height: 220px;
-
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
 .job-card:hover {
-  transform:
-    translateY(-5px);
-
-  box-shadow:
-    0 18px 35px
-    rgba(0,0,0,0.08);
-
-  border-color:
-    rgba(239,68,68,0.12);
+  transform: translateY(-5px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+  border-color: rgba(239, 68, 68, 0.12);
 }
 
 /* ==========================
    JOB CONTENT
 ========================== */
-
 .job-title {
   font-size: 1.45rem;
   font-weight: 700;
-
   margin-bottom: 6px;
-
   color: #07111f;
 }
 
@@ -134,17 +97,14 @@
 
 .job-salary {
   color: #059669;
-
   font-size: 1.35rem;
   font-weight: 700;
-
   margin: 14px 0;
 }
 
 /* ==========================
    BUTTONS
 ========================== */
-
 .job-buttons {
   display: flex;
   gap: 10px;
@@ -155,18 +115,13 @@
 .apply-btn,
 .applied-btn {
   flex: 1;
-
   border: none;
   border-radius: 12px;
-
   padding: 11px;
-
   font-weight: 600;
   font-size: 14px;
-
   cursor: pointer;
-
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .details-btn {
@@ -184,12 +139,8 @@
 }
 
 .apply-btn:hover {
-  transform:
-    translateY(-2px);
-
-  box-shadow:
-    0 10px 24px
-    rgba(7,17,31,0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(7, 17, 31, 0.15);
 }
 
 .applied-btn {
@@ -198,42 +149,36 @@
 }
 
 /* ==========================
-   APPLY MODAL
+   MODAL OVERLAY
 ========================== */
-
 .modal-overlay {
   position: fixed;
   inset: 0;
-
-  background:
-    rgba(0,0,0,0.45);
-
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-
   z-index: 999;
+  padding: 20px;
+  overflow-y: auto;
 }
 
+/* ==========================
+   APPLY MODAL
+========================== */
 .apply-modal {
   background: white;
-
   width: 400px;
-  max-width: 92%;
-
+  max-width: 100%;
   border-radius: 22px;
-
   padding: 28px;
-
-  box-shadow:
-    0 18px 45px
-    rgba(0,0,0,0.12);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+  animation: modalFade 0.25s ease;
 }
 
 .apply-modal h2 {
   font-size: 1.8rem;
   font-weight: 700;
-
   margin-bottom: 10px;
 }
 
@@ -245,7 +190,6 @@
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-
   gap: 10px;
   margin-top: 18px;
 }
@@ -254,10 +198,9 @@
 .submit-btn {
   border: none;
   border-radius: 12px;
-
   padding: 10px 18px;
-
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .cancel-btn {
@@ -272,43 +215,31 @@
 /* ==========================
    JOB DETAILS MODAL
 ========================== */
-
 .job-details-modal {
   position: relative;
-
   width: 620px;
-  max-width: 92%;
-
+  max-width: 100%;
   background: white;
-
   border-radius: 26px;
-
   padding: 30px;
-
-  box-shadow:
-    0 20px 60px
-    rgba(0,0,0,0.14);
-
-  animation:
-    modalFade 0.25s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  animation: modalFade 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .close-modal-btn {
   position: absolute;
-
   top: 18px;
   right: 18px;
-
   border: none;
   background: #f3f4f6;
-
   width: 38px;
   height: 38px;
-
   border-radius: 50%;
-
   font-size: 16px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .close-modal-btn:hover {
@@ -318,16 +249,13 @@
 .details-title {
   font-size: 2rem;
   font-weight: 800;
-
   color: #07111f;
-
   margin-bottom: 8px;
 }
 
 .details-company {
   color: #6b7280;
   font-size: 1rem;
-
   margin-bottom: 18px;
 }
 
@@ -335,17 +263,13 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-
   margin-bottom: 22px;
 }
 
 .details-meta span {
   background: #f3f4f6;
-
   padding: 9px 14px;
-
   border-radius: 999px;
-
   font-weight: 600;
   font-size: 14px;
 }
@@ -353,63 +277,49 @@
 .details-description h3 {
   font-size: 1.2rem;
   font-weight: 700;
-
   margin-bottom: 10px;
 }
 
 .details-description p {
   line-height: 1.7;
   color: #4b5563;
-
   margin-bottom: 22px;
 }
 
 .apply-details-btn {
   width: 100%;
-
   border: none;
   border-radius: 14px;
-
   background: #07111f;
   color: white;
-
   font-weight: 700;
   font-size: 15px;
-
   padding: 14px;
-
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.apply-details-btn:hover {
+  transform: translateY(-2px);
 }
 
 /* ==========================
    EMPTY STATE
 ========================== */
-
 .empty-state {
   width: 550px;
   max-width: 90%;
-
   min-height: 280px;
-
   display: flex;
   flex-direction: column;
-
   justify-content: center;
   align-items: center;
-
   text-align: center;
-
   padding: 40px;
-
   border-radius: 24px;
-
   background: white;
-
   border: 1px solid #ececec;
-
-  box-shadow:
-    0 8px 22px
-    rgba(0,0,0,0.04);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
 }
 
 .empty-icon {
@@ -420,9 +330,7 @@
 .empty-state h2 {
   font-size: 1.7rem;
   font-weight: 800;
-
   color: #07111f;
-
   margin-bottom: 10px;
 }
 
@@ -433,28 +341,43 @@
 }
 
 /* ==========================
+   ANIMATION
+========================== */
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================
    RESPONSIVE
 ========================== */
-
 @media (max-width: 900px) {
-
   .dashboard-container {
     padding: 95px 18px 35px;
   }
-
   .dashboard-header {
     text-align: center;
   }
-
+  .dashboard-title {
+    font-size: 1.8rem;
+  }
   .jobs-grid {
     grid-template-columns: 1fr;
   }
-
   .job-buttons {
     flex-direction: column;
   }
-
   .details-title {
     font-size: 1.7rem;
+  }
+  .job-details-modal,
+  .apply-modal {
+    padding: 22px;
   }
 }

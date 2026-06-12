@@ -1,255 +1,108 @@
 import axios from "axios";
 
-const BASE_URL =
-  "https://skillbridge-backend-w05j.onrender.com";
+/* ==========================
+   BASE URL
+========================== */
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const API_URL =
-  `${BASE_URL}/api/jobs`;
+/* ==========================
+   AXIOS INSTANCE
+========================== */
+const api = axios.create({
+  baseURL: BASE_URL,
+});
 
-export const getJobs =
-  async () => {
+/* Auto Token Interceptor */
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.authorization = token;
+  }
+  return config;
+});
 
-    const response =
-      await axios.get(
-        API_URL
-      );
+/* ==========================
+   PUBLIC JOBS
+========================== */
+export const getJobs = async () => {
+  const response = await api.get("/api/jobs");
+  return response.data;
+};
 
-    return response.data;
-  };
+/* ==========================
+   APPLY JOB
+========================== */
+export const applyJob = async (formData) => {
+  const response = await api.post("/api/jobs/apply", formData);
+  return response.data;
+};
 
-export const applyJob =
-  async (formData) => {
+/* ==========================
+   CREATE JOB
+========================== */
+export const createJob = async (jobData) => {
+  const response = await api.post("/api/jobs/create", jobData);
+  return response.data;
+};
 
-    const token =
-      localStorage.getItem(
-        "token"
-      );
+/* ==========================
+   UPDATE JOB
+========================== */
+export const updateJob = async (jobId, jobData) => {
+  const response = await api.put(`/api/jobs/update/${jobId}`, jobData);
+  return response.data;
+};
 
-    const response =
-      await axios.post(
-        `${BASE_URL}/api/jobs/apply`,
-        formData,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
+/* ==========================
+   DELETE JOB
+========================== */
+export const deleteJob = async (jobId) => {
+  const response = await api.delete(`/api/jobs/delete/${jobId}`);
+  return response.data;
+};
 
-    return response.data;
-  };
+/* ==========================
+   RECRUITER JOBS
+========================== */
+export const getRecruiterJobs = async () => {
+  const response = await api.get("/api/jobs/my-jobs");
+  return response.data;
+};
 
-export const updateJob =
-  async (
-    jobId,
-    jobData
-  ) => {
+/* ==========================
+   PROFILE
+========================== */
+export const updateProfile = async (formData) => {
+  const response = await api.put("/api/users/update-profile", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
 
-    const token =
-      localStorage.getItem(
-        "token"
-      );
+/* ==========================
+   APPLICATIONS
+========================== */
+export const getMyApplications = async () => {
+  const response = await api.get("/api/applications/my-applications");
+  return response.data;
+};
 
-    const response =
-      await axios.put(
-        `${API_URL}/update/${jobId}`,
-        jobData,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
+export const getRecruiterApplications = async () => {
+  const response = await api.get("/api/applications/recruiter-applications");
+  return response.data;
+};
 
-    return response.data;
-  };
+export const updateStatus = async (applicationId, status) => {
+  const response = await api.patch(`/api/applications/update/${applicationId}`, { status });
+  return response.data;
+};
 
-export const updateProfile =
-  async (formData) => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.put(
-
-        `${BASE_URL}/api/users/update-profile`,
-
-        formData,
-
-        {
-          headers: {
-            authorization:
-              token,
-
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const getMyApplications =
-  async () => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.get(
-        `${BASE_URL}/api/applications/my-applications`,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const getRecruiterApplications =
-  async () => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.get(
-        `${BASE_URL}/api/applications/recruiter-applications`,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const updateStatus =
-  async (
-    applicationId,
-    status
-  ) => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.patch(
-        `${BASE_URL}/api/applications/update/${applicationId}`,
-        { status },
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const createJob =
-  async (jobData) => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.post(
-        `${API_URL}/create`,
-        jobData,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const getRecruiterJobs =
-  async () => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.get(
-        `${API_URL}/my-jobs`,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const deleteJob =
-  async (jobId) => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.delete(
-        `${API_URL}/delete/${jobId}`,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
-
-export const getRecruiterStats =
-  async () => {
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.get(
-        `${BASE_URL}/api/applications/recruiter-stats`,
-        {
-          headers: {
-            authorization:
-              token,
-          },
-        }
-      );
-
-    return response.data;
-  };
+/* ==========================
+   STATS
+========================== */
+export const getRecruiterStats = async () => {
+  const response = await api.get("/api/applications/recruiter-stats");
+  return response.data;
+};

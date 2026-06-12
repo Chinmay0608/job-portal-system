@@ -1,35 +1,25 @@
-import axios
-from "axios";
+import axios from "axios";
 
-const API =
-  "http://localhost:5000/api";
+/* ==========================
+   BASE URL
+========================== */
+const API = `${import.meta.env.VITE_API_BASE_URL}/api`;
 
-export const uploadResume =
-  async (file) => {
+/* ==========================
+   UPLOAD RESUME
+========================== */
+export const uploadResume = async (file) => {
+  const formData = new FormData();
+  formData.append("resume", file);
 
-    const formData =
-      new FormData();
+  const token = localStorage.getItem("token");
 
-    formData.append(
-      "resume",
-      file
-    );
+  const response = await axios.post(`${API}/auth/upload-resume`, formData, {
+    headers: {
+      authorization: token,
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    const response =
-      await axios.post(
-        `${API}/auth/upload-resume`,
-        formData,
-        {
-          headers: {
-            authorization: token,
-          },
-        }
-      );
-
-    return response.data;
-  };
+  return response.data;
+};
