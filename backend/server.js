@@ -1,91 +1,56 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
-const userRoutes =
-  require(
-    "./routes/userRoutes"
-  );
-
+const path = require("path");
 const connectDB = require("./config/db");
 
-const jobRoutes = require("./routes/jobRoutes");
-const applicationRoutes =
-  require("./routes/applicationRoutes");
 const authRoutes = require("./routes/authRoutes");
-const {
-  protect,
-  authorizeRoles,
-} = require("./middleware/authMiddleware");
+const jobRoutes = require("./routes/jobRoutes");
+const applicationRoutes = require("./routes/applicationRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
-// Database
+/* ==========================
+   DATABASE
+========================== */
 connectDB();
 
-// Middleware
+/* ==========================
+   MIDDLEWARE
+========================== */
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-    ],
+    origin: ["http://localhost:5173", process.env.CLIENT_URL],
     credentials: true,
   })
 );
 app.use(express.json());
-// Serve uploaded files statically from /uploads
-const path =
-  require(
-    "path"
-  );
 
-app.use(
-  "/uploads",
-  express.static(
-    path.join(
-      __dirname,
-      "uploads"
-    )
-  )
-);
+/* ==========================
+   STATIC FILES
+========================== */
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes
+/* ==========================
+   ROUTES
+========================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
-app.use(
-  "/api/applications",
-  applicationRoutes
-);
+app.use("/api/applications", applicationRoutes);
+app.use("/api/users", userRoutes);
 
-app.use(
-  "/api/users",
-  userRoutes
-);
-
+/* ==========================
+   HEALTH CHECK
+========================== */
 app.get("/", (req, res) => {
-  res.send("Job Portal Backend Running");
+  res.send("SkillBridge Backend Running 🚀");
 });
 
-app.get("/profile", protect, (req, res) => {
-  res.json({
-    message: "Protected route accessed",
-    user: req.user,
-  });
-});
-
-app.get(
-  "/recruiter-dashboard",
-  protect,
-  authorizeRoles("recruiter"),
-  (req, res) => {
-    res.json({
-      message: "Welcome Recruiter",
-    });
-  }
-);
-
+/* ==========================
+   SERVER
+========================== */
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

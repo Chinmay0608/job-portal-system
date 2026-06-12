@@ -1,15 +1,26 @@
 const express = require("express");
-const upload = require("../middleware/multer");
-const { createJob, getAllJobs, getRecruiterJobs, deleteJob, applyJob, updateJob } = require("../controllers/jobController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const {
+  createJob,
+  getAllJobs,
+  getRecruiterJobs,
+  deleteJob,
+  updateJob,
+} = require("../controllers/jobController");
 
 const router = express.Router();
 
+/* ==========================
+   PUBLIC ROUTES
+========================== */
 router.get("/", getAllJobs);
+
+/* ==========================
+   RECRUITER ROUTES
+========================== */
 router.get("/my-jobs", protect, authorizeRoles("recruiter"), getRecruiterJobs);
 router.post("/create", protect, authorizeRoles("recruiter"), createJob);
-router.delete("/delete/:jobId", protect, authorizeRoles("recruiter"), deleteJob);
 router.put("/update/:jobId", protect, authorizeRoles("recruiter"), updateJob);
-router.post("/apply", protect, authorizeRoles("candidate"), upload.single("resume"), applyJob);
+router.delete("/delete/:jobId", protect, authorizeRoles("recruiter"), deleteJob);
 
 module.exports = router;

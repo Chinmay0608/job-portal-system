@@ -1,508 +1,149 @@
-const Application =
-  require(
-    "../models/Application"
-  );
+const Application = require("../models/Application");
+const cloudinary = require("../config/cloudinary");
+const sendEmail = require("../utils/sendEmail");
 
-const cloudinary =
-  require(
-    "../config/cloudinary"
-  );
+const applyJob = async (req, res) => {
+  try {
+    const { jobId } = req.body;
 
-const sendEmail =
-  require(
-    "../utils/sendEmail"
-  );
+    const alreadyApplied = await Application.findOne({
+      candidate: req.user.id,
+      job: jobId,
+    });
 
-const applyJob =
-  async (req, res) => {
-
-    try {
-
-      const {
-        jobId
-      } = req.body;
-
-      const alreadyApplied =
-        await Application.findOne({
-          candidate:
-            req.user.id,
-
-          job:
-            jobId,
-        });
-
-      if (
-        alreadyApplied
-      ) {
-        return res.status(400)
-          .json({
-            message:
-              "Already applied to this job",
-          });
-      }
-
-      let resumeUrl =
-        "";
-
-      if (
-        req.file
-      ) {
-
-        const uploadedFile =
-          await new Promise(
-            (
-              resolve,
-              reject
-            ) => {
-
-              cloudinary
-                .uploader
-                .upload_stream(
-
-                  {
-                    folder:
-                      "skillbridge_resumes",
-
-                    resource_type:
-                      "raw",
-                  },
-
-                  (
-                    error,
-                    result
-                  ) => {
-
-                    if (
-                      error
-                    ) {
-                      reject(
-                        error
-                      );
-
-                    } else {
-
-                      resolve(
-                        result
-                      );
-                    }
-                  }
-                )
-                .end(
-                  req.file.buffer
-                );
-            }
-          );
-
-        resumeUrl =
-          uploadedFile
-            .secure_url;
-      }
-
-      const application =
-        await Application
-          .create({
-
-            candidate:
-              req.user.id,
-
-            job:
-              jobId,
-
-            resume:
-              resumeUrl,
-          });
-
-      res.status(201)
-        .json({
-          message:
-            "Applied successfully",
-
-          application,
-        });
-
-    } catch (error) {
-
-      console.log(
-        error
-      );
-
-      res.status(500)
-        .json({
-          message:
-            error.message,
-        });
+    if (alreadyApplied) {
+      return res.status(400).json({ message: "Already applied to this job" });
     }
-  };
 
-const getMyApplications =
-  async (req, res) => {
+    let resumeUrl = "";
 
-    try {
-
-      const applications =
-        await Application
-          .find({
-            candidate:
-              req.user.id,
-          })
-          .populate(
-            "job",
-            `
-              title
-              company
-              location
-              salary
-            `
-          );
-
-      res.status(200)
-        .json({
-          applications,
-        });
-
-    } catch (error) {
-
-      console.log(
-        error
-      );
-
-      res.status(500)
-        .json({
-          message:
-            "Server Error",
-        });
-    }
-  };
-
-const getRecruiterApplications =
-  async (req, res) => {
-
-    try {
-
-      const applications =
-        await Application
-          .find()
-          .populate(
-            "candidate",
-            `
-              name
-              email
-              resume
-            `
-          )
-          .populate(
-            "job",
-            `
-              title
-              company
-              recruiter
-            `
-          );
-
-      const recruiterApplications =
-        applications.filter(
-          (
-            application
-          ) =>
-            application.job &&
-            application
-              .job
-              .recruiter
-              .toString() ===
-            req.user.id
-        );
-
-      res.status(200)
-        .json({
-          applications:
-            recruiterApplications,
-        });
-
-    } catch (error) {
-
-      console.log(
-        error
-      );
-
-      res.status(500)
-        .json({
-          message:
-            "Server Error",
-        });
-    }
-  };
-
-const updateApplicationStatus =
-  async (req, res) => {
-
-    try {
-
-      const {
-        applicationId
-      } = req.params;
-
-      const {
-        status
-      } = req.body;
-
-      const application =
-        await Application
-          .findById(
-            applicationId
-          )
-          .populate({
-            path:
-              "job",
-
-            select:
-              `
-              recruiter
-              title
-              company
-              `,
-          })
-          .populate({
-            path:
-              "candidate",
-
-            select:
-              `
-              name
-              email
-              `,
-          });
-
-      if (
-        !application
-      ) {
-        return res.status(404)
-          .json({
-            message:
-              "Application not found",
-          });
-      }
-
-      if (
-        !application.job
-      ) {
-        return res.status(404)
-          .json({
-            message:
-              "Job not found",
-          });
-      }
-
-      if (
-        application
-          .job
-          .recruiter
-          .toString() !==
-        req.user.id
-      ) {
-
-        return res.status(403)
-          .json({
-            message:
-              "Access denied",
-          });
-      }
-
-      application.status =
-        status;
-
-      await application.save({
-        validateBeforeSave:
-          false,
+    if (req.file) {
+      const uploadedFile = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: "skillbridge_resumes", resource_type: "raw" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
       });
 
-      const emailSubject =
-        "Application Status Update";
-
-      const emailHtml =
-        status ===
-        "shortlisted"
-
-          ? `
-            <h2>
-              Congratulations 🎉
-            </h2>
-
-            <p>
-              Hello
-              ${application.candidate.name},
-            </p>
-
-            <p>
-              You have been
-              <strong>
-                shortlisted
-              </strong>
-
-              for the role of
-
-              <strong>
-                ${application.job.title}
-              </strong>
-
-              at
-
-              <strong>
-                ${application.job.company}
-              </strong>.
-            </p>
-
-            <p>
-              Please stay tuned
-              for further updates.
-            </p>
-
-            <br />
-
-            <p>
-              Team SkillBridge
-            </p>
-            `
-
-          : `
-            <h2>
-              Application Update
-            </h2>
-
-            <p>
-              Hello
-              ${application.candidate.name},
-            </p>
-
-            <p>
-              Thank you for
-              applying for
-
-              <strong>
-                ${application.job.title}
-              </strong>
-
-              at
-
-              <strong>
-                ${application.job.company}
-              </strong>.
-            </p>
-
-            <p>
-              We regret to inform
-              you that your
-              application was
-              not selected this
-              time.
-            </p>
-
-            <p>
-              Keep applying —
-              great opportunities
-              are ahead.
-            </p>
-
-            <br />
-
-            <p>
-              Team SkillBridge
-            </p>
-            `;
-
-      await sendEmail(
-
-        application
-          .candidate
-          .email,
-
-        emailSubject,
-
-        emailHtml
-      );
-
-      res.status(200)
-        .json({
-          message:
-            "Application status updated successfully",
-
-          application,
-        });
-
-    } catch (error) {
-
-      console.log(
-        error
-      );
-
-      res.status(500)
-        .json({
-          message:
-            "Server Error",
-        });
+      resumeUrl = uploadedFile.secure_url;
     }
-  };
 
-  const getRecruiterStats =
-  async (req, res) => {
+    const application = await Application.create({
+      candidate: req.user.id,
+      job: jobId,
+      resume: resumeUrl,
+    });
 
-    try {
+    res.status(201).json({ message: "Applied successfully", application });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
 
-      const applications =
-        await Application
-          .find()
-          .populate(
-            "job",
-            "recruiter"
-          );
+const getMyApplications = async (req, res) => {
+  try {
+    const applications = await Application.find({ candidate: req.user.id })
+      .populate("job", "title company location salary");
 
-      const recruiterApplications =
-        applications.filter(
-          (application) =>
-            application.job &&
-            application.job
-              .recruiter
-              .toString() ===
-            req.user.id
-        );
+    res.status(200).json({ applications });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+};
 
-      const totalApplications =
-        recruiterApplications.length;
+const getRecruiterApplications = async (req, res) => {
+  try {
+    const applications = await Application.find()
+      .populate("candidate", "name email resume")
+      .populate("job", "title company recruiter");
 
-      const shortlisted =
-        recruiterApplications.filter(
-          (application) =>
-            application.status ===
-            "shortlisted"
-        ).length;
+    const recruiterApplications = applications.filter(
+      (application) => application.job && application.job.recruiter.toString() === req.user.id
+    );
 
-      const rejected =
-        recruiterApplications.filter(
-          (application) =>
-            application.status ===
-            "rejected"
-        ).length;
+    res.status(200).json({ applications: recruiterApplications });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+};
 
-      res.status(200)
-        .json({
+const updateApplicationStatus = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { status } = req.body;
 
-          totalApplications,
+    const application = await Application.findById(applicationId)
+      .populate({ path: "job", select: "recruiter title company" })
+      .populate({ path: "candidate", select: "name email" });
 
-          shortlisted,
-
-          rejected,
-        });
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500)
-        .json({
-          message:
-            "Server Error",
-        });
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
     }
-  };
+
+    if (!application.job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (application.job.recruiter.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    application.status = status;
+    await application.save({ validateBeforeSave: false });
+
+    const emailSubject = "Application Status Update";
+    const emailHtml = status === "shortlisted" 
+      ? `
+        <h2>Congratulations 🎉</h2>
+        <p>Hello ${application.candidate.name},</p>
+        <p>You have been <strong>shortlisted</strong> for the role of <strong>${application.job.title}</strong> at <strong>${application.job.company}</strong>.</p>
+        <p>Please stay tuned for further updates.</p>
+        <br />
+        <p>Team SkillBridge</p>
+      `
+      : `
+        <h2>Application Update</h2>
+        <p>Hello ${application.candidate.name},</p>
+        <p>Thank you for applying for <strong>${application.job.title}</strong> at <strong>${application.job.company}</strong>.</p>
+        <p>We regret to inform you that your application was not selected this time.</p>
+        <p>Keep applying — great opportunities are ahead.</p>
+        <br />
+        <p>Team SkillBridge</p>
+      `;
+
+    await sendEmail(application.candidate.email, emailSubject, emailHtml);
+
+    res.status(200).json({ message: "Application status updated successfully", application });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+};
+
+const getRecruiterStats = async (req, res) => {
+  try {
+    const applications = await Application.find().populate("job", "recruiter");
+
+    const recruiterApplications = applications.filter(
+      (application) => application.job && application.job.recruiter.toString() === req.user.id
+    );
+
+    res.status(200).json({
+      totalApplications: recruiterApplications.length,
+      shortlisted: recruiterApplications.filter((app) => app.status === "shortlisted").length,
+      rejected: recruiterApplications.filter((app) => app.status === "rejected").length,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+};
 
 module.exports = {
   applyJob,

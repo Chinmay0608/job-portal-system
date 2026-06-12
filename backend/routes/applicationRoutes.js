@@ -1,80 +1,27 @@
-const express =
-  require(
-    "express"
-  );
-
+const express = require("express");
 const {
   applyJob,
   getMyApplications,
   getRecruiterApplications,
   getRecruiterStats,
-  updateApplicationStatus
-} = require(
-  "../controllers/applicationController"
-);
+  updateApplicationStatus,
+} = require("../controllers/applicationController");
+const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const upload = require("../middleware/multer");
 
-const {
-  protect,
-  authorizeRoles
-} = require(
-  "../middleware/authMiddleware"
-);
+const router = express.Router();
 
-const upload =
-  require(
-    "../middleware/multer"
-  );
+/* ==========================
+   CANDIDATE ROUTES
+========================== */
+router.post("/apply", protect, authorizeRoles("candidate"), upload.single("resume"), applyJob);
+router.get("/my-applications", protect, authorizeRoles("candidate"), getMyApplications);
 
-const router =
-  express.Router();
+/* ==========================
+   RECRUITER ROUTES
+========================== */
+router.get("/recruiter-applications", protect, authorizeRoles("recruiter"), getRecruiterApplications);
+router.get("/recruiter-stats", protect, authorizeRoles("recruiter"), getRecruiterStats);
+router.patch("/update/:applicationId", protect, authorizeRoles("recruiter"), updateApplicationStatus);
 
-router.post(
-  "/apply",
-  protect,
-  authorizeRoles(
-    "candidate"
-  ),
-  upload.single(
-    "resume"
-  ),
-  applyJob
-);
-
-router.get(
-  "/my-applications",
-  protect,
-  authorizeRoles(
-    "candidate"
-  ),
-  getMyApplications
-);
-
-router.get(
-  "/recruiter-applications",
-  protect,
-  authorizeRoles(
-    "recruiter"
-  ),
-  getRecruiterApplications
-);
-
-router.get(
-  "/recruiter-stats",
-  protect,
-  authorizeRoles(
-    "recruiter"
-  ),
-  getRecruiterStats
-);
-
-router.patch(
-  "/update/:applicationId",
-  protect,
-  authorizeRoles(
-    "recruiter"
-  ),
-  updateApplicationStatus
-);
-
-module.exports =
-  router;
+module.exports = router;
