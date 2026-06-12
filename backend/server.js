@@ -19,6 +19,9 @@ connectDB();
 /* ==========================
    MIDDLEWARE
 ========================== */
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.FRONTEND_URL,
