@@ -1,10 +1,14 @@
 import axios from "axios";
 
+const BASE_URL =
+  "https://skillbridge-backend-w05j.onrender.com";
+
 const API_URL =
-  "http://localhost:5000/api/jobs";
+  `${BASE_URL}/api/jobs`;
 
 export const getJobs =
   async () => {
+
     const response =
       await axios.get(
         API_URL
@@ -23,11 +27,12 @@ export const applyJob =
 
     const response =
       await axios.post(
-        "http://localhost:5000/api/jobs/apply",
+        `${BASE_URL}/api/jobs/apply`,
         formData,
         {
           headers: {
-            authorization: token,
+            authorization:
+              token,
           },
         }
       );
@@ -72,7 +77,7 @@ export const updateProfile =
     const response =
       await axios.put(
 
-        "http://localhost:5000/api/users/update-profile",
+        `${BASE_URL}/api/users/update-profile`,
 
         formData,
 
@@ -92,6 +97,7 @@ export const updateProfile =
 
 export const getMyApplications =
   async () => {
+
     const token =
       localStorage.getItem(
         "token"
@@ -99,7 +105,7 @@ export const getMyApplications =
 
     const response =
       await axios.get(
-        "http://localhost:5000/api/applications/my-applications",
+        `${BASE_URL}/api/applications/my-applications`,
         {
           headers: {
             authorization:
@@ -111,8 +117,9 @@ export const getMyApplications =
     return response.data;
   };
 
- export const getRecruiterApplications =
+export const getRecruiterApplications =
   async () => {
+
     const token =
       localStorage.getItem(
         "token"
@@ -120,7 +127,7 @@ export const getMyApplications =
 
     const response =
       await axios.get(
-        "http://localhost:5000/api/applications/recruiter-applications",
+        `${BASE_URL}/api/applications/recruiter-applications`,
         {
           headers: {
             authorization:
@@ -145,7 +152,7 @@ export const updateStatus =
 
     const response =
       await axios.patch(
-        `http://localhost:5000/api/applications/update/${applicationId}`,
+        `${BASE_URL}/api/applications/update/${applicationId}`,
         { status },
         {
           headers: {
@@ -158,8 +165,13 @@ export const updateStatus =
     return response.data;
   };
 
-export const createJob = async (jobData) => {
-    const token = localStorage.getItem("token");
+export const createJob =
+  async (jobData) => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
 
     const response =
       await axios.post(
@@ -220,7 +232,7 @@ export const deleteJob =
     return response.data;
   };
 
-  export const getRecruiterStats =
+export const getRecruiterStats =
   async () => {
 
     const token =
@@ -230,9 +242,7 @@ export const deleteJob =
 
     const response =
       await axios.get(
-
-        "http://localhost:5000/api/applications/recruiter-stats",
-
+        `${BASE_URL}/api/applications/recruiter-stats`,
         {
           headers: {
             authorization:
