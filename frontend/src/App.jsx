@@ -9,8 +9,8 @@ import MyApplications from "./pages/MyApplications";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Profile from "./Pages/Profile";
-import NotFound from "./Pages/NotFound";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 import ForgotPassword
   from "./pages/ForgotPassword";
 
