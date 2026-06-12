@@ -8,6 +8,11 @@ const cloudinary =
     "../config/cloudinary"
   );
 
+const sendEmail =
+  require(
+    "../utils/sendEmail"
+  );
+
 const applyJob =
   async (req, res) => {
 
@@ -250,7 +255,21 @@ const updateApplicationStatus =
               "job",
 
             select:
-              "recruiter",
+              `
+              recruiter
+              title
+              company
+              `,
+          })
+          .populate({
+            path:
+              "candidate",
+
+            select:
+              `
+              name
+              email
+              `,
           });
 
       if (
@@ -296,6 +315,111 @@ const updateApplicationStatus =
           false,
       });
 
+      const emailSubject =
+        "Application Status Update";
+
+      const emailHtml =
+        status ===
+        "shortlisted"
+
+          ? `
+            <h2>
+              Congratulations 🎉
+            </h2>
+
+            <p>
+              Hello
+              ${application.candidate.name},
+            </p>
+
+            <p>
+              You have been
+              <strong>
+                shortlisted
+              </strong>
+
+              for the role of
+
+              <strong>
+                ${application.job.title}
+              </strong>
+
+              at
+
+              <strong>
+                ${application.job.company}
+              </strong>.
+            </p>
+
+            <p>
+              Please stay tuned
+              for further updates.
+            </p>
+
+            <br />
+
+            <p>
+              Team SkillBridge
+            </p>
+            `
+
+          : `
+            <h2>
+              Application Update
+            </h2>
+
+            <p>
+              Hello
+              ${application.candidate.name},
+            </p>
+
+            <p>
+              Thank you for
+              applying for
+
+              <strong>
+                ${application.job.title}
+              </strong>
+
+              at
+
+              <strong>
+                ${application.job.company}
+              </strong>.
+            </p>
+
+            <p>
+              We regret to inform
+              you that your
+              application was
+              not selected this
+              time.
+            </p>
+
+            <p>
+              Keep applying —
+              great opportunities
+              are ahead.
+            </p>
+
+            <br />
+
+            <p>
+              Team SkillBridge
+            </p>
+            `;
+
+      await sendEmail(
+
+        application
+          .candidate
+          .email,
+
+        emailSubject,
+
+        emailHtml
+      );
+
       res.status(200)
         .json({
           message:
@@ -318,9 +442,72 @@ const updateApplicationStatus =
     }
   };
 
+  const getRecruiterStats =
+  async (req, res) => {
+
+    try {
+
+      const applications =
+        await Application
+          .find()
+          .populate(
+            "job",
+            "recruiter"
+          );
+
+      const recruiterApplications =
+        applications.filter(
+          (application) =>
+            application.job &&
+            application.job
+              .recruiter
+              .toString() ===
+            req.user.id
+        );
+
+      const totalApplications =
+        recruiterApplications.length;
+
+      const shortlisted =
+        recruiterApplications.filter(
+          (application) =>
+            application.status ===
+            "shortlisted"
+        ).length;
+
+      const rejected =
+        recruiterApplications.filter(
+          (application) =>
+            application.status ===
+            "rejected"
+        ).length;
+
+      res.status(200)
+        .json({
+
+          totalApplications,
+
+          shortlisted,
+
+          rejected,
+        });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500)
+        .json({
+          message:
+            "Server Error",
+        });
+    }
+  };
+
 module.exports = {
   applyJob,
   getMyApplications,
   getRecruiterApplications,
+  getRecruiterStats,
   updateApplicationStatus,
 };

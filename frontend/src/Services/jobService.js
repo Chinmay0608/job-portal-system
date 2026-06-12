@@ -219,3 +219,27 @@ export const deleteJob =
 
     return response.data;
   };
+
+  export const getRecruiterStats =
+  async () => {
+
+    const token =
+      localStorage.getItem(
+        "token"
+      );
+
+    const response =
+      await axios.get(
+
+        "http://localhost:5000/api/applications/recruiter-stats",
+
+        {
+          headers: {
+            authorization:
+              token,
+          },
+        }
+      );
+
+    return response.data;
+  };

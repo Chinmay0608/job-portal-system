@@ -4,10 +4,11 @@
 
 .applications-page {
   max-width: 1250px;
-
   margin: 0 auto;
 
-  padding: 80px 28px 50px;
+  min-height: 60vh;
+
+  padding: 90px 28px 120px;
 }
 
 /* ==========================
@@ -16,22 +17,18 @@
 
 .applications-header {
   text-align: center;
-
   margin-bottom: 34px;
 }
 
 .applications-header h1 {
   font-size: 2.2rem;
   font-weight: 800;
-
   color: #07111f;
-
   margin-bottom: 6px;
 }
 
 .applications-header p {
   font-size: 0.95rem;
-
   color: #6b7280;
 }
 
@@ -40,15 +37,10 @@
 ========================== */
 
 .applications-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(320px, 1fr)
-    );
-
-  gap: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  justify-content: center;
 }
 
 /* ==========================
@@ -56,35 +48,31 @@
 ========================== */
 
 .application-card {
+  width: 420px;
   background: white;
 
-  border-radius: 18px;
-
-  padding: 18px;
+  border-radius: 20px;
+  padding: 20px;
 
   border: 1px solid #ececec;
 
   box-shadow:
-    0 8px 22px
-    rgba(0,0,0,0.04);
+    0 8px 22px rgba(0,0,0,0.04);
 
-  min-height: 210px;
+  min-height: 260px;
 
   display: flex;
   flex-direction: column;
-
   justify-content: space-between;
 
   transition: 0.3s ease;
 }
 
 .application-card:hover {
-  transform:
-    translateY(-5px);
+  transform: translateY(-5px);
 
   box-shadow:
-    0 18px 35px
-    rgba(0,0,0,0.07);
+    0 18px 35px rgba(0,0,0,0.07);
 
   border-color:
     rgba(239,68,68,0.14);
@@ -97,7 +85,6 @@
 .job-name {
   font-size: 1.45rem;
   font-weight: 700;
-
   color: #07111f;
 
   margin-bottom: 6px;
@@ -105,33 +92,44 @@
 
 .company-name {
   color: #6b7280;
-
   font-size: 0.95rem;
 
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .job-location {
   color: #374151;
-
   font-size: 0.95rem;
 
   margin-bottom: 8px;
 }
 
 .job-salary {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
-
   color: #059669;
+
+  margin-bottom: 10px;
+}
+
+.applied-date {
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 
 /* ==========================
-   STATUS
+   STATUS + BUTTON
 ========================== */
 
 .status-wrapper {
-  margin-top: 16px;
+  margin-top: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -140,12 +138,11 @@
   align-items: center;
   justify-content: center;
 
-  padding: 7px 14px;
+  padding: 8px 15px;
 
   border-radius: 999px;
 
   font-weight: 600;
-
   text-transform: capitalize;
 
   font-size: 12px;
@@ -173,6 +170,34 @@
 }
 
 /* ==========================
+   RESUME BUTTON
+========================== */
+
+.resume-btn {
+  background: #07111f;
+  color: white;
+
+  padding: 10px 16px;
+
+  border-radius: 12px;
+
+  text-decoration: none;
+  font-weight: 600;
+
+  transition: 0.3s ease;
+}
+
+.resume-btn:hover {
+  color: white;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 24px
+    rgba(7,17,31,0.18);
+}
+
+/* ==========================
    EMPTY STATE
 ========================== */
 
@@ -182,7 +207,6 @@
   background: white;
 
   border-radius: 24px;
-
   border: 1px solid #ececec;
 
   padding: 60px 30px;
@@ -190,13 +214,11 @@
   text-align: center;
 
   box-shadow:
-    0 8px 22px
-    rgba(0,0,0,0.04);
+    0 8px 22px rgba(0,0,0,0.04);
 }
 
 .empty-icon {
   font-size: 3.5rem;
-
   margin-bottom: 16px;
 }
 
@@ -211,11 +233,9 @@
 
 .empty-applications p {
   color: #6b7280;
-
   font-size: 0.95rem;
 
   max-width: 380px;
-
   margin: 0 auto;
 
   line-height: 1.6;
@@ -237,11 +257,15 @@
   }
 
   .applications-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .job-name {
     font-size: 1.3rem;
+  }
+
+  .status-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

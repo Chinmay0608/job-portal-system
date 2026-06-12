@@ -7,6 +7,7 @@ import "./CandidateDashboard.css";
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [applying,setApplying,] = useState(false);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -45,68 +46,85 @@ function CandidateDashboard() {
   const handleDetailsClick = (job) => { setSelectedJob(job); setShowDetailsModal(true); };
 
   const submitApplication =
-  async () => {
-
-    console.log(
-      "Submit clicked"
-    );
-
-    if (!resumeFile)
-      return toast.error(
-        "Please upload resume"
-      );
-
-    try {
+    async () => {
 
       console.log(
-        "Sending request"
+        "Submit clicked"
       );
 
-      const formData =
-        new FormData();
-
-      formData.append(
-        "resume",
-        resumeFile
-      );
-
-      formData.append(
-        "jobId",
-        selectedJob._id
-      );
-
-      const response =
-        await applyJob(
-          formData
+      if (!resumeFile)
+        return toast.error(
+          "Please upload resume"
         );
 
-      console.log(
-        response
-      );
+      try {
 
-      toast.success(
-        response.message
-      );
+        setApplying(
+          true
+        );
 
-    } catch (error) {
+        const formData =
+          new FormData();
 
-      console.log(
-        "ERROR:",
-        error
-      );
+        formData.append(
+          "resume",
+          resumeFile
+        );
 
-      console.log(
-        error.response
-      );
+        formData.append(
+          "jobId",
+          selectedJob._id
+        );
 
-      toast.error(
-        error.response
-          ?.data
-          ?.message ||
-          "Application Failed"
-      );
-    }
-  };
+        const response =
+          await applyJob(
+            formData
+          );
+
+        toast.success(
+          response.message
+        );
+
+        setAppliedJobs(
+          (prev) => [
+            ...prev,
+            selectedJob._id,
+          ]
+        );
+
+        setShowModal(
+          false
+        );
+
+        setSelectedJob(
+          null
+        );
+
+        setResumeFile(
+          null
+        );
+
+      } catch (error) {
+
+        console.log(
+          "ERROR:",
+          error
+        );
+
+        toast.error(
+          error.response
+            ?.data
+            ?.message ||
+            "Application Failed"
+        );
+
+      } finally {
+
+        setApplying(
+          false
+        );
+      }
+    };
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) || job.company.toLowerCase().includes(search.toLowerCase());
@@ -121,24 +139,151 @@ function CandidateDashboard() {
     <div className="dashboard-container">
       {/* Header */}
       <div className="dashboard-header">
+
         <div>
-          <h1 className="dashboard-title">Welcome back, {user?.name} 👋</h1>
-          <p className="dashboard-subtitle">Find and apply to your dream opportunities</p>
+
+          <h1 className="dashboard-title">
+            Welcome back,
+            {user?.name} 👋
+          </h1>
+
+          <p className="dashboard-subtitle">
+            Find and apply to your
+            dream opportunities
+          </p>
+
         </div>
-        <div className="row g-3 mt-4" style={{ maxWidth: "1100px" }}>
-          <div className="col-md-4"><input type="text" placeholder="Search jobs or company..." className="form-control filter-input" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-          <div className="col-md-3"><input type="text" placeholder="Location" className="form-control filter-input" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} /></div>
-          <div className="col-md-3"><input type="text" placeholder="Company" className="form-control filter-input" value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} /></div>
+
+        <div
+          className="
+            row
+            g-3
+            mt-4
+          "
+
+          style={{
+            maxWidth:
+              "1100px"
+          }}
+        >
+
+          <div className="col-md-4">
+            <input
+              type="text"
+
+              placeholder="
+                Search jobs or company...
+              "
+
+              className="
+                form-control
+                filter-input
+              "
+
+              value={search}
+
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          <div className="col-md-3">
+            <input
+              type="text"
+
+              placeholder="
+                Location
+              "
+
+              className="
+                form-control
+                filter-input
+              "
+
+              value={
+                locationFilter
+              }
+
+              onChange={(e) =>
+                setLocationFilter(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          <div className="col-md-3">
+            <input
+              type="text"
+
+              placeholder="
+                Company
+              "
+
+              className="
+                form-control
+                filter-input
+              "
+
+              value={
+                companyFilter
+              }
+
+              onChange={(e) =>
+                setCompanyFilter(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
           <div className="col-md-2">
-            <select className="form-control filter-input" value={salaryFilter} onChange={(e) => setSalaryFilter(e.target.value)}>
-              <option value="">Salary</option>
-              <option value="300000">3 LPA+</option>
-              <option value="500000">5 LPA+</option>
-              <option value="800000">8 LPA+</option>
-              <option value="1000000">10 LPA+</option>
-              <option value="1500000">15 LPA+</option>
+            <select
+              className="
+                form-control
+                filter-input
+              "
+
+              value={
+                salaryFilter
+              }
+
+              onChange={(e) =>
+                setSalaryFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Salary
+              </option>
+
+              <option value="300000">
+                3 LPA+
+              </option>
+
+              <option value="500000">
+                5 LPA+
+              </option>
+
+              <option value="800000">
+                8 LPA+
+              </option>
+
+              <option value="1000000">
+                10 LPA+
+              </option>
+
+              <option value="1500000">
+                15 LPA+
+              </option>
+
             </select>
           </div>
+
         </div>
       </div>
 
@@ -219,7 +364,27 @@ function CandidateDashboard() {
             </div>
             <div className="modal-buttons">
               <button className="cancel-btn" onClick={() => { setShowModal(false); setResumeFile(null); }}>Cancel</button>
-              <button className="submit-btn" onClick={submitApplication}>Submit Application</button>
+              <button
+                className="
+                  submit-btn
+                "
+
+                onClick={
+                  submitApplication
+                }
+
+                disabled={
+                  applying
+                }
+              >
+
+                {
+                  applying
+                    ? "Submitting..."
+                    : "Submit Application"
+                }
+
+              </button>
             </div>
           </div>
         </div>

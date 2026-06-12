@@ -80,6 +80,26 @@ function Login() {
               </div>
               <input type="email" placeholder="Email" className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <input type="password" placeholder="Password" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <p
+                style={{
+                  textAlign: "right",
+                  marginBottom: "15px",
+                }}
+              >
+                <span
+                  className="
+                    auth-link
+                  "
+
+                  onClick={() =>
+                    navigate(
+                      "/forgot-password"
+                    )
+                  }
+                >
+                  Forgot Password?
+                </span>
+              </p>
               <button type="submit" className="auth-btn">Login</button>
               <p className="auth-bottom-text">
                 Start your journey with SkillBridge,{" "}

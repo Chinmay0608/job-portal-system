@@ -12,6 +12,7 @@ const {
 
 const {
   protect,
+  authorizeRoles,
 } = require(
   "../middleware/authMiddleware"
 );
@@ -25,6 +26,7 @@ router.put(
   "/update-profile",
 
   protect,
+  authorizeRoles("candidate", "recruiter"),
 
   upload.single(
     "resume"

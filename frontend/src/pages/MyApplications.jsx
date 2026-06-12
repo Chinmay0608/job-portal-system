@@ -164,6 +164,12 @@ function MyApplications() {
                           .salary
                       }
                     </p>
+                    <p className="applied-date">
+                      Applied on{" "}
+                      {new Date(
+                        application.createdAt
+                      ).toLocaleDateString()}
+                    </p>
 
                   </div>
 
@@ -176,6 +182,24 @@ function MyApplications() {
                         application.status
                       }
                     </span>
+                    {
+                      application.resume && (
+
+                        <a
+                          href={
+                            application.resume
+                          }
+
+                          target="_blank"
+
+                          rel="noreferrer"
+
+                          className="resume-btn"
+                        >
+                          View Resume
+                        </a>
+                      )
+                    }
 
                   </div>
 

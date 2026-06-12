@@ -11,29 +11,134 @@ function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.name.trim().length < 3) {
-      return toast.error("Name must be at least 3 characters");
-    }
+  const handleSubmit =
+    async (e) => {
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      return toast.error("Invalid email format");
-    }
+      e.preventDefault();
 
-    if (formData.password.length < 6) {
-      return toast.error("Password must be at least 6 characters");
-    }
+      const trimmedName =
+        formData.name.trim();
 
-    try {
-      const response = await registerUser(formData);
-      toast.success(response.message);
-      navigate("/login");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Registration Failed");
-    }
-  };
+      const nameRegex =
+        /^[A-Za-z\s]+$/;
+
+      if (
+        trimmedName.length < 3
+      ) {
+        return toast.error(
+          "Name must be at least 3 characters"
+        );
+      }
+
+      if (
+        !nameRegex.test(
+          trimmedName
+        )
+      ) {
+        return toast.error(
+          "Name should contain only letters"
+        );
+      }
+
+      if (
+        /\s{2,}/.test(
+          trimmedName
+        )
+      ) {
+        return toast.error(
+          "Extra spaces are not allowed"
+        );
+      }
+
+      const emailRegex =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (
+        !emailRegex.test(
+          formData.email
+        )
+      ) {
+        return toast.error(
+          "Invalid email format"
+        );
+      }
+
+      if (
+        formData.password
+          .length < 6
+      ) {
+        return toast.error(
+          "Password must be at least 6 characters"
+        );
+      }
+      
+      const allowedDomains = [
+        "gmail.com",
+        "yahoo.com",
+        "outlook.com",
+        "hotmail.com",
+        "icloud.com",
+        "proton.me",
+        "protonmail.com",
+        "yahoo.in",
+      ];
+
+      const emailDomain =
+        formData.email
+          .split("@")[1]
+          ?.toLowerCase();
+
+      if (
+        !allowedDomains.includes(
+          emailDomain
+        )
+      ) {
+
+        return toast.error(
+          "Please enter a valid email provider"
+        );
+      }
+
+      try {
+
+        const response =
+          await registerUser({
+
+            ...formData,
+
+            name:
+              trimmedName
+                .replace(
+                  /\s+/g,
+                  " "
+                )
+                .replace(
+                  /\b\w/g,
+                  (char) =>
+                    char.toUpperCase()
+                ),
+          });
+
+        toast.success(
+          response.message
+        );
+
+        navigate(
+          "/login"
+        );
+
+      } catch (error) {
+
+        toast.error(
+
+          error.response
+            ?.data
+            ?.message ||
+
+          "Registration Failed"
+        );
+      }
+    };
 
   return (
     <div className="auth-page">

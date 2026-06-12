@@ -1,7 +1,11 @@
-const mongoose = require("mongoose");
+const mongoose =
+  require(
+    "mongoose"
+  );
 
-const userSchema = new mongoose.Schema(
-  {
+const userSchema =
+  new mongoose.Schema({
+
     name: {
       type: String,
       required: true,
@@ -20,18 +24,33 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["candidate", "recruiter"],
-      default: "candidate",
+      enum: [
+        "candidate",
+        "recruiter",
+      ],
+      default:
+        "candidate",
     },
 
     resume: {
       type: String,
       default: "",
     },
-  },
-  {
-    timestamps: true,
-  }
-);
 
-module.exports = mongoose.models.User || mongoose.model("User", userSchema);
+    resetPasswordToken: {
+      type: String,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+    },
+
+  }, {
+    timestamps: true,
+  });
+
+  module.exports =
+  mongoose.model(
+    "User",
+    userSchema
+  );

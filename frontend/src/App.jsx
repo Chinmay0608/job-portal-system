@@ -11,6 +11,12 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./Pages/Profile";
 import NotFound from "./Pages/NotFound";
+import ForgotPassword
+  from "./pages/ForgotPassword";
+
+import ResetPassword
+  from "./pages/ResetPassword";
+
 
 function AppContent() {
   const location = useLocation();
@@ -29,6 +35,19 @@ function AppContent() {
         <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute role="candidate"><Profile /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
+        <Route
+          path="/forgot-password"
+          element={
+            <ForgotPassword />
+          }
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={
+            <ResetPassword />
+          }
+        />
       </Routes>
       {!hideLayout && <Footer />}
     </>

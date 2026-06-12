@@ -5,7 +5,7 @@ import { getRecruiterApplications, updateStatus } from "../Services/jobService";
 
 function RecruiterApplications() {
   const [applications, setApplications] = useState([]);
-  const [loading, setloading,] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchApplications(); }, []);
 
