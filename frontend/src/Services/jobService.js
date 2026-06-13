@@ -72,14 +72,16 @@ export const getRecruiterJobs = async () => {
 /* ==========================
    PROFILE
 ========================== */
-export const updateProfile = async (formData) => {
-  const response = await api.put("/api/users/update-profile", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
-};
+export const updateProfile =
+  async (formData) => {
+    const response =
+      await api.put(
+        "/api/users/update-profile",
+        formData
+      );
+
+    return response.data;
+  };
 
 /* ==========================
    APPLICATIONS

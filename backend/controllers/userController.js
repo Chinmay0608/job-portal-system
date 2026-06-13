@@ -10,7 +10,6 @@ const updateProfile =
 
       console.log(req.files);
       console.log(req.body);
-      console.error(error);
 
       const {
         name,
