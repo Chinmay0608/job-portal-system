@@ -42,6 +42,8 @@ function CandidateDashboard() {
     try {
       setLoading(true);
       const response = await getJobs();
+      console.log("Jobs Response:", response);
+
       setJobs(response?.jobs || []);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -121,65 +123,67 @@ function CandidateDashboard() {
   });
 
   return (
-    <div className="dashboard-container">
-      {/* Header */}
-      <div className="dashboard-header">
-        <div>
-          <h1 className="dashboard-title">Welcome back, {user?.name} 👋</h1>
-          <p className="dashboard-subtitle">Find and apply to your dream opportunities</p>
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        {/* Header */}
+        <div className="dashboard-header">
+          <div>
+            <h1 className="dashboard-title">Welcome back, {user?.name} 👋</h1>
+            <p className="dashboard-subtitle">Find and apply to your dream opportunities</p>
+          </div>
+
+          {/* Filters */}
+          <div className="row g-3 mt-4" style={{ maxWidth: "1100px" }}>
+            <div className="col-md-4">
+              <input
+                type="text"
+                placeholder="Search jobs or company..."
+                className="form-control filter-input"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <input
+                type="text"
+                placeholder="Location"
+                className="form-control filter-input"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <input
+                type="text"
+                placeholder="Company"
+                className="form-control filter-input"
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-2">
+              <select
+                className="form-control filter-input"
+                value={salaryFilter}
+                onChange={(e) => setSalaryFilter(e.target.value)}
+              >
+                <option value="">Salary</option>
+                <option value="300000">3 LPA+</option>
+                <option value="500000">5 LPA+</option>
+                <option value="800000">8 LPA+</option>
+                <option value="1000000">10 LPA+</option>
+                <option value="1500000">15 LPA+</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="row g-3 mt-4" style={{ maxWidth: "1100px" }}>
-          <div className="col-md-4">
-            <input
-              type="text"
-              placeholder="Search jobs or company..."
-              className="form-control filter-input"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <input
-              type="text"
-              placeholder="Location"
-              className="form-control filter-input"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <input
-              type="text"
-              placeholder="Company"
-              className="form-control filter-input"
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="col-md-2">
-            <select
-              className="form-control filter-input"
-              value={salaryFilter}
-              onChange={(e) => setSalaryFilter(e.target.value)}
-            >
-              <option value="">Salary</option>
-              <option value="300000">3 LPA+</option>
-              <option value="500000">5 LPA+</option>
-              <option value="800000">8 LPA+</option>
-              <option value="1000000">10 LPA+</option>
-              <option value="1500000">15 LPA+</option>
-            </select>
-          </div>
-        </div>
+        {/* Remaining JSX (Jobs Grid + Modals) */}
+        {/* Keep same as your current code */}
       </div>
-
-      {/* Remaining JSX (Jobs Grid + Modals) */}
-      {/* Keep same as your current code */}
     </div>
   );
 }
