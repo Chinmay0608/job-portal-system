@@ -48,9 +48,23 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
-    const user = await User.findOne({ email: normalizedEmail });
+    const user =
+      await User.findOne({
+        email
+      });
+
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({
+        message:
+          "User not found",
+      });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({
+        message:
+          "Please login with Google"
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
