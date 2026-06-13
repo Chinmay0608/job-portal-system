@@ -45,31 +45,38 @@ const registerUser = async (req, res) => {
 ========================== */
 const loginUser = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+
     const { email, password } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail =
+      email.trim().toLowerCase();
 
     const user =
       await User.findOne({
         email: normalizedEmail
       });
 
+    console.log("USER:", user);
+
     if (!user) {
       return res.status(404).json({
-        message:
-          "User not found",
+        message: "User not found",
       });
     }
 
-    if (!user.password) {
+    const isMatch =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
+
+    console.log("PASSWORD MATCH:", isMatch);
+
+    if (!isMatch) {
       return res.status(400).json({
         message:
-          "Please login with Google"
+          "Invalid credentials"
       });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
