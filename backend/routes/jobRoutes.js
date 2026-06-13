@@ -1,11 +1,13 @@
 const express = require("express");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const upload = require("../middleware/multer");
 const {
   createJob,
   getAllJobs,
   getRecruiterJobs,
   deleteJob,
   updateJob,
+  applyJob,
 } = require("../controllers/jobController");
 
 const router = express.Router();
@@ -14,6 +16,16 @@ const router = express.Router();
    PUBLIC ROUTES
 ========================== */
 router.get("/", getAllJobs);
+
+/* ==========================
+   CANDIDATE ROUTES
+========================== */
+router.post(
+  "/apply",
+  protect,
+  upload.single("resume"),
+  applyJob
+);
 
 /* ==========================
    RECRUITER ROUTES

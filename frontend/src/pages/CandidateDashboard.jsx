@@ -104,6 +104,7 @@ function CandidateDashboard() {
   /* Close Modal */
   const closeModal = () => {
     setShowModal(false);
+    setShowDetailsModal(false);
     setSelectedJob(null);
     setResumeFile(null);
   };
@@ -131,6 +132,69 @@ function CandidateDashboard() {
             <h1 className="dashboard-title">Welcome back, {user?.name} 👋</h1>
             <p className="dashboard-subtitle">Find and apply to your dream opportunities</p>
           </div>
+
+          {/* Jobs Grid */}
+          {loading ? (
+            <div className="text-center mt-5">
+              <div className="spinner-border text-dark" />
+              <p className="mt-3">Loading jobs...</p>
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="empty-state mx-auto mt-5">
+              <div className="empty-icon">📭</div>
+              <h2>No Jobs Found</h2>
+              <p>
+                Try adjusting filters or check back later for new opportunities.
+              </p>
+            </div>
+          ) : (
+            <div className="jobs-grid mt-4">
+              {filteredJobs.map((job) => (
+                <div key={job._id} className="job-card">
+                  <div>
+                    <h3 className="job-title">{job.title}</h3>
+                    <p className="job-company">{job.company}</p>
+                    <p className="job-location">
+                      📍 {job.location}
+                    </p>
+
+                    <p className="job-salary">
+                      ₹{job.salary}
+                    </p>
+                  </div>
+
+                  <div className="job-buttons">
+                    <button
+                      className="details-btn"
+                      onClick={() =>
+                        handleDetailsClick(job)
+                      }
+                    >
+                      Details
+                    </button>
+
+                    {appliedJobs.includes(job._id) ? (
+                      <button
+                        className="applied-btn"
+                        disabled
+                      >
+                        Applied
+                      </button>
+                    ) : (
+                      <button
+                        className="apply-btn"
+                        onClick={() =>
+                          handleApplyClick(job)
+                        }
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Filters */}
           <div className="row g-3 mt-4" style={{ maxWidth: "1100px" }}>
@@ -183,6 +247,106 @@ function CandidateDashboard() {
 
         {/* Remaining JSX (Jobs Grid + Modals) */}
         {/* Keep same as your current code */}
+        {showModal && (
+          <div className="modal-overlay">
+            <div className="apply-modal">
+              <h2>Apply for {selectedJob?.title}</h2>
+              <p className="modal-subtitle">
+                Upload your resume to continue
+              </p>
+
+              <input
+                type="file"
+                className="form-control"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) =>
+                  setResumeFile(
+                    e.target.files[0]
+                  )
+                }
+              />
+
+              <div className="modal-buttons">
+                <button
+                  className="cancel-btn"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="submit-btn"
+                  onClick={submitApplication}
+                  disabled={applying}
+                >
+                  {applying
+                    ? "Applying..."
+                    : "Submit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showDetailsModal && selectedJob && (
+          <div className="modal-overlay">
+            <div className="job-details-modal">
+
+              <button
+                className="close-modal-btn"
+                onClick={() =>
+                  setShowDetailsModal(false)
+                }
+              >
+                ✕
+              </button>
+
+              <h2 className="details-title">
+                {selectedJob.title}
+              </h2>
+
+              <p className="details-company">
+                {selectedJob.company}
+              </p>
+
+              <div className="details-meta">
+                <span>
+                  📍 {selectedJob.location}
+                </span>
+
+                <span>
+                  💰 ₹{selectedJob.salary}
+                </span>
+
+                <span>
+                  💼 {selectedJob.role}
+                </span>
+              </div>
+
+              <div className="details-description">
+                <h3>Description</h3>
+                <p>
+                  {selectedJob.description}
+                </p>
+              </div>
+
+              {!appliedJobs.includes(
+                selectedJob._id
+              ) && (
+                <button
+                  className="apply-details-btn"
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    handleApplyClick(
+                      selectedJob
+                    );
+                  }}
+                >
+                  Apply Now
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
