@@ -51,10 +51,9 @@ const loginUser = async (req, res) => {
     const normalizedEmail =
       email.trim().toLowerCase();
 
-    const user =
-      await User.findOne({
-        email: normalizedEmail
-      });
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
 
     console.log("USER:", user);
 
