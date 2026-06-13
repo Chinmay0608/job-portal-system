@@ -71,12 +71,53 @@ function Home() {
         </div>
 
         <div className="categories-grid">
-          <div className="category-card"><span>⚛️</span><h3>Frontend</h3><p>React, Angular, Vue</p></div>
-          <div className="category-card"><span>🖥️</span><h3>Backend</h3><p>Node.js, Java, Python</p></div>
-          <div className="category-card"><span>🤖</span><h3>AI / ML</h3><p>Machine Learning Roles</p></div>
-          <div className="category-card"><span>☁️</span><h3>Cloud</h3><p>AWS, Azure, DevOps</p></div>
-          <div className="category-card"><span>📱</span><h3>Mobile</h3><p>Flutter, Android, iOS</p></div>
-          <div className="category-card"><span>🔐</span><h3>Cyber Security</h3><p>Security & Infra</p></div>
+          <div className="category-card">
+            <span>⚛️</span>
+            <h3>Frontend</h3>
+            <p>React, Angular, Vue</p>
+          </div>
+
+          <div className="category-card">
+            <span>🖥️</span>
+            <h3>Backend</h3>
+            <p>Node.js, Java, Python</p>
+          </div>
+
+          <div className="category-card">
+            <span>🤖</span>
+            <h3>AI / ML</h3>
+            <p>Machine Learning & Data Science</p>
+          </div>
+
+          <div className="category-card">
+            <span>☁️</span>
+            <h3>Cloud & DevOps</h3>
+            <p>AWS, Azure, Kubernetes</p>
+          </div>
+
+          <div className="category-card">
+            <span>📱</span>
+            <h3>Mobile Development</h3>
+            <p>Flutter, Android, iOS</p>
+          </div>
+
+          <div className="category-card">
+            <span>🔐</span>
+            <h3>Cyber Security</h3>
+            <p>Security, Networking, Infra</p>
+          </div>
+
+          <div className="category-card">
+            <span>📊</span>
+            <h3>Business & Marketing</h3>
+            <p>Sales, Marketing, HR, Finance</p>
+          </div>
+
+          <div className="category-card">
+            <span>🎨</span>
+            <h3>Design & Product</h3>
+            <p>UI/UX, Product Design, Creative</p>
+          </div>
         </div>
       </section>
 
