@@ -50,7 +50,7 @@ const loginUser = async (req, res) => {
 
     const user =
       await User.findOne({
-        email
+        email: normalizedEmail
       });
 
     if (!user) {

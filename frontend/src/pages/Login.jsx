@@ -50,7 +50,7 @@ function Login() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const response = await fetch(`${API_URL}/api/auth/google-login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: user.displayName, email: user.email }),
