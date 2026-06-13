@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import "./Profile.css";
 import { updateProfile } from "../Services/jobService";
 
 function Profile() {
@@ -14,9 +15,57 @@ function Profile() {
   }
 
   const [user, setUser] = useState(storedUser);
+  const [profileImage,setProfileImage] = useState(null);
   const [name, setName] = useState(storedUser?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [skills, setSkills] = useState(["React","Node.js","MongoDB"]);
+  const [skillInput, setSkillInput] = useState("");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [location, setLocation] = useState(user?.location || "");
+  const [linkedin, setLinkedin] = useState(user?.linkedin || "");
+  const [github, setGithub] = useState(user?.github || "");
+  const [about, setAbout] = useState(user?.about || "");
+  const [savedCompletion,setSavedCompletion] = useState(0);
+
+  const calculateCompletion =
+  (profileUser) => {
+    const fields = [
+      profileUser?.name,
+      profileUser?.email,
+      profileUser?.phone,
+      profileUser?.location,
+      profileUser?.linkedin,
+      profileUser?.github,
+      profileUser?.about,
+      profileUser?.skills
+        ?.length > 0,
+      profileUser?.resume,
+      profileUser
+        ?.profileImage,
+    ];
+
+    const completed =
+      fields.filter(Boolean)
+        .length;
+
+    return Math.round(
+      (completed /
+        fields.length) *
+        100
+    );
+  };
+
+  useEffect(() => {
+    if (user) {
+      setSavedCompletion(
+        calculateCompletion(
+          user
+        )
+      );
+    }
+  }, [user]);
 
   /* Resume URL Fix */
   const getResumeUrl = (resumePath) => {
@@ -25,109 +74,376 @@ function Profile() {
     return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     try {
       setLoading(true);
-      const formData = new FormData();
-      formData.append("name", name);
 
+      const formData =
+        new FormData();
+
+      formData.append(
+        "name",
+        name
+      );
+
+      formData.append(
+        "phone",
+        phone
+      );
+
+      formData.append(
+        "location",
+        location
+      );
+
+      formData.append(
+        "linkedin",
+        linkedin
+      );
+
+      formData.append(
+        "github",
+        github
+      );
+
+      formData.append(
+        "about",
+        about
+      );
+
+      formData.append(
+        "skills",
+        JSON.stringify(
+          skills
+        )
+      );
+
+      /* Resume Upload */
       if (resume) {
-        formData.append("resume", resume);
+        formData.append(
+          "resume",
+          resume
+        );
       }
 
-      const response = await updateProfile(formData);
-      toast.success(response.message || "Profile updated successfully");
+      /* Profile Image Upload */
+      if (profileImage) {
+        formData.append(
+          "profileImage",
+          profileImage
+        );
+      }
 
-      localStorage.setItem("user", JSON.stringify(response.user));
-      setUser(response.user);
+      const response =
+        await updateProfile(
+          formData
+        );
+
+      toast.success(
+        response.message ||
+          "Profile updated"
+      );
+
+      /* Update Local User */
+      localStorage.setItem(
+        "user",
+        JSON.stringify(
+          response.user
+        )
+      );
+
+      setUser(
+        response.user
+      );
+
+      /* Clear temp uploads */
+      setResume(null);
+      setProfileImage(null);
+      
     } catch (error) {
-      console.error("Profile Update Error:", error);
-      toast.error(error?.response?.data?.message || "Profile update failed");
+      console.error(
+        "Update Error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data
+          ?.message ||
+          "Update failed"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const addSkill = () => {
+    const trimmed = skillInput.trim();
+
+    if (
+      trimmed &&
+      !skills.includes(trimmed)
+    ) {
+      setSkills([
+        ...skills,
+        trimmed
+      ]);
+      setSkillInput("");
+    }
+  };
+
+  const removeSkill = (skill) => {
+    setSkills(
+      skills.filter(
+        (s) => s !== skill
+      )
+    );
+  };
+
   return (
-    <div className="container py-5" style={{ marginTop: "95px" }}>
-      <div
-        className="card border-0 shadow-sm p-4"
-        style={{ borderRadius: "28px", maxWidth: "580px", margin: "auto" }}
-      >
-        {/* Header */}
-        <div className="d-flex align-items-center gap-2 mb-4">
-          <div
-            style={{
-              width: "65px",
-              height: "65px",
-              borderRadius: "50%",
-              background: "#07111f",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.4rem",
-              fontWeight: "700",
-            }}
-          >
-            {user?.name?.charAt(0).toUpperCase()}
+    <div className="profile-page">
+      <div className="profile-container">
+
+        {/* LEFT SIDEBAR */}
+        <div className="profile-sidebar">
+          <div className="avatar-wrapper">
+            {user?.profileImage ? (
+              <img
+                src={
+                  user?.profileImage
+                }
+                alt="profile"
+                className="profile-avatar"
+              />
+            ) : (
+              <div className="avatar-circle">
+                {user?.name
+                  ?.charAt(0)
+                  .toUpperCase()}
+              </div>
+            )}
+
+            <label className="upload-avatar-btn">
+              📷
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) =>
+                  setProfileImage(
+                    e.target.files[0]
+                  )
+                }
+              />
+            </label>
           </div>
 
-          <div>
-            <h3 className="fw-bold mb-1">{user?.name}</h3>
-            <p className="text-muted mb-2">{user?.email}</p>
-            <span className="badge bg-dark px-2 py-1" style={{ fontSize: "0.75rem" }}>
-              {user?.role}
+          <h2>{user?.name}</h2>
+          <p>{user?.email}</p>
+
+          <span className="role-badge">
+            {user?.role}
+          </span>
+
+          <div className="completion-section">
+            <p>Profile Completion</p> 
+            <span className="completion-percent">
+              {savedCompletion}% Complete
             </span>
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${savedCompletion}%`,
+                }}
+              />
+            </div>
+
+            <div className="profile-stats">
+              
+              <div className="stat-card">
+                <h3>
+                  {user?.applications?.length || 0}
+                </h3>
+                <p>Applications</p>
+              </div>
+
+              <div className="stat-card">
+                <h3>0</h3>
+                <p>Saved Jobs</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Resume */}
+          <div className="resume-box">
+            <h3>Resume</h3>
+
+            {/* Current Resume */}
+            {user?.resume && (
+              <a
+                href={getResumeUrl(
+                  user.resume
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="resume-link"
+              >
+                📄 View Current Resume
+              </a>
+            )}
+
+            {/* Upload New Resume */}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) =>
+                setResume(
+                  e.target.files[0]
+                )
+              }
+            />
           </div>
         </div>
 
-        <h2 className="fw-bold mb-3" style={{ fontSize: "2rem" }}>
-          My Profile
-        </h2>
+        {/* RIGHT SIDE */}
+        <div className="profile-content">
+          <h1>My Profile</h1>
 
-        <form onSubmit={handleSubmit}>
-          <label className="mb-2">Full Name</label>
-          <input
-            type="text"
-            className="form-control mb-3"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          <div className="profile-grid">
+            <div className="input-group">
+              <label>Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) =>
+                  setName(e.target.value)
+                }
+              />
+            </div>
 
-          <label className="mb-2">Email</label>
-          <input
-            type="email"
-            className="form-control mb-3"
-            value={user?.email || ""}
-            disabled
-          />
+            <div className="input-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={user?.email}
+                disabled
+              />
+            </div>
 
-          <label className="mb-2">Update Resume</label>
-          <input
-            type="file"
-            className="form-control mb-3"
-            accept=".pdf,.doc,.docx"
-            onChange={(e) => setResume(e.target.files?.[0])}
-          />
+            <div className="input-group">
+              <label>Phone Number</label>
+              <input
+                type="text"
+                placeholder="Enter phone"
+                value={phone}
+                onChange={(e) =>
+                  setPhone(e.target.value)
+                }
+              />
+            </div>
 
-          {user?.resume && (
-            <a
-              href={getResumeUrl(user.resume)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-outline-dark w-100 mb-3"
-            >
-              View Current Resume
-            </a>
-          )}
+            <div className="input-group">
+              <label>Location</label>
+              <input
+                type="text"
+                placeholder="Jaipur, India"
+                value={location}
+                onChange={(e) =>
+                  setLocation(e.target.value)
+                }
+              />
+            </div>
 
-          <button className="btn btn-dark w-100 py-2" disabled={loading}>
-            {loading ? "Saving..." : "Save Profile"}
+            <div className="input-group">
+              <label>LinkedIn</label>
+              <input
+                type="text"
+                placeholder="LinkedIn URL"
+                value={linkedin}
+                onChange={(e) =>
+                  setLinkedin(e.target.value)
+                }
+              />
+            </div>
+
+            <div className="input-group">
+              <label>GitHub</label>
+              <input
+                type="text"
+                placeholder="GitHub URL"
+                value={github}
+                onChange={(e) =>
+                  setGithub(e.target.value)
+                }
+              />
+            </div>
+          </div>
+
+          {/* ABOUT */}
+          <div className="about-section">
+            <label>About Me</label>
+
+            <textarea
+              rows="5"
+              placeholder="Tell recruiters about yourself..."
+              value={about}
+              onChange={(e) =>
+                setAbout(e.target.value)
+              }
+            />
+          </div>
+
+          {/* SKILLS */}
+          <div className="skills-section">
+            <h3>Skills</h3>
+
+            <div className="skill-input-box">
+              <input
+                type="text"
+                placeholder="Add skill..."
+                value={skillInput}
+                onChange={(e) =>
+                  setSkillInput(e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSkill();
+                  }
+                }}
+              />
+
+              <button
+                className="add-skill-btn"
+                onClick={addSkill}
+              >
+                Add
+              </button>
+            </div>
+
+            <div className="skills-tags">
+              {skills.map((skill, index) => (
+                <span key={index}>
+                  {skill}
+
+                  <button
+                    onClick={() =>
+                      removeSkill(skill)
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <button className="save-btn" onClick={handleSave}>
+            {
+              loading ? "Saving..." : "Save Profile"
+            } 
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

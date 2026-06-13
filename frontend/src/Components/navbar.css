@@ -8,12 +8,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 56px;
-  background: rgba(255, 255, 255, 0.75);
+  padding: 18px 56px;
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(229, 231, 235, 0.8);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
 }
 
 /* =========================
@@ -27,6 +27,18 @@
   text-decoration: none;
   line-height: 1;
   white-space: nowrap;
+  transition: transform 0.3s ease;
+}
+
+.premium-logo:hover {
+  transform: scale(1.02);
+}
+
+/* Remove weird border if logo image exists */
+.premium-logo img {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* =========================
@@ -36,69 +48,91 @@
   display: flex;
   gap: 14px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 /* =========================
-   LOGIN + DASHBOARD
+   NAV BUTTON BASE
 ========================= */
 .login-btn,
-.dashboard-btn {
-  text-decoration: none;
-  border: 1px solid #d1d5db;
-  border-radius: 18px;
-  padding: 14px 28px;
-  background: white;
-  color: #111827;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-/* =========================
-   SIGNUP + LOGOUT
-========================= */
+.dashboard-btn,
 .signup-btn,
 .logout-btn {
   text-decoration: none;
-  border: none;
   border-radius: 18px;
   padding: 14px 30px;
-  background: linear-gradient(to right, #07111f, #0f172a);
-  color: white;
   font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(7, 17, 31, 0.18);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 /* =========================
-   HOVER EFFECT
+   LIGHT BUTTONS
 ========================= */
-.nav-hover:hover,
+.login-btn,
+.dashboard-btn {
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #111827;
+}
+
 .login-btn:hover,
-.dashboard-btn:hover,
+.dashboard-btn:hover {
+  transform: translateY(-2px);
+  border-color: #07111f;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   DARK BUTTONS
+========================= */
+.signup-btn,
+.logout-btn {
+  border: none;
+  background: linear-gradient(
+    135deg,
+    #07111f,
+    #0f172a
+  );
+  color: white;
+  box-shadow: 0 8px 20px rgba(7, 17, 31, 0.18);
+}
+
 .signup-btn:hover,
 .logout-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 28px rgba(7, 17, 31, 0.25);
+}
+
+/* =========================
+   ACTIVE BUTTON
+========================= */
+.active-nav {
+  border: 2px solid #07111f !important;
+  background: #f8fafc;
 }
 
 /* =========================
    MOBILE RESPONSIVE
 ========================= */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .custom-navbar {
     padding: 18px 24px;
     flex-wrap: wrap;
-    gap: 12px;
-  }
-  .premium-logo {
-    font-size: 2rem !important;
-  }
-  .nav-buttons {
-    gap: 10px;
+    gap: 14px;
     justify-content: center;
   }
+
+  .premium-logo {
+    font-size: 2.2rem !important;
+  }
+
+  .nav-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .login-btn,
   .signup-btn,
   .dashboard-btn,

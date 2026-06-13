@@ -1,36 +1,73 @@
-const multer = require("multer");
+const multer =
+  require("multer");
 
-/* ==========================
-   MEMORY STORAGE
-========================== */
-const storage = multer.memoryStorage();
+const {
+  CloudinaryStorage,
+} = require(
+  "multer-storage-cloudinary"
+);
 
-/* ==========================
-   FILE FILTER
-========================== */
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
+const cloudinary =
+  require("../config/cloudinary");
 
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only PDF, DOC, and DOCX files are allowed"), false);
-  }
-};
+/* STORAGE */
+const storage =
+  new CloudinaryStorage({
+    cloudinary,
 
-/* ==========================
-   MULTER CONFIG
-========================== */
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-  },
-});
+    params: async (
+      req,
+      file
+    ) => {
+      /* PROFILE IMAGE */
+      if (
+        file.fieldname ===
+        "profileImage"
+      ) {
+        return {
+          folder:
+            "skillbridge/profile-images",
 
-module.exports = upload;
+          allowed_formats:
+            [
+              "jpg",
+              "jpeg",
+              "png",
+              "webp",
+            ],
+
+          resource_type:
+            "image",
+        };
+      }
+
+      /* RESUME */
+      return {
+        folder:
+          "skillbridge/resumes",
+
+        allowed_formats:
+          [
+            "pdf",
+            "doc",
+            "docx",
+          ],
+
+        resource_type:
+          "raw",
+      };
+    },
+  });
+
+const upload =
+  multer({
+    storage,
+
+    limits: {
+      fileSize:
+        5 * 1024 * 1024,
+    },
+  });
+
+module.exports =
+  upload;

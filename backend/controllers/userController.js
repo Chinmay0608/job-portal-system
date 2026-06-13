@@ -1,42 +1,105 @@
-const User = require("../models/user");
+const User =
+  require("../models/user");
 
-/* ==========================
-   UPDATE PROFILE
-========================== */
-const updateProfile = async (req, res) => {
-  try {
-    const { name } = req.body;
-
-    if (!name) {
-      return res.status(400).json({ message: "Name is required" });
-    }
-
-    const updateData = { name };
-
-    // only update resume if new file uploaded
-    if (req.file) {
-      updateData.resume = req.file.path;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      updateData,
-      { new: true }
+const updateProfile =
+  async (req, res) => {
+    console.log(
+      "UPDATE ROUTE HIT"
     );
+    try {
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
+      console.log(req.files);
+      console.log(req.body);
+      console.error(error);
+
+      const {
+        name,
+        phone,
+        location,
+        linkedin,
+        github,
+        about,
+        skills,
+      } = req.body;
+
+      const user =
+        await User.findById(
+          req.user.id
+        );
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "User not found",
+          });
+      }
+
+      user.name =
+        name || user.name;
+
+      user.phone =
+        phone || "";
+
+      user.location =
+        location || "";
+
+      user.linkedin =
+        linkedin || "";
+
+      user.github =
+        github || "";
+
+      user.about =
+        about || "";
+
+      user.skills =
+        skills
+          ? JSON.parse(
+              skills
+            )
+          : [];
+
+      /* Resume */
+      if (
+        req.files?.resume?.[0]
+      ) {
+        user.resume =
+          req.files
+            .resume[0]
+            .path;
+      }
+
+      /* Profile Image */
+      if (
+        req.files
+          ?.profileImage?.[0]
+      ) {
+        user.profileImage =
+          req.files
+            .profileImage[0]
+            .path;
+      }
+
+      await user.save();
+
+      res.status(200).json({
+        message:
+          "Profile updated successfully",
+        user,
+      });
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      res.status(500).json({
+        message:
+          "Profile update failed",
+      });
     }
-
-    res.status(200).json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: error.message || "Server Error" });
-  }
-};
+  };
 
 module.exports = {
   updateProfile,

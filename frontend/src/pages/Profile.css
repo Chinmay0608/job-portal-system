@@ -1,0 +1,509 @@
+/* =========================
+   PROFILE PAGE
+========================= */
+.profile-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 40px 28px;
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.profile-container {
+  max-width: 1350px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* =========================
+   LEFT SIDEBAR
+========================= */
+.profile-sidebar {
+  background: white;
+  border-radius: 28px;
+  padding: 30px 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border: 1px solid #ececec;
+  position: sticky;
+  top: 100px;
+  width: 100%;
+}
+
+.profile-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+/* Avatar */
+.avatar-wrapper {
+  position: relative;
+  width: fit-content;
+  margin-bottom: 24px;
+}
+
+.avatar-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    #07111f,
+    #1e293b
+  );
+  color: white;
+  font-size: 3rem;
+  font-weight: 800;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 22px;
+  box-shadow: 0 12px 30px rgba(7, 17, 31, 0.15);
+}
+
+/* Sidebar Name */
+.profile-sidebar h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #07111f;
+  margin-bottom: 6px;
+}
+
+/* Sidebar Email */
+.profile-sidebar p {
+  color: #6b7280;
+  font-size: 14px;
+  word-break: break-word;
+  margin-bottom: 18px;
+}
+
+/* =========================
+   ROLE BADGE
+========================= */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 17, 31, 0.08);
+  color: #07111f;
+  border: 1px solid rgba(7, 17, 31, 0.1);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* =========================
+   PROFILE COMPLETION
+========================= */
+.completion-section {
+  margin-top: 30px;
+}
+
+.completion-section p {
+  font-weight: 700;
+  color: #111827;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #07111f,
+    #1e293b
+  );
+}
+
+.completion-percent {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* =========================
+   STATS
+========================= */
+.profile-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.stat-card {
+  flex: 1;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 22px 14px;
+  text-align: center;
+  border: 1px solid #ececec;
+  transition: 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.stat-card p {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.stat-card h3 {
+  font-size: 2.0rem;
+  font-weight: 800;
+  color: #07111f;
+  margin-bottom: 8px;
+}
+
+/* =========================
+   RESUME
+========================= */
+.resume-box {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #ececec;
+}
+
+.resume-box h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.resume-box input[type="file"] {
+  width: 100%;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.resume-box .save-btn {
+  margin-top: 12px;
+  width: 100%;
+  height: 56px;
+  border-radius: 18px;
+  font-size: 16px;
+}
+
+/* Resume link */
+.resume-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  height: 54px;
+
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+
+  color: #07111f;
+  font-weight: 600;
+  text-decoration: none;
+
+  margin-bottom: 14px;
+  transition: all 0.3s ease;
+}
+
+.resume-link:hover {
+  background: #07111f;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* =========================
+   RIGHT CONTENT
+========================= */
+.profile-content {
+  background: white;
+  border-radius: 30px;
+  padding: 45px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #ececec;
+}
+
+.profile-content h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #07111f;
+  margin-bottom: 36px;
+}
+
+/* =========================
+   GRID FORM
+========================= */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+/* =========================
+   INPUTS
+========================= */
+.input-group input,
+.about-section textarea,
+.skill-input-box input {
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 0 20px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.input-group input {
+  height: 60px;
+}
+
+.input-group input:hover,
+.about-section textarea:hover,
+.skill-input-box input:hover {
+  border-color: #d1d5db;
+  background: white;
+}
+
+.input-group input:focus,
+.about-section textarea:focus,
+.skill-input-box input:focus {
+  outline: none;
+  border-color: #07111f;
+  box-shadow: 0 0 0 4px rgba(7, 17, 31, 0.08);
+  background: white;
+}
+
+.input-group input::placeholder,
+.about-section textarea::placeholder,
+.skill-input-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* =========================
+   ABOUT SECTION
+========================= */
+.about-section {
+  margin-top: 34px;
+}
+
+.about-section label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.about-section textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 22px;
+  resize: none;
+}
+
+/* =========================
+   SKILLS
+========================= */
+.skills-section {
+  margin-top: 34px;
+}
+
+.skills-section h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.skill-input-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.skill-input-box input {
+  flex: 1;
+  height: 58px;
+}
+
+.add-skill-btn {
+  border: none;
+  border-radius: 16px;
+  padding: 0 28px;
+  background: #07111f;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.add-skill-btn:hover {
+  transform: translateY(-2px);
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.skills-tags span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.skills-tags span:hover {
+  background: #07111f;
+  color: white;
+}
+
+.skills-tags button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* =========================
+   SAVE BUTTON
+========================= */
+.save-btn {
+  margin-top: 34px;
+  width: 100%;
+  height: 60px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    #07111f,
+    #0f172a
+  );
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(7, 17, 31, 0.18);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1100px) {
+  .profile-container {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    position: static;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 20px 14px;
+  }
+
+  .profile-content {
+    padding: 28px 20px;
+  }
+
+  .profile-content h1 {
+    font-size: 2.2rem;
+  }
+
+  .profile-sidebar {
+    padding: 26px 20px;
+  }
+
+  .avatar-circle {
+    width: 90px;
+    height: 90px;
+    font-size: 2.4rem;
+  }
+
+  .profile-sidebar h2 {
+    font-size: 1.7rem;
+  }
+
+  .profile-stats {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    width: 100%;
+  }
+
+  .skill-input-box {
+    flex-direction: column;
+  }
+
+  .add-skill-btn {
+    height: 54px;
+  }
+}
+
+/* Upload Button */
+.upload-avatar-btn {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #07111f;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  border: 3px solid white;
+  transition: 0.3s ease;
+}
+
+.upload-avatar-btn:hover {
+  transform: scale(1.08);
+}

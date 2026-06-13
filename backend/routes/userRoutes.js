@@ -11,8 +11,23 @@ const router = express.Router();
 router.put(
   "/update-profile",
   protect,
-  authorizeRoles("candidate", "recruiter"),
-  upload.single("resume"),
+  authorizeRoles(
+    "candidate",
+    "recruiter"
+  ),
+
+  upload.fields([
+    {
+      name: "resume",
+      maxCount: 1,
+    },
+    {
+      name:
+        "profileImage",
+      maxCount: 1,
+    },
+  ]),
+
   updateProfile
 );
 
