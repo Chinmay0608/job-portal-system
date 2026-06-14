@@ -46,7 +46,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="custom-navbar glass-navbar">
+    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}`}>
       {/* Logo */}
       <Link className="navbar-brand premium-logo" to="/">
         SkillBridge

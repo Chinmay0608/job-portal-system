@@ -1,0 +1,144 @@
+.site-footer {
+  background: #090d12;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 64px 8% 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.footer-inner {
+  display: flex;
+  gap: 80px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* BRAND COLUMN */
+.footer-brand-col {
+  flex: 1.2;
+  min-width: 200px;
+}
+
+.footer-logo {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+}
+
+.footer-tagline {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.38);
+  line-height: 1.7;
+  max-width: 220px;
+  margin-bottom: 24px;
+}
+
+.footer-socials {
+  display: flex;
+  gap: 10px;
+}
+
+.footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.footer-social-link:hover {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.35);
+  color: #ef4444;
+}
+
+/* LINKS GRID */
+.footer-links-grid {
+  display: flex;
+  gap: 52px;
+  flex: 2;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.footer-col h4 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 4px;
+}
+
+.footer-col a {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.52);
+  text-decoration: none;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.footer-col a:hover {
+  color: rgba(255,255,255,0.88);
+}
+
+/* BOTTOM BAR */
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.footer-bottom span {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.22);
+}
+
+.footer-bottom-right {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.22);
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .footer-links-grid {
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+
+  .footer-col {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer-bottom {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .footer-links-grid {
+    gap: 24px;
+  }
+}
