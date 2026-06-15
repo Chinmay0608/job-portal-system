@@ -1,509 +1,466 @@
-/* =========================
-   PROFILE PAGE
-========================= */
+/* ==========================================================================
+   1. GLOBAL PAGE SETUP (Indeed-Inspired Clean Canvas)
+   ========================================================================== */
 .profile-page {
+  width: 100%;
   min-height: 100vh;
-  background: #f8fafc;
-  padding: 40px 28px;
+  background-color: #ffffff; /* Pure white or a very soft gray #f8f9fa */
+  padding: 50px 20px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #2d2d2d; /* Soft off-black for premium readability */
 }
 
-/* =========================
-   MAIN LAYOUT
-========================= */
+/* Master Structure Layout - Balanced, spacious grid symmetry */
 .profile-container {
-  max-width: 1350px;
-  margin: auto;
+  max-width: 1000px; /* Kept slightly tighter for that elegant, centered look */
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 28px;
+  grid-template-columns: 280px 1fr;
+  gap: 60px; /* Generous breathing room between columns */
   align-items: start;
 }
 
-/* =========================
-   LEFT SIDEBAR
-========================= */
+/* ==========================================================================
+   2. LEFT SIDEBAR COMPONENT (Clean, Borderless Profile Meta)
+   ========================================================================== */
 .profile-sidebar {
-  background: white;
-  border-radius: 28px;
-  padding: 30px 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ececec;
-  position: sticky;
-  top: 100px;
-  width: 100%;
+  background: transparent; /* Removed heavy boxes and shadows */
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.profile-avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid white;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-}
-
-/* Avatar */
+/* Profile Image Circle - Minimalist Initials style */
 .avatar-wrapper {
   position: relative;
-  width: fit-content;
   margin-bottom: 24px;
 }
 
-.avatar-circle {
-  width: 110px;
-  height: 110px;
+.profile-avatar {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    #07111f,
-    #1e293b
-  );
-  color: white;
-  font-size: 3rem;
-  font-weight: 800;
+  object-fit: cover;
+}
+
+.avatar-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: #4b4b4b; /* Flat, classy dark grey */
+  color: #ffffff;
+  font-size: 42px;
+  font-weight: 500;
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 22px;
-  box-shadow: 0 12px 30px rgba(7, 17, 31, 0.15);
+  justify-content: center;
+  letter-spacing: -1px;
 }
 
-/* Sidebar Name */
+/* Premium, subtle overlay for camera button */
+.upload-avatar-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.upload-avatar-btn:hover {
+  background-color: #f8f9fa;
+}
+
 .profile-sidebar h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #07111f;
-  margin-bottom: 6px;
-}
-
-/* Sidebar Email */
-.profile-sidebar p {
-  color: #6b7280;
-  font-size: 14px;
-  word-break: break-word;
-  margin-bottom: 18px;
-}
-
-/* =========================
-   ROLE BADGE
-========================= */
-.role-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(7, 17, 31, 0.08);
-  color: #07111f;
-  border: 1px solid rgba(7, 17, 31, 0.1);
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 14px;
+  font-size: 26px;
+  color: #111111;
+  margin: 0 0 6px 0;
   font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
-/* =========================
-   PROFILE COMPLETION
-========================= */
+.profile-sidebar p {
+  font-size: 14px;
+  color: #6f6f6f;
+  margin: 0 0 20px 0;
+}
+
+.role-badge {
+  background: #e8f0fe; /* Light corporate accent tint */
+  color: #1a73e8;      /* Clean tech blue string anchor */
+  padding: 6px 16px;
+  border-radius: 6px;  /* Square-ish organic look instead of pill capsules */
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 30px;
+}
+
+/* Progress Tracker & Metrics Box Context */
 .completion-section {
-  margin-top: 30px;
+  width: 100%;
+  text-align: left;
 }
 
 .completion-section p {
-  font-weight: 700;
-  color: #111827;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-  margin: 12px 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    #07111f,
-    #1e293b
-  );
+  font-size: 14px;
+  color: #2d2d2d;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .completion-percent {
   display: block;
-  margin-top: 8px;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* =========================
-   STATS
-========================= */
-.profile-stats {
-  display: flex;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.stat-card {
-  flex: 1;
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 22px 14px;
-  text-align: center;
-  border: 1px solid #ececec;
-  transition: 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-}
-
-.stat-card p {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.stat-card h3 {
-  font-size: 2.0rem;
-  font-weight: 800;
-  color: #07111f;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6f6f6f;
   margin-bottom: 8px;
 }
 
-/* =========================
-   RESUME
-========================= */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e8e8e8;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #2563eb; /* Strong premium corporate brand blue */
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar Stats Context Setup */
+.profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.stat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+}
+
+.stat-card h3 {
+  font-size: 16px;
+  color: #111111;
+  margin: 0;
+  font-weight: 700;
+}
+
+.stat-card p {
+  font-size: 13px;
+  color: #6f6f6f;
+  margin: 0;
+}
+
+/* Minimalist Document Upload Trigger Area */
 .resume-box {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #ececec;
+  width: 100%;
+  margin-top: 30px;
+  text-align: left;
 }
 
 .resume-box h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 14px;
-}
-
-.resume-box input[type="file"] {
-  width: 100%;
-  margin-bottom: 14px;
   font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.resume-box .save-btn {
-  margin-top: 12px;
-  width: 100%;
-  height: 56px;
-  border-radius: 18px;
-  font-size: 16px;
-}
-
-/* Resume link */
 .resume-link {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  width: 100%;
-  height: 54px;
-
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-
-  color: #07111f;
-  font-weight: 600;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  color: #2563eb;
   text-decoration: none;
-
+  font-size: 14px;
+  font-weight: 500;
   margin-bottom: 14px;
-  transition: all 0.3s ease;
+  background: #ffffff;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .resume-link:hover {
-  background: #07111f;
-  color: white;
-  transform: translateY(-2px);
+  border-color: #2563eb;
+  background-color: #f5f8ff;
 }
 
-/* =========================
-   RIGHT CONTENT
-========================= */
+.resume-box input[type="file"] {
+  font-size: 13px;
+  color: #6f6f6f;
+}
+
+/* ==========================================================================
+   3. RIGHT FORM INTERFACE COMPONENT (The Elegant White-Label Workspace)
+   ========================================================================== */
 .profile-content {
-  background: white;
-  border-radius: 30px;
-  padding: 45px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ececec;
+  display: flex;
+  flex-direction: column;
+  gap: 40px; /* Massive spacing to emulate the Indeed form architecture */
 }
 
 .profile-content h1 {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #07111f;
-  margin-bottom: 36px;
+  font-size: 28px;
+  color: #111111;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  border-bottom: 2px solid #111111;
+  padding-bottom: 12px;
+  width: max-content;
 }
 
-/* =========================
-   GRID FORM
-========================= */
+/* Two-column Input Grid Blueprint */
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 26px;
+  column-gap: 30px;
+  row-gap: 24px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .input-group label {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #111827;
-}
-
-/* =========================
-   INPUTS
-========================= */
-.input-group input,
-.about-section textarea,
-.skill-input-box input {
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  border-radius: 18px;
-  padding: 0 20px;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
 }
 
 .input-group input {
-  height: 60px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #2d2d2d;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-group input:hover,
-.about-section textarea:hover,
-.skill-input-box input:hover {
-  border-color: #d1d5db;
-  background: white;
-}
-
-.input-group input:focus,
-.about-section textarea:focus,
-.skill-input-box input:focus {
+.input-group input:focus {
   outline: none;
-  border-color: #07111f;
-  box-shadow: 0 0 0 4px rgba(7, 17, 31, 0.08);
-  background: white;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12); /* Soft professional focus halo */
 }
 
-.input-group input::placeholder,
-.about-section textarea::placeholder,
-.skill-input-box input::placeholder {
-  color: #9ca3af;
+.input-group input:disabled {
+  background-color: #f1f1f1;
+  color: #767676;
+  border-color: #e2e2e2;
+  cursor: not-allowed;
 }
 
-/* =========================
-   ABOUT SECTION
-========================= */
+/* Full Width Stack Elements (About Area) */
 .about-section {
-  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
 .about-section label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
 }
 
 .about-section textarea {
   width: 100%;
-  min-height: 150px;
-  padding: 22px;
-  resize: none;
+  padding: 14px 16px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #2d2d2d;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* =========================
-   SKILLS
-========================= */
+.about-section textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* ==========================================================================
+   4. SKILLS CHIPS & INTERACTION TAGS
+   ========================================================================== */
 .skills-section {
-  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
 }
 
 .skills-section h3 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
 }
 
 .skill-input-box {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  max-width: 500px;
 }
 
 .skill-input-box input {
   flex: 1;
-  height: 58px;
+  padding: 12px 16px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.skill-input-box input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
 .add-skill-btn {
-  border: none;
-  border-radius: 16px;
-  padding: 0 28px;
-  background: #07111f;
-  color: white;
+  background: #ffffff;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  padding: 0 24px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .add-skill-btn:hover {
-  transform: translateY(-2px);
+  background: #2563eb;
+  color: #ffffff;
 }
 
+/* Inline horizontal flex wrap chips container */
 .skills-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-}
-
-.skills-tags span {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  background: #f3f4f6;
-  border-radius: 999px;
-  padding: 12px 18px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  margin-top: 4px;
 }
 
-.skills-tags span:hover {
-  background: #07111f;
-  color: white;
+.skill-chip {
+  background: #f4f4f4;
+  color: #2d2d2d;
+  padding: 8px 14px;
+  border-radius: 20px; /* Oval pill-style chips keep it ultra clean */
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e0e0e0;
 }
 
-.skills-tags button {
+.skill-chip button {
+  background: none;
   border: none;
-  background: transparent;
-  color: inherit;
+  color: #8c8c8c;
   font-size: 18px;
   cursor: pointer;
-}
-
-/* =========================
-   SAVE BUTTON
-========================= */
-.save-btn {
-  margin-top: 34px;
-  width: 100%;
-  height: 60px;
-  border: none;
-  border-radius: 18px;
-  background: linear-gradient(
-    135deg,
-    #07111f,
-    #0f172a
-  );
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.save-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px rgba(7, 17, 31, 0.18);
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 1100px) {
-  .profile-container {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-sidebar {
-    position: static;
-  }
-
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .profile-page {
-    padding: 20px 14px;
-  }
-
-  .profile-content {
-    padding: 28px 20px;
-  }
-
-  .profile-content h1 {
-    font-size: 2.2rem;
-  }
-
-  .profile-sidebar {
-    padding: 26px 20px;
-  }
-
-  .avatar-circle {
-    width: 90px;
-    height: 90px;
-    font-size: 2.4rem;
-  }
-
-  .profile-sidebar h2 {
-    font-size: 1.7rem;
-  }
-
-  .profile-stats {
-    flex-direction: column;
-  }
-
-  .stat-card {
-    width: 100%;
-  }
-
-  .skill-input-box {
-    flex-direction: column;
-  }
-
-  .add-skill-btn {
-    height: 54px;
-  }
-}
-
-/* Upload Button */
-.upload-avatar-btn {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #07111f;
-  color: white;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  border: 3px solid white;
-  transition: 0.3s ease;
+  transition: color 0.15s;
 }
 
-.upload-avatar-btn:hover {
-  transform: scale(1.08);
+.skill-chip button:hover {
+  color: #d9383a;
+}
+
+/* ==========================================================================
+   5. ACTION TRIGGER BAR (The Master Save Button)
+   ========================================================================== */
+.save-btn {
+  background: #2563eb; /* Deep premium Royal Blue action color */
+  color: #ffffff;
+  border: none;
+  padding: 16px 36px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.15s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.08);
+}
+
+.save-btn:hover {
+  background: #1d4ed8; /* Darker blue shift on hover action */
+}
+
+.save-btn:disabled {
+  background: #e0e0e0;
+  color: #a0a0a0;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   6. RESPONSIVE DESIGN BLUEPRINT (Fluid layouts for small screens)
+   ========================================================================== */
+@media (max-width: 900px) {
+  .profile-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .profile-sidebar {
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .skill-input-box {
+    max-width: 100%;
+  }
+  
+  .save-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

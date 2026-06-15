@@ -20,30 +20,25 @@ function Footer() {
   const handleJobNavigation = (type) => {
     const token = localStorage.getItem("token");
 
-    setTimeout(() => {
-      if (!token) {
-        navigate("/login", {
-          state: {
-            redirectAfterLogin:
-              "/candidate-dashboard",
-            roleType: type,
-          },
-        });
-      } else {
-        navigate("/candidate-dashboard", {
-          state: {
-            roleType: type,
-          },
-        });
-      }
+    if (!token) {
+      navigate("/login", {
+        state: {
+          redirectAfterLogin: "/candidate-dashboard",
+          roleType: type,
+        },
+      });
+    } else {
+      navigate("/candidate-dashboard", {
+        state: {
+          roleType: type,
+        },
+      });
+    }
 
-      setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }, 100);
-    }, 1000);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (

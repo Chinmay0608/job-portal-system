@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { getJobs, applyJob, getMyApplications } from "../Services/jobService";
 import toast from "react-hot-toast";
 import "../Styles/pages/CandidateDashboard.css";
@@ -10,21 +10,17 @@ function CandidateDashboard() {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
 
-  // Filters
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
 
-  // Modals / Selection
-  const [showModal, setShowModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
+  const [showApplyPanel, setShowApplyPanel] = useState(false);
 
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  /* Safe User Parsing */
   let user = null;
   try {
     user = JSON.parse(localStorage.getItem("user") || "null");
@@ -33,18 +29,31 @@ function CandidateDashboard() {
   }
 
   useEffect(() => {
-    fetchJobs();
-    fetchAppliedJobs();
+    const initDashboard = async () => {
+      await fetchAppliedJobs();
+      await fetchJobs();
+    };
+    initDashboard();
   }, []);
 
-  /* Fetch Jobs */
+  useEffect(() => {
+    if (location.state?.roleType === "remote") {
+      setLocationFilter("Remote");
+    } else if (location.state?.roleType === "all") {
+      setLocationFilter("");
+    }
+  }, [location.state]);
+
   const fetchJobs = async () => {
     try {
       setLoading(true);
       const response = await getJobs();
-      console.log("Jobs Response:", response);
-
-      setJobs(response?.jobs || []);
+      const rawJobs = response?.jobs || [];
+      setJobs(rawJobs);
+      
+      if (rawJobs.length > 0) {
+        setSelectedJob(rawJobs[0]);
+      }
     } catch (error) {
       console.error("Error fetching jobs:", error);
       toast.error("Failed to load jobs");
@@ -53,7 +62,6 @@ function CandidateDashboard() {
     }
   };
 
-  /* Fetch Applied Jobs */
   const fetchAppliedJobs = async () => {
     try {
       const response = await getMyApplications();
@@ -64,22 +72,9 @@ function CandidateDashboard() {
     }
   };
 
-  /* Open Apply Modal */
-  const handleApplyClick = (job) => {
-    setSelectedJob(job);
-    setShowModal(true);
-  };
-
-  /* Open Details Modal */
-  const handleDetailsClick = (job) => {
-    setSelectedJob(job);
-    setShowDetailsModal(true);
-  };
-
-  /* Submit Application */
   const submitApplication = async () => {
     if (!resumeFile) {
-      return toast.error("Please upload resume");
+      return toast.error("Please upload your resume");
     }
 
     try {
@@ -92,7 +87,8 @@ function CandidateDashboard() {
       toast.success(response?.message || "Application submitted successfully");
 
       setAppliedJobs((prev) => [...prev, selectedJob?._id]);
-      closeModal();
+      setShowApplyPanel(false);
+      setResumeFile(null);
     } catch (error) {
       console.error("Application Error:", error);
       toast.error(error?.response?.data?.message || "Application Failed");
@@ -101,15 +97,6 @@ function CandidateDashboard() {
     }
   };
 
-  /* Close Modal */
-  const closeModal = () => {
-    setShowModal(false);
-    setShowDetailsModal(false);
-    setSelectedJob(null);
-    setResumeFile(null);
-  };
-
-  /* Filter Jobs */
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job?.title?.toLowerCase().includes(search.toLowerCase()) ||
@@ -118,235 +105,166 @@ function CandidateDashboard() {
     const matchesLocation = !locationFilter || job?.location?.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesCompany = !companyFilter || job?.company?.toLowerCase().includes(companyFilter.toLowerCase());
     const matchesSalary = !salaryFilter || Number(job?.salary) >= Number(salaryFilter);
-    const notApplied = !appliedJobs.includes(job?._id);
 
-    return matchesSearch && matchesLocation && matchesCompany && matchesSalary && notApplied;
+    return matchesSearch && matchesLocation && matchesCompany && matchesSalary;
   });
 
+  const handleJobSelect = (job) => {
+    setSelectedJob(job);
+    setShowApplyPanel(false);
+    setResumeFile(null);
+  };
+
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-container">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div>
-            <h1 className="dashboard-title">Welcome back, {user?.name} 👋</h1>
-            <p className="dashboard-subtitle">Find and apply to your dream opportunities</p>
+    <div className="ind-dashboard">
+      {/* SEARCH CONSOLE BAR */}
+      <div className="ind-search-bar">
+        <div className="ind-search-inner">
+          <div className="ind-input-wrapper">
+            <span className="ind-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Job title, keywords, or company"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="ind-input-divider"></div>
+          <div className="ind-input-wrapper">
+            <span className="ind-icon">📍</span>
+            <input
+              type="text"
+              placeholder="City, state, zip code, or 'remote'"
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+            />
+          </div>
+          <button className="ind-search-btn">Find jobs</button>
+        </div>
+      </div>
+
+      <div className="ind-content-container">
+        <h2 className="ind-welcome-text">Welcome, {user?.name || "Candidate"}</h2>
+
+        <div className="ind-main-layout">
+          {/* LEFT COLUMN: LISTING CONTAINER */}
+          <div className="ind-list-column">
+            <h3 className="ind-section-title">Jobs for you</h3>
+
+            {loading ? (
+              <div className="ind-loader-box">
+                <div className="ind-spinner"></div>
+                <p>Loading your matches...</p>
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="ind-empty-box">
+                <span>📭</span>
+                <h4>No matching listings found</h4>
+                <p>Try modifying your parameters above.</p>
+              </div>
+            ) : (
+              <div className="ind-cards-stack">
+                {filteredJobs.map((job) => {
+                  const isSelected = selectedJob?._id === job._id;
+                  const hasApplied = appliedJobs.includes(job._id);
+
+                  return (
+                    <div
+                      key={job._id}
+                      className={`ind-job-card ${isSelected ? "active" : ""}`}
+                      onClick={() => handleJobSelect(job)}
+                    >
+                      <div className="ind-card-tag">Easily apply</div>
+                      <h4 className="ind-card-title">{job.title}</h4>
+                      <p className="ind-card-company">{job.company}</p>
+                      <p className="ind-card-location">{job.location}</p>
+                      
+                      <div className="ind-card-salary-badge">
+                        ₹{Number(job.salary).toLocaleString("en-IN")} a year
+                      </div>
+
+                      {hasApplied && (
+                        <div className="ind-card-status-pill">✓ Applied</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Jobs Grid */}
-          {loading ? (
-            <div className="text-center mt-5">
-              <div className="spinner-border text-dark" />
-              <p className="mt-3">Loading jobs...</p>
-            </div>
-          ) : filteredJobs.length === 0 ? (
-            <div className="empty-state mx-auto mt-5">
-              <div className="empty-icon">📭</div>
-              <h2>No Jobs Found</h2>
-              <p>
-                Try adjusting filters or check back later for new opportunities.
-              </p>
-            </div>
-          ) : (
-            <div className="jobs-grid mt-4">
-              {filteredJobs.map((job) => (
-                <div key={job._id} className="job-card">
-                  <div>
-                    <h3 className="job-title">{job.title}</h3>
-                    <p className="job-company">{job.company}</p>
-                    <p className="job-location">
-                      📍 {job.location}
-                    </p>
+          {/* RIGHT COLUMN: DETAIL WORKSPACE */}
+          <div className="ind-detail-column">
+            {selectedJob ? (
+              <div className="ind-detail-sticky-wrapper">
+                <div className="ind-detail-header-card">
+                  <h3 className="ind-detail-main-title">{selectedJob.title}</h3>
+                  <p className="ind-detail-company-link">{selectedJob.company}</p>
+                  <p className="ind-detail-location-text">{selectedJob.location}</p>
+                  <p className="ind-detail-salary-text">
+                    ₹{Number(selectedJob.salary).toLocaleString("en-IN")} a year
+                  </p>
 
-                    <p className="job-salary">
-                      ₹{job.salary}
-                    </p>
-                  </div>
-
-                  <div className="job-buttons">
-                    <button
-                      className="details-btn"
-                      onClick={() =>
-                        handleDetailsClick(job)
-                      }
-                    >
-                      Details
-                    </button>
-
-                    {appliedJobs.includes(job._id) ? (
-                      <button
-                        className="applied-btn"
-                        disabled
-                      >
-                        Applied
+                  <div className="ind-actions-row">
+                    {appliedJobs.includes(selectedJob._id) ? (
+                      <button className="ind-applied-status-btn" disabled>
+                        Applied Already
                       </button>
+                    ) : showApplyPanel ? (
+                      <div className="ind-inline-uploader-box">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => setResumeFile(e.target.files[0])}
+                        />
+                        <button 
+                          className="ind-inline-submit-btn" 
+                          onClick={submitApplication}
+                          disabled={applying}
+                        >
+                          {applying ? "Sending..." : "Submit Application"}
+                        </button>
+                        <button 
+                          className="ind-inline-cancel-btn"
+                          onClick={() => setShowApplyPanel(false)}
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        className="apply-btn"
-                        onClick={() =>
-                          handleApplyClick(job)
-                        }
+                      <button 
+                        className="ind-primary-apply-btn"
+                        onClick={() => setShowApplyPanel(true)}
                       >
-                        Apply
+                        Apply Now
                       </button>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* Filters */}
-          <div className="row g-3 mt-4" style={{ maxWidth: "1100px" }}>
-            <div className="col-md-4">
-              <input
-                type="text"
-                placeholder="Search jobs or company..."
-                className="form-control filter-input"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+                <div className="ind-detail-scroll-body">
+                  <h4 className="ind-body-section-heading">Job details</h4>
+                  
+                  <div className="ind-meta-item">
+                    <span className="ind-meta-label">💼 Job Type</span>
+                    <span className="ind-meta-val">{selectedJob.role || "Full-time"}</span>
+                  </div>
 
-            <div className="col-md-3">
-              <input
-                type="text"
-                placeholder="Location"
-                className="form-control filter-input"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              />
-            </div>
+                  <hr className="ind-body-divider" />
 
-            <div className="col-md-3">
-              <input
-                type="text"
-                placeholder="Company"
-                className="form-control filter-input"
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-              />
-            </div>
-
-            <div className="col-md-2">
-              <select
-                className="form-control filter-input"
-                value={salaryFilter}
-                onChange={(e) => setSalaryFilter(e.target.value)}
-              >
-                <option value="">Salary</option>
-                <option value="300000">3 LPA+</option>
-                <option value="500000">5 LPA+</option>
-                <option value="800000">8 LPA+</option>
-                <option value="1000000">10 LPA+</option>
-                <option value="1500000">15 LPA+</option>
-              </select>
-            </div>
+                  <h4 className="ind-body-section-heading">Full Job Description</h4>
+                  <div className="ind-description-content">
+                    <p>{selectedJob.description}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="ind-no-selection-placeholder">
+                <p>Select a job listing entry to view comprehensive insights here.</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Remaining JSX (Jobs Grid + Modals) */}
-        {/* Keep same as your current code */}
-        {showModal && (
-          <div className="modal-overlay">
-            <div className="apply-modal">
-              <h2>Apply for {selectedJob?.title}</h2>
-              <p className="modal-subtitle">
-                Upload your resume to continue
-              </p>
-
-              <input
-                type="file"
-                className="form-control"
-                accept=".pdf,.doc,.docx"
-                onChange={(e) =>
-                  setResumeFile(
-                    e.target.files[0]
-                  )
-                }
-              />
-
-              <div className="modal-buttons">
-                <button
-                  className="cancel-btn"
-                  onClick={closeModal}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  className="submit-btn"
-                  onClick={submitApplication}
-                  disabled={applying}
-                >
-                  {applying
-                    ? "Applying..."
-                    : "Submit"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {showDetailsModal && selectedJob && (
-          <div className="modal-overlay">
-            <div className="job-details-modal">
-
-              <button
-                className="close-modal-btn"
-                onClick={() =>
-                  setShowDetailsModal(false)
-                }
-              >
-                ✕
-              </button>
-
-              <h2 className="details-title">
-                {selectedJob.title}
-              </h2>
-
-              <p className="details-company">
-                {selectedJob.company}
-              </p>
-
-              <div className="details-meta">
-                <span>
-                  📍 {selectedJob.location}
-                </span>
-
-                <span>
-                  💰 ₹{selectedJob.salary}
-                </span>
-
-                <span>
-                  💼 {selectedJob.role}
-                </span>
-              </div>
-
-              <div className="details-description">
-                <h3>Description</h3>
-                <p>
-                  {selectedJob.description}
-                </p>
-              </div>
-
-              {!appliedJobs.includes(
-                selectedJob._id
-              ) && (
-                <button
-                  className="apply-details-btn"
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    handleApplyClick(
-                      selectedJob
-                    );
-                  }}
-                >
-                  Apply Now
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

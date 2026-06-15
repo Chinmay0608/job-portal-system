@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../firebase";
 import { loginUser } from "../Services/authService";
@@ -14,9 +14,20 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const location = useLocation();
+
   const redirectUser = (user) => {
-    if (user?.role === "candidate") navigate("/candidate-dashboard");
-    else navigate("/recruiter-dashboard");
+    if (user?.role === "candidate") {
+      const destination = location.state?.redirectAfterLogin || "/candidate-dashboard";
+      
+      navigate(destination, {
+        state: {
+          roleType: location.state?.roleType
+        }
+      });
+    } else {
+      navigate("/recruiter-dashboard");
+    }
   };
 
   const handleSubmit = async (e) => {
