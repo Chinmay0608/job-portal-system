@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../Services/authService";
+import { auth, provider } from "../firebase";
+import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
+import { FcGoogle } from "react-icons/fc";
+import "../Styles/pages/Register.css";
 
 function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,6 +26,35 @@ function Register() {
     }));
   };
 
+  const redirectUser = (user) => {
+    if (user?.role === "candidate") navigate("/candidate-dashboard");
+    else navigate("/recruiter-dashboard");
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setGoogleLoading(true);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: user.displayName, email: user.email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Google Authentication Failed");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      toast.success("Account initialized with Google successfully");
+      redirectUser(data.user);
+    } catch (error) {
+      console.error("Google Auth Error:", error);
+      toast.error(error.message || "Google Signup Failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -28,53 +62,14 @@ function Register() {
     const trimmedEmail = formData.email.trim().toLowerCase();
     const trimmedPhone = formData.phone.trim();
 
-    /* Name Validation */
-    const nameRegex = /^[A-Za-z\s]+$/;
-
-    if (trimmedName.length < 3) {
-      return toast.error("Name must be at least 3 characters");
-    }
-    if (!nameRegex.test(trimmedName)) {
-      return toast.error("Name should contain only letters");
-    }
-    if (/\s{2,}/.test(trimmedName)) {
-      return toast.error("Extra spaces are not allowed");
-    }
-
-    /* Email Validation */
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(trimmedEmail)) {
-      return toast.error("Invalid email format");
-    }
-
-    const allowedDomains = [
-      "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
-      "icloud.com", "proton.me", "protonmail.com", "yahoo.in"
-    ];
-    const emailDomain = trimmedEmail.split("@")[1];
-
-    if (!allowedDomains.includes(emailDomain)) {
-      return toast.error("Please enter a valid email provider");
-    }
-
-    /* Phone Validation */
-    if (trimmedPhone && !/^[6-9]\d{9}$/.test(trimmedPhone)) {
-      return toast.error("Enter a valid phone number");
-    }
-
-    /* Password Validation */
-    if (formData.password.length < 6) {
-      return toast.error("Password must be at least 6 characters");
-    }
+    if (trimmedName.length < 3) return toast.error("Name must be at least 3 characters");
+    if (!/^[A-Za-z\s]+$/.test(trimmedName)) return toast.error("Name should contain only letters");
+    if (trimmedPhone && !/^[6-9]\d{9}$/.test(trimmedPhone)) return toast.error("Enter a valid 10-digit phone number");
+    if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
 
     try {
       setLoading(true);
-
-      const formattedName = trimmedName
-        .replace(/\s+/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-
+      const formattedName = trimmedName.replace(/\s+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
       const response = await registerUser({
         ...formData,
         name: formattedName,
@@ -85,7 +80,7 @@ function Register() {
       toast.success(response.message || "Account created successfully");
       navigate("/login");
     } catch (error) {
-      console.error("Register Error:", error);
+      console.error("Registration Error:", error);
       toast.error(error?.response?.data?.message || "Registration Failed");
     } finally {
       setLoading(false);
@@ -93,83 +88,161 @@ function Register() {
   };
 
   return (
-    <div className="auth-page">
-      {/* Left Side */}
-      <div className="auth-left">
-        <img src="/undraw_job-hunt_5umi.svg" alt="illustration" className="auth-illustration" />
-        <h1 className="brand-heading">Start your career journey.</h1>
-        <p className="brand-text">
-          Create your SkillBridge account, connect with recruiters, and discover opportunities built for your future.
-        </p>
+    <div className="register-page">
+      {/* LEFT PANEL — Modern Geometric Art Context */}
+      <div className="register-art-panel">
+        <div className="bg-circle bg-circle-1"></div>
+        <div className="bg-circle bg-circle-2"></div>
 
-        <div className="stats-row">
-          <div className="stat-card"><h2>50K+</h2><p>Jobs</p></div>
-          <div className="stat-card"><h2>1K+</h2><p>Recruiters</p></div>
-          <div className="stat-card"><h2>20K+</h2><p>Candidates</p></div>
+        <div className="bg-square bg-square-1"></div>
+        <div className="bg-square bg-square-2"></div>
+
+        <div className="bg-dots bg-dots-1">
+          {[...Array(12)].map((_, i) => <span key={i}></span>)}
+        </div>
+
+        <div className="bg-dots bg-dots-2">
+          {[...Array(12)].map((_, i) => <span key={i}></span>)}
+        </div>
+
+        <div className="register-art-content">
+          <h2>
+            Start your
+            <br />
+            career journey.
+          </h2>
+          <p>
+            Create your SkillBridge account, discover opportunities,
+            <br />
+            and connect with recruiters built for your future.
+          </p>
+
+          <div className="stats-container">
+            <div className="stats-card">
+              <div className="stats-icon pink">💼</div>
+              <h3>50K+</h3>
+              <span>Jobs</span>
+            </div>
+
+            <div className="stats-card">
+              <div className="stats-icon green">👥</div>
+              <h3>1K+</h3>
+              <span>Recruiters</span>
+            </div>
+
+            <div className="stats-card">
+              <div className="stats-icon blue">👤</div>
+              <h3>20K+</h3>
+              <span>Candidates</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Register Form */}
-      <div className="auth-right">
-        <h1 className="auth-title">Sign Up</h1>
-        <p className="auth-subtitle">Start your journey with SkillBridge</p>
+      {/* RIGHT PANEL — Sign Up Entry Credentials Section */}
+      <div className="register-form-panel">
+        <div className="register-form-inner">
+          <div className="register-brand" onClick={() => navigate("/")}>
+            <span className="register-brand-dot">Skill</span>Bridge
+          </div>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            className="auth-input"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+          <h1 className="register-title">Sign Up</h1>
+          <p className="register-subtitle">Start your journey with SkillBridge</p>
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            className="auth-input"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+          <form onSubmit={handleSubmit} className="register-form">
+            <button
+              type="button"
+              className="register-google-btn"
+              onClick={handleGoogleSignup}
+              disabled={googleLoading}
+            >
+              <FcGoogle size={20} />
+              {googleLoading ? "Please wait..." : "Sign up with Google"}
+            </button>
 
-          <input
-            type="tel"
-            name="phone"
-            placeholder="Phone Number"
-            className="auth-input"
-            value={formData.phone}
-            onChange={handleChange}
-          />
+            <div className="register-divider">
+              <span>or Sign up with Email</span>
+            </div>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            className="auth-input"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+            {/* FULL NAME BLOCK */}
+            <div className="register-input-group">
+              <label className="register-field-label">Full Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter text"
+                className="register-input"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <select name="role" className="auth-input" value={formData.role} onChange={handleChange}>
-            <option value="candidate">Candidate</option>
-            <option value="recruiter">Recruiter</option>
-          </select>
+            {/* EMAIL BLOCK */}
+            <div className="register-input-group">
+              <label className="register-field-label">Email</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="mail@website.com"
+                className="register-input"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
+            {/* PHONE NUMBER BLOCK */}
+            <div className="register-input-group">
+              <label className="register-field-label">Phone Number (Optional)</label>
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Enter phone number"
+                className="register-input"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
 
-          <p className="auth-bottom-text">
-            Already have an account?{" "}
-            <span className="auth-link" onClick={() => navigate("/login")}>
-              Login
-            </span>
-          </p>
-        </form>
+            {/* PASSWORD BLOCK */}
+            <div className="register-input-group">
+              <label className="register-field-label">Password</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Min 6 characters"
+                className="register-input"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* ROLE SELECTION BLOCK */}
+            <div className="register-input-group">
+              <label className="register-field-label">Join As</label>
+              <select
+                name="role"
+                className="register-select"
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="candidate">Candidate</option>
+                <option value="recruiter">Recruiter</option>
+              </select>
+            </div>
+
+            <button type="submit" className="register-submit-btn" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account"}
+            </button>
+
+            <p className="register-bottom-text">
+              Already have an account?{" "}
+              <span onClick={() => navigate("/login")}>Login</span>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

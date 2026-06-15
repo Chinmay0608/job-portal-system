@@ -1,197 +1,157 @@
-/* ==========================
-   PAGE
-========================== */
+/* ==========================================
+   FLUSH TOP WELLFOUND SPECIFICATION (RICH PALETTE)
+========================================== */
 
-.legal-page {
-  background: #f8fafc;
+.wf-legal-root {
+  background: #f8fafc; /* Rich premium warm off-white canvas base */
   min-height: 100vh;
-  padding: 50px 40px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-/* ==========================
-   WRAPPER
-========================== */
-
-.legal-wrapper {
-  max-width: 1250px;
-  margin: auto;
-
+.wf-legal-grid {
+  max-width: 1200px;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 270px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 32px;
-
+  padding: 24px 24px 60px; /* Snug top grid padding */
   align-items: start;
 }
 
-/* ==========================
-   SIDEBAR
-========================== */
+/* ==========================================
+   SIDEBAR NAV DESIGN
+========================================== */
 
-.legal-sidebar {
-  width: 270px;
-  min-width: 270px;
-
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-
+.wf-legal-sidebar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0; /* Crisp soft border accent */
+  border-radius: 6px;
   position: sticky;
-  top: 100px;
+  top: 100px; /* Clean tracking line beneath header navbar height */
   overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
 }
 
-.legal-sidebar h3 {
-  padding: 24px;
-  font-size: 1.7rem;
-  font-weight: 800;
-  color: #020617;
-
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* Links */
-
-.legal-link {
+.wf-sidebar-item {
   display: block;
-  padding: 20px 24px;
-
+  padding: 14px 20px;
   text-decoration: none;
   color: #475569;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
-
-  border-bottom: 1px solid #e5e7eb;
-  transition: 0.2s ease;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  transition: all 0.15s ease;
 }
 
-.legal-link:hover {
-  background: #f8fafc;
-  color: #020617;
+/* Row shading rows */
+.wf-sidebar-item:nth-child(even) {
+  background: #f8fafc; /* Alternating subtle tinted backdrop rows */
 }
 
-/* Active */
+.wf-sidebar-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
 
-.legal-link.active {
-  background: #020617;
-  color: white;
+/* Selected Highlight State Line */
+.wf-sidebar-item.active {
+  background: #ffffff !important;
+  color: #0f172a !important;
   font-weight: 700;
+  border-left: 4px solid #0f172a; /* Flat solid modern accent tag */
+  padding-left: 16px;
 }
 
-.legal-link:last-child {
+.wf-sidebar-item:last-child {
   border-bottom: none;
 }
 
-/* ==========================
-   CONTENT
-========================== */
+/* ==========================================
+   MAIN DOCUMENT PANEL
+========================================== */
 
-.legal-content {
-  min-width: 0; /* VERY IMPORTANT */
-
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-
-  padding: 45px 60px;
-
-  overflow: hidden;
+.wf-legal-panel {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 40px 48px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
-/* Main Title */
-
-.legal-content h1 {
-  font-size: clamp(2.8rem, 4vw, 4rem);
-  font-weight: 900;
-  letter-spacing: -2px;
-  color: #020617;
-  margin-bottom: 20px;
-
-  line-height: 1;
-  word-break: break-word;
-}
-
-/* Divider */
-
-.legal-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin-bottom: 42px;
-}
-
-/* ==========================
-   BODY
-========================== */
-
-.legal-body {
-  max-width: 760px;
-}
-
-/* Headings */
-
-.legal-content h2 {
-  font-size: 1.8rem;
+.wf-panel-title {
+  font-size: 1.85rem;
   font-weight: 800;
-  color: #020617;
-
-  margin-top: 42px;
-  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+  line-height: 1.1;
 }
 
-/* Paragraphs */
-
-.legal-content p {
-  font-size: 1.05rem;
-  line-height: 1.9;
-  color: #475569;
-  margin-bottom: 18px;
+.wf-panel-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin-bottom: 24px;
 }
 
-/* Lists */
+/* ==========================================
+   INTERNAL CORE TYPOGRAPHY
+========================================== */
 
-.legal-content ul {
-  padding-left: 24px;
-  margin-bottom: 22px;
+.wf-panel-body h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 24px 0 10px 0;
 }
 
-.legal-content li {
-  color: #475569;
-  margin-bottom: 12px;
-  line-height: 1.8;
+.wf-panel-body p {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #334155; /* Refined soft slate body text */
+  margin-bottom: 14px;
 }
 
-/* Effective Date */
+.wf-panel-body ul {
+  padding-left: 20px;
+  margin-bottom: 14px;
+}
+
+.wf-panel-body li {
+  color: #334155;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
 
 .effective-date {
   color: #64748b;
+  font-size: 0.88rem;
   font-style: italic;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
-/* ==========================
-   RESPONSIVE
-========================== */
+/* ==========================================
+   BREAKPOINTS
+========================================== */
 
 @media (max-width: 900px) {
-  .legal-page {
-    padding: 30px 20px;
+  .wf-legal-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 16px;
   }
 
-  .legal-wrapper {
-    flex-direction: column;
-  }
-
-  .legal-sidebar {
-    width: 100%;
-    min-width: unset;
+  .wf-legal-sidebar {
     position: static;
-  }
-
-  .legal-content {
     width: 100%;
-    padding: 36px 24px;
   }
 
-  .legal-content h1 {
-    font-size: 2.6rem;
+  .wf-legal-panel {
+    padding: 24px 20px;
   }
 }

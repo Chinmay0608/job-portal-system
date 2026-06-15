@@ -1,24 +1,17 @@
 import { NavLink } from "react-router-dom";
-import "../Styles/pages/Legal.css";
+import "../Styles/components/Legal.css";
 
-function LegalLayout({
-  title,
-  children,
-}) {
+function LegalLayout({ title, children }) {
   return (
-    <div className="legal-page">
-      <div className="legal-wrapper">
+    <div className="wf-legal-root">
+      <div className="wf-legal-grid">
 
-        {/* Sidebar */}
-        <aside className="legal-sidebar">
-          <h3>Legal</h3>
-
+        {/* Minimal Wellfound Sidebar Layout */}
+        <aside className="wf-legal-sidebar">
           <NavLink
             to="/privacy-policy"
             className={({ isActive }) =>
-              isActive
-                ? "legal-link active"
-                : "legal-link"
+              isActive ? "wf-sidebar-item active" : "wf-sidebar-item"
             }
           >
             Privacy Policy
@@ -27,9 +20,7 @@ function LegalLayout({
           <NavLink
             to="/terms-of-use"
             className={({ isActive }) =>
-              isActive
-                ? "legal-link active"
-                : "legal-link"
+              isActive ? "wf-sidebar-item active" : "wf-sidebar-item"
             }
           >
             Terms of Use
@@ -38,9 +29,7 @@ function LegalLayout({
           <NavLink
             to="/cookie-policy"
             className={({ isActive }) =>
-              isActive
-                ? "legal-link active"
-                : "legal-link"
+              isActive ? "wf-sidebar-item active" : "wf-sidebar-item"
             }
           >
             Cookie Policy
@@ -49,22 +38,18 @@ function LegalLayout({
           <NavLink
             to="/security"
             className={({ isActive }) =>
-              isActive
-                ? "legal-link active"
-                : "legal-link"
+              isActive ? "wf-sidebar-item active" : "wf-sidebar-item"
             }
           >
             Security
           </NavLink>
         </aside>
 
-        {/* Content */}
-        <main className="legal-content">
-          <h1>{title}</h1>
-
-          <div className="legal-divider"></div>
-
-          <div className="legal-body">
+        {/* Content Box */}
+        <main className="wf-legal-panel">
+          <h1 className="wf-panel-title">{title}</h1>
+          <div className="wf-panel-divider"></div>
+          <div className="wf-panel-body">
             {children}
           </div>
         </main>

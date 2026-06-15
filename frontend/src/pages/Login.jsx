@@ -7,53 +7,11 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import "../Styles/pages/Login.css";
 
-function MosaicPanel() {
-  return (
-    <div className="floating-mosaic">
-
-      <div className="floating-card card-1 skill-card">
-        <span>💻</span>
-        <h4>Frontend</h4>
-      </div>
-
-      <div className="floating-card card-2 image-card">
-        <img
-          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500"
-          alt="candidate"
-        />
-      </div>
-
-      <div className="floating-card card-3 skill-card">
-        <span>🌍</span>
-        <h4>Remote Jobs</h4>
-      </div>
-
-      <div className="floating-card card-4 image-card">
-        <img
-          src="https://images.unsplash.com/photo-1500648767791-00dcc994a43d?w=500"
-          alt="candidate"
-        />
-      </div>
-
-      <div className="floating-card card-5 skill-card">
-        <span>📄</span>
-        <h4>Resume Builder</h4>
-      </div>
-
-      <div className="floating-card card-6 skill-card">
-        <span>🏢</span>
-        <h4>Recruiters</h4>
-      </div>
-
-    </div>
-  );
-}
-
 function Login() {
   const navigate = useNavigate();
-  const [email,         setEmail]         = useState("");
-  const [password,      setPassword]      = useState("");
-  const [loading,       setLoading]       = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const redirectUser = (user) => {
@@ -81,12 +39,12 @@ function Login() {
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      const result   = await signInWithPopup(auth, provider);
-      const user     = result.user;
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ name: user.displayName, email: user.email }),
+        body: JSON.stringify({ name: user.displayName, email: user.email }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Login Failed");
@@ -104,15 +62,10 @@ function Login() {
 
   return (
     <div className="login-page">
-
-      {/* LEFT — Form */}
+      {/* LEFT — FORM CONTROL VIEWPORT */}
       <div className="login-form-panel">
         <div className="login-form-inner">
-
-          <div
-            className="login-brand"
-            onClick={() => navigate("/")}
-          >
+          <div className="login-brand" onClick={() => navigate("/")}>
             <span className="login-brand-dot">Skill</span>Bridge
           </div>
 
@@ -120,7 +73,6 @@ function Login() {
           <p className="login-subtitle">Find the job made for you!</p>
 
           <form onSubmit={handleSubmit} className="login-form">
-
             <button
               type="button"
               className="login-google-btn"
@@ -135,44 +87,55 @@ function Login() {
               <span>or Login with Email</span>
             </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              className="login-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            {/* EMAIL BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
+            <div className="login-input-group">
+              <label className="login-field-label">Email Address</label>
+              <input
+                type="email"
+                placeholder="mail@website.com"
+                className="login-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              className="login-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            {/* PASSWORD BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
+            <div className="login-input-group">
+              <label className="login-field-label">Password</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                className="login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
             <p className="login-forgot">
-              <span onClick={() => navigate("/forgot-password")}>Forgot password?</span>
+              <span onClick={() => navigate("/forgot-password")}>
+                Forgot password?
+              </span>
             </p>
 
             <button type="submit" className="login-submit-btn" disabled={loading}>
               {loading ? "Logging in..." : "Log in"}
             </button>
 
+            {/* STYLED TEXT SWITCHER SPAN */}
             <p className="login-bottom-text">
               Not registered?{" "}
-              <span onClick={() => navigate("/register")}>Create an Account</span>
+              <span onClick={() => navigate("/register")}>
+                Create an Account
+              </span>
             </p>
-
           </form>
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
+      {/* RIGHT PANEL — ART SYSTEM CONTAINER */}
       <div className="login-art-panel">
-
         <div className="bg-circle bg-circle-1"></div>
         <div className="bg-circle bg-circle-2"></div>
 
@@ -201,7 +164,6 @@ function Login() {
           </p>
 
           <div className="stats-container">
-
             <div className="stats-card">
               <div className="stats-icon pink">💼</div>
               <h3>50K+</h3>
@@ -219,7 +181,6 @@ function Login() {
               <h3>20K+</h3>
               <span>Candidates</span>
             </div>
-
           </div>
         </div>
       </div>
