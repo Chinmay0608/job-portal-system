@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
 import ProtectedRoute from "./Components/ProtectedRoute";
+import ScrollToTop from "./Components/ScrollToTop";
 
 import CandidateDashboard from "./pages/CandidateDashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
@@ -156,6 +157,7 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AppContent />
     </BrowserRouter>
   );

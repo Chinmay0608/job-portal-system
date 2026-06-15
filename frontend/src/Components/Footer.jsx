@@ -1,16 +1,65 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../Styles/components/Footer.css";
 
 function Footer() {
+  const navigate = useNavigate();
+
+  const delayedNavigate = (path) => {
+    setTimeout(() => {
+      navigate(path);
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }, 100);
+    }, 500);
+  };
+
+  const handleJobNavigation = (type) => {
+    const token = localStorage.getItem("token");
+
+    setTimeout(() => {
+      if (!token) {
+        navigate("/login", {
+          state: {
+            redirectAfterLogin:
+              "/candidate-dashboard",
+            roleType: type,
+          },
+        });
+      } else {
+        navigate("/candidate-dashboard", {
+          state: {
+            roleType: type,
+          },
+        });
+      }
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }, 100);
+    }, 1000);
+  };
+
   return (
     <footer className="site-footer">
       <div className="footer-inner">
 
         {/* Brand */}
         <div className="footer-brand-col">
-          <Link to="/" className="footer-logo">
+          <button
+            className="footer-logo"
+            onClick={() =>
+              delayedNavigate("/")
+            }
+          >
             SkillBridge
-          </Link>
+          </button>
 
           <p className="footer-tagline">
             Connecting talent and opportunity.
@@ -23,7 +72,6 @@ function Footer() {
               href="https://twitter.com"
               target="_blank"
               rel="noreferrer"
-              aria-label="Twitter"
               className="footer-social-link"
             >
               𝕏
@@ -33,7 +81,6 @@ function Footer() {
               href="https://linkedin.com"
               target="_blank"
               rel="noreferrer"
-              aria-label="LinkedIn"
               className="footer-social-link"
             >
               in
@@ -43,7 +90,6 @@ function Footer() {
               href="https://github.com"
               target="_blank"
               rel="noreferrer"
-              aria-label="GitHub"
               className="footer-social-link"
             >
               ⌥
@@ -58,88 +104,176 @@ function Footer() {
           <div className="footer-col">
             <h4>For Candidates</h4>
 
-            <Link to="/candidate-dashboard">
+            <button
+              onClick={() =>
+                handleJobNavigation("all")
+              }
+            >
               Browse Jobs
-            </Link>
+            </button>
 
-            <Link to="/candidate-dashboard">
+            <button
+              onClick={() =>
+                handleJobNavigation("remote")
+              }
+            >
               Remote Roles
-            </Link>
+            </button>
 
-            <Link to="/salary-data">
+            <button
+              onClick={() =>
+                delayedNavigate("/salary-data")
+              }
+            >
               Salary Data
-            </Link>
+            </button>
 
-            <Link to="/get-featured">
+            <button
+              onClick={() =>
+                delayedNavigate("/get-featured")
+              }
+            >
               Get Featured
-            </Link>
+            </button>
           </div>
 
           {/* Companies */}
           <div className="footer-col">
             <h4>For Companies</h4>
 
-            {/* Redirected because page doesn't exist */}
-            <Link to="/recruiter-dashboard">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/recruiter-dashboard"
+                )
+              }
+            >
               Post a Job
-            </Link>
+            </button>
 
-            <Link to="/ai-recruiting">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/ai-recruiting"
+                )
+              }
+            >
               AI Recruiting
-            </Link>
+            </button>
 
-            {/* Redirected because page doesn't exist */}
-            <Link to="/register">
+            <button
+              onClick={() =>
+                delayedNavigate("/register")
+              }
+            >
               Pricing
-            </Link>
+            </button>
 
-            <Link to="/success-stories">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/success-stories"
+                )
+              }
+            >
               Success Stories
-            </Link>
+            </button>
           </div>
 
           {/* Company */}
           <div className="footer-col">
             <h4>Company</h4>
 
-            <Link to="/about">About</Link>
-            <Link to="/blog">Blog</Link>
-            <Link to="/careers">Careers</Link>
+            <button
+              onClick={() =>
+                delayedNavigate("/about")
+              }
+            >
+              About
+            </button>
 
-            <Link to="/help-center">
+            <button
+              onClick={() =>
+                delayedNavigate("/blog")
+              }
+            >
+              Blog
+            </button>
+
+            <button
+              onClick={() =>
+                delayedNavigate("/careers")
+              }
+            >
+              Careers
+            </button>
+
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/help-center"
+                )
+              }
+            >
               Help Center
-            </Link>
+            </button>
           </div>
 
           {/* Legal */}
           <div className="footer-col">
             <h4>Legal</h4>
 
-            <Link to="/privacy-policy">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/privacy-policy"
+                )
+              }
+            >
               Privacy Policy
-            </Link>
+            </button>
 
-            <Link to="/terms-of-use">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/terms-of-use"
+                )
+              }
+            >
               Terms of Use
-            </Link>
+            </button>
 
-            <Link to="/cookie-policy">
+            <button
+              onClick={() =>
+                delayedNavigate(
+                  "/cookie-policy"
+                )
+              }
+            >
               Cookie Policy
-            </Link>
+            </button>
 
-            <Link to="/security">
+            <button
+              onClick={() =>
+                delayedNavigate("/security")
+              }
+            >
               Security
-            </Link>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Bottom */}
       <div className="footer-bottom">
-        <span>© 2026 SkillBridge. All rights reserved.</span>
+        <span>
+          © 2026 SkillBridge.
+          All rights reserved.
+        </span>
 
         <span className="footer-bottom-right">
-          Made with ❤️ for builders everywhere
+          Made with ❤️ for builders
+          everywhere
         </span>
       </div>
     </footer>
