@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRecruiterApplications, updateStatus } from "../Services/jobService";
 import toast from "react-hot-toast";
-import "./RecruiterApplications.css";
+import "../Styles/pages/RecruiterApplications.css";
 
 function RecruiterApplications() {
   const [applications, setApplications] = useState([]);

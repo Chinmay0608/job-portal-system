@@ -1,0 +1,295 @@
+/* ==========================
+   SALARY DATA PAGE
+========================== */
+
+.salary-page {
+  width: 100%;
+  background: #fafaf9;
+  color: #0d1117;
+}
+
+/* ==========================
+   HERO
+========================== */
+
+.salary-hero {
+  text-align: center;
+  padding: 120px 80px 90px;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #f7f7f5
+  );
+}
+
+.salary-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.salary-hero h1 {
+  font-size: clamp(3rem, 5vw, 5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 24px;
+}
+
+.salary-hero p {
+  max-width: 700px;
+  margin: auto;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #6b7280;
+  margin-bottom: 36px;
+}
+
+/* SEARCH */
+
+.salary-search {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  max-width: 650px;
+  margin: auto;
+}
+
+.salary-search input {
+  flex: 1;
+  height: 58px;
+  padding: 0 20px;
+  border-radius: 16px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  outline: none;
+  font-size: 15px;
+}
+
+.salary-search input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+.salary-search button {
+  border: none;
+  background: #0d1117;
+  color: white;
+  padding: 0 28px;
+  border-radius: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.salary-search button:hover {
+  background: #1f2937;
+}
+
+/* ==========================
+   SALARY SECTION
+========================== */
+
+.salary-section {
+  padding: 90px 80px;
+}
+
+.salary-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.salary-header h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 12px;
+}
+
+.salary-header p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+/* GRID */
+
+.salary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.salary-card {
+  background: white;
+  border-radius: 28px;
+  padding: 32px;
+  border: 1px solid #ececec;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  transition: 0.25s ease;
+}
+
+.salary-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 15px 30px rgba(0,0,0,0.05);
+}
+
+.salary-role h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.salary-role span {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.salary-range {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+/* ==========================
+   INSIGHTS
+========================== */
+
+.salary-insights {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.salary-insights h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 50px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.insight-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 30px;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.06);
+}
+
+.insight-card span {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 18px;
+}
+
+.insight-card h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.insight-card p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   CTA
+========================== */
+
+.salary-cta {
+  background: #0d1117;
+  color: white;
+  text-align: center;
+  padding: 90px 40px;
+}
+
+.salary-cta h2 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.salary-cta p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 32px;
+}
+
+.salary-cta button {
+  border: none;
+  background: white;
+  color: #0d1117;
+  padding: 16px 34px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.salary-cta button:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1024px) {
+  .salary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .salary-section,
+  .salary-insights {
+    padding: 70px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .salary-hero {
+    padding: 100px 24px 70px;
+  }
+
+  .salary-search {
+    flex-direction: column;
+  }
+
+  .insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .salary-header h2,
+  .salary-insights h2 {
+    font-size: 2.2rem;
+  }
+
+  .salary-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

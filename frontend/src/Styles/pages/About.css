@@ -1,0 +1,256 @@
+/* ==========================
+   ABOUT PAGE
+========================== */
+
+.about-page {
+  width: 100%;
+  background: #fafaf9;
+  color: #0d1117;
+}
+
+/* ==========================
+   HERO
+========================== */
+
+.about-hero {
+  padding: 120px 80px 90px;
+  text-align: center;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #f7f7f5
+  );
+}
+
+.about-content {
+  max-width: 760px;
+  margin: auto;
+}
+
+.about-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.about-hero h1 {
+  font-size: clamp(3rem, 5vw, 5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 24px;
+}
+
+.about-hero p {
+  font-size: 1.1rem;
+  color: #6b7280;
+  line-height: 1.8;
+  max-width: 650px;
+  margin: auto;
+}
+
+/* ==========================
+   ABOUT SECTION
+========================== */
+
+.about-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  padding: 90px 80px;
+}
+
+.about-card {
+  background: white;
+  border-radius: 30px;
+  padding: 40px;
+  border: 1px solid #ececec;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.04);
+}
+
+.about-card h2 {
+  font-size: 2rem;
+  margin-bottom: 18px;
+  font-weight: 800;
+}
+
+.about-card p {
+  color: #6b7280;
+  line-height: 1.9;
+  font-size: 1rem;
+}
+
+/* ==========================
+   FEATURES
+========================== */
+
+.features-section {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.features-section h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 50px;
+  letter-spacing: -2px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.feature-box {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 30px;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+}
+
+.feature-box:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.06);
+}
+
+.feature-box span {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.feature-box h3 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  font-weight: 800;
+}
+
+.feature-box p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   STATS
+========================== */
+
+.about-stats {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px 80px 90px;
+}
+
+.stat-box {
+  background: white;
+  border-radius: 28px;
+  padding: 42px 60px;
+  text-align: center;
+  min-width: 220px;
+  border: 1px solid #ececec;
+}
+
+.stat-box h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.stat-box p {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+/* ==========================
+   CTA
+========================== */
+
+.about-cta {
+  text-align: center;
+  background: #0d1117;
+  color: white;
+  padding: 90px 40px;
+}
+
+.about-cta h2 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 20px;
+  letter-spacing: -2px;
+}
+
+.about-cta p {
+  max-width: 650px;
+  margin: auto;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.8;
+  margin-bottom: 36px;
+}
+
+.about-cta button {
+  border: none;
+  background: white;
+  color: #0d1117;
+  padding: 16px 34px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.about-cta button:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1024px) {
+  .about-section {
+    grid-template-columns: 1fr;
+    padding: 70px 32px;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .about-stats {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 100px 24px 70px;
+  }
+
+  .features-section,
+  .about-stats {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-hero h1 {
+    letter-spacing: -2px;
+  }
+
+  .stat-box {
+    width: 100%;
+  }
+}

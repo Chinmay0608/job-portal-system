@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import "./Profile.css";
+import "../Styles/pages/Profile.css";
 import { updateProfile } from "../Services/jobService";
 
 function Profile() {

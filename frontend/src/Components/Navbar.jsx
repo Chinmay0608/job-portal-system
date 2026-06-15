@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import "./navbar.css";
+import "../Styles/components/navbar.css";
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

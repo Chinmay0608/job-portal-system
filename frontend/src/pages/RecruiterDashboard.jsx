@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications } from "../Services/jobService";
 import toast from "react-hot-toast";
-import "./RecruiterDashboard.css";
+import "../Styles/pages/RecruiterDashboard.css";
 
 const initialFormState = {
   title: "",

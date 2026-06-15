@@ -1,0 +1,335 @@
+/* ==========================
+   SUCCESS STORIES PAGE
+========================== */
+
+.success-page {
+  width: 100%;
+  background: #fafaf9;
+  color: #0d1117;
+}
+
+/* ==========================
+   HERO
+========================== */
+
+.success-hero {
+  text-align: center;
+  padding: 120px 80px 90px;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #f7f7f5
+  );
+}
+
+.success-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 99px;
+  background: #eef2ff;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.success-hero h1 {
+  font-size: clamp(3rem, 5vw, 5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 24px;
+}
+
+.success-hero p {
+  max-width: 700px;
+  margin: auto;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #6b7280;
+  margin-bottom: 36px;
+}
+
+/* ==========================
+   FEATURED STORY
+========================== */
+
+.featured-story {
+  padding: 90px 80px;
+}
+
+.featured-card {
+  background: white;
+  border-radius: 36px;
+  overflow: hidden;
+  border: 1px solid #ececec;
+
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  align-items: center;
+
+  box-shadow: 0 20px 50px rgba(0,0,0,0.04);
+}
+
+/* Featured Image */
+.featured-img {
+  width: 90%;
+  height: 400px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Right Content */
+.featured-content {
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured-content span {
+  color: #2563eb;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.featured-content h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+}
+
+.featured-content p {
+  color: #6b7280;
+  line-height: 1.9;
+  margin-bottom: 30px;
+}
+
+.story-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #059669;
+  font-weight: 700;
+}
+
+/* ==========================
+   STORIES GRID
+========================== */
+
+.stories-section {
+  padding: 90px 80px;
+}
+
+.stories-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.stories-header h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 14px;
+}
+
+.stories-header p {
+  color: #6b7280;
+}
+
+.stories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.story-card {
+  background: white;
+  border-radius: 24px; /* Slightly lowered to match the exact pill curve of mockup */
+  overflow: hidden;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+  
+  display: flex;
+  flex-direction: column;
+}
+
+.story-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+}
+
+.story-card img {
+  width: 100%;
+  height: 280px;           
+  object-fit: cover;
+  object-position: top center; 
+  display: block;
+}
+
+.story-card-content {
+  padding: 24px;
+  text-align: left; /* Ensures your textual flow starts cleanly from left margin */
+}
+
+.story-card-content span {
+  display: inline-block;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.story-card-content h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #0d1117;
+}
+
+.story-card-content p {
+  color: #6b7280;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+/* ==========================
+   IMPACT SECTION
+========================== */
+
+.impact-section {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.impact-section h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 50px;
+}
+
+.impact-grid {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.impact-card {
+  background: white;
+  border: 1px solid #ececec;
+  border-radius: 30px;
+
+  width: 240px;
+  padding: 42px 28px;
+}
+
+.impact-card h3 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.impact-card p {
+  color: #6b7280;
+}
+
+/* ==========================
+   CTA
+========================== */
+
+.success-cta {
+  background: #0d1117;
+  color: white;
+  text-align: center;
+  padding: 90px 40px;
+}
+
+.success-cta h2 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.success-cta p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 32px;
+}
+
+.success-cta button {
+  border: none;
+  background: white;
+  color: #0d1117;
+  padding: 16px 34px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.success-cta button:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================
+   RESPONSIVE / MEDIA QUERIES
+========================== */
+
+@media (max-width: 1024px) {
+  .featured-card {
+    grid-template-columns: 1fr;
+  }
+  
+  .featured-img {
+    height: 330px;
+    object-position: center top;
+  }
+
+  .stories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stories-section,
+  .featured-story,
+  .impact-section {
+    padding: 70px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .success-hero {
+    padding: 100px 24px 70px;
+  }
+
+  .stories-header h2,
+  .impact-section h2 {
+    font-size: 2.2rem;
+  }
+
+  .featured-story {
+    padding: 70px 24px;
+  }
+
+  .featured-img {
+    height: 240px;
+  }
+
+  .featured-content {
+    padding: 32px 24px;
+  }
+
+  .featured-content h2 {
+    font-size: 2rem;
+  }
+}

@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
 import ProtectedRoute from "./Components/ProtectedRoute";
+
 import CandidateDashboard from "./pages/CandidateDashboard";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import RecruiterApplications from "./pages/RecruiterApplications";
@@ -14,14 +16,32 @@ import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
+import About from "./pages/About";
+import Blog from "./pages/Blog";
+import Careers from "./pages/Careers";
+import HelpCenter from "./pages/HelpCenter";
+
+import SalaryData from "./pages/SalaryData";
+import GetFeatured from "./pages/GetFeatured";
+
+import AiRecruiting from "./pages/AiRecruiting";
+import SuccessStories from "./pages/SuccessStories";
+
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import CookiePolicy from "./pages/CookiePolicy";
+import Security from "./pages/Security";
+
 function AppContent() {
   const location = useLocation();
 
-  const hideLayout = [
-    "/login",
-    "/register",
-    "/forgot-password",
-  ].includes(location.pathname) || location.pathname.startsWith("/reset-password");
+  const hideLayout =
+    [
+      "/login",
+      "/register",
+      "/forgot-password",
+    ].includes(location.pathname) ||
+    location.pathname.startsWith("/reset-password");
 
   return (
     <>
@@ -33,7 +53,10 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
 
         {/* Candidate Routes */}
         <Route
@@ -44,6 +67,7 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/my-applications"
           element={
@@ -62,6 +86,7 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/recruiter-applications"
           element={
@@ -81,7 +106,45 @@ function AppContent() {
           }
         />
 
-        {/* 404 Route */}
+        {/* Footer Pages */}
+        <Route path="/about" element={<About />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/help-center" element={<HelpCenter />} />
+
+        <Route
+          path="/salary-data"
+          element={<SalaryData />}
+        />
+        <Route
+          path="/get-featured"
+          element={<GetFeatured />}
+        />
+
+        <Route
+          path="/ai-recruiting"
+          element={<AiRecruiting />}
+        />
+        <Route
+          path="/success-stories"
+          element={<SuccessStories />}
+        />
+
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
+        />
+        <Route
+          path="/terms-of-use"
+          element={<TermsOfUse />}
+        />
+        <Route
+          path="/cookie-policy"
+          element={<CookiePolicy />}
+        />
+        <Route path="/security" element={<Security />} />
+
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
 

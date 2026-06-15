@@ -1,0 +1,345 @@
+/* ==========================
+   AI RECRUITING PAGE
+========================== */
+
+.ai-page {
+  width: 100%;
+  background: #fafaf9;
+  color: #0d1117;
+}
+
+/* ==========================
+   HERO
+========================== */
+
+.ai-hero {
+  padding: 120px 80px 90px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 60px;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #f7f7f5
+  );
+}
+
+.ai-hero-content {
+  max-width: 650px;
+}
+
+.ai-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.ai-hero h1 {
+  font-size: clamp(3rem, 5vw, 5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 24px;
+}
+
+.ai-hero p {
+  font-size: 1.05rem;
+  color: #6b7280;
+  line-height: 1.8;
+  margin-bottom: 34px;
+}
+
+/* BUTTONS */
+
+.ai-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 16px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.primary-btn {
+  background: #0d1117;
+  color: white;
+}
+
+.primary-btn:hover {
+  background: #1f2937;
+}
+
+.secondary-btn {
+  background: white;
+  border: 1px solid #e5e7eb;
+}
+
+.secondary-btn:hover {
+  border-color: #d1d5db;
+}
+
+/* HERO CARD */
+
+.ai-hero-card {
+  width: 320px;
+  background: white;
+  border-radius: 32px;
+  padding: 40px;
+  text-align: center;
+  border: 1px solid #ececec;
+  box-shadow:
+    0 15px 40px rgba(0,0,0,0.05);
+}
+
+.ai-hero-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.score-circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #60a5fa
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: auto;
+  margin-bottom: 28px;
+}
+
+.score-circle span {
+  font-size: 2.5rem;
+  color: white;
+  font-weight: 900;
+}
+
+.ai-hero-card p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   FEATURES
+========================== */
+
+.ai-features {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.ai-features h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 50px;
+  letter-spacing: -2px;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.ai-card {
+  background: white;
+  border-radius: 28px;
+  padding: 38px 30px;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+}
+
+.ai-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.06);
+}
+
+.ai-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.ai-card h3 {
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+  font-weight: 800;
+}
+
+.ai-card p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   PROCESS
+========================== */
+
+.ai-process {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.ai-process h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 50px;
+}
+
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.process-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px;
+  border: 1px solid #ececec;
+}
+
+.process-card span {
+  width: 60px;
+  height: 60px;
+  background: #0d1117;
+  color: white;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 800;
+  margin: auto;
+  margin-bottom: 20px;
+}
+
+.process-card h3 {
+  margin-bottom: 12px;
+}
+
+.process-card p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   STATS
+========================== */
+
+.ai-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 30px 80px 90px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 60px;
+  min-width: 240px;
+  text-align: center;
+  border: 1px solid #ececec;
+}
+
+.stat-card h2 {
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.stat-card p {
+  color: #6b7280;
+}
+
+/* ==========================
+   CTA
+========================== */
+
+.ai-cta {
+  background: #0d1117;
+  color: white;
+  text-align: center;
+  padding: 90px 40px;
+}
+
+.ai-cta h2 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.ai-cta p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 32px;
+}
+
+.ai-cta button {
+  border: none;
+  background: white;
+  color: #0d1117;
+  padding: 16px 34px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1024px) {
+  .ai-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 90px 32px;
+  }
+
+  .ai-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .process-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-stats {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-features,
+  .ai-process {
+    padding: 70px 24px;
+  }
+
+  .stat-card {
+    width: 100%;
+  }
+}

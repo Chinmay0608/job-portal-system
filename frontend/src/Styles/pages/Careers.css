@@ -1,0 +1,292 @@
+/* ==========================
+   CAREERS PAGE
+========================== */
+
+.careers-page {
+  width: 100%;
+  background: #fafaf9;
+  color: #0d1117;
+}
+
+/* ==========================
+   HERO
+========================== */
+
+.careers-hero {
+  text-align: center;
+  padding: 120px 80px 90px;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #f7f7f5
+  );
+}
+
+.careers-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.careers-hero h1 {
+  font-size: clamp(3rem, 5vw, 5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -3px;
+  margin-bottom: 24px;
+}
+
+.careers-hero p {
+  max-width: 700px;
+  margin: auto;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #6b7280;
+  margin-bottom: 36px;
+}
+
+.careers-btn {
+  border: none;
+  background: #0d1117;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.careers-btn:hover {
+  background: #1f2937;
+  transform: translateY(-2px);
+}
+
+/* ==========================
+   WHY JOIN
+========================== */
+
+.why-join-section {
+  padding: 90px 80px;
+  text-align: center;
+}
+
+.why-join-section h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 50px;
+  letter-spacing: -2px;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.benefit-card {
+  background: white;
+  border-radius: 28px;
+  padding: 40px 30px;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.06);
+}
+
+.benefit-card span {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 18px;
+}
+
+.benefit-card h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.benefit-card p {
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ==========================
+   JOB OPENINGS
+========================== */
+
+.openings-section {
+  padding: 90px 80px;
+}
+
+.openings-section h2 {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 50px;
+}
+
+.openings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.job-card {
+  background: white;
+  border-radius: 28px;
+  padding: 32px;
+  border: 1px solid #ececec;
+  transition: 0.25s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 15px 30px rgba(0,0,0,0.05);
+}
+
+.job-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.job-top h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.job-type {
+  background: #eef2ff;
+  color: #2563eb;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.job-location {
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.job-desc {
+  color: #6b7280;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.apply-btn {
+  border: none;
+  background: #0d1117;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.apply-btn:hover {
+  background: #1f2937;
+}
+
+/* ==========================
+   CULTURE
+========================== */
+
+.culture-section {
+  text-align: center;
+  padding: 90px 80px;
+}
+
+.culture-section h2 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 24px;
+}
+
+.culture-section p {
+  max-width: 760px;
+  margin: auto;
+  line-height: 1.9;
+  color: #6b7280;
+}
+
+/* ==========================
+   CTA
+========================== */
+
+.careers-cta {
+  background: #0d1117;
+  color: white;
+  text-align: center;
+  padding: 90px 40px;
+}
+
+.careers-cta h2 {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 18px;
+}
+
+.careers-cta p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 32px;
+}
+
+.careers-cta button {
+  border: none;
+  background: white;
+  color: #0d1117;
+  padding: 16px 34px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1024px) {
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .openings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .why-join-section,
+  .openings-section,
+  .culture-section {
+    padding: 70px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .careers-hero {
+    padding: 100px 24px 70px;
+  }
+
+  .culture-section h2,
+  .openings-section h2,
+  .why-join-section h2 {
+    font-size: 2.2rem;
+  }
+}

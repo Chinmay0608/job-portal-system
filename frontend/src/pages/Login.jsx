@@ -5,32 +5,67 @@ import { auth, provider } from "../firebase";
 import { loginUser } from "../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import careerImage from "../assets/undraw_career-progress_vfq5.svg";
+import "../Styles/pages/Login.css";
+
+function MosaicPanel() {
+  return (
+    <div className="floating-mosaic">
+
+      <div className="floating-card card-1 skill-card">
+        <span>💻</span>
+        <h4>Frontend</h4>
+      </div>
+
+      <div className="floating-card card-2 image-card">
+        <img
+          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500"
+          alt="candidate"
+        />
+      </div>
+
+      <div className="floating-card card-3 skill-card">
+        <span>🌍</span>
+        <h4>Remote Jobs</h4>
+      </div>
+
+      <div className="floating-card card-4 image-card">
+        <img
+          src="https://images.unsplash.com/photo-1500648767791-00dcc994a43d?w=500"
+          alt="candidate"
+        />
+      </div>
+
+      <div className="floating-card card-5 skill-card">
+        <span>📄</span>
+        <h4>Resume Builder</h4>
+      </div>
+
+      <div className="floating-card card-6 skill-card">
+        <span>🏢</span>
+        <h4>Recruiters</h4>
+      </div>
+
+    </div>
+  );
+}
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
-
   const redirectUser = (user) => {
-    if (user?.role === "candidate") {
-      navigate("/candidate-dashboard");
-    } else {
-      navigate("/recruiter-dashboard");
-    }
+    if (user?.role === "candidate") navigate("/candidate-dashboard");
+    else navigate("/recruiter-dashboard");
   };
 
-  /* Normal Login */
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
       toast.success("Login successful");
@@ -43,24 +78,18 @@ function Login() {
     }
   };
 
-  /* Google Login */
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
+      const result   = await signInWithPopup(auth, provider);
+      const user     = result.user;
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: user.displayName, email: user.email }),
+        body:    JSON.stringify({ name: user.displayName, email: user.email }),
       });
-
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Google Login Failed");
-      }
-
+      if (!response.ok) throw new Error(data.message || "Google Login Failed");
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       toast.success("Google login successful");
@@ -74,78 +103,123 @@ function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-page">
-        {/* Left Side */}
-        <div className="auth-left">
-          <img src={careerImage} alt="career" className="auth-illustration" />
-          <h1 className="brand-heading">Find your next opportunity.</h1>
-          <p className="brand-text">
-            Discover jobs, connect with recruiters, and build the career you deserve.
-          </p>
+    <div className="login-page">
 
-          <div className="stats-row">
-            <div className="stat-card"><h3>50K+</h3><p>Jobs</p></div>
-            <div className="stat-card"><h3>1K+</h3><p>Recruiters</p></div>
-            <div className="stat-card"><h3>20K+</h3><p>Candidates</p></div>
+      {/* LEFT — Form */}
+      <div className="login-form-panel">
+        <div className="login-form-inner">
+
+          <div
+            className="login-brand"
+            onClick={() => navigate("/")}
+          >
+            <span className="login-brand-dot">Skill</span>Bridge
           </div>
+
+          <h1 className="login-title">Login</h1>
+          <p className="login-subtitle">Find the job made for you!</p>
+
+          <form onSubmit={handleSubmit} className="login-form">
+
+            <button
+              type="button"
+              className="login-google-btn"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading}
+            >
+              <FcGoogle size={20} />
+              {googleLoading ? "Please wait..." : "Log in with Google"}
+            </button>
+
+            <div className="login-divider">
+              <span>or Login with Email</span>
+            </div>
+
+            <input
+              type="email"
+              placeholder="Email"
+              className="login-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              className="login-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <p className="login-forgot">
+              <span onClick={() => navigate("/forgot-password")}>Forgot password?</span>
+            </p>
+
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? "Logging in..." : "Log in"}
+            </button>
+
+            <p className="login-bottom-text">
+              Not registered?{" "}
+              <span onClick={() => navigate("/register")}>Create an Account</span>
+            </p>
+
+          </form>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="login-art-panel">
+
+        <div className="bg-circle bg-circle-1"></div>
+        <div className="bg-circle bg-circle-2"></div>
+
+        <div className="bg-square bg-square-1"></div>
+        <div className="bg-square bg-square-2"></div>
+
+        <div className="bg-dots bg-dots-1">
+          {[...Array(12)].map((_, i) => <span key={i}></span>)}
         </div>
 
-        {/* Right Side */}
-        <div className="auth-right">
-          <div className="auth-card">
-            <h1 className="auth-title">Login</h1>
+        <div className="bg-dots bg-dots-2">
+          {[...Array(12)].map((_, i) => <span key={i}></span>)}
+        </div>
 
-            <form onSubmit={handleSubmit}>
-              <button
-                type="button"
-                className="google-btn"
-                onClick={handleGoogleLogin}
-                disabled={googleLoading}
-              >
-                <FcGoogle size={22} />
-                {googleLoading ? "Please wait..." : "Continue with Google"}
-              </button>
+        <div className="login-art-content">
+          <h2>
+            Find your next
+            <br />
+            opportunity.
+          </h2>
 
-              <div className="auth-divider">
-                <span>Or continue with email</span>
-              </div>
+          <p>
+            Discover jobs, connect with recruiters,
+            <br />
+            and build the career you deserve.
+          </p>
 
-              <input
-                type="email"
-                placeholder="Email"
-                className="auth-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          <div className="stats-container">
 
-              <input
-                type="password"
-                placeholder="Password"
-                className="auth-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+            <div className="stats-card">
+              <div className="stats-icon pink">💼</div>
+              <h3>50K+</h3>
+              <span>Jobs</span>
+            </div>
 
-              <p style={{ textAlign: "right", marginBottom: "15px" }}>
-                <span className="auth-link" onClick={() => navigate("/forgot-password")}>
-                  Forgot Password?
-                </span>
-              </p>
+            <div className="stats-card">
+              <div className="stats-icon green">👥</div>
+              <h3>1K+</h3>
+              <span>Recruiters</span>
+            </div>
 
-              <button type="submit" className="auth-btn" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
-              </button>
+            <div className="stats-card">
+              <div className="stats-icon blue">👤</div>
+              <h3>20K+</h3>
+              <span>Candidates</span>
+            </div>
 
-              <p className="auth-bottom-text">
-                Start your journey with SkillBridge,{" "}
-                <span className="auth-link" onClick={() => navigate("/register")}>
-                  Sign Up
-                </span>
-              </p>
-            </form>
           </div>
         </div>
       </div>
