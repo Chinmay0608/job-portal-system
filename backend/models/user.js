@@ -68,6 +68,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    education: {
+      type: String,
+      default: "",
+    },
+
+    experienceLevel: {
+      type: String,
+      enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years"],
+      default: "Fresher",
+    },
   },
   {
     timestamps: true,

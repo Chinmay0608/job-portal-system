@@ -19,6 +19,8 @@ const updateProfile =
         github,
         about,
         skills,
+        education,
+        experienceLevel,
       } = req.body;
 
       const user =
@@ -52,6 +54,12 @@ const updateProfile =
 
       user.about =
         about || "";
+
+      user.education =
+        education || "";
+
+      user.experienceLevel =
+        experienceLevel || "Fresher";
 
       user.skills =
         skills

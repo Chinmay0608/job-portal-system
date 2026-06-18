@@ -1,5 +1,6 @@
 const Job = require("../models/job");
 const Application = require("../models/Application");
+const User = require("../models/user");
 
 /* ==========================
    CREATE JOB
@@ -53,6 +54,32 @@ const getRecruiterJobs = async (req, res) => {
     console.error(error.message);
     res.status(500).json({ message: error.message || "Server Error" });
   }
+};
+
+/* ==========================
+   GET RECOMMENDED JOBS
+========================== */
+const getRecommendedJobs = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        const jobs = await Job.find({
+            qualificationRequired: {
+                $in: user.qualifications
+            }
+        });
+
+        const filteredJobs = jobs.filter(job =>
+            job.skillsRequired.some(skill =>
+                user.skills.includes(skill)
+            )
+        );
+
+        res.json(filteredJobs);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 /* ==========================
@@ -143,6 +170,7 @@ module.exports = {
   createJob,
   getAllJobs,
   getRecruiterJobs,
+  getRecommendedJobs,
   deleteJob,
   applyJob,
   updateJob,
