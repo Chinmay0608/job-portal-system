@@ -73,17 +73,21 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
+
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 18px;
   overflow: hidden;
-  max-width: 620px;
+
+  max-width: 720px;   
+  width: 100%;
+
   margin: 0 auto;
 }
 
 .home-cta-card {
   flex: 1;
-  padding: 26px 28px;
+  padding: 32px 30px;
   text-align: left;
   cursor: pointer;
   transition: background 0.2s;
@@ -98,12 +102,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   color: rgba(255,255,255,0.25);
   font-size: 0.8rem;
   font-weight: 500;
+
   padding: 0 2px;
   flex-shrink: 0;
   gap: 6px;
+
 }
 
 .home-cta-divider::before,
@@ -134,10 +141,11 @@
 
 .home-cta-btn {
   border: none;
-  padding: 10px 16px;
+  padding: 12px 22px;
   border-radius: 9px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.2s;
   display: inline-block;
@@ -261,9 +269,16 @@
 .home-logo-item img {
   height: 20px;
   object-fit: contain;
-  opacity: 0.4;
-  filter: grayscale(1);
-  transition: opacity 0.2s, filter 0.2s;
+  opacity: 1;
+  filter :
+    grayscale(0)
+    brightness(1.0)
+    saturate(1.0)
+    drop-shadow(0 0 8px rgba(255,255,255,0.8))
+    drop-shadow(0 0 20px rgba(255,255,255,0.7))
+    drop-shadow(0 0 40px rgba(255,255,255,0.6))
+    drop-shadow(0 0 60px rgba(255,255,255,0.4));
+  transition: all 0.3s ease;
 }
 
 .home-logo-item img:hover {
@@ -334,6 +349,11 @@
   font-size: 1.25rem;
   flex-shrink: 0;
   margin-top: 1px;
+   color: #0d1117;
+}
+
+.home-recruiter-panel .home-feature-icon {
+  color: #ffffff;
 }
 
 .home-feature-item p {

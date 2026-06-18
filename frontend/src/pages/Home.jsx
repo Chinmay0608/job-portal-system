@@ -1,5 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import "../Styles/pages/Home.css";
+import {
+  HiOutlineUserGroup,
+  HiOutlineCurrencyDollar,
+  HiOutlineLightningBolt,
+  HiOutlineSparkles,
+} from "react-icons/hi";
+import {
+  HiUserGroup,
+  HiCog,
+  HiClipboardList,
+  HiChip
+} from "react-icons/hi";
+
 
 function Home() {
   const navigate = useNavigate();
@@ -22,17 +35,41 @@ function Home() {
   ];
 
   const seekerFeatures = [
-    { icon: "🔗", text: "Connect directly with founders and hiring managers — no middlemen." },
-    { icon: "💰", text: "See salary and equity upfront before you apply." },
-    { icon: "⚡", text: "One profile, one click to apply. No cover letters needed." },
-    { icon: "🌟", text: "Exclusive roles at startups you can't find anywhere else." },
+    {
+    icon: <HiOutlineUserGroup />,
+    text: "Connect directly with founders and hiring managers — no middlemen."
+    },
+    {
+      icon: <HiOutlineCurrencyDollar />,
+      text: "See salary and equity upfront before you apply."
+    },
+    {
+      icon: <HiOutlineLightningBolt />,
+      text: "One profile, one click to apply. No cover letters needed."
+    },
+    {
+      icon: <HiOutlineSparkles />,
+      text: "Exclusive roles at startups you can't find anywhere else."
+    }
   ];
 
   const recruiterFeatures = [
-    { icon: "🎯", text: "Tap into a community of 10M+ startup-ready candidates." },
-    { icon: "🛠️", text: "Set up job posts and company branding in under 10 minutes." },
-    { icon: "📋", text: "Free ATS built-in, or plug into the one you already use." },
-    { icon: "🤖", text: "AI-powered sourcing scans 500M+ profiles and fills your calendar." },
+    {
+      icon: <HiUserGroup />,
+      text: "Tap into a community of 10M+ startup-ready candidates."
+    },
+    {
+      icon: <HiCog />,
+      text: "Set up job posts and company branding in under 10 minutes."
+    },
+    {
+      icon: <HiClipboardList />,
+      text: "Free ATS built-in, or plug into the one you already use."
+    },
+    {
+      icon: <HiChip />,
+      text: "AI-powered sourcing scans 500M+ profiles and fills your calendar."
+    }
   ];
 
   const testimonials = [
