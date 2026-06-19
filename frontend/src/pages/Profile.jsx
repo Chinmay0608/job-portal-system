@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import "../Styles/pages/Profile.css";
 import { updateProfile } from "../Services/jobService";
+import Select from "react-select";
 
 function Profile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -27,6 +28,8 @@ function Profile() {
   const [linkedin, setLinkedin] = useState(user?.linkedin || "");
   const [github, setGithub] = useState(user?.github || "");
   const [about, setAbout] = useState(user?.about || "");
+  const [education, setEducation] = useState(user?.education || "");
+  const [experienceLevel, setExperienceLevel] = useState( user?.experienceLevel || "Fresher");
   
   // Dynamic User Saved Skills
   const [skills, setSkills] = useState(user?.skills || []); 
@@ -46,9 +49,22 @@ function Profile() {
       profileUser?.linkedin,
       profileUser?.github,
       profileUser?.about,
+      profileUser?.education,
+      profileUser?.experienceLevel,
       profileUser?.skills?.length > 0,
       profileUser?.resume,
       profileUser?.profileImage,
+    ];
+
+    const educationOptions = [
+      { value: "B.Tech", label: "B.Tech" },
+      { value: "B.E", label: "B.E" },
+      { value: "BCA", label: "BCA" },
+      { value: "B.Sc", label: "B.Sc" },
+      { value: "M.Tech", label: "M.Tech" },
+      { value: "MCA", label: "MCA" },
+      { value: "MBA", label: "MBA" },
+      { value: "PhD", label: "PhD" },
     ];
 
     const completed = fields.filter(Boolean).length;
@@ -67,6 +83,8 @@ function Profile() {
       setGithub(user.github || "");
       setAbout(user.about || "");
       setSkills(user.skills || []);
+      setEducation(user.education || "");
+      setExperienceLevel(user.experienceLevel || "Fresher");
     }
   }, [user]);
 
@@ -89,6 +107,8 @@ function Profile() {
       formData.append("github", github);
       formData.append("about", about);
       formData.append("skills", JSON.stringify(skills));
+      formData.append("education", education);
+      formData.append("experienceLevel", experienceLevel);
 
       if (resume) formData.append("resume", resume);
       if (profileImage) formData.append("profileImage", profileImage);
@@ -204,66 +224,83 @@ function Profile() {
 
           {/* Clean Input Grid Layout Block */}
           <div className="profile-grid">
+            {/* Field 1: Full Name */}
             <div className="input-group">
               <label>Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
 
+            {/* Field 2: Email */}
             <div className="input-group">
               <label>Email</label>
               <input type="email" value={email} disabled />
             </div>
 
+            {/* Field 3: Phone */}
             <div className="input-group">
               <label>Phone Number</label>
-              <input
-                type="text"
-                placeholder="Enter phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              <input type="text" placeholder="Enter phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
 
+            {/* Field 4: Location */}
             <div className="input-group">
               <label>Location</label>
-              <input
-                type="text"
-                placeholder="Jaipur, India"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
+              <input type="text" placeholder="Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
             </div>
 
+            {/* FIXED Dropdown 1: Select Degree Group */}
+            <div className="input-group">
+              <label>Highest Qualification</label>
+              <select value={education} onChange={(e) => setEducation(e.target.value)}>
+                <option value="">Select Degree</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="BCA">BCA</option>
+                <option value="MCA">MCA</option>
+              </select>
+            </div>
+
+            {/* Dropdown 2: Experience Level Group */}
+            <div className="input-group">
+              <label>Experience Level</label>
+              <select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
+                <option value="Fresher">Fresher</option>
+                <option value="0-2 Years">0-2 Years</option>
+                <option value="2-5 Years">2-5 Years</option>
+                <option value="5+ Years">5+ Years</option>
+              </select>
+            </div>
+
+            {/* Field 5: LinkedIn */}
             <div className="input-group">
               <label>LinkedIn</label>
-              <input
-                type="text"
-                placeholder="LinkedIn URL"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-              />
+              <input type="text" placeholder="LinkedIn URL" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
             </div>
 
+            {/* Field 6: GitHub */}
             <div className="input-group">
               <label>GitHub</label>
-              <input
-                type="text"
-                placeholder="GitHub URL"
-                value={github}
-                onChange={(e) => setGithub(e.target.value)}
-              />
+              <input type="text" placeholder="GitHub URL" value={github} onChange={(e) => setGithub(e.target.value)} />
             </div>
           </div>
 
-          {/* About Section Stack (Kept strictly inside the parent content wrapper) */}
-          <div className="about-section">
-            <label>About Me</label>
+          {/* FIXED: Keeps this outer section completely separate from the grid box columns */}
+          <div className="about-section summary-wrapper-card">
+            <label>Professional Summary</label>
             <textarea
               rows="5"
+              placeholder="Tell recruiters about yourself..."
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+            />
+          </div>
+
+          {/* About Section Stack (Kept strictly inside the parent content wrapper) */}
+          <div className="about-card">
+            <label>Professional Summary</label>
+
+            <textarea
+              rows="8"
               placeholder="Tell recruiters about yourself..."
               value={about}
               onChange={(e) => setAbout(e.target.value)}

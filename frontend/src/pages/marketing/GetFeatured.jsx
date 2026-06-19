@@ -1,4 +1,4 @@
-import "../Styles/pages/GetFeatured.css";
+import "../../Styles/pages/GetFeatured.css";
 
 function GetFeatured() {
   const benefits = [

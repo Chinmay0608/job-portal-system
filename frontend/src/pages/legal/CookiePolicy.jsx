@@ -1,4 +1,4 @@
-import LegalLayout from "../Components/LegalLayout";
+import "../../Components/LegalLayout";
 
 function CookiePolicy() {
   return (

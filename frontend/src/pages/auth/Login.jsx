@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "../firebase";
-import { loginUser } from "../Services/authService";
+import { auth, provider } from "../../firebase";
+import { loginUser } from "../../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import "../Styles/pages/Login.css";
+import "../../Styles/pages/Login.css";
 
 function Login() {
   const navigate = useNavigate();

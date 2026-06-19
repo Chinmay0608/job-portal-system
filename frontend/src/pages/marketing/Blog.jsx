@@ -1,4 +1,4 @@
-import "../Styles/pages/Blog.css";
+import "../../Styles/pages/Blog.css";
 import { useNavigate } from "react-router-dom";
 
 function Blog() {

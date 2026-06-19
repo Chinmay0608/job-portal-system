@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { getMyApplications } from "../Services/jobService";
+import { getMyApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
-import "../Styles/pages/MyApplications.css";
+import "../../Styles/pages/MyApplications.css";
 
 function MyApplications() {
   const [applications, setApplications] = useState([]);

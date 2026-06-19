@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { getJobs, applyJob, getMyApplications } from "../Services/jobService";
+import { getJobs, applyJob, getMyApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
-import "../Styles/pages/CandidateDashboard.css";
+import "../../Styles/pages/CandidateDashboard.css";
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);

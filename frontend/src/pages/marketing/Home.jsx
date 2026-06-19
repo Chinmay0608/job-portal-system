@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import "../Styles/pages/Home.css";
+import "../../Styles/pages/Home.css";
 import {
   HiOutlineUserGroup,
   HiOutlineCurrencyDollar,

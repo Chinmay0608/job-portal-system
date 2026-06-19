@@ -1,4 +1,4 @@
-import "../Styles/pages/Careers.css";
+import "../../Styles/pages/Careers.css";
 
 function Careers() {
   const openings = [

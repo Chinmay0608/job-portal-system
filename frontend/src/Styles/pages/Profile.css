@@ -1,154 +1,155 @@
 /* ==========================================================================
-   1. GLOBAL PAGE SETUP (Indeed-Inspired Clean Canvas)
+   1. GLOBAL PAGE CANVAS
    ========================================================================== */
 .profile-page {
   width: 100%;
   min-height: 100vh;
-  background-color: #ffffff; /* Pure white or a very soft gray #f8f9fa */
-  padding: 50px 20px;
+  background-color: #fafbfc; /* Premium off-white editorial background */
+  padding: 40px 24px;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #2d2d2d; /* Soft off-black for premium readability */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b; /* Rich dark slate for high-end readability */
 }
 
-/* Master Structure Layout - Balanced, spacious grid symmetry */
+/* Master Grid - Split structure with tight modern spacing */
 .profile-container {
-  max-width: 1000px; /* Kept slightly tighter for that elegant, centered look */
+  max-width: 960px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 60px; /* Generous breathing room between columns */
+  grid-template-columns: 250px 1fr;
+  gap: 48px;
   align-items: start;
 }
 
 /* ==========================================================================
-   2. LEFT SIDEBAR COMPONENT (Clean, Borderless Profile Meta)
+   2. UNIQUE SIDEBAR METRICS ARCHITECTURE
    ========================================================================== */
 .profile-sidebar {
-  background: transparent; /* Removed heavy boxes and shadows */
-  padding: 10px 0;
+  background: #ffffff;
+  padding: 24px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0; /* Crisp subtle boundary card */
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-/* Profile Image Circle - Minimalist Initials style */
 .avatar-wrapper {
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .profile-avatar {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #f1f5f9;
 }
 
 .avatar-circle {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  background-color: #4b4b4b; /* Flat, classy dark grey */
+  background: linear-gradient(135deg, #1e293b, #0f172a); /* Premium dark gradient accent */
   color: #ffffff;
-  font-size: 42px;
-  font-weight: 500;
+  font-size: 36px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: -1px;
 }
 
-/* Premium, subtle overlay for camera button */
 .upload-avatar-btn {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  bottom: 0;
+  right: 0;
   background: #ffffff;
-  border: 1px solid #d4d4d4;
-  width: 32px;
-  height: 32px;
+  border: 1px solid #cbd5e1;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  font-size: 13px;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-size: 11px;
 }
 
 .upload-avatar-btn:hover {
-  background-color: #f8f9fa;
+  background-color: #f8fafc;
 }
 
 .profile-sidebar h2 {
-  font-size: 26px;
-  color: #111111;
-  margin: 0 0 6px 0;
+  font-size: 20px;
+  color: #0f172a;
+  margin: 0 0 4px 0;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .profile-sidebar p {
-  font-size: 14px;
-  color: #6f6f6f;
-  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 16px 0;
 }
 
 .role-badge {
-  background: #e8f0fe; /* Light corporate accent tint */
-  color: #1a73e8;      /* Clean tech blue string anchor */
-  padding: 6px 16px;
-  border-radius: 6px;  /* Square-ish organic look instead of pill capsules */
-  font-size: 13px;
+  background: #eff6ff; 
+  color: #2563eb;      
+  padding: 4px 12px;
+  border-radius: 6px;  
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 24px;
 }
 
-/* Progress Tracker & Metrics Box Context */
+/* Micro Progress Bar */
 .completion-section {
   width: 100%;
   text-align: left;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
 }
 
 .completion-section p {
-  font-size: 14px;
-  color: #2d2d2d;
-  margin-bottom: 8px;
+  font-size: 12px;
+  color: #334155;
+  margin-bottom: 4px;
   font-weight: 600;
 }
 
 .completion-percent {
   display: block;
-  font-size: 13px;
-  font-weight: 400;
-  color: #6f6f6f;
+  font-size: 11px;
+  color: #64748b;
   margin-bottom: 8px;
 }
 
 .progress-bar {
   width: 100%;
-  height: 6px;
-  background: #e8e8e8;
-  border-radius: 3px;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .progress-fill {
   height: 100%;
-  background: #2563eb; /* Strong premium corporate brand blue */
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #2563eb;
+  transition: width 0.4s ease;
 }
 
-/* Sidebar Stats Context Setup */
+/* Side Info Stats Rows */
 .profile-stats {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -156,152 +157,170 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.stat-card p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
 }
 
 .stat-card h3 {
-  font-size: 16px;
-  color: #111111;
+  font-size: 13px;
+  color: #0f172a;
   margin: 0;
   font-weight: 700;
 }
 
-.stat-card p {
-  font-size: 13px;
-  color: #6f6f6f;
-  margin: 0;
-}
-
-/* Minimalist Document Upload Trigger Area */
+/* Resume Document Row Component */
 .resume-box {
   width: 100%;
-  margin-top: 30px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
   text-align: left;
 }
 
 .resume-box h3 {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
-  color: #111111;
-  margin: 0 0 12px 0;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
 }
 
 .resume-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   color: #2563eb;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   background: #ffffff;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: border-color 0.15s;
 }
 
 .resume-link:hover {
   border-color: #2563eb;
-  background-color: #f5f8ff;
+  background-color: #fafafa;
 }
 
 .resume-box input[type="file"] {
-  font-size: 13px;
-  color: #6f6f6f;
+  font-size: 11px;
+  color: #64748b;
+  width: 100%;
 }
 
 /* ==========================================================================
-   3. RIGHT FORM INTERFACE COMPONENT (The Elegant White-Label Workspace)
+   3. RIGHT FORM INTERFACE COMPONENT
    ========================================================================== */
 .profile-content {
   display: flex;
   flex-direction: column;
-  gap: 40px; /* Massive spacing to emulate the Indeed form architecture */
+  gap: 28px; /* Perfectly clustered layout vertical density */
 }
 
 .profile-content h1 {
-  font-size: 28px;
-  color: #111111;
+  font-size: 22px;
+  color: #0f172a;
   margin: 0;
   font-weight: 700;
-  letter-spacing: -0.5px;
-  border-bottom: 2px solid #111111;
-  padding-bottom: 12px;
+  letter-spacing: -0.4px;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 6px;
   width: max-content;
 }
 
-/* Two-column Input Grid Blueprint */
+/* Two-column Input Form Blueprint */
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  column-gap: 30px;
-  row-gap: 24px;
+  column-gap: 24px;
+  row-gap: 16px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .input-group label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #111111;
+  color: #334155;
 }
 
-.input-group input {
+/* Inputs and Select fields synchronized seamlessly */
+.input-group input,
+.input-group select {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #d4d4d4;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 15px;
-  color: #2d2d2d;
+  font-size: 14px;
+  color: #1e293b;
   box-sizing: border-box;
   background-color: #ffffff;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-group input:focus {
+/* Completely unique custom arrow style drop-down matching */
+.input-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 36px;
+}
+
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12); /* Soft professional focus halo */
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08); /* Premium micro shadow rings */
 }
 
 .input-group input:disabled {
-  background-color: #f1f1f1;
-  color: #767676;
-  border-color: #e2e2e2;
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
   cursor: not-allowed;
 }
 
-/* Full Width Stack Elements (About Area) */
+/* Isolated Full-Width Elements Area (Professional Summary Fixed Layout) */
 .about-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
 .about-section label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #111111;
+  color: #334155;
 }
 
 .about-section textarea {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #d4d4d4;
+  min-height: 110px; /* Highly compact workspace depth layout */
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 15px;
-  color: #2d2d2d;
+  font-size: 14px;
+  color: #1e293b;
   font-family: inherit;
   resize: vertical;
   box-sizing: border-box;
@@ -311,23 +330,23 @@
 .about-section textarea:focus {
   outline: none;
   border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 /* ==========================================================================
-   4. SKILLS CHIPS & INTERACTION TAGS
+   4. SKILLS SECTION & TAG CHIPS
    ========================================================================== */
 .skills-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 .skills-section h3 {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  color: #111111;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
@@ -335,14 +354,14 @@
 
 .skill-input-box {
   display: flex;
-  gap: 12px;
-  max-width: 500px;
+  gap: 10px;
+  max-width: 400px;
 }
 
 .skill-input-box input {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #d4d4d4;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
 }
@@ -356,12 +375,12 @@
   background: #ffffff;
   color: #2563eb;
   border: 1px solid #2563eb;
-  padding: 0 24px;
+  padding: 0 16px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: all 0.15s ease;
 }
 
 .add-skill-btn:hover {
@@ -369,88 +388,85 @@
   color: #ffffff;
 }
 
-/* Inline horizontal flex wrap chips container */
+/* Chips wrap block layer */
 .skills-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .skill-chip {
-  background: #f4f4f4;
-  color: #2d2d2d;
-  padding: 8px 14px;
-  border-radius: 20px; /* Oval pill-style chips keep it ultra clean */
-  font-size: 14px;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 5px 12px;
+  border-radius: 16px; /* Pill profile look */
+  font-size: 13px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #e0e0e0;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
 }
 
 .skill-chip button {
   background: none;
   border: none;
-  color: #8c8c8c;
-  font-size: 18px;
+  color: #94a3b8;
+  font-size: 14px;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s;
 }
 
 .skill-chip button:hover {
-  color: #d9383a;
+  color: #ef4444;
 }
 
 /* ==========================================================================
-   5. ACTION TRIGGER BAR (The Master Save Button)
+   5. MASTER SUBMIT CONTROLS
    ========================================================================== */
 .save-btn {
-  background: #2563eb; /* Deep premium Royal Blue action color */
+  background: #2563eb;
   color: #ffffff;
   border: none;
-  padding: 16px 36px;
+  padding: 11px 24px;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   align-self: flex-start;
   transition: background-color 0.15s ease;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.08);
 }
 
 .save-btn:hover {
-  background: #1d4ed8; /* Darker blue shift on hover action */
+  background: #1d4ed8;
 }
 
 .save-btn:disabled {
-  background: #e0e0e0;
-  color: #a0a0a0;
-  box-shadow: none;
+  background: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
 }
 
 /* ==========================================================================
-   6. RESPONSIVE DESIGN BLUEPRINT (Fluid layouts for small screens)
+   6. RESPONSIVE DESIGN BLUEPRINT
    ========================================================================== */
-@media (max-width: 900px) {
+@media (max-width: 850px) {
   .profile-container {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
   }
   
   .profile-sidebar {
-    border-bottom: 1px solid #e8e8e8;
-    padding-bottom: 30px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 24px;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 580px) {
   .profile-grid {
     grid-template-columns: 1fr;
   }

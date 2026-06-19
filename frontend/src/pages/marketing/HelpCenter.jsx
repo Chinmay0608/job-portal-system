@@ -1,4 +1,4 @@
-import "../Styles/pages/HelpCenter.css";
+import "../../Styles/pages/HelpCenter.css";
 
 function HelpCenter() {
   const faqs = [

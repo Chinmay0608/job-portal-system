@@ -1,13 +1,8 @@
 import axios from "axios";
 
-/* ==========================
-   BASE URL
-========================== */
 const API = `${import.meta.env.VITE_API_BASE_URL}/api`;
 
-/* ==========================
-   UPLOAD RESUME
-========================== */
+// Resume Upload Engine: Packs a physical file binary and streams it to the backend cloud pipeline
 export const uploadResume = async (file) => {
   const formData = new FormData();
   formData.append("resume", file);
