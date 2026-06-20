@@ -1,24 +1,90 @@
-﻿/* ==========================================================================
-   1. CORE SHEET SHELL & FIXED SIDEBAR NAVIGATION ARCHITECTURE
+﻿:root {
+  --primary-accent: #2557a7; /* Official Indeed Blue */
+  --accent-hover: #164081;   /* Deeper Indeed Dark Blue for interactive hover states */
+  --bg-main: #f4f2f0;        /* Light warm gray texture from the Indeed background ecosystem */
+  --text-dark: #2d2d2d;      /* Indeed Charcoal/Black for optimal reading contrast */
+  --text-muted: #6f6f6f;     /* Gray descriptor subtext tone */
+  --border-color: #d4d2d0;   /* Clean border slate separator */
+  --accent-light: #e8f0fe;   /* Soft ice blue highlight fallback for selected indicators */
+  
+  --blue-light: #e8f0fe;
+  --green-light: #e2f3ea;    /* Soft variant for active/shortlisted badges */
+  --red-light: #fbeae9;      /* Soft variant for close/rejected badges */
+}
+
+/* ==========================================================================
+   1. CORE STRUCTURE & SIDEBAR NAVIGATION
    ========================================================================== */
 .recruiter-dashboard-shell {
-  min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: 'Inter', system-ui, sans-serif;
   display: flex;
-  margin-top: 0;
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-dark);
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', Roboto, sans-serif;
 }
 
 .dashboard-sidebar {
   position: fixed;
-  top: 0; left: 0; z-index: 10;
+  top: 0; left: 0; z-index: 100;
   width: 260px; height: 100vh;
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; flex-direction: column;
   background: #ffffff;
   padding: 32px 24px;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--border-color);
   box-sizing: border-box;
+}
+
+.sidebar-brand {
+  padding-bottom: 24px;
+  margin-bottom: 16px;
+}
+
+.brand-logo-link {
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-mix .part-red {
+  color: #EF4444; /* Premium red logo text */
+}
+
+.brand-mix .part-black {
+  color: #0F172A; /* Slate black logo text */
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-item {
+  width: 100%; height: 46px; padding: 0 14px; border: none; background: transparent;
+  display: inline-flex; align-items: center; gap: 12px;
+  color: #424242; font-weight: 600; font-size: 0.92rem; text-align: left; cursor: pointer;
+  border-radius: 8px; transition: all 150ms ease;
+}
+
+.sidebar-item:hover { 
+  background: #f4f2f0; 
+  color: var(--text-dark); 
+}
+
+.sidebar-item.active { 
+  background: var(--accent-light); 
+  color: var(--primary-accent); 
+}
+
+.sidebar-icon { 
+  font-size: 1.25rem; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  color: inherit; 
 }
 
 .dashboard-main {
@@ -30,122 +96,177 @@
   box-sizing: border-box;
 }
 
-.sidebar-brand {
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 16px;
-}
-.sidebar-brand h1 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #0f172a; }
-.sidebar-brand p { margin: 0; color: #64748b; font-size: 0.85rem; }
-
 /* ==========================================================================
-   2. SIDEBAR ACTION BUTTON NAVIGATION
-   ========================================================================== */
-.sidebar-nav { display: grid; gap: 4px; }
-.sidebar-item {
-  width: 100%; height: 46px; padding: 0 14px; border: none; background: transparent;
-  display: inline-flex; align-items: center; gap: 12px;
-  color: #475569; font-weight: 600; font-size: 0.92rem; text-align: left; cursor: pointer;
-  border-radius: 10px; transition: all 150ms ease;
-}
-.sidebar-item:hover { background: #f1f5f9; color: #0f172a; }
-.sidebar-item.active { background: #ede9fe; color: #6366f1; }
-
-/* Optimized to wrap dynamic React Icon layouts cleanly */
-.sidebar-icon { 
-  font-size: 1.25rem; 
-  display:inline-flex; 
-  align-items: center; 
-  justify-content: center;
-  color: inherit;
-}
-
-.sidebar-bottom-nav { display: grid; gap: 4px; }
-.sidebar-logout { color: #dc2626; }
-.sidebar-logout:hover { background: #fef2f2; color: #dc2626; }
-
-/* ==========================================================================
-   3. INTERNAL TOP CONTENT UTILITY BAR MODULAR LAYOUT
+   2. TOP UTILITY HEADER PANEL
    ========================================================================== */
 .dashboard-topbar {
-  display: flex; justify-content: space-between; align-items: center; gap: 24px;
-  background: transparent; border: none; padding: 0;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 24px;
 }
-.topbar-copy { flex: 1; }
-.topbar-copy .eyebrow { margin: 0 0 4px; color: #64748b; font-size: 0.9rem; font-weight: 500; }
-.topbar-copy h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
-.topbar-actions { display: flex; align-items: center; gap: 14px; }
 
-.search-box {
-  display: inline-flex; align-items: center; gap: 10px; background: #ffffff;
-  border: 1px solid #e2e8f0; padding: 10px 16px; width: 320px; border-radius: 999px; cursor: text;
+.topbar-copy h2 { 
+  margin: 0 0 4px; 
+  font-size: 1.6rem; 
+  font-weight: 700; 
+  color: var(--text-dark); 
+  letter-spacing: -0.3px; 
 }
-.search-box input { flex: 1; border: none; outline: none; background: transparent; font-size: 0.9rem; color: #0f172a; }
-.search-icon { display: inline-flex; align-items: center; color: #94a3b8; font-size: 1.1rem; }
 
-.icon-btn {
-  border: 1px solid #e2e8f0; background: #ffffff; width: 40px; height: 40px;
-  display: grid; place-items: center; color: #475569; cursor: pointer; border-radius: 50%;
+.topbar-copy .eyebrow { 
+  margin: 0; 
+  color: var(--text-muted); 
+  font-size: 0.9rem; 
+}
+
+.topbar-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 14px; 
+}
+
+.icon-btn.notification-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-dark);
+  cursor: pointer;
   position: relative;
-}
-.icon-btn .icon { display: inline-flex; align-items: center; font-size: 1.1rem; }
-.notification-btn .badge {
-  position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px;
-  background: #ef4444; color: white; font-size: 0.65rem; font-weight: 700;
-  border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
-  border: 2px solid #ffffff;
+  transition: all 150ms ease;
+  padding: 0;
+  outline: none;
 }
 
-.topbar-profile {
-  display: inline-flex; align-items: center; gap: 12px; background: #ffffff;
-  border: 1px solid #e2e8f0; padding: 6px 14px 6px 8px; cursor: pointer; border-radius: 999px;
+.icon-btn.notification-btn:hover {
+  background: #ffffff;
+  border-color: var(--text-dark);
 }
-.profile-avatar {
-  width: 34px; height: 34px; display: grid; place-items: center;
-  background: #ede9fe; color: #6366f1; font-weight: 700; font-size: 0.85rem; border-radius: 50%;
+
+.icon-btn.notification-btn .badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff6c3b; /* Vibrant notification badge dot alert code */
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 2px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-sizing: border-box;
 }
-.profile-details { display: flex; flex-direction: column; text-align: left; }
-.profile-name { color: #0f172a; font-weight: 700; font-size: 0.88rem; line-height: 1.2; }
-.profile-role { color: #64748b; font-size: 0.78rem; font-weight: 500; }
-.profile-chevron { display: inline-flex; align-items: center; color: #94a3b8; font-size: 1rem; margin-left: 2px; }
+
+.text-action-btn {
+  background: #ffffff;
+  border: 1px solid var(--primary-accent);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-accent);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.text-action-btn:hover {
+  background: #f4f8ff;
+  border-color: var(--accent-hover);
+  color: var(--accent-hover);
+}
+
+.primary-accent-btn {
+  background: var(--primary-accent);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.primary-accent-btn:hover {
+  background: var(--accent-hover);
+}
+
+.profile-avatar-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: var(--primary-accent);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+}
 
 /* ==========================================================================
-   4. QUANTITATIVE ANALYTICS CONSOLE DATA SCORECARDS (MODERN SLEEK RECTANGLES)
-   ========================================================================== */
+   3. METRICS ROW SCORECARDS (Compact Rectangle Profile)
+   ========================================================================= */
+/* ==========================================================================
+   3. METRICS ROW SCORECARDS (Vibrant High-Contrast Edition)
+   ========================================================================= */
 .stats-grid { 
   display: grid; 
   grid-template-columns: repeat(4, minmax(0, 1fr)); 
   gap: 20px; 
 }
+
 .stat-box {
-  background: #ffffff; 
-  padding: 16px 20px; /* Reduced vertical padding for sleek rectangle profile */
-  border: 1px solid #e2e8f0;
-  display: flex; 
-  flex-direction: row; /* Horizontal alignment for premium look */
+  background: #ffffff;
+  padding: 16px 20px; /* Increased structural padding */
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: row; 
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02); 
-  border-radius: 14px; /* Smoother contemporary corner profiles */
+  justify-content: flex-start;
+  gap: 20px; /* Generous separation gap */
+  border-radius: 12px; /* Smooth modern radius profile */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); /* Rich depth elevation shadow */
+  box-sizing: border-box;
+  transition: transform 150ms ease, box-shadow 150ms ease;
 }
-.stat-header { 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
+
 .stat-icon { 
-  width: 44px; 
-  height: 44px; 
-  border-radius: 10px; /* Sleeker rectangle profile matches outer shell */
-  display: inline-flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 1.25rem; 
+  width: 52px;  /* Sharper scale visualization profile */
+  height: 52px; 
+  border-radius: 12px; 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem; /* Massive structural icon presence */
+  flex-shrink: 0;
 }
-.stat-icon-purple { background: #f3e8ff; color: #9333ea; }
-.stat-icon-blue { background: #dbeafe; color: #2563eb; }
-.stat-icon-green { background: #dcfce7; color: #16a34a; }
-.stat-icon-red { background: #fee2e2; color: #dc2626; }
+
+/* Vivid, saturated background layers paired with deep high-contrast icon shades */
+.stat-icon-purple { background: #e8f0fe; color: #144ba6; } /* Deep Indeed Blue theme core tint */
+.stat-icon-blue { background: #e0f2fe; color: #0284c7; }   /* Electric vibrant sky blue */
+.stat-icon-green { background: #dcfce7; color: #15803d; }  /* Emerald high-contrast green */
+.stat-icon-red { background: #fee2e2; color: #b91c1c; }    /* Warning primary deep crisp red */
 
 .stat-info-block {
   display: flex;
@@ -153,155 +274,392 @@
   justify-content: center;
   gap: 2px;
 }
-.stat-number { 
-  margin: 0; 
-  font-size: 1.6rem; /* Cleaned font proportions */
-  font-weight: 800; 
-  color: #0f172a; 
-  line-height: 1.2; 
-}
-.stat-label { 
-  margin: 0; 
-  color: #64748b; 
-  font-size: 0.88rem; 
-  font-weight: 500; 
+
+.stat-number {
+  margin: 0;
+  font-size: 1.8rem; /* Extremely bold digital readout typography scaling */
+  font-weight: 800;  /* Extra heavy weight configuration */
+  color: #0f172a;    /* Clean charcoal midnight color lock */
+  line-height: 1.1;
 }
 
-/* Decommissioned unneeded percentage metrics styling elements */
-.stat-trend, .stat-subtitle { display: none !important; }
+.stat-label {
+  margin: 0;
+  color: #475569;    /* Deepened contrast typography lock */
+  font-size: 0.88rem; /* Highly legible micro descriptor sizing */
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stat-row-top { display: contents; }
+.stat-trend { display: none !important; }
 
 /* ==========================================================================
-   5. WORKSPACE SPLIT PANELS (POSTING MODULE CONTROLS)
+   4. WORKSPACE SPLIT LAYERS
    ========================================================================== */
-.dashboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 28px; align-items: start; }
-.panel-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 20px; }
-.sticky-card { position: sticky; top: 24px; }
-
-.panel-heading h3 { margin: 0 0 4px; font-size: 1.15rem; font-weight: 800; color: #0f172a; }
-.form-subtitle { margin: 0 0 20px; color: #64748b; font-size: 0.85rem; line-height: 1.4; }
-
-.job-form { display: flex; flex-direction: column; gap: 14px; }
-.form-label { font-weight: 700; color: #334155; font-size: 0.88rem; margin: 0 0 4px; display: block; }
-.form-control {
-  width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; background: #f8fafc;
-  font-size: 0.92rem; color: #0f172a; border-radius: 10px; box-sizing: border-box;
+.dashboard-grid { 
+  display: grid; 
+  grid-template-columns: 380px 1fr; 
+  gap: 28px; 
+  align-items: start; 
 }
-.form-control:focus { outline: none; border-color: #6366f1; background: #ffffff; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-textarea { min-height: 100px; resize: none; font-family: inherit; }
-.char-counter { margin: 2px 0 0; color: #94a3b8; font-size: 0.75rem; text-align: right; }
 
-.form-actions { margin-top: 12px; }
-.create-job-btn {
-  width: 100%; height: 46px; background: #4f46e5; color: white; border: none;
-  font-weight: 700; font-size: 0.95rem; cursor: pointer; border-radius: 10px;
+.panel-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.sticky-card {
+  position: sticky;
+  top: 24px;
+}
+
+.panel-heading h3 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.highlight-purple {
+  color: var(--primary-accent);
+}
+
+/* JOB CREATION FORM CONTROLS */
+.job-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input-field-box {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+}
+
+.input-field-box:focus-within {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 1px var(--primary-accent);
+}
+
+.field-prefix-icon {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.input-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.input-stack label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4b4b4b;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.input-stack input,
+.input-stack textarea {
+  border: none;
+  outline: none;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  width: 100%;
+  background: transparent;
+}
+
+.textarea-field-box {
+  align-items: flex-start;
+}
+
+.form-row-split {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.custom-dropdown-container {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  position: relative;
+  width: 80px;
+}
+
+.form-select-native {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select-dropdown-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+.post-job-submit-btn {
+  width: 100%;
+  height: 44px;
+  background: var(--primary-accent);
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 8px;
   transition: background 150ms ease;
 }
-.create-job-btn:hover { background: #4338ca; }
+
+.post-job-submit-btn:hover {
+  background: var(--accent-hover);
+}
 
 /* ==========================================================================
-   6. MY POSTED JOBS CONTENT TILES
+   5. MY POSTED JOBS GRID CARDS
    ========================================================================== */
-.panel-heading-row {
-  display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 24px;
+.panel-heading-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 }
-.primary-btn-small {
-  background: #4f46e5; color: white; border: none; padding: 8px 16px;
-  font-weight: 700; font-size: 0.85rem; cursor: pointer; border-radius: 8px;
-}
-.jobs-header-actions {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-}
-.filter-tabs { display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 8px; }
-.filter-tab {
-  padding: 6px 14px; background: transparent; border: none; color: #64748b;
-  font-weight: 600; font-size: 0.85rem; cursor: pointer; border-radius: 6px;
-}
-.filter-tab.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-.jobs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.job-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 12px; border-radius: 16px; }
-.job-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-.job-card-header h4 { margin: 0 0 2px; font-size: 1.05rem; font-weight: 700; color: #0f172a; }
-.job-company-location { margin: 0; color: #64748b; font-size: 0.85rem; font-weight: 500; }
-
-.status-badge { font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: capitalize; }
-.status-badge.status-active { background: #e0f2fe; color: #0369a1; }
-.status-badge.status-draft { background: #fef3c7; color: #d97706; }
-.status-badge.status-closed { background: #f1f5f9; color: #475569; }
-
-.job-card-details {
-  display: flex; gap: 12px; font-size: 0.82rem; color: #475569; font-weight: 500;
-  background: #f8fafc; padding: 8px 12px; border-radius: 8px;
+.panel-heading-row-top h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-dark);
 }
-.job-card-metrics { display: flex; gap: 8px; }
-.metric-pill {
-  flex: 1; background: #ffffff; border: 1px solid #e2e8f0; padding: 8px;
-  display: flex; flex-direction: column; align-items: center; border-radius: 10px;
-}
-.metric-number { font-size: 1.1rem; font-weight: 800; color: #0f172a; }
-.metric-label { font-size: 0.75rem; color: #64748b; font-weight: 500; }
 
-.card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-.edit-btn, .delete-btn {
-  height: 36px; border: none; font-weight: 700; font-size: 0.82rem;
-  display: inline-flex; align-items: center; justify-content: center; gap: 4px; border-radius: 8px; cursor: pointer;
+.filter-controls-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.edit-btn { background: #eff6ff; color: #2563eb; }
-.delete-btn { background: #fef2f2; color: #ef4444; }
+
+.dropdown-filter-pill {
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.pill-native-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 16px;
+}
+
+.pill-dropdown-arrow {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.view-toggle-buttons {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.view-toggle-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.view-toggle-btn.active {
+  background: #e8f0fe;
+  color: var(--primary-accent);
+}
+
+.jobs-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.job-item-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.card-header-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-avatar-logo {
+  font-size: 1.3rem;
+  width: 42px;
+  height: 42px;
+  background: #f4f2f0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+
+.card-context-dots-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.card-core-identity h4 {
+  margin: 0 0 2px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.card-company-subtext {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.card-location-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #4b4b4b;
+  font-weight: 500;
+}
+
+.meta-pin-icon {
+  font-size: 1rem;
+}
+
+.card-compensation-salary {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f6136; /* Indeed Premium Green for currency display */
+}
+
+.card-operational-ctas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.card-operational-ctas button {
+  height: 36px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cta-edit-outline {
+  background: #ffffff;
+  border: 1px solid var(--primary-accent);
+  color: var(--primary-accent);
+}
+
+.cta-edit-outline:hover {
+  background: #f4f8ff;
+}
+
+.cta-delete-solid {
+  background: var(--red-light);
+  color: #a91e13;
+}
+
+.cta-delete-solid:hover {
+  background: #f7d5d2;
+}
+
+.load-more-foot-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--primary-accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 24px auto 0 auto;
+  width: 100%;
+}
+
+.loader-mesh-placeholder,
+.empty-state-mesh {
+  grid-column: span 2;
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
 
 /* ==========================================================================
-   7. INTERACTION APPLICANT FLOW TABLES & PROGRESS BARS
-   ========================================================================== */
-.dashboard-bottom-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px; }
-.applications-list { display: grid; gap: 12px; }
-.application-card {
-  border: 1px solid #e2e8f0; padding: 16px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; transition: all 150ms ease; border-radius: 14px;
-}
-.application-card:hover { border-color: #cbd5e1; background: #f8fafc; }
-.application-card.active { background: #eff6ff; border-color: #bfdbfe; }
-
-.application-summary { display: flex; justify-content: space-between; align-items: flex-start; }
-.application-summary h4 { margin: 0 0 2px; font-size: 0.98rem; font-weight: 700; }
-.application-meta { margin: 0; color: #64748b; font-size: 0.82rem; }
-.application-actions { display: flex; gap: 8px; }
-.resume-btn {
-  background: #f1f5f9; color: #334155; text-decoration: none; padding: 8px 14px;
-  font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; border-radius: 8px;
-}
-.shortlist-btn, .reject-btn { padding: 8px 14px; border: none; font-weight: 700; font-size: 0.82rem; border-radius: 8px; cursor: pointer; }
-.shortlist-btn { background: #22c55e; color: white; }
-.reject-btn { background: #ef4444; color: white; }
-
-.funnel-list, .skills-list { display: grid; gap: 10px; }
-.funnel-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: #475569; padding: 4px 0; }
-.funnel-row strong { color: #0f172a; font-weight: 700; }
-
-.skill-row { display: flex; flex-direction: column; gap: 4px; }
-.skill-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #334155; }
-.progress-track { width: 100%; height: 6px; background: #e2e8f0; overflow: hidden; border-radius: 999px; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5 0%, #3b82f6 100%); border-radius: 999px; }
-
-.status-badge.shortlisted { background: #dcfce7; color: #16a34a; }
-.status-badge.rejected { background: #fee2e2; color: #dc2626; }
-.status-badge.open { background: #f1f5f9; color: #475569; }
-
-/* ==========================================================================
-   8. DYNAMIC ADAPTIVE VIEWPORT RESPONSIVE BREAK POINTS
+   6. RESPONSIVE BREAKPOINTS
    ========================================================================== */
 @media (max-width: 1200px) {
   .dashboard-main { margin-left: 0; max-width: 100%; }
-  .dashboard-sidebar { position: relative; width: 100%; height: auto; top: 0; border-right: none; border-bottom: 1px solid #e2e8f0; }
-  .recruiter-dashboard-shell { flex-direction: column; margin-top: 0; min-height: auto; }
-  .dashboard-grid, .dashboard-bottom-grid { grid-template-columns: 1fr; }
+  .dashboard-sidebar { position: relative; width: 100%; height: auto; top: 0; border-right: none; border-bottom: 1px solid var(--border-color); padding: 24px; }
+  .recruiter-dashboard-shell { flex-direction: column; }
+  .dashboard-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
 @media (max-width: 760px) {
-  .stats-grid, .jobs-grid { grid-template-columns: 1fr; }
+  .stats-grid, .jobs-grid-cards { grid-template-columns: 1fr; }
   .dashboard-topbar { flex-direction: column; align-items: stretch; gap: 16px; }
-  .topbar-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
-  .search-box { width: 100%; }
-  .topbar-profile { width: 100%; justify-content: space-between; }
-  .sidebar-nav, .sidebar-bottom-nav, .dashboard-side-widgets { display: none; }
+  .topbar-actions { width: 100%; justify-content: space-between; }
+  .sidebar-nav { display: none; }
 }
