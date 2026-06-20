@@ -60,26 +60,43 @@ const getRecruiterJobs = async (req, res) => {
    GET RECOMMENDED JOBS
 ========================== */
 const getRecommendedJobs = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
+  try {
+    const user = await User.findById(req.user.id);
 
-        const jobs = await Job.find({
-            qualificationRequired: {
-                $in: user.qualifications
-            }
-        });
+    const jobs = await Job.find();
 
-        const filteredJobs = jobs.filter(job =>
-            job.skillsRequired.some(skill =>
-                user.skills.includes(skill)
-            )
+    const recommendedJobs = jobs
+      .map((job) => {
+        const matchedSkills = job.skillsRequired.filter((skill) =>
+          user.skills?.some(
+            (userSkill) =>
+              userSkill.toLowerCase() === skill.toLowerCase()
+          )
         );
 
-        res.json(filteredJobs);
+        const matchPercentage =
+          job.skillsRequired.length > 0
+            ? Math.round(
+                (matchedSkills.length / job.skillsRequired.length) * 100
+              )
+            : 0;
 
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+        return {
+          ...job.toObject(),
+          matchPercentage,
+        };
+      })
+      .filter((job) => job.matchPercentage > 0)
+      .sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    res.status(200).json({
+      jobs: recommendedJobs,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 /* ==========================

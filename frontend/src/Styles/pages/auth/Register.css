@@ -64,6 +64,7 @@
   align-items: center;
   padding: 24px 48px; 
   height: 100%;
+  position: relative;
 }
 
 .register-form-inner {
@@ -72,13 +73,16 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding-top: 80px;
 }
 
 .register-brand {
-  font-size: 1rem;
+  position: absolute;
+  top: 5px;
+  right: 15px;
+  font-size: 2.4rem;
   font-weight: 900;
   color: #0d1117;
-  margin-bottom: 12px; 
   letter-spacing: -0.3px;
   cursor: pointer;
 }

@@ -5,7 +5,7 @@
   max-width: 1250px;
   margin: 0 auto;
   min-height: 60vh;
-  padding: 90px 28px 120px;
+  padding: 30px 28px 120px;
 }
 
 /* ==========================
@@ -13,11 +13,12 @@
 ========================== */
 .applications-header {
   text-align: center;
-  margin-bottom: 34px;
+  margin-bottom: 24px;
+  margin-top: -90px;
 }
 
 .applications-header h1 {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   font-weight: 800;
   color: #07111f;
   margin-bottom: 6px;

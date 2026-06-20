@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getJobs, applyJob, getMyApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
-import "../../Styles/pages/CandidateDashboard.css";
+import "../../Styles/pages/candidate/CandidateDashboard.css";
+import { FiSearch } from "react-icons/fi";
+import { HiOutlineLocationMarker } from "react-icons/hi";
+
+const JOBS_PER_PAGE = 20;
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -18,6 +22,10 @@ function CandidateDashboard() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [showApplyPanel, setShowApplyPanel] = useState(false);
+  const [showRecommended, setShowRecommended] = useState(false);
+
+  // Pagination: how many jobs are currently visible in the list
+  const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
   const location = useLocation();
 
@@ -87,6 +95,12 @@ function CandidateDashboard() {
       toast.success(response?.message || "Application submitted successfully");
 
       setAppliedJobs((prev) => [...prev, selectedJob?._id]);
+
+      const nextJob = displayedJobs.find(
+        (job) => job._id !== selectedJob?._id
+      );
+      setSelectedJob(nextJob || null);
+
       setShowApplyPanel(false);
       setResumeFile(null);
     } catch (error) {
@@ -109,11 +123,61 @@ function CandidateDashboard() {
     return matchesSearch && matchesLocation && matchesCompany && matchesSalary;
   });
 
+  const availableJobs = filteredJobs.filter(
+    (job) => !appliedJobs.includes(job._id)
+  );
+
+  const recommendedJobs = availableJobs.filter((job) => {
+    const description = job.description?.toLowerCase() || "";
+
+    const commonSkills = [
+      "react",
+      "node",
+      "mongodb",
+      "express",
+      "javascript",
+      "java",
+      "spring",
+      "python",
+      "sql",
+      "mysql",
+      "aws",
+      "docker",
+      "kubernetes",
+      "html",
+      "css",
+      "tailwind",
+      "typescript",
+    ];
+
+    return commonSkills.some((skill) =>
+      description.includes(skill)
+    );
+  });
+
+  const displayedJobs = showRecommended
+    ? recommendedJobs
+    : availableJobs;
+
+  // Only render the first `visibleCount` jobs in the list
+  const visibleJobs = displayedJobs.slice(0, visibleCount);
+  const hasMoreJobs = visibleCount < displayedJobs.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + JOBS_PER_PAGE);
+  };
+
   const handleJobSelect = (job) => {
     setSelectedJob(job);
     setShowApplyPanel(false);
     setResumeFile(null);
   };
+
+  // Reset pagination whenever the filters or the All/Recommended toggle change,
+  // so a new search always starts back at the first 20 results.
+  useEffect(() => {
+    setVisibleCount(JOBS_PER_PAGE);
+  }, [search, locationFilter, salaryFilter, companyFilter, showRecommended]);
 
   return (
     <div className="ind-dashboard">
@@ -121,7 +185,7 @@ function CandidateDashboard() {
       <div className="ind-search-bar">
         <div className="ind-search-inner">
           <div className="ind-input-wrapper">
-            <span className="ind-icon">🔍</span>
+            <FiSearch className="ind-icon" />
             <input
               type="text"
               placeholder="Job title, keywords, or company"
@@ -131,7 +195,7 @@ function CandidateDashboard() {
           </div>
           <div className="ind-input-divider"></div>
           <div className="ind-input-wrapper">
-            <span className="ind-icon">📍</span>
+            <HiOutlineLocationMarker className="ind-icon" />
             <input
               type="text"
               placeholder="City, state, zip code, or 'remote'"
@@ -149,6 +213,21 @@ function CandidateDashboard() {
         <div className="ind-main-layout">
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div className="ind-list-column">
+            <div className="jobs-toggle">
+              <button
+                className={!showRecommended ? "active" : ""}
+                onClick={() => setShowRecommended(false)}
+              >
+                All Jobs
+              </button>
+
+              <button
+                className={showRecommended ? "active" : ""}
+                onClick={() => setShowRecommended(true)}
+              >
+                Recommended
+              </button>
+            </div>
             <h3 className="ind-section-title">Jobs for you</h3>
 
             {loading ? (
@@ -156,40 +235,55 @@ function CandidateDashboard() {
                 <div className="ind-spinner"></div>
                 <p>Loading your matches...</p>
               </div>
-            ) : filteredJobs.length === 0 ? (
+            ) : displayedJobs.length === 0 ? (
               <div className="ind-empty-box">
                 <span>📭</span>
                 <h4>No matching listings found</h4>
                 <p>Try modifying your parameters above.</p>
               </div>
             ) : (
-              <div className="ind-cards-stack">
-                {filteredJobs.map((job) => {
-                  const isSelected = selectedJob?._id === job._id;
-                  const hasApplied = appliedJobs.includes(job._id);
+              <>
+                <div className="ind-cards-stack">
+                  {visibleJobs.map((job) => {
+                    const isSelected = selectedJob?._id === job._id;
+                    const hasApplied = appliedJobs.includes(job._id);
 
-                  return (
-                    <div
-                      key={job._id}
-                      className={`ind-job-card ${isSelected ? "active" : ""}`}
-                      onClick={() => handleJobSelect(job)}
-                    >
-                      <div className="ind-card-tag">Easily apply</div>
-                      <h4 className="ind-card-title">{job.title}</h4>
-                      <p className="ind-card-company">{job.company}</p>
-                      <p className="ind-card-location">{job.location}</p>
-                      
-                      <div className="ind-card-salary-badge">
-                        ₹{Number(job.salary).toLocaleString("en-IN")} a year
+                    return (
+                      <div
+                        key={job._id}
+                        className={`ind-job-card ${isSelected ? "active" : ""}`}
+                        onClick={() => handleJobSelect(job)}
+                      >
+                        <div className="ind-card-tag">Easily apply</div>
+                        <h4 className="ind-card-title">{job.title}</h4>
+                        <p className="ind-card-company">{job.company}</p>
+                        <p className="ind-card-location">{job.location}</p>
+
+                        <div className="ind-card-salary-badge">
+                          ₹{Number(job.salary).toLocaleString("en-IN")} a year
+                        </div>
+
+                            {showRecommended && (
+                          <div className="match-badge">
+                            ⭐ Recommended
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {hasApplied && (
-                        <div className="ind-card-status-pill">✓ Applied</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                {hasMoreJobs && (
+                  <div className="ind-load-more-wrapper">
+                    <button
+                      className="ind-load-more-btn"
+                      onClick={handleLoadMore}
+                    >
+                      Load more jobs
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

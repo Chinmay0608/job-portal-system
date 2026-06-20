@@ -5,7 +5,7 @@ import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import "../../Styles/pages/Register.css";
+import "../../Styles/pages/auth/Register.css";
 
 function Register() {
   const navigate = useNavigate();

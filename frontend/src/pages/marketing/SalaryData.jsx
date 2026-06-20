@@ -1,4 +1,4 @@
-import "../../Styles/pages/SalaryData.css";
+import "../../Styles/pages/marketing/SalaryData.css";
 
 function SalaryData() {
   const salaries = [

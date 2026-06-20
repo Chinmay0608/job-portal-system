@@ -31,7 +31,6 @@ import Home from "./pages/marketing/Home";
 import About from "./pages/marketing/About";
 import Blog from "./pages/marketing/Blog";
 import Careers from "./pages/marketing/Careers";
-import HelpCenter from "./pages/marketing/HelpCenter";
 import SalaryData from "./pages/marketing/SalaryData";
 import GetFeatured from "./pages/marketing/GetFeatured";
 import AiRecruiting from "./pages/marketing/AiRecruiting";
@@ -44,6 +43,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfUse from "./pages/legal/TermsOfUse";
 import CookiePolicy from "./pages/legal/CookiePolicy";
 import Security from "./pages/legal/Security";
+import HelpCenter from "./pages/legal/HelpCenter";
 
 // ==========================================================================
 // 6. UNIVERSAL UTILITY SHIFT SHARED LAYOUT IMPORT SEGMENT
@@ -55,7 +55,7 @@ function AppContent() {
   const location = useLocation();
 
   // Integrated /recruiter-dashboard layout toggle rule parameters
-  const hideLayout = ["/login", "/register", "/forgot-password", "/recruiter-dashboard"].includes(location.pathname) || 
+  const hideLayout = ["/login", "/register", "/forgot-password"].includes(location.pathname) || 
                      location.pathname.startsWith("/reset-password");
 
   return (

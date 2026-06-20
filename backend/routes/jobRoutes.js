@@ -5,6 +5,7 @@ const {
   createJob,
   getAllJobs,
   getRecruiterJobs,
+  getRecommendedJobs,
   deleteJob,
   updateJob,
   applyJob,
@@ -25,6 +26,13 @@ router.post(
   protect,
   upload.single("resume"),
   applyJob
+);
+
+router.get(
+  "/recommended",
+  protect,
+  authorizeRoles("candidate"),
+  getRecommendedJobs
 );
 
 /* ==========================

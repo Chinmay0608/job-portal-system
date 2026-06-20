@@ -5,7 +5,7 @@ import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import "../../Styles/pages/Login.css";
+import "../../Styles/pages/auth/Login.css";
 
 function Login() {
   const navigate = useNavigate();

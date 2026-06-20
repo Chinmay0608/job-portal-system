@@ -1,4 +1,4 @@
-import "../../Styles/pages/AiRecruiting.css";
+import "../../Styles/pages/marketing/AiRecruiting.css";
 
 function AiRecruiting() {
   const features = [

@@ -29,7 +29,7 @@ function Profile() {
   const [github, setGithub] = useState(user?.github || "");
   const [about, setAbout] = useState(user?.about || "");
   const [education, setEducation] = useState(user?.education || "");
-  const [experienceLevel, setExperienceLevel] = useState( user?.experienceLevel || "Fresher");
+  const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
   
   // Dynamic User Saved Skills
   const [skills, setSkills] = useState(user?.skills || []); 
@@ -54,17 +54,6 @@ function Profile() {
       profileUser?.skills?.length > 0,
       profileUser?.resume,
       profileUser?.profileImage,
-    ];
-
-    const educationOptions = [
-      { value: "B.Tech", label: "B.Tech" },
-      { value: "B.E", label: "B.E" },
-      { value: "BCA", label: "BCA" },
-      { value: "B.Sc", label: "B.Sc" },
-      { value: "M.Tech", label: "M.Tech" },
-      { value: "MCA", label: "MCA" },
-      { value: "MBA", label: "MBA" },
-      { value: "PhD", label: "PhD" },
     ];
 
     const completed = fields.filter(Boolean).length;
@@ -145,9 +134,10 @@ function Profile() {
   return (
     <div className="profile-page">
       <div className="profile-container">
-        
+
         {/* LEFT COLUMN: SIDEBAR */}
         <div className="profile-sidebar">
+
           <div className="avatar-wrapper">
             {user?.profileImage ? (
               <img
@@ -177,8 +167,10 @@ function Profile() {
           <span className="role-badge">{user?.role || "Candidate"}</span>
 
           <div className="completion-section">
-            <p>Profile Completion</p>
-            <span className="completion-percent">{savedCompletion}% Complete</span>
+            <div className="completion-header">
+              <p>Profile strength</p>
+              <span className="completion-percent">{savedCompletion}%</span>
+            </div>
             <div className="progress-bar">
               <div
                 className="progress-fill"
@@ -207,143 +199,141 @@ function Profile() {
                 rel="noreferrer"
                 className="resume-link"
               >
-                📄 View Current Resume
+                📄 View current resume
               </a>
             )}
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => setResume(e.target.files[0])}
-            />
+            <label className="resume-upload-label">
+              Upload new file
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setResume(e.target.files[0])}
+              />
+            </label>
           </div>
         </div>
 
         {/* RIGHT COLUMN: MAIN FORM WORKSPACE */}
         <div className="profile-content">
-          <h1>My Profile</h1>
+
+          <div className="profile-content-header">
+            <span className="profile-eyebrow">Candidate profile</span>
+            <h1>My Profile</h1>
+            <p className="profile-content-subtitle">
+              Keep this up to date — recruiters see this before they see your resume.
+            </p>
+          </div>
 
           {/* Clean Input Grid Layout Block */}
-          <div className="profile-grid">
-            {/* Field 1: Full Name */}
-            <div className="input-group">
-              <label>Full Name</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="profile-section-card">
+            <h2 className="profile-section-title">Basic information</h2>
+
+            <div className="profile-grid">
+              {/* Field 1: Full Name */}
+              <div className="input-group">
+                <label>Full Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+
+              {/* Field 2: Email */}
+              <div className="input-group">
+                <label>Email</label>
+                <input type="email" value={email} disabled />
+              </div>
+
+              {/* Field 3: Phone */}
+              <div className="input-group">
+                <label>Phone Number</label>
+                <input type="text" placeholder="Enter phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+
+              {/* Field 4: Location */}
+              <div className="input-group">
+                <label>Location</label>
+                <input type="text" placeholder="Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
+              </div>
+
+              {/* Dropdown 1: Select Degree Group */}
+              <div className="input-group">
+                <label>Highest Qualification</label>
+                <select value={education} onChange={(e) => setEducation(e.target.value)}>
+                  <option value="">Select Degree</option>
+                  <option value="B.Tech">B.Tech</option>
+                  <option value="M.Tech">M.Tech</option>
+                  <option value="BCA">BCA</option>
+                  <option value="MCA">MCA</option>
+                </select>
+              </div>
+
+              {/* Dropdown 2: Experience Level Group */}
+              <div className="input-group">
+                <label>Experience Level</label>
+                <select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
+                  <option value="Fresher">Fresher</option>
+                  <option value="0-2 Years">0-2 Years</option>
+                  <option value="2-5 Years">2-5 Years</option>
+                  <option value="5+ Years">5+ Years</option>
+                </select>
+              </div>
+
+              {/* Field 5: LinkedIn */}
+              <div className="input-group">
+                <label>LinkedIn</label>
+                <input type="text" placeholder="LinkedIn URL" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+              </div>
+
+              {/* Field 6: GitHub */}
+              <div className="input-group">
+                <label>GitHub</label>
+                <input type="text" placeholder="GitHub URL" value={github} onChange={(e) => setGithub(e.target.value)} />
+              </div>
             </div>
-
-            {/* Field 2: Email */}
-            <div className="input-group">
-              <label>Email</label>
-              <input type="email" value={email} disabled />
-            </div>
-
-            {/* Field 3: Phone */}
-            <div className="input-group">
-              <label>Phone Number</label>
-              <input type="text" placeholder="Enter phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-
-            {/* Field 4: Location */}
-            <div className="input-group">
-              <label>Location</label>
-              <input type="text" placeholder="Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
-
-            {/* FIXED Dropdown 1: Select Degree Group */}
-            <div className="input-group">
-              <label>Highest Qualification</label>
-              <select value={education} onChange={(e) => setEducation(e.target.value)}>
-                <option value="">Select Degree</option>
-                <option value="B.Tech">B.Tech</option>
-                <option value="M.Tech">M.Tech</option>
-                <option value="BCA">BCA</option>
-                <option value="MCA">MCA</option>
-              </select>
-            </div>
-
-            {/* Dropdown 2: Experience Level Group */}
-            <div className="input-group">
-              <label>Experience Level</label>
-              <select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
-                <option value="Fresher">Fresher</option>
-                <option value="0-2 Years">0-2 Years</option>
-                <option value="2-5 Years">2-5 Years</option>
-                <option value="5+ Years">5+ Years</option>
-              </select>
-            </div>
-
-            {/* Field 5: LinkedIn */}
-            <div className="input-group">
-              <label>LinkedIn</label>
-              <input type="text" placeholder="LinkedIn URL" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
-            </div>
-
-            {/* Field 6: GitHub */}
-            <div className="input-group">
-              <label>GitHub</label>
-              <input type="text" placeholder="GitHub URL" value={github} onChange={(e) => setGithub(e.target.value)} />
-            </div>
-          </div>
-
-          {/* FIXED: Keeps this outer section completely separate from the grid box columns */}
-          <div className="about-section summary-wrapper-card">
-            <label>Professional Summary</label>
-            <textarea
-              rows="5"
-              placeholder="Tell recruiters about yourself..."
-              value={about}
-              onChange={(e) => setAbout(e.target.value)}
-            />
-          </div>
-
-          {/* About Section Stack (Kept strictly inside the parent content wrapper) */}
-          <div className="about-card">
-            <label>Professional Summary</label>
-
-            <textarea
-              rows="8"
-              placeholder="Tell recruiters about yourself..."
-              value={about}
-              onChange={(e) => setAbout(e.target.value)}
-            />
           </div>
 
           {/* Skills Engine Block */}
-          <div className="skills-section">
-            <h3>Skills</h3>
-            <div className="skill-input-box">
-              <input
-                type="text"
-                placeholder="Add skill..."
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkill();
-                  }
-                }}
-              />
-              <button type="button" className="add-skill-btn" onClick={addSkill}>
-                Add
-              </button>
-            </div>
+          <div className="profile-section-card">
+            <div className="skills-section">
+              <h3>Skills</h3>
+              <div className="skill-input-box">
+                <input
+                  type="text"
+                  placeholder="Add skill..."
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addSkill();
+                    }
+                  }}
+                />
+                <button type="button" className="add-skill-btn" onClick={addSkill}>
+                  Add
+                </button>
+              </div>
 
-            <div className="skills-tags">
-              {skills.map((skill, index) => (
-                <span key={index} className="skill-chip">
-                  {skill}
-                  <button type="button" onClick={() => removeSkill(skill)}>
-                    &times;
-                  </button>
-                </span>
-              ))}
+              <div className="skills-tags">
+                {skills.length === 0 && (
+                  <span className="skills-empty">No skills added yet — add your first one above.</span>
+                )}
+                {skills.map((skill, index) => (
+                  <span key={index} className="skill-chip">
+                    {skill}
+                    <button type="button" onClick={() => removeSkill(skill)}>
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Action Trigger Base */}
-          <button type="button" className="save-btn" onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Profile"}
-          </button>
+          <div className="profile-save-bar">
+            <button type="button" className="save-btn" onClick={handleSave} disabled={loading}>
+              {loading ? "Saving..." : "Save Profile"}
+            </button>
+          </div>
         </div>
 
       </div>

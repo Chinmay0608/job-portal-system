@@ -1,35 +1,22 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
-import "../../Styles/pages/RecruiterDashboard.css";
+import "../../Styles/pages/recruiter/RecruiterDashboard.css";
 
-// Import exact matching React Icons from Heroicons v2 (hi2)
 import {
-  HiOutlineHome,
   HiOutlineBriefcase,
-  HiOutlineUsers,
-  HiOutlineCheckBadge,
-  HiOutlineChatBubbleLeftRight,
-  HiOutlineChartBar,
-  HiOutlineBuildingOffice,
-  HiOutlineCog,
-  HiOutlineBell,
   HiChevronDown,
   HiOutlinePlus,
-  HiEllipsisVertical,
   HiOutlineMapPin,
   HiOutlineCurrencyRupee,
   HiOutlineDocumentText,
   HiOutlineSquares2X2,
   HiOutlineListBullet,
-  HiMiniBriefcase,
-  HiMiniUsers,
-  HiMiniCheckCircle,
-  HiMiniXCircle
+  HiXMark,
 } from "react-icons/hi2";
 
 const initialFormState = { title: "", role: "Full-time", company: "", location: "", salary: "", description: "" };
+const JOBS_PER_PAGE = 6;
 
 function RecruiterDashboard() {
   const [formData, setFormData] = useState(initialFormState);
@@ -38,6 +25,20 @@ function RecruiterDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [stats, setStats] = useState({ totalJobs: 0, totalApplications: 0, shortlisted: 0, rejected: 0 });
+
+  // Modal visibility for Create/Edit Job card
+  const [showJobModal, setShowJobModal] = useState(false);
+
+  // Filter: derived dynamically from real job data (no static dropdown options)
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef(null);
+
+  // View mode: grid or list — both render the same real job data
+  const [viewMode, setViewMode] = useState("grid");
+
+  // Pagination
+  const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
   useEffect(() => { fetchDashboardData(); }, []);
 
@@ -50,27 +51,37 @@ function RecruiterDashboard() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Opens the Create Job card as a modal overlay
   const handleQuickCreate = () => {
     setEditingJob(null);
     setFormData(initialFormState);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setShowJobModal(true);
+  };
+
+  const closeJobModal = () => {
+    setShowJobModal(false);
+    setEditingJob(null);
+    setFormData(initialFormState);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.title.trim().length < 3) return toast.error("Job title must be at least 3 characters");
     if (Number(formData.salary) <= 0) return toast.error("Salary must be greater than 0");
-    
+
     try {
       setSubmitting(true);
       let response = editingJob ? await updateJob(editingJob._id, formData) : await createJob(formData);
       toast.success(response?.message || (editingJob ? "Job updated successfully" : "Job created successfully"));
       setFormData(initialFormState);
       setEditingJob(null);
+      setShowJobModal(false);
       await fetchDashboardData();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Something went wrong");
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const fetchJobs = async () => {
@@ -78,8 +89,11 @@ function RecruiterDashboard() {
       setLoading(true);
       const response = await getRecruiterJobs();
       setJobs(response?.jobs || []);
-    } catch (error) { toast.error("Failed to load jobs"); } 
-    finally { setLoading(false); }
+    } catch (error) {
+      toast.error("Failed to load jobs");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchStats = async () => {
@@ -92,7 +106,9 @@ function RecruiterDashboard() {
         shortlisted: apps.filter((a) => a.status === "shortlisted").length,
         rejected: apps.filter((a) => a.status === "rejected").length,
       });
-    } catch (error) { console.error("Stats Error:", error); }
+    } catch (error) {
+      console.error("Stats Error:", error);
+    }
   };
 
   const handleDelete = async (jobId) => {
@@ -100,7 +116,9 @@ function RecruiterDashboard() {
       const response = await deleteJob(jobId);
       toast.success(response?.message || "Job deleted");
       await fetchDashboardData();
-    } catch (error) { toast.error(error?.response?.data?.message || "Delete failed"); }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Delete failed");
+    }
   };
 
   const handleEdit = (job) => {
@@ -113,100 +131,91 @@ function RecruiterDashboard() {
       salary: job.salary || "",
       description: job.description || "",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setShowJobModal(true);
   };
 
-  const getJobIcon = (title) => {
-    const t = title.toLowerCase();
-    if (t.includes("react") || t.includes("frontend") || t.includes("ui")) return "⚛️";
-    if (t.includes("java") || t.includes("backend")) return "☕";
-    if (t.includes("devops") || t.includes("cloud")) return "☁️";
-    if (t.includes("full stack") || t.includes("stack")) return "🥞";
-    return "💻";
+  // Build the status filter's option list dynamically from the actual jobs returned —
+  // no hardcoded "Active / Draft" options that don't map to real data.
+  const availableRoleTypes = useMemo(() => {
+    const types = new Set(jobs.map((job) => job.role).filter(Boolean));
+    return ["All", ...Array.from(types)];
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    if (statusFilter === "All") return jobs;
+    return jobs.filter((job) => job.role === statusFilter);
+  }, [jobs, statusFilter]);
+
+  const visibleJobs = filteredJobs.slice(0, visibleCount);
+  const hasMoreJobs = visibleCount < filteredJobs.length;
+
+  // Reset pagination whenever the filter changes so results start from the top
+  useEffect(() => {
+    setVisibleCount(JOBS_PER_PAGE);
+  }, [statusFilter]);
+
+  // Close the custom filter dropdown when clicking outside it
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectFilter = (type) => {
+    setStatusFilter(type);
+    setIsFilterOpen(false);
+  };
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + JOBS_PER_PAGE);
   };
 
   return (
-    <div className="recruiter-dashboard-shell">
-      {/* 1. LEFT SIDEBAR */}
-      <aside className="dashboard-sidebar">
-        <div>
-          <div className="sidebar-brand">
-            <Link to="/" className="brand-logo-link">
-              <span className="brand-text-span brand-mix">
-                <span className="part-red">Skill</span>
-                <span className="part-black">bridge</span>
-              </span>
-            </Link>
-          </div>
-          <nav className="sidebar-nav">
-            <button className="sidebar-item active"><HiOutlineHome className="sidebar-icon" />Dashboard</button>
-            <button className="sidebar-item"><HiOutlineBriefcase className="sidebar-icon" />My Jobs</button>
-            <button className="sidebar-item"><HiOutlineUsers className="sidebar-icon" />Applicants</button>
-            <button className="sidebar-item"><HiOutlineCheckBadge className="sidebar-icon" />Shortlisted</button>
-            <button className="sidebar-item"><HiOutlineChatBubbleLeftRight className="sidebar-icon" />Messages</button>
-            <button className="sidebar-item"><HiOutlineChartBar className="sidebar-icon" />Analytics</button>
-            <button className="sidebar-item"><HiOutlineBuildingOffice className="sidebar-icon" />Company Profile</button>
-            <button className="sidebar-item"><HiOutlineCog className="sidebar-icon" />Settings</button>
-          </nav>
-        </div>
-      </aside>
+    <div className="recruiter-dashboard-shell seamless-page-canvas">
+      <main className="dashboard-main full-width-layout">
 
-      {/* 2. MAIN HUB VISUAL AREA */}
-      <main className="dashboard-main">
-        {/* TOP UTILITY HEADER PANEL */}
-        <section className="dashboard-topbar">
+        {/* SUB-HEADER CONTEXT ROW */}
+        <section className="dashboard-topbar inline-subheading">
           <div className="topbar-copy">
             <h2>Welcome back, Recruiter! 👋</h2>
             <p className="eyebrow">Manage your jobs and find the best talent</p>
           </div>
           <div className="topbar-actions">
-            <button type="button" className="icon-btn notification-btn">
-              <HiOutlineBell />
-              <span className="badge">3</span>
-            </button>
-            <button type="button" className="text-action-btn">View Applicants</button>
             <button type="button" className="primary-accent-btn" onClick={handleQuickCreate}>
               <HiOutlinePlus /> Create Job
             </button>
-            <div className="topbar-profile">
-              <div className="profile-avatar-circle">R</div>
-            </div>
           </div>
         </section>
 
-        {/* METRICS ROW SCORECARDS */}
+        {/* SCORECARDS — all values are live from fetchStats(), no placeholders */}
         <section className="stats-grid">
           <div className="stat-box">
-            <div className="stat-row-top">
-              <div className="stat-icon stat-icon-purple"><HiMiniBriefcase /></div>
-            </div>
+            <div className="stat-icon stat-icon-purple">💼</div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.totalJobs}</h3>
               <p className="stat-label">Total Jobs</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-row-top">
-              <div className="stat-icon stat-icon-blue"><HiMiniUsers /></div>
-            </div>
+            <div className="stat-icon stat-icon-blue">👥</div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.totalApplications}</h3>
               <p className="stat-label">Applications</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-row-top">
-              <div className="stat-icon stat-icon-green"><HiMiniCheckCircle /></div>
-            </div>
+            <div className="stat-icon stat-icon-green">✓</div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.shortlisted}</h3>
               <p className="stat-label">Shortlisted</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-row-top">
-              <div className="stat-icon stat-icon-red"><HiMiniXCircle /></div>
-            </div>
+            <div className="stat-icon stat-icon-red">✕</div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.rejected}</h3>
               <p className="stat-label">Rejected</p>
@@ -214,101 +223,72 @@ function RecruiterDashboard() {
           </div>
         </section>
 
-        {/* DESKTOP SPLIT LAYER ARCHITECTURE */}
-        <section className="dashboard-grid">
-          {/* LEFT COLUMN PANEL — POLYMORPHIC INTERACTION WRAPPER */}
-          <aside className="dashboard-panel job-form-panel">
-            <div className="panel-card sticky-card">
-              <div className="panel-heading">
-                <h3>Create <span className="highlight-purple">New Job</span></h3>
-                <p className="form-subtitle">Fill in the details to post a new job</p>
-              </div>
-              <form onSubmit={handleSubmit} className="job-form">
-                <div className="input-field-box">
-                  <span className="field-prefix-icon"><HiOutlineBriefcase /></span>
-                  <div className="input-stack">
-                    <label>Job Title</label>
-                    <input name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Frontend Developer" required />
-                  </div>
-                </div>
-
-                <div className="input-field-box">
-                  <span className="field-prefix-icon"><HiOutlineBuildingOffice /></span>
-                  <div className="input-stack">
-                    <label>Company</label>
-                    <input name="company" value={formData.company} onChange={handleChange} placeholder="e.g. Google" required />
-                  </div>
-                </div>
-
-                <div className="input-field-box">
-                  <span className="field-prefix-icon"><HiOutlineMapPin /></span>
-                  <div className="input-stack">
-                    <label>Location</label>
-                    <input name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Bangalore" required />
-                  </div>
-                </div>
-
-                <div className="form-row-split">
-                  <div className="input-field-box split-box">
-                    <span className="field-prefix-icon"><HiOutlineCurrencyRupee /></span>
-                    <div className="input-stack">
-                      <label>Salary</label>
-                      <input name="salary" value={formData.salary} onChange={handleChange} placeholder="e.g. 1800000" inputMode="numeric" required />
-                    </div>
-                  </div>
-                  <div className="custom-dropdown-container">
-                    <select name="role" value={formData.role} onChange={handleChange} className="form-select-native">
-                      <option value="Full-time">INR</option>
-                      <option value="Part-time">USD</option>
-                      <option value="Contract">EUR</option>
-                    </select>
-                    <HiChevronDown className="select-dropdown-arrow" />
-                  </div>
-                </div>
-
-                <div className="input-field-box textarea-field-box">
-                  <span className="field-prefix-icon prefix-textarea-icon"><HiOutlineDocumentText /></span>
-                  <div className="input-stack">
-                    <label>Job Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} rows={4} placeholder="Write job description..." required />
-                  </div>
-                </div>
-
-                <button type="submit" className="post-job-submit-btn" disabled={submitting}>
-                  🚀 {editingJob ? "Update Job" : "Post Job"}
-                </button>
-              </form>
-            </div>
-          </aside>
-
-          {/* RIGHT COLUMN PANEL — GRID VACANCY CONTAINER CARDS */}
+        {/* JOBS LISTING — now full width since the sidebar form is gone */}
+        <section className="dashboard-grid single-column">
           <section className="dashboard-panel jobs-panel">
             <div className="panel-heading-row-top">
               <h3>My Posted Jobs</h3>
               <div className="filter-controls-cluster">
-                <div className="dropdown-filter-pill">
-                  <HiOutlineBriefcase className="filter-pill-icon" />
-                  <select className="pill-native-select">
-                    <option>All Jobs</option>
-                    <option>Active</option>
-                    <option>Draft</option>
-                  </select>
-                  <HiChevronDown className="pill-dropdown-arrow" />
+                {/* Real filter built from actual job "role" field values present in data */}
+                <div className="dropdown-filter-pill" ref={filterRef}>
+                  <button
+                    type="button"
+                    className="filter-pill-trigger"
+                    onClick={() => setIsFilterOpen((prev) => !prev)}
+                  >
+                    <HiOutlineBriefcase className="filter-pill-icon" />
+                    <span>{statusFilter}</span>
+                    <HiChevronDown className={`pill-dropdown-arrow ${isFilterOpen ? "open" : ""}`} />
+                  </button>
+
+                  {isFilterOpen && (
+                    <div className="filter-dropdown-menu">
+                      {availableRoleTypes.map((type) => (
+                        <button
+                          type="button"
+                          key={type}
+                          className={`filter-dropdown-item ${statusFilter === type ? "selected" : ""}`}
+                          onClick={() => handleSelectFilter(type)}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
                 <div className="view-toggle-buttons">
-                  <button type="button" className="view-toggle-btn active"><HiOutlineSquares2X2 /></button>
-                  <button type="button" className="view-toggle-btn"><HiOutlineListBullet /></button>
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+                    onClick={() => setViewMode("grid")}
+                    aria-label="Grid view"
+                  >
+                    <HiOutlineSquares2X2 />
+                  </button>
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${viewMode === "list" ? "active" : ""}`}
+                    onClick={() => setViewMode("list")}
+                    aria-label="List view"
+                  >
+                    <HiOutlineListBullet />
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div className="jobs-grid-cards">
+            <div className={viewMode === "grid" ? "jobs-grid-cards" : "jobs-list-cards"}>
               {loading ? (
                 <div className="loader-mesh-placeholder">Loading job opportunities...</div>
-              ) : jobs.length === 0 ? (
-                <div className="empty-state-mesh">No job cards active. Create your first post using the left panel.</div>
+              ) : filteredJobs.length === 0 ? (
+                <div className="empty-state-mesh">
+                  {jobs.length === 0
+                    ? "No job cards active. Create your first post using the button above."
+                    : "No jobs match this filter."}
+                </div>
               ) : (
-                jobs.map((job) => (
+                visibleJobs.map((job) => (
                   <article key={job._id} className="job-item-card">
                     <div className="card-core-identity">
                       <h4>{job.title}</h4>
@@ -332,15 +312,88 @@ function RecruiterDashboard() {
                 ))
               )}
             </div>
-            
-            {jobs.length > 0 && (
-              <button type="button" className="load-more-foot-link">
+
+            {!loading && hasMoreJobs && (
+              <button type="button" className="load-more-foot-link" onClick={handleLoadMore}>
                 Load more jobs <HiChevronDown />
               </button>
             )}
           </section>
         </section>
       </main>
+
+      {/* CREATE / EDIT JOB MODAL — opens only when Create Job (or Edit) is clicked */}
+      {showJobModal && (
+        <div className="job-modal-overlay" onClick={closeJobModal}>
+          <div className="job-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="panel-heading">
+              <h3>{editingJob ? "Edit " : "Create "}<span className="highlight-purple">{editingJob ? "Job" : "New Job"}</span></h3>
+              <button type="button" className="job-modal-close-btn" onClick={closeJobModal} aria-label="Close">
+                <HiXMark />
+              </button>
+            </div>
+            <p className="form-subtitle">
+              {editingJob ? "Update the details for this job listing" : "Fill in the details to post a new job"}
+            </p>
+
+            <form onSubmit={handleSubmit} className="job-form">
+              <div className="input-field-box">
+                <span className="field-prefix-icon"><HiOutlineBriefcase /></span>
+                <div className="input-stack">
+                  <label>Job Title</label>
+                  <input name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Frontend Developer" required />
+                </div>
+              </div>
+
+              <div className="input-field-box">
+                <span className="field-prefix-icon"><HiOutlineBriefcase /></span>
+                <div className="input-stack">
+                  <label>Company</label>
+                  <input name="company" value={formData.company} onChange={handleChange} placeholder="e.g. Google" required />
+                </div>
+              </div>
+
+              <div className="input-field-box">
+                <span className="field-prefix-icon"><HiOutlineMapPin /></span>
+                <div className="input-stack">
+                  <label>Location</label>
+                  <input name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Bangalore" required />
+                </div>
+              </div>
+
+              <div className="form-row-split">
+                <div className="input-field-box split-box">
+                  <span className="field-prefix-icon"><HiOutlineCurrencyRupee /></span>
+                  <div className="input-stack">
+                    <label>Salary</label>
+                    <input name="salary" value={formData.salary} onChange={handleChange} placeholder="e.g. 1800000" inputMode="numeric" required />
+                  </div>
+                </div>
+                <div className="custom-dropdown-container">
+                  <select name="role" value={formData.role} onChange={handleChange} className="form-select-native">
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                  </select>
+                  <HiChevronDown className="select-dropdown-arrow" />
+                </div>
+              </div>
+
+              <div className="input-field-box textarea-field-box">
+                <span className="field-prefix-icon prefix-textarea-icon"><HiOutlineDocumentText /></span>
+                <div className="input-stack">
+                  <label>Job Description</label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} rows={4} placeholder="Write job description..." required />
+                </div>
+              </div>
+
+              <button type="submit" className="post-job-submit-btn" disabled={submitting}>
+                {submitting ? "Saving..." : editingJob ? "Update Job" : "Post Job"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
