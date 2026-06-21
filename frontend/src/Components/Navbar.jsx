@@ -49,7 +49,7 @@ function Navbar() {
     <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}`}>
       {/* Logo */}
       <Link className="navbar-brand premium-logo" to="/">
-        SkillBridge
+        <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>
       </Link>
 
       {/* Right Side Buttons */}
@@ -75,7 +75,7 @@ function Navbar() {
               <>
                 <Link className="dashboard-btn nav-hover" to="/recruiter-dashboard">Dashboard</Link>
                 <Link className="dashboard-btn nav-hover" to="/recruiter-applications">Applicants</Link>
-                <Link className="dashboard-btn nav-hover" to="/profile">Profile</Link>
+                <Link className="dashboard-btn nav-hover" to="/recruiter-profile">Profile</Link>
               </>
             )}
 

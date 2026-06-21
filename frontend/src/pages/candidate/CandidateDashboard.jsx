@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getJobs, applyJob, getMyApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import "../../Styles/pages/candidate/CandidateDashboard.css";
@@ -7,6 +7,29 @@ import { FiSearch } from "react-icons/fi";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 
 const JOBS_PER_PAGE = 20;
+const PROFILE_NUDGE_THRESHOLD = 30; // show nudge if completion is below this %
+
+// Same field list used in Profile.jsx's calculateCompletion, kept identical
+// so the percentage shown here always matches the Profile page exactly.
+const calculateCompletion = (profileUser) => {
+  const fields = [
+    profileUser?.name,
+    profileUser?.email,
+    profileUser?.phone,
+    profileUser?.location,
+    profileUser?.linkedin,
+    profileUser?.github,
+    profileUser?.about,
+    profileUser?.education,
+    profileUser?.experienceLevel,
+    profileUser?.skills?.length > 0,
+    profileUser?.resume,
+    profileUser?.profileImage,
+  ];
+
+  const completed = fields.filter(Boolean).length;
+  return Math.round((completed / fields.length) * 100);
+};
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
@@ -24,10 +47,21 @@ function CandidateDashboard() {
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [showRecommended, setShowRecommended] = useState(false);
 
+  // Resume reuse flow: ask the candidate whether to reuse their saved
+  // profile resume, or upload a different one for this specific application.
+  const [resumeChoiceMode, setResumeChoiceMode] = useState(false);
+  const [useSavedResume, setUseSavedResume] = useState(null); // null | true | false
+  const [fetchingSavedResume, setFetchingSavedResume] = useState(false);
+
+  // Profile completion nudge: one-time modal shown on first dashboard visit
+  // if the candidate's profile is below the completion threshold.
+  const [showProfileNudge, setShowProfileNudge] = useState(false);
+
   // Pagination: how many jobs are currently visible in the list
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   let user = null;
   try {
@@ -36,12 +70,30 @@ function CandidateDashboard() {
     console.error("Invalid user data:", error);
   }
 
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const initDashboard = async () => {
       await fetchAppliedJobs();
       await fetchJobs();
     };
     initDashboard();
+  }, []);
+
+  // Profile completion nudge — runs once per account, ever, unless they
+  // complete enough of their profile that it would no longer trigger.
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const nudgeKey = `sb_seen_profile_nudge_${user.email}`;
+    const alreadySeen = localStorage.getItem(nudgeKey) === "true";
+    const completion = calculateCompletion(user);
+
+    if (!alreadySeen && completion < PROFILE_NUDGE_THRESHOLD) {
+      setShowProfileNudge(true);
+      localStorage.setItem(nudgeKey, "true");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -80,15 +132,41 @@ function CandidateDashboard() {
     }
   };
 
-  const submitApplication = async () => {
-    if (!resumeFile) {
+  // Builds a full URL for the resume stored on the user's profile,
+  // matching the same logic used in Profile.jsx's getResumeUrl.
+  const getSavedResumeUrl = () => {
+    const resumePath = user?.resume;
+    if (!resumePath) return null;
+    if (resumePath.startsWith("http")) return resumePath;
+    return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
+  };
+
+  // Fetches the candidate's saved profile resume and converts it into a
+  // File object, so it can be submitted through the exact same apply
+  // endpoint/contract as a freshly uploaded file (no backend changes needed).
+  const fetchSavedResumeAsFile = async () => {
+    const url = getSavedResumeUrl();
+    if (!url) return null;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Could not load saved resume");
+
+    const blob = await response.blob();
+    const fileName = url.split("/").pop() || "resume.pdf";
+    return new File([blob], fileName, { type: blob.type || "application/pdf" });
+  };
+
+  const submitApplication = async (fileToSubmit) => {
+    const resumeToSend = fileToSubmit || resumeFile;
+
+    if (!resumeToSend) {
       return toast.error("Please upload your resume");
     }
 
     try {
       setApplying(true);
       const formData = new FormData();
-      formData.append("resume", resumeFile);
+      formData.append("resume", resumeToSend);
       formData.append("jobId", selectedJob?._id);
 
       const response = await applyJob(formData);
@@ -101,14 +179,60 @@ function CandidateDashboard() {
       );
       setSelectedJob(nextJob || null);
 
-      setShowApplyPanel(false);
-      setResumeFile(null);
+      resetApplyState();
     } catch (error) {
       console.error("Application Error:", error);
       toast.error(error?.response?.data?.message || "Application Failed");
     } finally {
       setApplying(false);
     }
+  };
+
+  const resetApplyState = () => {
+    setShowApplyPanel(false);
+    setResumeFile(null);
+    setResumeChoiceMode(false);
+    setUseSavedResume(null);
+  };
+
+  // Triggered by "Apply Now". If the candidate has a saved profile resume,
+  // ask whether to reuse it before showing any upload field.
+  const handleApplyNowClick = () => {
+    if (user?.resume) {
+      setResumeChoiceMode(true);
+    } else {
+      setShowApplyPanel(true);
+    }
+  };
+
+  // Candidate confirmed: reuse the saved profile resume for this application.
+  const handleUseSavedResume = async () => {
+    try {
+      setFetchingSavedResume(true);
+      const file = await fetchSavedResumeAsFile();
+      if (!file) {
+        toast.error("Couldn't load your saved resume. Please upload one.");
+        setResumeChoiceMode(false);
+        setShowApplyPanel(true);
+        return;
+      }
+      setUseSavedResume(true);
+      await submitApplication(file);
+    } catch (error) {
+      console.error("Saved resume fetch error:", error);
+      toast.error("Couldn't load your saved resume. Please upload one.");
+      setResumeChoiceMode(false);
+      setShowApplyPanel(true);
+    } finally {
+      setFetchingSavedResume(false);
+    }
+  };
+
+  // Candidate declined: show the normal uploader for a different resume.
+  const handleUseDifferentResume = () => {
+    setUseSavedResume(false);
+    setResumeChoiceMode(false);
+    setShowApplyPanel(true);
   };
 
   const filteredJobs = jobs.filter((job) => {
@@ -169,8 +293,7 @@ function CandidateDashboard() {
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
-    setShowApplyPanel(false);
-    setResumeFile(null);
+    resetApplyState();
   };
 
   // Reset pagination whenever the filters or the All/Recommended toggle change,
@@ -178,6 +301,8 @@ function CandidateDashboard() {
   useEffect(() => {
     setVisibleCount(JOBS_PER_PAGE);
   }, [search, locationFilter, salaryFilter, companyFilter, showRecommended]);
+
+  const profileCompletion = user ? calculateCompletion(user) : 0;
 
   return (
     <div className="ind-dashboard">
@@ -304,6 +429,29 @@ function CandidateDashboard() {
                       <button className="ind-applied-status-btn" disabled>
                         Applied Already
                       </button>
+                    ) : resumeChoiceMode ? (
+                      // Ask whether to reuse the saved profile resume or upload a different one
+                      <div className="ind-resume-choice-box">
+                        <p className="ind-resume-choice-text">
+                          Use your saved resume for this application?
+                        </p>
+                        <div className="ind-resume-choice-actions">
+                          <button
+                            className="ind-resume-choice-yes"
+                            onClick={handleUseSavedResume}
+                            disabled={fetchingSavedResume}
+                          >
+                            {fetchingSavedResume ? "Loading..." : "Yes, use saved resume"}
+                          </button>
+                          <button
+                            className="ind-resume-choice-no"
+                            onClick={handleUseDifferentResume}
+                            disabled={fetchingSavedResume}
+                          >
+                            No, upload different
+                          </button>
+                        </div>
+                      </div>
                     ) : showApplyPanel ? (
                       <div className="ind-inline-uploader-box">
                         <input
@@ -313,14 +461,14 @@ function CandidateDashboard() {
                         />
                         <button 
                           className="ind-inline-submit-btn" 
-                          onClick={submitApplication}
+                          onClick={() => submitApplication()}
                           disabled={applying}
                         >
                           {applying ? "Sending..." : "Submit Application"}
                         </button>
                         <button 
                           className="ind-inline-cancel-btn"
-                          onClick={() => setShowApplyPanel(false)}
+                          onClick={resetApplyState}
                         >
                           ✕
                         </button>
@@ -328,7 +476,7 @@ function CandidateDashboard() {
                     ) : (
                       <button 
                         className="ind-primary-apply-btn"
-                        onClick={() => setShowApplyPanel(true)}
+                        onClick={handleApplyNowClick}
                       >
                         Apply Now
                       </button>
@@ -360,6 +508,51 @@ function CandidateDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ONE-TIME PROFILE COMPLETION NUDGE MODAL */}
+      {showProfileNudge && (
+        <div className="ind-nudge-overlay" onClick={() => setShowProfileNudge(false)}>
+          <div className="ind-nudge-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="ind-nudge-close"
+              onClick={() => setShowProfileNudge(false)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            <span className="ind-nudge-icon">📋</span>
+            <h3 className="ind-nudge-title">Complete your profile to get matched</h3>
+            <p className="ind-nudge-text">
+              Your profile is only <strong>{profileCompletion}% complete</strong>.
+              Add a few more details — like your skills and resume — so we can
+              recommend jobs that actually fit you.
+            </p>
+
+            <div className="ind-nudge-progress-bar">
+              <div
+                className="ind-nudge-progress-fill"
+                style={{ width: `${profileCompletion}%` }}
+              />
+            </div>
+
+            <div className="ind-nudge-actions">
+              <button
+                className="ind-nudge-primary-btn"
+                onClick={() => navigate("/profile")}
+              >
+                Complete my profile
+              </button>
+              <button
+                className="ind-nudge-ghost-btn"
+                onClick={() => setShowProfileNudge(false)}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

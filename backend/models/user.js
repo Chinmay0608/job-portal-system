@@ -78,6 +78,25 @@ const userSchema = new mongoose.Schema(
       enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years"],
       default: "Fresher",
     },
+
+    /* ==========================
+       RECRUITER-ONLY FIELDS
+       Populated only when role === "recruiter"
+    ========================== */
+    designation: {
+      type: String,
+      default: "",
+    },
+
+    companyName: {
+      type: String,
+      default: "",
+    },
+
+    companyWebsite: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

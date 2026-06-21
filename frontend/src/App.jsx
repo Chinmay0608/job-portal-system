@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import ScrollToTop from "./Components/ScrollToTop";
+import SplashScreen from "./Components/SplashScreen";
 
 // ==========================================================================
 // 1. AUTHENTICATION INFRASTRUCTURE DOMAIN IMPORT SEGMENT
@@ -17,12 +19,14 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // ==========================================================================
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
 import MyApplications from "./pages/candidate/MyApplications";
+import CandidateProfile from "./pages/candidate/candidateProfile";
 
 // ==========================================================================
 // 3. RECRUITER ADMINISTRATIVE MANAGEMENT IMPORT SEGMENT
 // ==========================================================================
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
 import RecruiterApplications from "./pages/recruiter/RecruiterApplications";
+import RecruiterProfile from "./pages/recruiter/recruiterProfile";
 
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
@@ -48,7 +52,6 @@ import HelpCenter from "./pages/legal/HelpCenter";
 // ==========================================================================
 // 6. UNIVERSAL UTILITY SHIFT SHARED LAYOUT IMPORT SEGMENT
 // ==========================================================================
-import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 function AppContent() {
@@ -72,13 +75,12 @@ function AppContent() {
         {/* Role-Gated Candidate Spaces */}
         <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
         <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
 
         {/* Role-Gated Recruiter Spaces */}
         <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
         <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
-
-        {/* Authenticated Shared Spaces */}
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
 
         {/* Informational Marketing & Legal Layout Trees */}
         <Route path="/about" element={<About />} />
@@ -103,9 +105,38 @@ function AppContent() {
 }
 
 function App() {
+  // Splash should only ever appear on the very first visit.
+  // Check localStorage synchronously on first render so the splash
+  // never flashes on subsequent visits/refreshes.
+  const hasSeenSplash = localStorage.getItem("sb_has_seen_splash") === "true";
+
+  const [showSplash, setShowSplash] = useState(!hasSeenSplash);
+  const [isSplashExiting, setIsSplashExiting] = useState(false);
+
+  useEffect(() => {
+    if (hasSeenSplash) return; // already shown before, skip entirely
+
+    // Hold the splash on screen, then trigger the fade-out animation
+    const exitTimer = setTimeout(() => setIsSplashExiting(true), 1400);
+
+    // Fully remove the splash from the DOM once the fade-out animation finishes,
+    // and record that it has now been seen so it never shows again.
+    const removeTimer = setTimeout(() => {
+      setShowSplash(false);
+      localStorage.setItem("sb_has_seen_splash", "true");
+    }, 1900);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(removeTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <BrowserRouter>
       <ScrollToTop />
+      {showSplash && <SplashScreen isExiting={isSplashExiting} />}
       <AppContent />
     </BrowserRouter>
   );

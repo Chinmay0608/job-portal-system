@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import "../Styles/pages/Profile.css";
-import { updateProfile } from "../Services/jobService";
-import Select from "react-select";
+import "../../Styles/pages/recruiter/recruiterProfile.css";
+import { updateProfile } from "../../Services/jobService";
 
-function Profile() {
+function RecruiterProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   /* Safe User Parse */
@@ -20,26 +19,22 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [savedCompletion, setSavedCompletion] = useState(0);
 
-  // 2. Input Fields State
+  // 2. Input Fields State — recruiter-specific
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [location, setLocation] = useState(user?.location || "");
   const [linkedin, setLinkedin] = useState(user?.linkedin || "");
-  const [github, setGithub] = useState(user?.github || "");
+  const [designation, setDesignation] = useState(user?.designation || "");
+  const [companyName, setCompanyName] = useState(user?.companyName || "");
+  const [companyWebsite, setCompanyWebsite] = useState(user?.companyWebsite || "");
   const [about, setAbout] = useState(user?.about || "");
-  const [education, setEducation] = useState(user?.education || "");
-  const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
-  
-  // Dynamic User Saved Skills
-  const [skills, setSkills] = useState(user?.skills || []); 
-  const [skillInput, setSkillInput] = useState("");
 
   // 3. File Uploads State
   const [profileImage, setProfileImage] = useState(null);
-  const [resume, setResume] = useState(null);
 
-  // Profile Completion Calculation Matrix
+  // Profile Completion Calculation Matrix — recruiter-specific fields
+  // (no resume/education/experience/skills — those belong to candidates only)
   const calculateCompletion = (profileUser) => {
     const fields = [
       profileUser?.name,
@@ -47,12 +42,10 @@ function Profile() {
       profileUser?.phone,
       profileUser?.location,
       profileUser?.linkedin,
-      profileUser?.github,
+      profileUser?.designation,
+      profileUser?.companyName,
+      profileUser?.companyWebsite,
       profileUser?.about,
-      profileUser?.education,
-      profileUser?.experienceLevel,
-      profileUser?.skills?.length > 0,
-      profileUser?.resume,
       profileUser?.profileImage,
     ];
 
@@ -69,20 +62,12 @@ function Profile() {
       setPhone(user.phone || "");
       setLocation(user.location || "");
       setLinkedin(user.linkedin || "");
-      setGithub(user.github || "");
+      setDesignation(user.designation || "");
+      setCompanyName(user.companyName || "");
+      setCompanyWebsite(user.companyWebsite || "");
       setAbout(user.about || "");
-      setSkills(user.skills || []);
-      setEducation(user.education || "");
-      setExperienceLevel(user.experienceLevel || "Fresher");
     }
   }, [user]);
-
-  /* Safe Resume URL Fix */
-  const getResumeUrl = (resumePath) => {
-    if (!resumePath) return "#";
-    if (resumePath.startsWith("http")) return resumePath;
-    return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
-  };
 
   const handleSave = async () => {
     try {
@@ -93,13 +78,11 @@ function Profile() {
       formData.append("phone", phone);
       formData.append("location", location);
       formData.append("linkedin", linkedin);
-      formData.append("github", github);
+      formData.append("designation", designation);
+      formData.append("companyName", companyName);
+      formData.append("companyWebsite", companyWebsite);
       formData.append("about", about);
-      formData.append("skills", JSON.stringify(skills));
-      formData.append("education", education);
-      formData.append("experienceLevel", experienceLevel);
 
-      if (resume) formData.append("resume", resume);
       if (profileImage) formData.append("profileImage", profileImage);
 
       const response = await updateProfile(formData);
@@ -109,7 +92,6 @@ function Profile() {
       localStorage.setItem("user", JSON.stringify(response.user));
       setUser(response.user);
 
-      setResume(null);
       setProfileImage(null);
     } catch (error) {
       console.error("Update Error:", error);
@@ -117,18 +99,6 @@ function Profile() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const addSkill = () => {
-    const trimmed = skillInput.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
-      setSkillInput("");
-    }
-  };
-
-  const removeSkill = (skillToRemove) => {
-    setSkills(skills.filter((s) => s !== skillToRemove));
   };
 
   return (
@@ -164,7 +134,7 @@ function Profile() {
 
           <h2>{user?.name || "Guest User"}</h2>
           <p>{user?.email}</p>
-          <span className="role-badge">{user?.role || "Candidate"}</span>
+          <span className="role-badge">{user?.role || "Recruiter"}</span>
 
           <div className="completion-section">
             <div className="completion-header">
@@ -180,36 +150,14 @@ function Profile() {
 
             <div className="profile-stats">
               <div className="stat-card">
-                <p>Applications</p>
-                <h3>{user?.applications?.length || 0}</h3>
+                <p>Jobs Posted</p>
+                <h3>{user?.jobsPosted?.length || 0}</h3>
               </div>
               <div className="stat-card">
-                <p>Saved Jobs</p>
-                <h3>0</h3>
+                <p>Applicants</p>
+                <h3>{user?.totalApplicants || 0}</h3>
               </div>
             </div>
-          </div>
-
-          <div className="resume-box">
-            <h3>Resume</h3>
-            {user?.resume && (
-              <a
-                href={getResumeUrl(user.resume)}
-                target="_blank"
-                rel="noreferrer"
-                className="resume-link"
-              >
-                📄 View current resume
-              </a>
-            )}
-            <label className="resume-upload-label">
-              Upload new file
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={(e) => setResume(e.target.files[0])}
-              />
-            </label>
           </div>
         </div>
 
@@ -217,114 +165,78 @@ function Profile() {
         <div className="profile-content">
 
           <div className="profile-content-header">
-            <span className="profile-eyebrow">Candidate profile</span>
+            <span className="profile-eyebrow">Recruiter profile</span>
             <h1>My Profile</h1>
             <p className="profile-content-subtitle">
-              Keep this up to date — recruiters see this before they see your resume.
+              Candidates see this before they apply — make your company look its best.
             </p>
           </div>
 
-          {/* Clean Input Grid Layout Block */}
+          {/* Basic Information */}
           <div className="profile-section-card">
             <h2 className="profile-section-title">Basic information</h2>
 
             <div className="profile-grid">
-              {/* Field 1: Full Name */}
               <div className="input-group">
                 <label>Full Name</label>
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
 
-              {/* Field 2: Email */}
               <div className="input-group">
                 <label>Email</label>
                 <input type="email" value={email} disabled />
               </div>
 
-              {/* Field 3: Phone */}
               <div className="input-group">
                 <label>Phone Number</label>
                 <input type="text" placeholder="Enter phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
 
-              {/* Field 4: Location */}
               <div className="input-group">
                 <label>Location</label>
                 <input type="text" placeholder="Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
               </div>
 
-              {/* Dropdown 1: Select Degree Group */}
               <div className="input-group">
-                <label>Highest Qualification</label>
-                <select value={education} onChange={(e) => setEducation(e.target.value)}>
-                  <option value="">Select Degree</option>
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="M.Tech">M.Tech</option>
-                  <option value="BCA">BCA</option>
-                  <option value="MCA">MCA</option>
-                </select>
+                <label>Designation</label>
+                <input type="text" placeholder="e.g. Talent Acquisition Manager" value={designation} onChange={(e) => setDesignation(e.target.value)} />
               </div>
 
-              {/* Dropdown 2: Experience Level Group */}
-              <div className="input-group">
-                <label>Experience Level</label>
-                <select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
-                  <option value="Fresher">Fresher</option>
-                  <option value="0-2 Years">0-2 Years</option>
-                  <option value="2-5 Years">2-5 Years</option>
-                  <option value="5+ Years">5+ Years</option>
-                </select>
-              </div>
-
-              {/* Field 5: LinkedIn */}
               <div className="input-group">
                 <label>LinkedIn</label>
                 <input type="text" placeholder="LinkedIn URL" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
               </div>
+            </div>
+          </div>
 
-              {/* Field 6: GitHub */}
+          {/* Company Information */}
+          <div className="profile-section-card">
+            <h2 className="profile-section-title">Company information</h2>
+
+            <div className="profile-grid">
               <div className="input-group">
-                <label>GitHub</label>
-                <input type="text" placeholder="GitHub URL" value={github} onChange={(e) => setGithub(e.target.value)} />
+                <label>Company Name</label>
+                <input type="text" placeholder="e.g. SkillBridge Technologies" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              </div>
+
+              <div className="input-group">
+                <label>Company Website</label>
+                <input type="text" placeholder="https://yourcompany.com" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
               </div>
             </div>
           </div>
 
-          {/* Skills Engine Block */}
+          {/* About the Company */}
           <div className="profile-section-card">
-            <div className="skills-section">
-              <h3>Skills</h3>
-              <div className="skill-input-box">
-                <input
-                  type="text"
-                  placeholder="Add skill..."
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addSkill();
-                    }
-                  }}
-                />
-                <button type="button" className="add-skill-btn" onClick={addSkill}>
-                  Add
-                </button>
-              </div>
-
-              <div className="skills-tags">
-                {skills.length === 0 && (
-                  <span className="skills-empty">No skills added yet — add your first one above.</span>
-                )}
-                {skills.map((skill, index) => (
-                  <span key={index} className="skill-chip">
-                    {skill}
-                    <button type="button" onClick={() => removeSkill(skill)}>
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
+            <div className="input-group">
+              <label>About the company</label>
+              <textarea
+                rows={5}
+                placeholder="Tell candidates what your company does and what it's like to work there..."
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                className="company-about-textarea"
+              />
             </div>
           </div>
 
@@ -341,4 +253,4 @@ function Profile() {
   );
 }
 
-export default Profile;
+export default RecruiterProfile;

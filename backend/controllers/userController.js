@@ -21,6 +21,9 @@ const updateProfile =
         skills,
         education,
         experienceLevel,
+        designation,
+        companyName,
+        companyWebsite,
       } = req.body;
 
       const user =
@@ -67,6 +70,15 @@ const updateProfile =
               skills
             )
           : [];
+
+      user.designation =
+        designation || "";
+
+      user.companyName =
+        companyName || "";
+
+      user.companyWebsite =
+        companyWebsite || "";
 
       /* Resume */
       if (

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PROFILE PAGE — Wellfound-inspired redesign
+   CANDIDATE PROFILE PAGE — Wellfound-inspired
    Palette: navy #0d1117, off-white #f6f5f1, accent red #ef4444
    ========================================================================== */
 
@@ -190,7 +190,7 @@
   font-weight: 800;
 }
 
-/* RESUME */
+/* RESUME (candidate-only) */
 .resume-box {
   width: 100%;
   margin-top: 22px;
@@ -362,7 +362,7 @@
   cursor: not-allowed;
 }
 
-/* SKILLS */
+/* SKILLS (candidate-only) */
 .skills-section {
   display: flex;
   flex-direction: column;
