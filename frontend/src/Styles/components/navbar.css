@@ -46,7 +46,7 @@
 }
 
 .logo-bridge {
-  color: white !important;
+  color: #0d1117 ;
 }
 
 
@@ -197,4 +197,28 @@
   border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
   background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
+}
+
+/* ========================================
+   HOME PAGE LOGO COLORS
+======================================== */
+
+.custom-navbar.navbar-dark .logo-skill {
+  color: #ef4444;
+}
+
+.custom-navbar.navbar-dark .logo-bridge {
+  color: #ffffff;
+}
+
+/* ========================================
+   OTHER PAGES LOGO COLORS
+======================================== */
+
+.custom-navbar:not(.navbar-dark) .logo-skill {
+  color: #ef4444;
+}
+
+.custom-navbar:not(.navbar-dark) .logo-bridge {
+  color: #0d1117;
 }
