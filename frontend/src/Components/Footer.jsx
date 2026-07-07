@@ -47,7 +47,7 @@ function Footer() {
 
           <div className="footer-col">
             <h4>For Companies</h4>
-            <button onClick={() => delayedNavigate("/recruiter-dashboard")}>Post a Job</button>
+            <button onClick={() => navigate("/register", {state: { role: "recruiter" }, })}>Post a Job</button>
             <button onClick={() => delayedNavigate("/ai-recruiting")}>AI Recruiting</button>
             <button onClick={() => delayedNavigate("/register")}>Pricing</button>
             <button onClick={() => delayedNavigate("/success-stories")}>Success Stories</button>

@@ -1,27 +1,33 @@
 import "../../Styles/pages/marketing/AiRecruiting.css";
+import {
+  FaRobot,
+  FaBolt,
+  FaChartLine,
+  FaBullseye,
+} from "react-icons/fa";
 
 function AiRecruiting() {
   const features = [
     {
-      icon: "🤖",
+      icon: <FaRobot />,
       title: "Smart Candidate Matching",
       desc:
         "AI analyzes candidate skills, experience, and preferences to recommend the best matches instantly.",
     },
     {
-      icon: "⚡",
+      icon: <FaBolt />,
       title: "Faster Hiring Process",
       desc:
         "Reduce screening time with automated resume analysis and intelligent recommendations.",
     },
     {
-      icon: "📊",
+      icon: <FaChartLine />,
       title: "Hiring Insights",
       desc:
         "Get data-driven insights on hiring trends, applicant quality, and recruiter performance.",
     },
     {
-      icon: "🎯",
+      icon: <FaBullseye />,
       title: "Precision Recruitment",
       desc:
         "Find the right talent with AI-powered filtering and role-based matching.",

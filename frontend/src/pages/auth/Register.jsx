@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../Services/authService";
 import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
@@ -9,6 +9,7 @@ import "../../Styles/pages/auth/Register.css";
 
 function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ function Register() {
     email: "",
     phone: "",
     password: "",
-    role: "candidate",
+    role: location.state?.role || "candidate",
   });
 
   const handleChange = (e) => {

@@ -1,22 +1,22 @@
 import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({ children, role }) {
+  const token = localStorage.getItem("token");
+
   let user = null;
 
   try {
     user = JSON.parse(localStorage.getItem("user") || "null");
-  } catch (error) {
-    console.error("Invalid user data in localStorage:", error);
+  } catch {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-  }
-
-  /* Not Logged In */
-  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  /* Wrong Role */
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (role && user.role !== role) {
     return <Navigate to="/" replace />;
   }

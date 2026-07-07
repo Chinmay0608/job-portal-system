@@ -1,6 +1,16 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaBriefcase,
+  FaMapMarkerAlt,
+  FaLaptopCode,
+  FaBuilding,
+} from "react-icons/fa";
 import "../../Styles/pages/marketing/SalaryData.css";
 
 function SalaryData() {
+  const navigate = useNavigate();
+
   const salaries = [
     {
       role: "Frontend Developer",
@@ -34,14 +44,54 @@ function SalaryData() {
     },
   ];
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSalaries, setFilteredSalaries] = useState(salaries);
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      setFilteredSalaries(salaries);
+      return;
+    }
+
+    const results = salaries.filter((item) =>
+      item.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setFilteredSalaries(results);
+  };
+
+  const insights = [
+    {
+      icon: <FaBriefcase />,
+      title: "Experience",
+      description:
+        "Professionals with more experience typically earn higher salaries due to their expertise and industry knowledge.",
+    },
+    {
+      icon: <FaMapMarkerAlt />,
+      title: "Location",
+      description:
+        "Compensation varies depending on the city, country, cost of living, and whether the role is remote or on-site.",
+    },
+    {
+      icon: <FaLaptopCode />,
+      title: "Skills",
+      description:
+        "Specialized skills such as AI, Cloud, Cyber Security, and Full Stack Development often command premium salaries.",
+    },
+    {
+      icon: <FaBuilding />,
+      title: "Company Type",
+      description:
+        "Startups, product companies, and enterprises have different compensation structures.",
+    },
+  ];
+
   return (
     <div className="salary-page">
-
       {/* HERO */}
       <section className="salary-hero">
-        <span className="salary-tag">
-          Salary Insights
-        </span>
+        <span className="salary-tag">Salary Insights</span>
 
         <h1>
           Know Your
@@ -50,48 +100,64 @@ function SalaryData() {
         </h1>
 
         <p>
-          Explore salary trends across roles,
-          industries, and experience levels to
-          make informed career decisions.
+          Explore salary trends across industries, job roles, and experience
+          levels to better understand your earning potential and negotiate with
+          confidence.
         </p>
 
         <div className="salary-search">
           <input
             type="text"
             placeholder="Search role (e.g. Frontend Developer)"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch();
+              }
+            }}
           />
 
-          <button>
+          <button onClick={handleSearch}>
             Search
           </button>
         </div>
       </section>
 
-      {/* SALARY TABLE */}
+      {/* SALARY SECTION */}
       <section className="salary-section">
         <div className="salary-header">
           <h2>Popular Salary Ranges</h2>
+
           <p>
-            Estimated salary ranges based on
-            hiring trends and industry data.
+            Estimated annual salary ranges based on current hiring trends and
+            industry benchmarks.
           </p>
         </div>
 
         <div className="salary-grid">
-          {salaries.map((item, index) => (
-            <div className="salary-card" key={index}>
+          {filteredSalaries.length > 0 ? (
+            filteredSalaries.map((item, index) => (
+              <div className="salary-card" key={index}>
+                <div className="salary-role">
+                  <h3>{item.role}</h3>
+                  <span>{item.experience}</span>
+                </div>
 
-              <div className="salary-role">
-                <h3>{item.role}</h3>
-                <span>{item.experience}</span>
+                <div className="salary-range">
+                  {item.salary}
+                </div>
               </div>
-
-              <div className="salary-range">
-                {item.salary}
-              </div>
-
+            ))
+          ) : (
+            <div className="salary-no-result">
+              <h3>No Salary Data Found</h3>
+              <p>
+                We couldn't find salary information for
+                <strong> "{searchTerm}"</strong>.
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -100,62 +166,33 @@ function SalaryData() {
         <h2>What Impacts Salary?</h2>
 
         <div className="insight-grid">
+          {insights.map((item, index) => (
+            <div className="insight-card" key={index}>
+              <div className="insight-icon">
+                {item.icon}
+              </div>
 
-          <div className="insight-card">
-            <span>💼</span>
-            <h3>Experience</h3>
-            <p>
-              More experience often leads
-              to higher compensation.
-            </p>
-          </div>
+              <h3>{item.title}</h3>
 
-          <div className="insight-card">
-            <span>📍</span>
-            <h3>Location</h3>
-            <p>
-              Salaries vary by city,
-              country, and remote work.
-            </p>
-          </div>
-
-          <div className="insight-card">
-            <span>🚀</span>
-            <h3>Skills</h3>
-            <p>
-              High-demand skills can
-              significantly boost pay.
-            </p>
-          </div>
-
-          <div className="insight-card">
-            <span>🏢</span>
-            <h3>Company Type</h3>
-            <p>
-              Startups and enterprises
-              offer different compensation.
-            </p>
-          </div>
-
+              <p>{item.description}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* CTA */}
       <section className="salary-cta">
-        <h2>
-          Find Higher Paying Opportunities
-        </h2>
+        <h2>Ready to Earn More?</h2>
 
         <p>
-          Discover jobs that match your
-          expectations and career goals.
+          Discover opportunities that match your skills, experience, and salary
+          expectations on SkillBridge.
         </p>
 
-        <button>
+        <button onClick={() => navigate("/candidate-dashboard")}>
           Explore Jobs
         </button>
       </section>
-
     </div>
   );
 }

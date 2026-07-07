@@ -14,7 +14,7 @@
 
 .salary-hero {
   text-align: center;
-  padding: 120px 80px 90px;
+  padding: 40px 80px 90px;
   background: linear-gradient(
     to bottom,
     #ffffff,
@@ -183,34 +183,49 @@
 }
 
 .insight-card {
-  background: white;
+  background: #ffffff;
+  border: 1px solid #ececec;
   border-radius: 28px;
   padding: 40px 30px;
-  border: 1px solid #ececec;
-  transition: 0.25s ease;
+  transition: all 0.25s ease;
 }
 
 .insight-card:hover {
   transform: translateY(-6px);
-  box-shadow:
-    0 20px 40px rgba(0,0,0,0.06);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
 }
 
-.insight-card span {
-  display: block;
-  font-size: 2.5rem;
-  margin-bottom: 18px;
+.insight-icon {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 24px;
+  border-radius: 18px;
+  background: #f5f7fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #2563eb;
+  transition: 0.25s;
+}
+
+.insight-card:hover .insight-icon {
+  background: #2563eb;
+  color: white;
+  transform: scale(1.08);
 }
 
 .insight-card h3 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  color: #0d1117;
 }
 
 .insight-card p {
   color: #6b7280;
-  line-height: 1.7;
+  line-height: 1.8;
+  font-size: 0.98rem;
 }
 
 /* ==========================

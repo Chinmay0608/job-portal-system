@@ -240,3 +240,35 @@
     font-size: 2rem;
   }
 }
+
+/* ==========================
+   FINAL DECISION PILL
+========================== */
+
+.decision-pill {
+  width: 100%;
+  padding: 15px 18px;
+  margin-top: 12px;
+
+  border-radius: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.decision-shortlisted {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.decision-rejected {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}

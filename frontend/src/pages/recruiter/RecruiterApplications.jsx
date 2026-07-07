@@ -98,19 +98,39 @@ function RecruiterApplications() {
                   </a>
                 )}
 
-                <button
-                  className="shortlist-btn"
-                  onClick={() => handleStatusUpdate(application._id, "shortlisted")}
-                >
-                  Shortlist
-                </button>
+                {application.status === "pending" ? (
+                  <>
+                    <button
+                      className="shortlist-btn"
+                      onClick={() =>
+                        handleStatusUpdate(application._id, "shortlisted")
+                      }
+                    >
+                      Shortlist
+                    </button>
 
-                <button
-                  className="reject-btn"
-                  onClick={() => handleStatusUpdate(application._id, "rejected")}
-                >
-                  Reject
-                </button>
+                    <button
+                      className="reject-btn"
+                      onClick={() =>
+                        handleStatusUpdate(application._id, "rejected")
+                      }
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : (
+                  <div
+                    className={`decision-pill ${
+                      application.status === "shortlisted"
+                        ? "decision-shortlisted"
+                        : "decision-rejected"
+                    }`}
+                  >
+                    {application.status === "shortlisted"
+                      ? "✓ Candidate Shortlisted"
+                      : "✕ Candidate Rejected"}
+                  </div>
+                )}
               </div>
             </div>
           ))}
