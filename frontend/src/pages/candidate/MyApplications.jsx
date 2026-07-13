@@ -1,28 +1,64 @@
 import { useEffect, useState } from "react";
-import { getMyApplications } from "../../Services/jobService";
+import RetryBanner from "../../Components/RetryBanner";
+import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
 import "../../Styles/pages/candidate/MyApplications.css";
 
 function MyApplications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+  const [fetchError, setFetchError] = useState("");
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    fetchApplications();
+    const token = localStorage.getItem("token");
+    fetchApplications(token);
   }, []);
 
-  const fetchApplications = async () => {
+  const fetchApplications = async (token) => {
     try {
+      setFetchError("");
       setLoading(true);
-      const response = await getMyApplications();
+      if (!token) {
+        toast.error("Unable to authenticate user");
+        setApplications([]);
+        return;
+      }
+
+      const response = await getMyApplicationsAPI(token);
       setApplications(response?.applications || []);
     } catch (error) {
       console.error("Applications Error:", error);
+      setFetchError("Unable to load applications. Please try again.");
       toast.error("Failed to load applications");
+      setApplications([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWithdraw = async (applicationId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Unable to authenticate user");
+      return;
+    }
+
+    const confirmWithdraw = window.confirm("Are you sure you want to withdraw this application?");
+    if (!confirmWithdraw) return;
+
+    try {
+      setDeletingId(applicationId);
+      await withdrawApplication(applicationId, token);
+      setApplications((prev) => prev.filter((app) => app._id !== applicationId));
+      toast.success("Application withdrawn successfully");
+    } catch (error) {
+      console.error("Withdraw Error:", error);
+      toast.error(error?.response?.data?.message || "Failed to withdraw application");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -44,6 +80,8 @@ function MyApplications() {
         <h1>My Applications</h1>
         <p>Track your applied jobs and status</p>
       </div>
+
+      {fetchError && <RetryBanner message={fetchError} onRetry={() => fetchApplications(localStorage.getItem("token"))} />}
 
       {/* Moved the grid conditional rendering to wrap ONLY the items */}
       {loading ? (
@@ -93,6 +131,15 @@ function MyApplications() {
                       View Resume
                     </a>
                   )}
+
+                  <button
+                    className="resume-btn withdraw-btn"
+                    type="button"
+                    disabled={deletingId === application._id}
+                    onClick={() => handleWithdraw(application._id)}
+                  >
+                    {deletingId === application._id ? "Withdrawing..." : "Withdraw"}
+                  </button>
                 </div>
               </div>
             );

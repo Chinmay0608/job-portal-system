@@ -18,3 +18,23 @@ export const uploadResume = async (file) => {
 
   return response.data;
 };
+
+export const getMyApplicationsAPI = async (token) => {
+  const response = await axios.get(`${API}/applications/my-applications`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
+
+export const withdrawApplication = async (applicationId, token) => {
+  const response = await axios.delete(`${API}/applications/${applicationId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};

@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getJobs, applyJob, getMyApplications } from "../../Services/jobService";
+import { getJobs, applyJob, getMyApplications, toggleSaveJob } from "../../Services/jobService";
+import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
+import RetryBanner from "../../Components/RetryBanner";
 import "../../Styles/pages/candidate/CandidateDashboard.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiBookmark } from "react-icons/fi";
 import { HiOutlineLocationMarker } from "react-icons/hi";
+import { FaBookmark } from "react-icons/fa";
 
 const JOBS_PER_PAGE = 20;
 const PROFILE_NUDGE_THRESHOLD = 30; // show nudge if completion is below this %
@@ -36,11 +39,16 @@ function CandidateDashboard() {
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [jobLoadError, setJobLoadError] = useState("");
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -63,21 +71,30 @@ function CandidateDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("user") || "null");
-  } catch (error) {
-    console.error("Invalid user data:", error);
-  }
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch (error) {
+      console.error("Invalid user data:", error);
+      return null;
+    }
+  });
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const initDashboard = async () => {
       await fetchAppliedJobs();
-      await fetchJobs();
+      await fetchJobs({
+        searchTerm: search,
+        locationTerm: locationFilter,
+        salaryTerm: salaryFilter,
+        companyTerm: companyFilter,
+        page: currentPage,
+      });
     };
     initDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Profile completion nudge — runs once per account, ever, unless they
@@ -104,18 +121,43 @@ function CandidateDashboard() {
     }
   }, [location.state]);
 
-  const fetchJobs = async () => {
+  useEffect(() => {
+    setCurrentPage(1);
+    debouncedFetchJobs({
+      searchTerm: search,
+      locationTerm: locationFilter,
+      salaryTerm: salaryFilter,
+      companyTerm: companyFilter,
+      page: 1,
+    });
+  }, [search, locationFilter, salaryFilter, companyFilter, debouncedFetchJobs]);
+
+  const fetchJobs = async ({ searchTerm, locationTerm, salaryTerm, companyTerm, page }) => {
     try {
+      setJobLoadError("");
       setLoading(true);
-      const response = await getJobs();
+      const response = await getJobs({
+        search: searchTerm,
+        location: locationTerm,
+        minSalary: salaryTerm,
+        page,
+        limit: JOBS_PER_PAGE,
+      });
+
       const rawJobs = response?.jobs || [];
       setJobs(rawJobs);
-      
+      setTotalJobs(response?.totalJobs || 0);
+      setTotalPages(response?.totalPages || 1);
+      setCurrentPage(response?.currentPage || 1);
+
       if (rawJobs.length > 0) {
         setSelectedJob(rawJobs[0]);
+      } else {
+        setSelectedJob(null);
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
+      setJobLoadError("Unable to load jobs. Please check your connection and retry.");
       toast.error("Failed to load jobs");
     } finally {
       setLoading(false);
@@ -131,6 +173,13 @@ function CandidateDashboard() {
       console.error("Error fetching applications:", error);
     }
   };
+
+  const debouncedFetchJobs = useCallback(
+    debounce((params) => {
+      fetchJobs(params);
+    }, 400),
+    []
+  );
 
   // Builds a full URL for the resume stored on the user's profile,
   // matching the same logic used in Profile.jsx's getResumeUrl.
@@ -205,6 +254,26 @@ function CandidateDashboard() {
     }
   };
 
+  const handleToggleSave = async (jobId) => {
+    if (!jobId) return;
+
+    try {
+      const response = await toggleSaveJob({ jobId });
+      const updatedSavedJobs = response?.savedJobs || [];
+
+      const updatedUser = {
+        ...user,
+        savedJobs: updatedSavedJobs,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Save job error:", error);
+      toast.error("Could not update saved jobs");
+    }
+  };
+
   // Candidate confirmed: reuse the saved profile resume for this application.
   const handleUseSavedResume = async () => {
     try {
@@ -235,21 +304,7 @@ function CandidateDashboard() {
     setShowApplyPanel(true);
   };
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job?.title?.toLowerCase().includes(search.toLowerCase()) ||
-      job?.company?.toLowerCase().includes(search.toLowerCase());
-
-    const matchesLocation = !locationFilter || job?.location?.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesCompany = !companyFilter || job?.company?.toLowerCase().includes(companyFilter.toLowerCase());
-    const matchesSalary = !salaryFilter || Number(job?.salary) >= Number(salaryFilter);
-
-    return matchesSearch && matchesLocation && matchesCompany && matchesSalary;
-  });
-
-  const availableJobs = filteredJobs.filter(
-    (job) => !appliedJobs.includes(job._id)
-  );
+  const availableJobs = jobs.filter((job) => !appliedJobs.includes(job._id));
 
   const recommendedJobs = availableJobs.filter((job) => {
     const description = job.description?.toLowerCase() || "";
@@ -283,13 +338,7 @@ function CandidateDashboard() {
     ? recommendedJobs
     : availableJobs;
 
-  // Only render the first `visibleCount` jobs in the list
-  const visibleJobs = displayedJobs.slice(0, visibleCount);
-  const hasMoreJobs = visibleCount < displayedJobs.length;
-
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + JOBS_PER_PAGE);
-  };
+  const visibleJobs = displayedJobs;
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
@@ -304,8 +353,23 @@ function CandidateDashboard() {
 
   const profileCompletion = user ? calculateCompletion(user) : 0;
 
+  const retryFetchJobs = () => {
+    fetchJobs({
+      searchTerm: search,
+      locationTerm: locationFilter,
+      salaryTerm: salaryFilter,
+      companyTerm: companyFilter,
+      page: currentPage,
+    });
+  };
+
   return (
     <div className="ind-dashboard">
+      {jobLoadError && (
+        <div className="page-alert-wrap">
+          <RetryBanner message={jobLoadError} onRetry={retryFetchJobs} />
+        </div>
+      )}
       {/* SEARCH CONSOLE BAR */}
       <div className="ind-search-bar">
         <div className="ind-search-inner">
@@ -398,16 +462,45 @@ function CandidateDashboard() {
                   })}
                 </div>
 
-                {hasMoreJobs && (
-                  <div className="ind-load-more-wrapper">
-                    <button
-                      className="ind-load-more-btn"
-                      onClick={handleLoadMore}
-                    >
-                      Load more jobs
-                    </button>
-                  </div>
-                )}
+                <div className="ind-pagination-wrapper">
+                  <button
+                    className="ind-pagination-btn"
+                    disabled={currentPage <= 1}
+                    onClick={() => {
+                      const nextPage = Math.max(1, currentPage - 1);
+                      setCurrentPage(nextPage);
+                      fetchJobs({
+                        searchTerm: search,
+                        locationTerm: locationFilter,
+                        salaryTerm: salaryFilter,
+                        companyTerm: companyFilter,
+                        page: nextPage,
+                      });
+                    }}
+                  >
+                    Previous
+                  </button>
+                  <span className="ind-pagination-info">
+                    Page {currentPage} of {totalPages} • {totalJobs} jobs
+                  </span>
+                  <button
+                    className="ind-pagination-btn"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => {
+                      const nextPage = Math.min(totalPages, currentPage + 1);
+                      setCurrentPage(nextPage);
+                      fetchJobs({
+                        searchTerm: search,
+                        locationTerm: locationFilter,
+                        salaryTerm: salaryFilter,
+                        companyTerm: companyFilter,
+                        page: nextPage,
+                      });
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -474,12 +567,50 @@ function CandidateDashboard() {
                         </button>
                       </div>
                     ) : (
-                      <button 
-                        className="ind-primary-apply-btn"
-                        onClick={handleApplyNowClick}
-                      >
-                        Apply Now
-                      </button>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        <button 
+                          className="ind-primary-apply-btn"
+                          onClick={handleApplyNowClick}
+                        >
+                          Apply Now
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSave(selectedJob._id)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 42,
+                            height: 42,
+                            border: "1px solid rgba(0,0,0,0.12)",
+                            borderRadius: 12,
+                            background: "transparent",
+                            color: user?.savedJobs?.some(
+                              (savedJobId) => savedJobId?.toString() === selectedJob?._id
+                            )
+                              ? "#e0245e"
+                              : "#333",
+                            cursor: "pointer",
+                            padding: 0,
+                          }}
+                          aria-label={
+                            user?.savedJobs?.some(
+                              (savedJobId) => savedJobId?.toString() === selectedJob?._id
+                            )
+                              ? "Unsave job"
+                              : "Save job"
+                          }
+                        >
+                          {user?.savedJobs?.some(
+                            (savedJobId) => savedJobId?.toString() === selectedJob?._id
+                          ) ? (
+                            <FaBookmark size={18} />
+                          ) : (
+                            <FiBookmark size={18} />
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

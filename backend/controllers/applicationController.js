@@ -48,9 +48,34 @@ const applyJob = async (req, res) => {
 const getMyApplications = async (req, res) => {
   try {
     const applications = await Application.find({ candidate: req.user.id })
-      .populate("job", "title company location salary");
+      .populate({
+        path: "job",
+        select: "title company location description salary",
+      });
 
     res.status(200).json({ applications });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+};
+
+const withdrawApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (application.candidate.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    await application.deleteOne();
+
+    res.status(200).json({ message: "Application withdrawn successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message || "Server Error" });

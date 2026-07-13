@@ -1,6 +1,7 @@
 const User =
   require("../models/user");
 const Job = require("../models/job");
+const bcrypt = require("bcryptjs");
 
 const updateProfile =
   async (req, res) => {
@@ -121,6 +122,42 @@ const updateProfile =
     }
   };
 
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      return res.status(400).json({ message: "All password fields are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ message: "New passwords do not match" });
+    }
+
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update password" });
+  }
+};
+
 const toggleSaveJob =
   async (req, res) => {
     try {
@@ -190,6 +227,7 @@ const getSavedJobs =
 
 module.exports = {
   updateProfile,
+  changePassword,
   toggleSaveJob,
   getSavedJobs,
 };

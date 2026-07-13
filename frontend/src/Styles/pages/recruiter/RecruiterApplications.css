@@ -175,6 +175,130 @@
   background: #fecaca;
 }
 
+.details-btn {
+  min-width: 140px;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #2563eb;
+  color: white;
+}
+
+.details-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.application-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 999;
+}
+
+.application-modal-card {
+  width: min(760px, 100%);
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: modal-pop-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-header,
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px;
+}
+
+.modal-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-subtitle {
+  color: #6b7280;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 0 28px 28px;
+}
+
+.modal-section {
+  margin-bottom: 20px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.modal-meta,
+.job-description {
+  color: #4b5563;
+  line-height: 1.75;
+  margin-top: 6px;
+}
+
+.modal-grid-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.modal-action-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 720px) {
+  .modal-grid-row {
+    grid-template-columns: 1fr;
+  }
+  .modal-header,
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* ==========================
    EMPTY STATE
 ========================== */

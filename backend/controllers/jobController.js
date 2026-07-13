@@ -35,8 +35,43 @@ const createJob = async (req, res) => {
 ========================== */
 const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find().populate("recruiter", "name email");
-    res.status(200).json({ jobs });
+    const { search, location, minSalary, page = 1, limit = 20 } = req.query;
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (location) {
+      query.location = { $regex: location, $options: "i" };
+    }
+
+    const numericSalary = Number(minSalary);
+    if (!Number.isNaN(numericSalary)) {
+      query.salary = { $gte: numericSalary };
+    }
+
+    const currentPage = Number(page) > 0 ? Number(page) : 1;
+    const perPage = Number(limit) > 0 ? Number(limit) : 20;
+
+    const totalJobs = await Job.countDocuments(query);
+    const jobs = await Job.find(query)
+      .populate("recruiter", "name email")
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+
+    const totalPages = Math.ceil(totalJobs / perPage) || 1;
+
+    res.status(200).json({
+      jobs,
+      totalJobs,
+      totalPages,
+      currentPage,
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: error.message || "Server Error" });

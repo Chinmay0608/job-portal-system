@@ -1,6 +1,9 @@
 const express = require("express");
+const { body } = require("express-validator");
+const validateRequest = require("../middleware/validationMiddleware");
 const {
   updateProfile,
+  changePassword,
   toggleSaveJob,
   getSavedJobs,
 } = require("../controllers/userController");
@@ -15,24 +18,43 @@ const router = express.Router();
 router.put(
   "/update-profile",
   protect,
-  authorizeRoles(
-    "candidate",
-    "recruiter"
-  ),
-
+  authorizeRoles("candidate", "recruiter"),
+  [
+    body("name")
+      .optional()
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Name must be at least 2 characters"),
+    body("phone")
+      .optional()
+      .trim()
+      .isNumeric()
+      .withMessage("Phone must be numeric"),
+    body("companyWebsite")
+      .optional()
+      .trim()
+      .isURL()
+      .withMessage("Company website must be a valid URL"),
+  ],
+  validateRequest,
   upload.fields([
     {
       name: "resume",
       maxCount: 1,
     },
     {
-      name:
-        "profileImage",
+      name: "profileImage",
       maxCount: 1,
     },
   ]),
-
   updateProfile
+);
+
+router.put(
+  "/change-password",
+  protect,
+  authorizeRoles("candidate", "recruiter"),
+  changePassword
 );
 
 router.post(

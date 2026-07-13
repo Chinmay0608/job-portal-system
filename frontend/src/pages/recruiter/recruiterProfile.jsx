@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import "../../Styles/pages/recruiter/recruiterProfile.css";
-import { updateProfile } from "../../Services/jobService";
+import { changePassword, updateProfile } from "../../Services/jobService";
 
 function RecruiterProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -32,6 +32,9 @@ function RecruiterProfile() {
 
   // 3. File Uploads State
   const [profileImage, setProfileImage] = useState(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   // Profile Completion Calculation Matrix — recruiter-specific fields
   // (no resume/education/experience/skills — those belong to candidates only)
@@ -96,6 +99,32 @@ function RecruiterProfile() {
     } catch (error) {
       console.error("Update Error:", error);
       toast.error(error?.response?.data?.message || "Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast.error("Please fill in all password fields.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await changePassword({ currentPassword, newPassword, confirmNewPassword });
+      toast.success(response.message || "Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error) {
+      console.error("Password Change Error:", error);
+      toast.error(error?.response?.data?.message || "Password update failed");
     } finally {
       setLoading(false);
     }
@@ -237,6 +266,44 @@ function RecruiterProfile() {
                 onChange={(e) => setAbout(e.target.value)}
                 className="company-about-textarea"
               />
+            </div>
+          </div>
+
+          <div className="profile-section-card">
+            <h2 className="profile-section-title">Change password</h2>
+            <div className="profile-grid">
+              <div className="input-group">
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </div>
+              <div className="input-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <div className="input-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="profile-save-bar">
+              <button type="button" className="save-btn" onClick={handleChangePassword} disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
+              </button>
             </div>
           </div>
 

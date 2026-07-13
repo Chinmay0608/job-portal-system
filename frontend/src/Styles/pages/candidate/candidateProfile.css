@@ -420,7 +420,9 @@
 .skills-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 14px;
+  margin-top: 16px;
+  align-items: center;
 }
 
 .skills-empty {
@@ -432,14 +434,13 @@
 .skill-chip {
   background: #f6f5f1;
   color: #1a1a2e;
-  padding: 7px 8px 7px 14px;
+  padding: 10px 16px;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid #e5e7eb;
+  gap: 10px;
 }
 
 .skill-chip button {

@@ -143,7 +143,8 @@
 /* ==========================
    RESUME BUTTON
 ========================== */
-.resume-btn {
+.resume-btn,
+.withdraw-btn {
   background: #07111f;
   color: white;
   padding: 10px 16px;
@@ -151,12 +152,30 @@
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
 }
 
-.resume-btn:hover {
+.resume-btn:hover,
+.withdraw-btn:hover {
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(7, 17, 31, 0.18);
+}
+
+.withdraw-btn {
+  background: #ef4444;
+}
+
+.withdraw-btn:hover {
+  background: #dc2626;
+}
+
+.withdraw-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ==========================
