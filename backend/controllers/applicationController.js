@@ -1,4 +1,5 @@
 const Application = require("../models/Application");
+const Job = require("../models/job");
 const cloudinary = require("../config/cloudinary");
 const sendEmail = require("../utils/sendEmail");
 
@@ -17,7 +18,7 @@ const applyJob = async (req, res) => {
 
     let resumeUrl = "";
 
-    if (req.file) {
+    if (req.file && req.file.buffer) {
       const uploadedFile = await new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           { folder: "skillbridge_resumes", resource_type: "raw" },
@@ -58,13 +59,16 @@ const getMyApplications = async (req, res) => {
 
 const getRecruiterApplications = async (req, res) => {
   try {
-    const applications = await Application.find()
+    const recruiterJobs = await Job.find({ recruiter: req.user.id }).select("_id");
+    const jobIds = recruiterJobs.map((job) => job._id);
+
+    if (jobIds.length === 0) {
+      return res.status(200).json({ applications: [] });
+    }
+
+    const recruiterApplications = await Application.find({ job: { $in: jobIds } })
       .populate("candidate", "name email resume")
       .populate("job", "title company recruiter");
-
-    const recruiterApplications = applications.filter(
-      (application) => application.job && application.job.recruiter.toString() === req.user.id
-    );
 
     res.status(200).json({ applications: recruiterApplications });
   } catch (error) {
@@ -128,16 +132,31 @@ const updateApplicationStatus = async (req, res) => {
 
 const getRecruiterStats = async (req, res) => {
   try {
-    const applications = await Application.find().populate("job", "recruiter");
+    const recruiterJobs = await Job.find({ recruiter: req.user.id }).select("_id");
+    const jobIds = recruiterJobs.map((job) => job._id);
 
-    const recruiterApplications = applications.filter(
-      (application) => application.job && application.job.recruiter.toString() === req.user.id
+    if (jobIds.length === 0) {
+      return res.status(200).json({
+        totalApplications: 0,
+        shortlisted: 0,
+        rejected: 0,
+      });
+    }
+
+    const stats = await Application.aggregate([
+      { $match: { job: { $in: jobIds } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    const counts = stats.reduce(
+      (acc, curr) => ({ ...acc, [curr._id]: curr.count }),
+      { pending: 0, shortlisted: 0, rejected: 0 }
     );
 
     res.status(200).json({
-      totalApplications: recruiterApplications.length,
-      shortlisted: recruiterApplications.filter((app) => app.status === "shortlisted").length,
-      rejected: recruiterApplications.filter((app) => app.status === "rejected").length,
+      totalApplications: counts.pending + counts.shortlisted + counts.rejected,
+      shortlisted: counts.shortlisted,
+      rejected: counts.rejected,
     });
   } catch (error) {
     console.error(error.message);

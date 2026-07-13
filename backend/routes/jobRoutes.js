@@ -8,7 +8,6 @@ const {
   getRecommendedJobs,
   deleteJob,
   updateJob,
-  applyJob,
 } = require("../controllers/jobController");
 
 const router = express.Router();
@@ -21,13 +20,6 @@ router.get("/", getAllJobs);
 /* ==========================
    CANDIDATE ROUTES
 ========================== */
-router.post(
-  "/apply",
-  protect,
-  upload.single("resume"),
-  applyJob
-);
-
 router.get(
   "/recommended",
   protect,

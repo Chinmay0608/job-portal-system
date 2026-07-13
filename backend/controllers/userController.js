@@ -1,5 +1,6 @@
 const User =
   require("../models/user");
+const Job = require("../models/job");
 
 const updateProfile =
   async (req, res) => {
@@ -120,6 +121,75 @@ const updateProfile =
     }
   };
 
+const toggleSaveJob =
+  async (req, res) => {
+    try {
+      const { jobId } = req.body;
+
+      if (!jobId) {
+        return res.status(400).json({ message: "Job ID is required" });
+      }
+
+      const job = await Job.findById(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const isSaved = user.savedJobs.some(
+        (savedJobId) => savedJobId.toString() === jobId
+      );
+
+      if (isSaved) {
+        user.savedJobs = user.savedJobs.filter(
+          (savedJobId) => savedJobId.toString() !== jobId
+        );
+      } else {
+        user.savedJobs.push(jobId);
+      }
+
+      await user.save();
+
+      res.status(200).json({
+        message: isSaved ? "Job removed from saved jobs" : "Job saved successfully",
+        saved: !isSaved,
+        savedJobs: user.savedJobs,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to update saved jobs" });
+    }
+  };
+
+const getSavedJobs =
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id)
+        .populate({
+          path: "savedJobs",
+          populate: {
+            path: "recruiter",
+            select: "name email",
+          },
+        });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.status(200).json({ savedJobs: user.savedJobs || [] });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to load saved jobs" });
+    }
+  };
+
 module.exports = {
   updateProfile,
+  toggleSaveJob,
+  getSavedJobs,
 };

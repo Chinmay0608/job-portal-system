@@ -1,5 +1,9 @@
 const express = require("express");
-const { updateProfile } = require("../controllers/userController");
+const {
+  updateProfile,
+  toggleSaveJob,
+  getSavedJobs,
+} = require("../controllers/userController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
 
@@ -29,6 +33,20 @@ router.put(
   ]),
 
   updateProfile
+);
+
+router.post(
+  "/saved-jobs/toggle",
+  protect,
+  authorizeRoles("candidate"),
+  toggleSaveJob
+);
+
+router.get(
+  "/saved-jobs",
+  protect,
+  authorizeRoles("candidate"),
+  getSavedJobs
 );
 
 module.exports = router;

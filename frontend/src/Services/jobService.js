@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
 
 // JOB MODULES
 export const getJobs = async () => (await api.get("/api/jobs")).data;
-export const applyJob = async (formData) => (await api.post("/api/jobs/apply", formData)).data;
+export const applyJob = async (formData) => (await api.post("/api/applications/apply", formData)).data;
 export const createJob = async (jobData) => (await api.post("/api/jobs/create", jobData)).data;
 export const updateJob = async (jobId, jobData) => (await api.put(`/api/jobs/update/${jobId}`, jobData)).data;
 export const deleteJob = async (jobId) => (await api.delete(`/api/jobs/delete/${jobId}`)).data;

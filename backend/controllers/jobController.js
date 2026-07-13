@@ -67,7 +67,11 @@ const getRecommendedJobs = async (req, res) => {
 
     const recommendedJobs = jobs
       .map((job) => {
-        const matchedSkills = job.skillsRequired.filter((skill) =>
+        const skillsRequired = Array.isArray(job.skillsRequired)
+          ? job.skillsRequired
+          : [];
+
+        const matchedSkills = skillsRequired.filter((skill) =>
           user.skills?.some(
             (userSkill) =>
               userSkill.toLowerCase() === skill.toLowerCase()
@@ -75,9 +79,9 @@ const getRecommendedJobs = async (req, res) => {
         );
 
         const matchPercentage =
-          job.skillsRequired.length > 0
+          skillsRequired.length > 0
             ? Math.round(
-                (matchedSkills.length / job.skillsRequired.length) * 100
+                (matchedSkills.length / skillsRequired.length) * 100
               )
             : 0;
 
@@ -96,40 +100,6 @@ const getRecommendedJobs = async (req, res) => {
     res.status(500).json({
       message: error.message,
     });
-  }
-};
-
-/* ==========================
-   APPLY JOB
-========================== */
-const applyJob = async (req, res) => {
-  try {
-    const { jobId } = req.body;
-
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    const existingApplication = await Application.findOne({
-      candidate: req.user.id,
-      job: jobId,
-    });
-
-    if (existingApplication) {
-      return res.status(400).json({ message: "You have already applied for this job" });
-    }
-
-    const application = await Application.create({
-      candidate: req.user.id,
-      job: jobId,
-      resume: req.file?.path || "",
-    });
-
-    res.status(201).json({ message: "Applied successfully", application });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: error.message || "Server Error" });
   }
 };
 
@@ -189,6 +159,5 @@ module.exports = {
   getRecruiterJobs,
   getRecommendedJobs,
   deleteJob,
-  applyJob,
   updateJob,
 };
