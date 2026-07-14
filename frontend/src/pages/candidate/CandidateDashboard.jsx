@@ -519,7 +519,7 @@ function CandidateDashboard() {
                   </p>
 
                   <div className="ind-actions-row">
-                    {appliedJobs.includes(selectedJob._id) ? (
+                    {appliedJobs?.includes(selectedJob._id) ? (
                       <button className="ind-applied-status-btn" disabled>
                         Applied Already
                       </button>

@@ -10,6 +10,7 @@ const {
   getRecommendedJobs,
   deleteJob,
   updateJob,
+  searchMasterSkills,
 } = require("../controllers/jobController");
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const router = express.Router();
    PUBLIC ROUTES
 ========================== */
 router.get("/", getAllJobs);
+router.get("/skills/search", searchMasterSkills);
 
 /* ==========================
    CANDIDATE ROUTES

@@ -1,6 +1,7 @@
 const Job = require("../models/job");
 const Application = require("../models/Application");
 const User = require("../models/user");
+const MasterSkill = require("../models/MasterSkill");
 
 /* ==========================
    CREATE JOB
@@ -188,6 +189,33 @@ const deleteJob = async (req, res) => {
   }
 };
 
+/* ==========================
+   SEARCH MASTER SKILLS
+========================== */
+const searchMasterSkills = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    // Return empty array if query is missing or empty
+    if (!query || query.trim() === "") {
+      return res.status(200).json([]);
+    }
+
+    // Case-insensitive anchored regex search for fast performance
+    const skills = await MasterSkill.find({
+      name: { $regex: `^${query.trim()}`, $options: "i" }
+    }).limit(10);
+
+    // Map to clean string array of skill names
+    const skillNames = skills.map((skill) => skill.name);
+
+    res.status(200).json(skillNames);
+  } catch (error) {
+    console.error("[searchMasterSkills] Database error:", error.message);
+    res.status(500).json({ message: "Error searching skills" });
+  }
+};
+
 module.exports = {
   createJob,
   getAllJobs,
@@ -195,4 +223,5 @@ module.exports = {
   getRecommendedJobs,
   deleteJob,
   updateJob,
+  searchMasterSkills,
 };

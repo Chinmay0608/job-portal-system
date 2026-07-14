@@ -400,6 +400,42 @@
   border-color: #0d1117;
 }
 
+.skills-input-wrapper {
+  position: relative; 
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.skills-suggestions-dropdown {
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  width: calc(100% - 90px); 
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.skills-suggestion-item {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.skills-suggestion-item:hover {
+  background-color: #f3f4f6; 
+}
+
 .add-skill-btn {
   background: #0d1117;
   color: #ffffff;

@@ -1,23 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import debounce from "lodash.debounce";
 import "../../Styles/pages/candidate/candidateProfile.css";
 import { changePassword, updateProfile } from "../../Services/jobService";
-
-const MASTER_SKILLS = [
-  "Java",
-  "Spring Boot",
-  "React",
-  "Node.js",
-  "Express",
-  "MongoDB",
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "SQL",
-  "REST APIs",
-  "Maven",
-  "Git",
-];
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -174,44 +159,70 @@ function CandidateProfile() {
       return;
     }
 
-    const matchedSkill = MASTER_SKILLS.find(
-      (skill) => skill.toLowerCase() === trimmed.toLowerCase()
-    );
-
-    if (!matchedSkill) {
-      setSkillError("Skill not recognized. Please choose from the allowed list.");
-      return;
-    }
-
-    if (skills.includes(matchedSkill)) {
+    // Check if skill already exists in user's skills array
+    if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
       setSkillInput("");
       setSuggestions([]);
       return;
     }
 
-    setSkills((prevSkills) => [...prevSkills, matchedSkill]);
+    // Add the skill to the array
+    setSkills((prevSkills) => [...prevSkills, trimmed]);
     setSkillInput("");
     setSuggestions([]);
     setSkillError("");
   };
 
+  // Async function to fetch skills from backend API
+  const fetchSkillSuggestions = async (query) => {
+    try {
+      if (!query.trim()) {
+        setSuggestions([]);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/jobs/skills/search?query=${encodeURIComponent(query)}`
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch skills:", response.statusText);
+        setSuggestions([]);
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Filter out already-added skills
+      const filtered = data.filter(
+        (skill) => !skills.some(s => s.toLowerCase() === skill.toLowerCase())
+      );
+
+      setSuggestions(filtered.slice(0, 8));
+    } catch (error) {
+      console.error("Error fetching skill suggestions:", error);
+      setSuggestions([]);
+    }
+  };
+
+  // Debounced skill search function
+  const debouncedSkillSearch = useCallback(
+    debounce((query) => {
+      fetchSkillSuggestions(query);
+    }, 250),
+    [skills]
+  );
+
   const handleSkillInputChange = (value) => {
     setSkillInput(value);
     setSkillError("");
 
-    const normalized = value.trim().toLowerCase();
-    if (!normalized) {
+    // Only trigger API call if input has content
+    if (value.trim().length > 0) {
+      debouncedSkillSearch(value);
+    } else {
       setSuggestions([]);
-      return;
     }
-
-    const nextSuggestions = MASTER_SKILLS.filter(
-      (skill) =>
-        !skills.includes(skill) &&
-        skill.toLowerCase().includes(normalized)
-    ).slice(0, 8);
-
-    setSuggestions(nextSuggestions);
   };
 
   const removeSkill = (skillToRemove) => {
