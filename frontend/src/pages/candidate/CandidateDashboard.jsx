@@ -82,6 +82,56 @@ function CandidateDashboard() {
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // Define all functions before useEffect hooks
+  const fetchJobs = async ({ searchTerm, locationTerm, salaryTerm, companyTerm, page }) => {
+    try {
+      setJobLoadError("");
+      setLoading(true);
+      const response = await getJobs({
+        search: searchTerm,
+        location: locationTerm,
+        minSalary: salaryTerm,
+        page,
+        limit: JOBS_PER_PAGE,
+      });
+
+      const rawJobs = response?.jobs || [];
+      setJobs(rawJobs);
+      setTotalJobs(response?.totalJobs || 0);
+      setTotalPages(response?.totalPages || 1);
+      setCurrentPage(response?.currentPage || 1);
+
+      if (rawJobs.length > 0) {
+        setSelectedJob(rawJobs[0]);
+      } else {
+        setSelectedJob(null);
+      }
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setJobLoadError("Unable to load jobs. Please check your connection and retry.");
+      toast.error("Failed to load jobs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAppliedJobs = async () => {
+    try {
+      const response = await getMyApplications();
+      const appliedIds = response?.applications?.map((app) => app?.job?._id) || [];
+      setAppliedJobs(appliedIds);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    }
+  };
+
+  const debouncedFetchJobs = useCallback(
+    debounce((params) => {
+      fetchJobs(params);
+    }, 400),
+    []
+  );
+
   useEffect(() => {
     const initDashboard = async () => {
       await fetchAppliedJobs();
@@ -131,55 +181,6 @@ function CandidateDashboard() {
       page: 1,
     });
   }, [search, locationFilter, salaryFilter, companyFilter, debouncedFetchJobs]);
-
-  const fetchJobs = async ({ searchTerm, locationTerm, salaryTerm, companyTerm, page }) => {
-    try {
-      setJobLoadError("");
-      setLoading(true);
-      const response = await getJobs({
-        search: searchTerm,
-        location: locationTerm,
-        minSalary: salaryTerm,
-        page,
-        limit: JOBS_PER_PAGE,
-      });
-
-      const rawJobs = response?.jobs || [];
-      setJobs(rawJobs);
-      setTotalJobs(response?.totalJobs || 0);
-      setTotalPages(response?.totalPages || 1);
-      setCurrentPage(response?.currentPage || 1);
-
-      if (rawJobs.length > 0) {
-        setSelectedJob(rawJobs[0]);
-      } else {
-        setSelectedJob(null);
-      }
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-      setJobLoadError("Unable to load jobs. Please check your connection and retry.");
-      toast.error("Failed to load jobs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAppliedJobs = async () => {
-    try {
-      const response = await getMyApplications();
-      const appliedIds = response?.applications?.map((app) => app?.job?._id) || [];
-      setAppliedJobs(appliedIds);
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-    }
-  };
-
-  const debouncedFetchJobs = useCallback(
-    debounce((params) => {
-      fetchJobs(params);
-    }, 400),
-    []
-  );
 
   // Builds a full URL for the resume stored on the user's profile,
   // matching the same logic used in Profile.jsx's getResumeUrl.

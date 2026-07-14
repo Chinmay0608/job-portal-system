@@ -195,4 +195,5 @@ module.exports = {
   getRecruiterApplications,
   getRecruiterStats,
   updateApplicationStatus,
+  withdrawApplication,
 };
