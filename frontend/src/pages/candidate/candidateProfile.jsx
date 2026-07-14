@@ -154,23 +154,35 @@ function CandidateProfile() {
 
   const handleAddSkill = (skillName) => {
     const trimmed = skillName.trim();
+    
+    // Validate: skill name must not be empty
     if (!trimmed) {
       setSkillError("");
       return;
     }
 
-    // Check if skill already exists in user's skills array
+    // Validate: check if skill already exists in user's skills array
     if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
       setSkillInput("");
       setSuggestions([]);
       return;
     }
 
-    // Add the skill to the array
-    setSkills((prevSkills) => [...prevSkills, trimmed]);
-    setSkillInput("");
-    setSuggestions([]);
-    setSkillError("");
+    // STRICT SUGGESTION CHECK: Find case-insensitive match in suggestions array
+    const matchedSkill = suggestions.find(
+      (suggestion) => suggestion.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    // If matched suggestion found, add the correctly-cased version
+    if (matchedSkill) {
+      setSkills((prevSkills) => [...prevSkills, matchedSkill]);
+      setSkillInput("");
+      setSuggestions([]);
+      setSkillError("");
+    } else {
+      // No match found in suggestions — block addition and show error
+      setSkillError("Please select a valid technical skill from the suggestion dropdown menu.");
+    }
   };
 
   // Async function to fetch skills from backend API
@@ -215,13 +227,15 @@ function CandidateProfile() {
 
   const handleSkillInputChange = (value) => {
     setSkillInput(value);
-    setSkillError("");
 
     // Only trigger API call if input has content
     if (value.trim().length > 0) {
+      setSkillError("");
       debouncedSkillSearch(value);
     } else {
+      // Clear suggestions and error when input is empty
       setSuggestions([]);
+      setSkillError("");
     }
   };
 
