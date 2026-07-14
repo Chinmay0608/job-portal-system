@@ -424,12 +424,40 @@ function CandidateProfile() {
                 </button>
 
                 {suggestions.length > 0 && (
-                  <div className="skill-suggestions">
+                  <div
+                    className="skill-suggestions"
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      zIndex: 100,
+                      backgroundColor: "white",
+                      border: "1px solid #ddd",
+                      borderTop: "none",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+                    }}
+                  >
                     {suggestions.map((suggestion) => (
                       <button
                         type="button"
                         key={suggestion}
                         className="skill-suggestion-item"
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "10px 12px",
+                          border: "none",
+                          backgroundColor: "transparent",
+                          cursor: "pointer",
+                          display: "block",
+                          fontSize: "14px",
+                          transition: "background-color 0.2s"
+                        }}
+                        onMouseEnter={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                        onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
                         onClick={() => handleAddSkill(suggestion)}
                       >
                         {suggestion}
