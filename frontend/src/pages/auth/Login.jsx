@@ -35,7 +35,6 @@ function Login() {
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-      localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
       toast.success("Login successful");
       redirectUser(response.user);
@@ -55,11 +54,11 @@ function Login() {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: user.displayName, email: user.email }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Login Failed");
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       toast.success("Google login successful");
       redirectUser(data.user);

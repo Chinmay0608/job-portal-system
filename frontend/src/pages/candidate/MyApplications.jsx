@@ -13,21 +13,15 @@ function MyApplications() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetchApplications(token);
+    fetchApplications();
   }, []);
 
-  const fetchApplications = async (token) => {
+  const fetchApplications = async () => {
     try {
       setFetchError("");
       setLoading(true);
-      if (!token) {
-        toast.error("Unable to authenticate user");
-        setApplications([]);
-        return;
-      }
 
-      const response = await getMyApplicationsAPI(token);
+      const response = await getMyApplicationsAPI();
       setApplications(response?.applications || []);
     } catch (error) {
       console.error("Applications Error:", error);
@@ -40,18 +34,12 @@ function MyApplications() {
   };
 
   const handleWithdraw = async (applicationId) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Unable to authenticate user");
-      return;
-    }
-
     const confirmWithdraw = window.confirm("Are you sure you want to withdraw this application?");
     if (!confirmWithdraw) return;
 
     try {
       setDeletingId(applicationId);
-      await withdrawApplication(applicationId, token);
+      await withdrawApplication(applicationId);
       setApplications((prev) => prev.filter((app) => app._id !== applicationId));
       toast.success("Application withdrawn successfully");
     } catch (error) {
@@ -81,7 +69,7 @@ function MyApplications() {
         <p>Track your applied jobs and status</p>
       </div>
 
-      {fetchError && <RetryBanner message={fetchError} onRetry={() => fetchApplications(localStorage.getItem("token"))} />}
+      {fetchError && <RetryBanner message={fetchError} onRetry={() => fetchApplications()} />}
 
       {/* Moved the grid conditional rendering to wrap ONLY the items */}
       {loading ? (

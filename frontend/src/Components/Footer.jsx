@@ -12,8 +12,8 @@ function Footer() {
   };
 
   const handleJobNavigation = (type) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const user = localStorage.getItem("user");
+    if (!user) {
       navigate("/login", { state: { redirectAfterLogin: "/candidate-dashboard", roleType: type } });
     } else {
       navigate("/candidate-dashboard", { state: { roleType: type } });

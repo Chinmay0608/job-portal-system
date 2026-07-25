@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import debounce from "lodash.debounce";
 import "../../Styles/pages/candidate/candidateProfile.css";
-import { changePassword, updateProfile } from "../../Services/jobService";
+import { changePassword, updateProfile, extractSkillsAPI } from "../../Services/jobService";
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -111,16 +111,48 @@ function CandidateProfile() {
 
       const response = await updateProfile(formData);
 
-      toast.success(response.message || "Profile updated successfully!");
+      if (response.extractedSkills && response.extractedSkills.length > 0) {
+        toast.success(`Magically extracted ${response.extractedSkills.length} skills from your resume: ${response.extractedSkills.join(", ")}!`);
+      } else {
+        toast.success(response.message || "Profile updated successfully!");
+      }
 
       localStorage.setItem("user", JSON.stringify(response.user));
       setUser(response.user);
+      
+      // Immediately update local skills state if backend added new ones
+      setSkills(response.user.skills || []);
 
       setResume(null);
       setProfileImage(null);
     } catch (error) {
       console.error("Update Error:", error);
       toast.error(error?.response?.data?.message || "Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadResume = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const url = getResumeUrl(user.resume);
+      const response = await fetch(url);
+      const rawBlob = await response.blob();
+      const blob = new Blob([rawBlob], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${user.name ? user.name.replace(/\s+/g, "_") : "Candidate"}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed", error);
+      toast.error("Failed to download resume");
     } finally {
       setLoading(false);
     }
@@ -185,6 +217,32 @@ function CandidateProfile() {
     }
   };
 
+  const handleExtractSkills = async () => {
+    if (!user?.resume) {
+      toast.error("Please upload and save your resume first!");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const data = await extractSkillsAPI();
+      
+      if (data.extractedSkills && data.extractedSkills.length > 0) {
+        toast.success(`Magically extracted ${data.extractedSkills.length} new skills!`);
+        setSkills(data.user.skills);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setUser(data.user);
+      } else {
+        toast.success(data.message || "No new skills found.");
+      }
+    } catch (error) {
+      console.error("Extraction error:", error);
+      toast.error(error?.response?.data?.message || "Failed to extract skills.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Async function to fetch skills from backend API
   const fetchSkillSuggestions = async (query) => {
     try {
@@ -194,7 +252,7 @@ function CandidateProfile() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/jobs/skills/search?query=${encodeURIComponent(query)}`
+        `${import.meta.env.VITE_API_BASE_URL}/api/jobs/skills/search?query=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -305,23 +363,41 @@ function CandidateProfile() {
           <div className="resume-box">
             <h3>Resume</h3>
             {user?.resume && (
-              <a
-                href={getResumeUrl(user.resume)}
-                target="_blank"
-                rel="noreferrer"
-                className="resume-link"
-              >
-                📄 View current resume
-              </a>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <a
+                  href={`https://docs.google.com/viewer?url=${encodeURIComponent(getResumeUrl(user.resume))}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#f3f4f6', borderRadius: '6px', color: '#111827', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}
+                >
+                  👁️ Preview
+                </a>
+                <a
+                  href="#"
+                  onClick={handleDownloadResume}
+                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#0d1117', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
+                >
+                  ⬇️ Download
+                </a>
+              </div>
             )}
             <label className="resume-upload-label">
-              Upload new file
+              {user?.resume ? "Upload replacement file" : "Upload new file"}
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => setResume(e.target.files[0])}
               />
             </label>
+            {resume ? (
+              <p style={{ fontSize: "0.75rem", color: "#15803d", marginTop: "4px" }}>
+                Selected: {resume.name}. Click "Save Changes" to apply.
+              </p>
+            ) : (
+              <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginTop: "4px" }}>
+                Don't forget to click "Save Changes" at the bottom!
+              </p>
+            )}
           </div>
         </div>
 
@@ -405,7 +481,24 @@ function CandidateProfile() {
           {/* Skills Engine Block */}
           <div className="profile-section-card">
             <div className="skills-section">
-              <h3>Skills</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3>Skills</h3>
+                {user?.resume && (
+                  <button 
+                    type="button"
+                    onClick={handleExtractSkills}
+                    disabled={loading}
+                    style={{
+                      background: "#ef4444", color: "white", border: "none", 
+                      padding: "6px 12px", borderRadius: "6px", fontSize: "0.8rem", 
+                      fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
+                      opacity: loading ? 0.7 : 1
+                    }}
+                  >
+                    ✨ Extract from Resume
+                  </button>
+                )}
+              </div>
               <div className="skill-input-box" style={{ position: "relative" }}>
                 <input
                   type="text"

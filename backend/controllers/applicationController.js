@@ -18,18 +18,8 @@ const applyJob = async (req, res) => {
 
     let resumeUrl = "";
 
-    if (req.file && req.file.buffer) {
-      const uploadedFile = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: "skillbridge_resumes", resource_type: "raw" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        ).end(req.file.buffer);
-      });
-
-      resumeUrl = uploadedFile.secure_url;
+    if (req.file && req.file.path) {
+      resumeUrl = req.file.path;
     }
 
     const application = await Application.create({
@@ -39,6 +29,37 @@ const applyJob = async (req, res) => {
     });
 
     res.status(201).json({ message: "Applied successfully", application });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const applyExternal = async (req, res) => {
+  try {
+    const { jobId } = req.body;
+
+    const job = await Job.findById(jobId);
+    if (!job || !job.isExternal) {
+      return res.status(400).json({ message: "Invalid external job" });
+    }
+
+    const alreadyApplied = await Application.findOne({
+      candidate: req.user.id,
+      job: jobId,
+    });
+
+    if (alreadyApplied) {
+      return res.status(400).json({ message: "Already tracked application" });
+    }
+
+    const application = await Application.create({
+      candidate: req.user.id,
+      job: jobId,
+      status: "pending",
+    });
+
+    res.status(201).json({ message: "External application tracked", application });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: error.message });
@@ -191,6 +212,7 @@ const getRecruiterStats = async (req, res) => {
 
 module.exports = {
   applyJob,
+  applyExternal,
   getMyApplications,
   getRecruiterApplications,
   getRecruiterStats,

@@ -22,9 +22,24 @@ const jobSchema = new mongoose.Schema(
     trim: true,
   },
   salary: {
-    type: Number,
+    type: String,
     required: true,
-    min: 0,
+  },
+  applyUrl: {
+    type: String,
+    default: "",
+  },
+  isExternal: {
+    type: Boolean,
+    default: false,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  companyLogo: {
+    type: String,
+    default: "",
   },
   description: {
     type: String,
@@ -51,7 +66,9 @@ const jobSchema = new mongoose.Schema(
   recruiter: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: function () {
+      return !this.isExternal;
+    },
   },
 },
 {

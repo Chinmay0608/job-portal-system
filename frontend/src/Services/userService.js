@@ -7,11 +7,9 @@ export const uploadResume = async (file) => {
   const formData = new FormData();
   formData.append("resume", file);
 
-  const token = localStorage.getItem("token");
-
   const response = await axios.post(`${API}/auth/upload-resume`, formData, {
+    withCredentials: true,
     headers: {
-      authorization: token,
       "Content-Type": "multipart/form-data",
     },
   });
@@ -19,21 +17,17 @@ export const uploadResume = async (file) => {
   return response.data;
 };
 
-export const getMyApplicationsAPI = async (token) => {
+export const getMyApplicationsAPI = async () => {
   const response = await axios.get(`${API}/applications/my-applications`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    withCredentials: true,
   });
 
   return response.data;
 };
 
-export const withdrawApplication = async (applicationId, token) => {
+export const withdrawApplication = async (applicationId) => {
   const response = await axios.delete(`${API}/applications/${applicationId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    withCredentials: true,
   });
 
   return response.data;

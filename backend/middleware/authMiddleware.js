@@ -5,17 +5,10 @@ const jwt = require("jsonwebtoken");
 ========================== */
 const protect = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const token = req.cookies.token;
 
-    if (!authHeader) {
+    if (!token) {
       return res.status(401).json({ message: "Unauthorized access" });
-    }
-
-    let token = authHeader;
-
-    // Handle Bearer token
-    if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

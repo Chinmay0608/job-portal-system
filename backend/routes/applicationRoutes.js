@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   applyJob,
+  applyExternal,
   getMyApplications,
   getRecruiterApplications,
   getRecruiterStats,
@@ -16,6 +17,7 @@ const router = express.Router();
    CANDIDATE ROUTES
 ========================== */
 router.post("/apply", protect, authorizeRoles("candidate"), upload.single("resume"), applyJob);
+router.post("/apply-external", protect, authorizeRoles("candidate"), applyExternal);
 router.get("/my-applications", protect, authorizeRoles("candidate"), getMyApplications);
 router.delete("/:applicationId", protect, authorizeRoles("candidate"), withdrawApplication);
 

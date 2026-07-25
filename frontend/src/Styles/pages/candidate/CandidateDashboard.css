@@ -92,18 +92,19 @@
 }
 
 .ind-welcome-text {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 900;
   color: #0d1117;
-  margin: 28px 0 20px;
-  letter-spacing: -0.8px;
+  margin: 24px 0 16px;
+  letter-spacing: -0.6px;
 }
 
 .ind-main-layout {
   display: grid;
-  grid-template-columns: 440px 1fr;
-  gap: 24px;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
   align-items: start;
+  height: calc(100vh - 150px);
 }
 
 /* ==========================================
@@ -111,6 +112,24 @@
 ========================================== */
 .ind-list-column {
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Custom scrollbar for webkit */
+.ind-list-column::-webkit-scrollbar,
+.ind-detail-scroll-body::-webkit-scrollbar {
+  width: 6px;
+}
+.ind-list-column::-webkit-scrollbar-track,
+.ind-detail-scroll-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ind-list-column::-webkit-scrollbar-thumb,
+.ind-detail-scroll-body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
 }
 
 .ind-section-title {
@@ -130,8 +149,8 @@
 .ind-job-card {
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px 20px;
+  border-radius: 12px;
+  padding: 14px 18px;
   cursor: pointer;
   position: relative;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -139,7 +158,7 @@
 
 .ind-job-card:hover {
   border-color: #0d1117;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
@@ -162,12 +181,12 @@
 }
 
 .ind-card-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #0d1117;
   margin: 0 0 4px 0;
   line-height: 1.3;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
 }
 
 .ind-card-company {
@@ -178,7 +197,7 @@
 }
 
 .ind-card-location {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: #9ca3af;
   margin: 0 0 10px 0;
 }
@@ -209,9 +228,7 @@
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
   border-radius: 16px;
-  height: calc(100vh - 160px);
-  position: sticky;
-  top: 24px;
+  height: 100%;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
 }
@@ -229,12 +246,12 @@
 }
 
 .ind-detail-main-title {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 900;
   color: #0d1117;
   margin: 0 0 6px 0;
   line-height: 1.2;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.5px;
 }
 
 .ind-detail-company-link {
@@ -251,10 +268,10 @@
 }
 
 .ind-detail-salary-text {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #0d1117;
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
 }
 
 /* ACTIONS & FILTERS ROW */
@@ -338,7 +355,7 @@
 
 /* DETAIL SCROLL BODY */
 .ind-detail-scroll-body {
-  padding: 24px 28px;
+  padding: 20px 28px;
   overflow-y: auto;
   flex: 1;
 }
@@ -740,5 +757,47 @@
 }
 
 .ind-nudge-ghost-btn:hover {
+  color: #374151;
+}
+
+/* ==========================================
+   PAGINATION
+========================================== */
+.ind-pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.ind-pagination-btn {
+  background: #0d1117;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.ind-pagination-btn:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.ind-pagination-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.ind-pagination-info {
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #374151;
 }

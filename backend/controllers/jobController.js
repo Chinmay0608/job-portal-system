@@ -2,6 +2,7 @@ const Job = require("../models/job");
 const Application = require("../models/Application");
 const User = require("../models/user");
 const MasterSkill = require("../models/MasterSkill");
+const jwt = require("jsonwebtoken");
 
 /* ==========================
    CREATE JOB
@@ -36,24 +37,84 @@ const createJob = async (req, res) => {
 ========================== */
 const getAllJobs = async (req, res) => {
   try {
-    const { search, location, minSalary, page = 1, limit = 20 } = req.query;
+    const {
+      search,
+      location,
+      minSalary,
+      experience,
+      page = 1,
+      limit = 20,
+    } = req.query;
 
-    const query = {};
+    const query = { isActive: { $ne: false } };
+
+    // 1. Filter out external jobs unless the user is the designated personal candidate
+    const personalEmail = process.env.PERSONAL_CANDIDATE_EMAIL || "myemail@example.com";
+    let isPersonalCandidate = false;
+
+    let userSkills = [];
+    if (req.cookies && req.cookies.token) {
+      try {
+        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (user && user.email === personalEmail) {
+          isPersonalCandidate = true;
+          userSkills = user.skills || [];
+        }
+      } catch (e) {
+        // Ignore invalid token
+      }
+    }
+
+    if (isPersonalCandidate) {
+      query.isExternal = true; // Only show real external jobs for the candidate
+      // Enforce International Visa / Remote Rule
+      query.$or = [
+        { location: { $regex: /india/i } },
+        { location: { $regex: /remote/i } },
+        { description: { $regex: /visa|sponsorship|sponsor|relocation/i } }
+      ];
+
+      // Enforce strict resume skill filtering for the candidate
+      if (userSkills && userSkills.length > 0) {
+        const skillRegexes = userSkills.map(s => new RegExp(`^${s}$`, "i"));
+        query.skillsRequired = { $in: skillRegexes };
+      }
+    } else {
+      query.isExternal = { $ne: true }; // Only show mock/internal jobs for others
+    }
 
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-      ];
+      // If $or already exists (from visa logic), we must use $and to combine them
+      const searchCondition = {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { company: { $regex: search, $options: "i" } },
+        ],
+      };
+      
+      if (query.$or) {
+        query.$and = [searchCondition, { $or: query.$or }];
+        delete query.$or;
+      } else {
+        query.$or = searchCondition.$or;
+      }
     }
 
     if (location) {
       query.location = { $regex: location, $options: "i" };
     }
 
-    const numericSalary = Number(minSalary);
-    if (!Number.isNaN(numericSalary)) {
-      query.salary = { $gte: numericSalary };
+    if (experience && experience !== "All Experience") {
+      // Check the experienceRequired field
+      query.experienceRequired = experience;
+    }
+
+    // 2. Parse salary filter based on String comparison or numeric extraction if needed
+    // Since we changed salary to String, minSalary filter might be tricky.
+    // For simplicity, we skip minSalary filter for string salaries, or only apply it to numeric ones
+    if (minSalary) {
+      // Basic string matching or omit for now
     }
 
     const currentPage = Number(page) > 0 ? Number(page) : 1;
@@ -99,7 +160,22 @@ const getRecommendedJobs = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    const jobs = await Job.find();
+    // Filter out external jobs unless it's the personal candidate
+    const personalEmail = process.env.PERSONAL_CANDIDATE_EMAIL || "myemail@example.com";
+    let query = { isActive: { $ne: false } };
+    if (user.email === personalEmail) {
+      query.isExternal = true;
+      // Enforce International Visa / Remote Rule
+      query.$or = [
+        { location: { $regex: /india/i } },
+        { location: { $regex: /remote/i } },
+        { description: { $regex: /visa|sponsorship|sponsor|relocation/i } }
+      ];
+    } else {
+      query.isExternal = { $ne: true };
+    }
+
+    const jobs = await Job.find(query);
 
     const recommendedJobs = jobs
       .map((job) => {

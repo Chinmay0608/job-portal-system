@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiMenu, FiX } from "react-icons/fi";
+import { logoutUser } from "../Services/authUtils";
 import "../Styles/components/navbar.css";
 
 function Navbar() {
@@ -23,9 +24,9 @@ function Navbar() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem("token");
-      setIsLoggedIn(!!token);
-      setUser(getUser());
+      const currentUser = getUser();
+      setIsLoggedIn(!!currentUser);
+      setUser(currentUser);
     };
 
     checkAuth();
@@ -43,9 +44,8 @@ function Navbar() {
 
   const isHome = location.pathname === "/";
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const logout = async () => {
+    await logoutUser();
     setIsLoggedIn(false);
     setUser(null);
     toast.success("Logged out successfully");

@@ -9,7 +9,7 @@
 }
 
 html {
-  font-size: 100%;
+  font-size: 85%; /* Globally scales down rem values to fix the zoomed-in feeling */
   scroll-behavior: smooth;
 }
 

@@ -40,11 +40,11 @@ function Register() {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: user.displayName, email: user.email }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Authentication Failed");
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       toast.success("Account initialized with Google successfully");
       redirectUser(data.user);

@@ -14,11 +14,11 @@
 }
 
 .profile-container {
-  max-width: 1280px;
+  max-width: 1140px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 32px;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
   align-items: start;
 }
 
@@ -45,20 +45,20 @@
 }
 
 .profile-avatar {
-  width: 96px;
-  height: 96px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #f6f5f1;
 }
 
 .avatar-circle {
-  width: 96px;
-  height: 96px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: #0d1117;
   color: #ffffff;
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -89,11 +89,11 @@
 }
 
 .profile-sidebar h2 {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   color: #0d1117;
   margin: 0 0 2px 0;
   font-weight: 800;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.2px;
 }
 
 .profile-sidebar p {
@@ -271,11 +271,11 @@
 }
 
 .profile-content h1 {
-  font-size: 1.9rem;
+  font-size: 1.55rem;
   color: #0d1117;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   font-weight: 900;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
 }
 
 .profile-content-subtitle {
@@ -288,8 +288,8 @@
 .profile-section-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 28px 28px;
+  border-radius: 16px;
+  padding: 24px 26px;
   flex: 0 0 auto;
   align-self: stretch;
 }
@@ -327,10 +327,10 @@
 .input-group input,
 .input-group select {
   width: 100%;
-  padding: 11px 14px;
+  padding: 9px 12px;
   border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 0.88rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
   color: #1a1a2e;
   box-sizing: border-box;
   background-color: #ffffff;

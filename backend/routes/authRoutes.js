@@ -11,6 +11,7 @@ const {
   googleLogin,
   forgotPassword,
   resetPassword,
+  logoutUser,
 } = require("../controllers/authController");
 
 const authLimiter = rateLimit({
@@ -45,6 +46,7 @@ router.post(
 );
 router.post("/login", authLimiter, loginUser);
 router.post("/google-login", googleLogin);
+router.post("/logout", logoutUser);
 
 /* ==========================
    PASSWORD RESET

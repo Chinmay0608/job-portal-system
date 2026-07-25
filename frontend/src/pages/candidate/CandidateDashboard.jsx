@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getJobs, applyJob, getMyApplications, toggleSaveJob } from "../../Services/jobService";
+import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs } from "../../Services/jobService";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
@@ -36,6 +36,7 @@ const calculateCompletion = (profileUser) => {
 
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
+  const [recommendedJobsList, setRecommendedJobsList] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
@@ -43,6 +44,7 @@ function CandidateDashboard() {
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState("All Experience");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
 
@@ -85,13 +87,14 @@ function CandidateDashboard() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Define all functions before useEffect hooks
-  const fetchJobs = async ({ searchTerm, locationTerm, salaryTerm, companyTerm, page }) => {
+  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, page }) => {
     try {
       setJobLoadError("");
       setLoading(true);
       const response = await getJobs({
         search: searchTerm,
         location: locationTerm,
+        experience: experienceTerm,
         minSalary: salaryTerm,
         page,
         limit: JOBS_PER_PAGE,
@@ -135,19 +138,30 @@ function CandidateDashboard() {
   );
 
   useEffect(() => {
-    const initDashboard = async () => {
+    const fetchAllInitialData = async () => {
       await fetchAppliedJobs();
+      
+      // Fetch normal jobs
       await fetchJobs({
         searchTerm: search,
         locationTerm: locationFilter,
+        experienceTerm: experienceFilter,
         salaryTerm: salaryFilter,
         companyTerm: companyFilter,
         page: currentPage,
       });
+
+      // Fetch globally recommended jobs from backend
+      try {
+        const response = await getRecommendedJobs();
+        setRecommendedJobsList(response?.jobs || []);
+      } catch (err) {
+        console.error("Failed to load recommended jobs", err);
+      }
     };
-    initDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    fetchAllInitialData();
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Profile completion nudge — runs once per account, ever, unless they
   // complete enough of their profile that it would no longer trigger.
@@ -178,11 +192,12 @@ function CandidateDashboard() {
     debouncedFetchJobs({
       searchTerm: search,
       locationTerm: locationFilter,
+      experienceTerm: experienceFilter,
       salaryTerm: salaryFilter,
       companyTerm: companyFilter,
       page: 1,
     });
-  }, [search, locationFilter, salaryFilter, companyFilter, debouncedFetchJobs]);
+  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, debouncedFetchJobs]);
 
   // Builds a full URL for the resume stored on the user's profile,
   // matching the same logic used in Profile.jsx's getResumeUrl.
@@ -226,11 +241,8 @@ function CandidateDashboard() {
 
       setAppliedJobs((prev) => [...prev, selectedJob?._id]);
 
-      const nextJob = displayedJobs.find(
-        (job) => job._id !== selectedJob?._id
-      );
-      setSelectedJob(nextJob || null);
-
+      // Do NOT auto-switch the job, keep the current job open so the user 
+      // can see the "Applied Already" button state.
       resetApplyState();
     } catch (error) {
       console.error("Application Error:", error);
@@ -247,9 +259,26 @@ function CandidateDashboard() {
     setUseSavedResume(null);
   };
 
-  // Triggered by "Apply Now". If the candidate has a saved profile resume,
-  // ask whether to reuse it before showing any upload field.
-  const handleApplyNowClick = () => {
+  // Triggered by "Apply Now". If the job is external, redirect and track.
+  const handleApplyNowClick = async () => {
+    if (selectedJob?.isExternal) {
+      try {
+        setApplying(true);
+        // Track the application silently
+        await applyExternal(selectedJob._id);
+        setAppliedJobs((prev) => [...prev, selectedJob._id]);
+        toast.success("External application tracked!");
+        // Open the real application URL
+        window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      } catch (error) {
+        // If already tracked or fails, just open it anyway
+        window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      } finally {
+        setApplying(false);
+      }
+      return;
+    }
+
     if (user?.resume) {
       setResumeChoiceMode(true);
     } else {
@@ -308,37 +337,31 @@ function CandidateDashboard() {
   };
 
   const availableJobs = jobs.filter((job) => !appliedJobs.includes(job._id));
+  const availableRecommended = recommendedJobsList.filter((job) => !appliedJobs.includes(job._id));
 
-  const recommendedJobs = availableJobs.filter((job) => {
-    const description = job.description?.toLowerCase() || "";
+  // If user is a junior/fresher, hide explicit senior/lead roles from recommended
+  const filteredRecommended = availableRecommended.filter((job) => {
+    let matchesExperience = true;
+    const titleLower = job.title?.toLowerCase() || "";
+    const userExp = user?.experienceLevel?.toLowerCase() || "fresher";
 
-    const commonSkills = [
-      "react",
-      "node",
-      "mongodb",
-      "express",
-      "javascript",
-      "java",
-      "spring",
-      "python",
-      "sql",
-      "mysql",
-      "aws",
-      "docker",
-      "kubernetes",
-      "html",
-      "css",
-      "tailwind",
-      "typescript",
-    ];
-
-    return commonSkills.some((skill) =>
-      description.includes(skill)
-    );
+    if (userExp === "fresher" || userExp === "0-2 years") {
+      if (
+        titleLower.includes("senior") || 
+        titleLower.includes("lead") || 
+        titleLower.includes("principal") || 
+        titleLower.includes("staff") ||
+        titleLower.includes("director") ||
+        titleLower.includes("head")
+      ) {
+        matchesExperience = false;
+      }
+    }
+    return matchesExperience;
   });
 
   const displayedJobs = showRecommended
-    ? recommendedJobs
+    ? filteredRecommended
     : availableJobs;
 
   const visibleJobs = displayedJobs;
@@ -396,7 +419,45 @@ function CandidateDashboard() {
               onChange={(e) => setLocationFilter(e.target.value)}
             />
           </div>
-          <button className="ind-search-btn">Find jobs</button>
+          <div className="ind-input-divider"></div>
+          <div className="ind-input-wrapper">
+            <select
+              value={experienceFilter}
+              onChange={(e) => setExperienceFilter(e.target.value)}
+              style={{
+                border: "none",
+                outline: "none",
+                width: "100%",
+                fontSize: "0.95rem",
+                color: "#1a1a2e",
+                fontFamily: "inherit",
+                backgroundColor: "transparent",
+                cursor: "pointer"
+              }}
+            >
+              <option value="All Experience">All Experience</option>
+              <option value="Fresher">Fresher</option>
+              <option value="0-2 Years">0-2 Years</option>
+              <option value="2-5 Years">2-5 Years</option>
+              <option value="5+ Years">5+ Years</option>
+            </select>
+          </div>
+          <button 
+            className="ind-search-btn"
+            onClick={() => {
+              setCurrentPage(1);
+              fetchJobs({
+                searchTerm: search,
+                locationTerm: locationFilter,
+                experienceTerm: experienceFilter,
+                salaryTerm: salaryFilter,
+                companyTerm: companyFilter,
+                page: 1,
+              });
+            }}
+          >
+            Find jobs
+          </button>
         </div>
       </div>
 
@@ -447,13 +508,23 @@ function CandidateDashboard() {
                         className={`ind-job-card ${isSelected ? "active" : ""}`}
                         onClick={() => handleJobSelect(job)}
                       >
-                        <div className="ind-card-tag">Easily apply</div>
+                        <div className="ind-card-tag">{job.isExternal ? "EXTERNAL APPLY" : "Easily apply"}</div>
                         <h4 className="ind-card-title">{job.title}</h4>
-                        <p className="ind-card-company">{job.company}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {job.companyLogo && (
+                            <img 
+                              src={job.companyLogo} 
+                              alt={job.company} 
+                              style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '4px' }} 
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          )}
+                          <p className="ind-card-company" style={{ margin: 0 }}>{job.company}</p>
+                        </div>
                         <p className="ind-card-location">{job.location}</p>
 
                         <div className="ind-card-salary-badge">
-                          ₹{Number(job.salary).toLocaleString("en-IN")} a year
+                          {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")} a year`}
                         </div>
 
                             {showRecommended && (
@@ -476,6 +547,7 @@ function CandidateDashboard() {
                       fetchJobs({
                         searchTerm: search,
                         locationTerm: locationFilter,
+                        experienceTerm: experienceFilter,
                         salaryTerm: salaryFilter,
                         companyTerm: companyFilter,
                         page: nextPage,
@@ -521,10 +593,20 @@ function CandidateDashboard() {
                     ← Back to Jobs
                   </button>
                   <h3 className="ind-detail-main-title">{selectedJob.title}</h3>
-                  <p className="ind-detail-company-link">{selectedJob.company}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {selectedJob.companyLogo && (
+                      <img 
+                        src={selectedJob.companyLogo} 
+                        alt={selectedJob.company} 
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '4px' }} 
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                    <p className="ind-detail-company-link" style={{ margin: 0 }}>{selectedJob.company}</p>
+                  </div>
                   <p className="ind-detail-location-text">{selectedJob.location}</p>
                   <p className="ind-detail-salary-text">
-                    ₹{Number(selectedJob.salary).toLocaleString("en-IN")} a year
+                    {typeof selectedJob.salary === 'string' && isNaN(Number(selectedJob.salary)) ? selectedJob.salary : `₹${Number(selectedJob.salary).toLocaleString("en-IN")} a year`}
                   </p>
 
                   <div className="ind-actions-row">
@@ -637,7 +719,11 @@ function CandidateDashboard() {
 
                   <h4 className="ind-body-section-heading">Full Job Description</h4>
                   <div className="ind-description-content">
-                    <p>{selectedJob.description}</p>
+                    {selectedJob.isExternal ? (
+                      <div dangerouslySetInnerHTML={{ __html: selectedJob.description }} />
+                    ) : (
+                      <p>{selectedJob.description}</p>
+                    )}
                   </div>
                 </div>
               </div>

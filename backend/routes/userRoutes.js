@@ -6,6 +6,7 @@ const {
   changePassword,
   toggleSaveJob,
   getSavedJobs,
+  extractSkills,
 } = require("../controllers/userController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
@@ -55,6 +56,13 @@ router.put(
   protect,
   authorizeRoles("candidate", "recruiter"),
   changePassword
+);
+
+router.post(
+  "/extract-skills",
+  protect,
+  authorizeRoles("candidate"),
+  extractSkills
 );
 
 router.post(
