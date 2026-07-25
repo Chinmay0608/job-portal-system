@@ -4,18 +4,11 @@ const { GoogleGenAI } = require("@google/genai");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
 
-// Initialize Gemini (Automatically picks up GEMINI_API_KEY from env)
-let ai;
-try {
-  ai = new GoogleGenAI();
-} catch (e) {
-  console.log("[Gemini Scraper] Gemini SDK failed to initialize. Check GEMINI_API_KEY.");
-}
+// We will initialize it lazily inside the function
 
 // A curated list of ATS boards that are easily scrapable (no heavy JS blocking)
 const TARGET_COMPANIES = [
   { name: "Stripe", url: "https://boards.greenhouse.io/stripe" },
-  { name: "Figma", url: "https://jobs.lever.co/figma" },
   { name: "Vercel", url: "https://boards.greenhouse.io/vercel" },
   { name: "Discord", url: "https://boards.greenhouse.io/discord" }
 ];
@@ -37,8 +30,18 @@ const addSkillsToMaster = async (skills) => {
 };
 
 const scrapeCareersPage = async (company) => {
-  if (!process.env.GEMINI_API_KEY) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
     console.log("[Gemini Scraper] GEMINI_API_KEY missing. Skipping.");
+    return 0;
+  }
+
+  // Lazy Initialization
+  let ai;
+  try {
+    ai = new GoogleGenAI({ apiKey: apiKey });
+  } catch (e) {
+    console.log("[Gemini Scraper] Gemini SDK failed to initialize with the provided key.");
     return 0;
   }
 
@@ -84,7 +87,7 @@ const scrapeCareersPage = async (company) => {
     console.log(`[Gemini Scraper] Sending data to Gemini 2.5 Flash for ${company.name}...`);
     
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
             responseMimeType: "application/json",
