@@ -75,9 +75,9 @@ const getAllJobs = async (req, res) => {
         { description: { $regex: /visa|sponsorship|sponsor|relocation/i } }
       ];
 
-      // Enforce strict resume skill filtering for the candidate
+      // Enforce loose resume skill filtering for the candidate (substring match)
       if (userSkills && userSkills.length > 0) {
-        const skillRegexes = userSkills.map(s => new RegExp(`^${s}$`, "i"));
+        const skillRegexes = userSkills.map(s => new RegExp(s, "i"));
         query.skillsRequired = { $in: skillRegexes };
       }
     } else {

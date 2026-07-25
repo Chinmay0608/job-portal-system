@@ -61,7 +61,7 @@ const scrapeCareersPage = async (company) => {
       You are an expert technical recruiter AI.
       I am providing you with the raw scraped text from the careers page of ${company.name}.
       Please extract all software engineering, data, and design jobs.
-      For each job, extract its exact Title, Location, required Skills (make educated guesses if not explicitly stated, e.g. "React" for Frontend), and the Application URL.
+      For each job, extract its exact Title, Location, required Skills (make educated guesses if not explicitly stated, e.g. "React" for Frontend), the Application URL, and a brief 2-3 sentence description of the role.
       Make sure the Application URL is a valid absolute URL. If it is relative, prepend it with the base URL. (Base URL is likely the domain of ${company.url})
       
       Here is the raw text:
@@ -78,9 +78,10 @@ const scrapeCareersPage = async (company) => {
               location: { type: "STRING" },
               skillsRequired: { type: "ARRAY", items: { type: "STRING" } },
               applyUrl: { type: "STRING" },
-              role: { type: "STRING" }
+              role: { type: "STRING" },
+              description: { type: "STRING" }
           },
-          required: ["title", "location", "skillsRequired", "applyUrl", "role"]
+          required: ["title", "location", "skillsRequired", "applyUrl", "role", "description"]
       }
     };
 
@@ -121,7 +122,7 @@ const scrapeCareersPage = async (company) => {
           company: company.name,
           location: job.location || "Remote",
           salary: "Competitive",
-          description: `Extracted via Gemini AI from ${company.name} careers page.`,
+          description: job.description || `Extracted via Gemini AI from ${company.name} careers page.`,
           skillsRequired: job.skillsRequired.slice(0, 5),
           educationRequired: "Not Specified",
           experienceRequired: "Fresher", // Default
