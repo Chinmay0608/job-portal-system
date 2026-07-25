@@ -87,7 +87,7 @@ const scrapeCareersPage = async (company) => {
     console.log(`[Gemini Scraper] Sending data to Gemini 2.5 Flash for ${company.name}...`);
     
     const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -95,7 +95,7 @@ const scrapeCareersPage = async (company) => {
         }
     });
 
-    const jobsJson = JSON.parse(response.text());
+    const jobsJson = JSON.parse(response.text);
     
     if (!jobsJson || jobsJson.length === 0) {
       console.log(`[Gemini Scraper] Gemini found no relevant jobs for ${company.name}.`);
