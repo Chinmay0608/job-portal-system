@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
+import { FiMenu, FiX } from "react-icons/fi";
 import "../Styles/components/navbar.css";
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +36,11 @@ function Navbar() {
     };
   }, [location.pathname]);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const isHome = location.pathname === "/";
 
   const logout = () => {
@@ -45,6 +52,10 @@ function Navbar() {
     navigate("/login", { replace: true });
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
     <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}`}>
       {/* Logo */}
@@ -52,8 +63,13 @@ function Navbar() {
         <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>
       </Link>
 
+      {/* Hamburger Toggle */}
+      <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
+        {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+      </button>
+
       {/* Right Side Buttons */}
-      <div className="nav-buttons">
+      <div className={`nav-buttons ${isMobileMenuOpen ? "mobile-open" : ""}`}>
         {isHome ? (
           <>
             <Link className="login-btn nav-hover" to="/login">Log In</Link>

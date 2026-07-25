@@ -65,8 +65,10 @@ function CandidateDashboard() {
   // if the candidate's profile is below the completion threshold.
   const [showProfileNudge, setShowProfileNudge] = useState(false);
 
-  // Pagination: how many jobs are currently visible in the list
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
+
+  // Mobile detail view toggle
+  const [isMobileDetailView, setIsMobileDetailView] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -344,6 +346,7 @@ function CandidateDashboard() {
   const handleJobSelect = (job) => {
     setSelectedJob(job);
     resetApplyState();
+    setIsMobileDetailView(true);
   };
 
   // Reset pagination whenever the filters or the All/Recommended toggle change,
@@ -400,7 +403,7 @@ function CandidateDashboard() {
       <div className="ind-content-container">
         <h2 className="ind-welcome-text">Welcome, {user?.name || "Candidate"}</h2>
 
-        <div className="ind-main-layout">
+        <div className={`ind-main-layout ${isMobileDetailView ? "mobile-detail-active" : ""}`}>
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div className="ind-list-column">
             <div className="jobs-toggle">
@@ -511,6 +514,12 @@ function CandidateDashboard() {
             {selectedJob ? (
               <div className="ind-detail-sticky-wrapper">
                 <div className="ind-detail-header-card">
+                  <button 
+                    className="mobile-back-btn"
+                    onClick={() => setIsMobileDetailView(false)}
+                  >
+                    ← Back to Jobs
+                  </button>
                   <h3 className="ind-detail-main-title">{selectedJob.title}</h3>
                   <p className="ind-detail-company-link">{selectedJob.company}</p>
                   <p className="ind-detail-location-text">{selectedJob.location}</p>

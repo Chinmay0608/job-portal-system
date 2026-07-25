@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --primary-accent: #0d1117;
   --accent-hover: #1e293b;
   --bg-main: #f6f5f1;
@@ -747,5 +747,17 @@
   }
   .job-modal-card {
     padding: 24px;
+  }
+  .form-row-split {
+    grid-template-columns: 1fr;
+  }
+  .custom-dropdown-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }

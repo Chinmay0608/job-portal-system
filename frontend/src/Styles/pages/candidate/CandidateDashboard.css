@@ -428,12 +428,45 @@
 /* ==========================================
    RESPONSIVE OVERRIDES
 ========================================== */
+.mobile-back-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
 @media (max-width: 992px) {
   .ind-main-layout {
     grid-template-columns: 1fr;
   }
+  
   .ind-detail-column {
-    display: none; /* Safely falls back on compact screens */
+    display: none; 
+  }
+  
+  .ind-main-layout.mobile-detail-active .ind-list-column {
+    display: none;
+  }
+  
+  .ind-main-layout.mobile-detail-active .ind-detail-column {
+    display: block;
+    position: relative;
+    top: 0;
+    height: auto;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding-bottom: 30px;
+  }
+  
+  .mobile-back-btn {
+    display: inline-block;
   }
 }
 
