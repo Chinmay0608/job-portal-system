@@ -200,10 +200,57 @@ const extractSkills = asyncHandler(async (req, res) => {
   });
 });
 
+/* ==========================
+   GET SIGNED RESUME URL
+========================== */
+const getSignedResumeUrl = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  // Only the candidate themselves or a recruiter can view the resume
+  if (req.user.role === "candidate" && req.user.id !== userId) {
+    res.status(403);
+    throw new Error("Access denied");
+  }
+
+  const targetUser = await User.findById(userId);
+  if (!targetUser || !targetUser.resume) {
+    res.status(404);
+    throw new Error("Resume not found");
+  }
+
+  // The resume is stored as a full Cloudinary URL.
+  // We need to extract the public ID.
+  // Example: https://res.cloudinary.com/dxyz/raw/authenticated/upload/v1234/skillbridge/resumes/filename.pdf
+  // The public ID is everything after the "upload/v[0-9]+/" part.
+  const urlParts = targetUser.resume.split("/upload/");
+  if (urlParts.length !== 2) {
+    return res.redirect(targetUser.resume); // Fallback for old unauthenticated local paths if any
+  }
+
+  // Remove the version string (e.g., v1613243/)
+  const pathWithoutUpload = urlParts[1];
+  const versionRegex = /^v\d+\//;
+  let publicIdWithExtension = pathWithoutUpload.replace(versionRegex, "");
+
+  // Cloudinary raw resources typically require the extension in the public ID, 
+  // but let's just generate the signed URL using the cloudinary utils.
+  const cloudinary = require("../config/cloudinary");
+  
+  const signedUrl = cloudinary.utils.url(publicIdWithExtension, {
+    resource_type: "raw",
+    type: "authenticated",
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + 15 * 60, // 15 mins
+  });
+
+  res.redirect(signedUrl);
+});
+
 module.exports = {
   updateProfile,
   changePassword,
   toggleSaveJob,
   getSavedJobs,
   extractSkills,
+  getSignedResumeUrl,
 };

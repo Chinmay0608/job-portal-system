@@ -1,5 +1,5 @@
 const express = require("express");
-const rateLimit = require("express-rate-limit");
+
 const { body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
 const upload = require("../middleware/multer");
@@ -14,16 +14,7 @@ const {
   logoutUser,
 } = require("../controllers/authController");
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: "Too many requests from this IP. Please try again after 15 minutes.",
-  },
-});
+const { authLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 

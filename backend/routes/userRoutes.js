@@ -7,6 +7,7 @@ const {
   toggleSaveJob,
   getSavedJobs,
   extractSkills,
+  getSignedResumeUrl,
 } = require("../controllers/userController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
@@ -73,5 +74,7 @@ router.post(
 );
 
 router.get("/saved-jobs", protect, authorizeRoles("candidate"), getSavedJobs);
+
+router.get("/resume/:userId", protect, getSignedResumeUrl);
 
 module.exports = router;

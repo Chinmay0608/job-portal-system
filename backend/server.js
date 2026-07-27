@@ -15,6 +15,7 @@ const jobRoutes = require("./routes/jobRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const errorHandler = require("./middleware/errorHandler");
+const csrfProtection = require("./middleware/csrfMiddleware");
 
 const app = express();
 
@@ -61,10 +62,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// Apply CSRF Protection
+app.use(csrfProtection);
+
 /* ==========================
    STATIC FILES
 ========================== */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Legacy uploads route removed for security.
 
 /* ==========================
    ROUTES

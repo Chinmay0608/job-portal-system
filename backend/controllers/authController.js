@@ -15,7 +15,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     res.status(400);
-    throw new Error("User already exists");
+    throw new Error("Registration failed. Email may already be in use.");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -154,12 +154,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: email.trim().toLowerCase() });
 
   if (!user) {
-    res.status(404);
-    throw new Error("User not found");
+    // Send generic response to prevent user enumeration
+    return res.status(200).json({ message: "If this email is registered, you'll receive a reset link" });
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex");
-  user.resetPasswordToken = resetToken;
+  const hash = crypto.createHash("sha256").update(resetToken).digest("hex");
+  
+  user.resetPasswordToken = hash;
   user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
   await user.save();
 
@@ -173,7 +175,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   await sendEmail(user.email, "Reset Password", html);
 
-  res.status(200).json({ message: "Password reset email sent" });
+  res.status(200).json({ message: "If this email is registered, you'll receive a reset link" });
 });
 
 /* ==========================
@@ -183,8 +185,13 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
   const user = await User.findOne({
-    resetPasswordToken: token,
+    resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },
   });
 

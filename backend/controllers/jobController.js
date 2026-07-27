@@ -4,6 +4,11 @@ const MasterSkill = require("../models/MasterSkill");
 const { calculateJobMatches } = require("../services/jobMatchService");
 const asyncHandler = require("express-async-handler");
 
+// Helper to escape regex characters and prevent ReDoS
+const escapeRegex = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 /* ==========================
    CREATE JOB
 ========================== */
@@ -66,11 +71,12 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (search) {
+    const safeSearch = escapeRegex(search);
     // If $or already exists (from visa logic), we must use $and to combine them
     const searchCondition = {
       $or: [
-        { title: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
+        { title: { $regex: safeSearch, $options: "i" } },
+        { company: { $regex: safeSearch, $options: "i" } },
       ],
     };
 
@@ -83,7 +89,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (location) {
-    query.location = { $regex: location, $options: "i" };
+    query.location = { $regex: escapeRegex(location), $options: "i" };
   }
 
   if (experience && experience !== "All Experience") {
@@ -237,8 +243,9 @@ const searchMasterSkills = asyncHandler(async (req, res) => {
   }
 
   // Case-insensitive anchored regex search for fast performance
+  const safeQuery = escapeRegex(query.trim());
   const skills = await MasterSkill.find({
-    name: { $regex: `^${query.trim()}`, $options: "i" },
+    name: { $regex: `^${safeQuery}`, $options: "i" },
   }).limit(10);
 
   // Map to clean string array of skill names

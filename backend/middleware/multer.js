@@ -9,24 +9,21 @@ const storage = new CloudinaryStorage({
   cloudinary,
 
   params: async (req, file) => {
-    /* PROFILE IMAGE */
     if (file.fieldname === "profileImage") {
       return {
         folder: "skillbridge/profile-images",
-
         allowed_formats: ["jpg", "jpeg", "png", "webp"],
-
         resource_type: "image",
+        type: "authenticated",
       };
     }
 
     /* RESUME */
     return {
       folder: "skillbridge/resumes",
-
       allowed_formats: ["pdf", "doc", "docx"],
-
       resource_type: "raw",
+      type: "authenticated",
     };
   },
 });
