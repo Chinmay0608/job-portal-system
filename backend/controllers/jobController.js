@@ -49,29 +49,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
     limit = 20,
   } = req.query;
 
-  const query = { isActive: { $ne: false } };
-
-  // 1. Filter out external jobs unless the user is the designated personal candidate
-  let isPersonalCandidate = false;
-
-  if (req.user) {
-    const user = await User.findById(req.user.id);
-    if (user && user.jobPreferences && user.jobPreferences.externalOnly) {
-      isPersonalCandidate = true;
-    }
-  }
-
-  if (isPersonalCandidate) {
-    query.isExternal = true; // Only show real external jobs for the candidate
-    // Enforce International Visa / Remote Rule
-    query.$or = [
-      { location: { $regex: /india|worldwide|anywhere|global/i } },
-      { location: { $regex: /remote/i } },
-      { description: { $regex: /visa|sponsorship|sponsor|relocation/i } },
-    ];
-  } else {
-    query.isExternal = { $ne: true }; // Only show mock/internal jobs for others
-  }
+  const query = { isActive: { $ne: false }, isExternal: true };
 
   if (search) {
     const safeSearch = escapeRegex(search);
@@ -151,20 +129,8 @@ const getRecruiterJobs = asyncHandler(async (req, res) => {
 const getRecommendedJobs = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
-  // Filter out external jobs unless it's the personal candidate
-  let query = { isActive: { $ne: false } };
-  
-  if (user && user.jobPreferences && user.jobPreferences.externalOnly) {
-    query.isExternal = true;
-    // Enforce International Visa / Remote Rule
-    query.$or = [
-      { location: { $regex: /india|worldwide|anywhere|global/i } },
-      { location: { $regex: /remote/i } },
-      { description: { $regex: /visa|sponsorship|sponsor|relocation/i } },
-    ];
-  } else {
-    query.isExternal = { $ne: true };
-  }
+  // Show only live external jobs
+  let query = { isActive: { $ne: false }, isExternal: true };
 
   const jobs = await Job.find(query);
 
