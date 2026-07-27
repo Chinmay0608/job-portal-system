@@ -162,8 +162,7 @@ function Register() {
             <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
             <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
             <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
-            {/* Base Deck Line */}
-            <line x1="0" y1="78" x2="300" y2="78" className="bridge-base" />
+            {/* Base Deck Line Removed to let card border act as the deck */}
           </svg>
         </div>
 

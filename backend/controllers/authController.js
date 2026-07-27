@@ -95,7 +95,8 @@ const googleLogin = asyncHandler(async (req, res) => {
 
   let user = await User.findOne({ email: normalizedEmail });
   if (!user) {
-    const hashedPassword = await bcrypt.hash("google-auth", 10);
+    const randomPassword = crypto.randomBytes(32).toString("hex");
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
     user = await User.create({
       name,
       email: normalizedEmail,

@@ -3,3 +3,6 @@ node_modules
 uploads
 dist*.pdf
 
+
+backend/uploads/*.pdf
+backend/uploads/*.docx

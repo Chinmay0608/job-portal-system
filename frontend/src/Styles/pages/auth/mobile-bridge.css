@@ -45,8 +45,13 @@
   .login-form-panel, .register-form-panel { 
     background: #18181b !important; 
     padding: 20px 16px !important; 
-    align-items: flex-start !important; 
+    align-items: center !important; 
+    justify-content: flex-start !important;
+    flex-direction: column !important;
     border: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
   }
 
   /* SVG Container Layout */
@@ -55,7 +60,8 @@
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
-    margin-top: 16px;
+    margin-top: 24px;
+    flex-shrink: 0;
   }
   
   /* SVG Elements Styling */
