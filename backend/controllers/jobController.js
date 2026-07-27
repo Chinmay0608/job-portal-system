@@ -70,16 +70,17 @@ const getAllJobs = async (req, res) => {
       query.isExternal = true; // Only show real external jobs for the candidate
       // Enforce International Visa / Remote Rule
       query.$or = [
-        { location: { $regex: /india/i } },
+        { location: { $regex: /india|worldwide|anywhere|global/i } },
         { location: { $regex: /remote/i } },
         { description: { $regex: /visa|sponsorship|sponsor|relocation/i } }
       ];
 
-      // Enforce loose resume skill filtering for the candidate (substring match)
-      if (userSkills && userSkills.length > 0) {
-        const skillRegexes = userSkills.map(s => new RegExp(s, "i"));
-        query.skillsRequired = { $in: skillRegexes };
-      }
+      // Temporarily removed the strict skill filter because external APIs use varying tags
+      // which results in legitimate jobs being hidden from the user.
+      // if (userSkills && userSkills.length > 0) {
+      //   const skillRegexes = userSkills.map(s => new RegExp(s, "i"));
+      //   query.skillsRequired = { $in: skillRegexes };
+      // }
     } else {
       query.isExternal = { $ne: true }; // Only show mock/internal jobs for others
     }

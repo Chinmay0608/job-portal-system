@@ -608,6 +608,22 @@ function CandidateDashboard() {
                   <p className="ind-detail-salary-text">
                     {typeof selectedJob.salary === 'string' && isNaN(Number(selectedJob.salary)) ? selectedJob.salary : `₹${Number(selectedJob.salary).toLocaleString("en-IN")} a year`}
                   </p>
+                  
+                  <div style={{ marginTop: '8px', marginBottom: '16px' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      background: '#f3f4f6',
+                      color: '#374151',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      letterSpacing: '0.02em',
+                      border: '1px solid #e5e7eb'
+                    }}>
+                      💼 {selectedJob.role || "Full-time"}
+                    </span>
+                  </div>
 
                   <div className="ind-actions-row">
                     {appliedJobs?.includes(selectedJob._id) ? (
