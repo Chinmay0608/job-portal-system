@@ -474,3 +474,20 @@ select {
     padding: 20px 16px;
   }
 }
+/* ==========================
+   GLOBAL INTERACTIVE MICRO-ANIMATIONS (PREMIUM FEEL)
+========================== */
+
+button, a, input[type="button"], input[type="submit"], .btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease-out !important;
+}
+
+button:active:not(:disabled), 
+a:active, 
+input[type="button"]:active:not(:disabled), 
+input[type="submit"]:active:not(:disabled), 
+.btn:active:not(:disabled) {
+  transform: scale(0.95) !important;
+  opacity: 0.9;
+}
+
