@@ -19,6 +19,14 @@ const addSkillsToMaster = async (skills) => {
   }
 };
 
+const extractExperience = (title) => {
+  const t = title.toLowerCase();
+  if (t.includes("senior") || t.includes("lead") || t.includes("director") || t.includes("principal") || t.includes("manager") || t.includes("head")) return "5+ Years";
+  if (t.includes("mid") || t.includes("intermediate") || t.includes("experienced")) return "2-5 Years";
+  if (t.includes("junior") || t.includes("associate") || t.includes("entry")) return "0-2 Years";
+  return "Fresher";
+};
+
 const importJobsFromRemotive = async () => {
   console.log("[Job Fetcher] Starting Remotive API import...");
   try {
@@ -40,7 +48,7 @@ const importJobsFromRemotive = async () => {
           description: job.description,
           skillsRequired,
           educationRequired: "Not Specified",
-          experienceRequired: "Fresher",
+          experienceRequired: extractExperience(job.title),
           applyUrl: job.url,
           isExternal: true,
           companyLogo: job.company_logo || "",
@@ -91,7 +99,7 @@ const importJobsFromTheMuse = async () => {
           description: job.contents || "No description available",
           skillsRequired: rawSkills.slice(0, 5),
           educationRequired: "Not Specified",
-          experienceRequired: "Fresher",
+          experienceRequired: extractExperience(job.name),
           applyUrl: applyUrl,
           isExternal: true,
           companyLogo: "",
@@ -133,7 +141,7 @@ const importJobsFromArbeitnow = async () => {
           description: job.description || "No description available",
           skillsRequired: skillsRequired,
           educationRequired: "Not Specified",
-          experienceRequired: "Fresher",
+          experienceRequired: extractExperience(job.title),
           applyUrl: applyUrl,
           isExternal: true,
           companyLogo: "",

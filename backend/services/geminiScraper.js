@@ -6,6 +6,14 @@ const MasterSkill = require("../models/MasterSkill");
 
 // We will initialize it lazily inside the function
 
+const extractExperience = (title) => {
+  const t = title.toLowerCase();
+  if (t.includes("senior") || t.includes("lead") || t.includes("director") || t.includes("principal") || t.includes("manager") || t.includes("head")) return "5+ Years";
+  if (t.includes("mid") || t.includes("intermediate") || t.includes("experienced")) return "2-5 Years";
+  if (t.includes("junior") || t.includes("associate") || t.includes("entry")) return "0-2 Years";
+  return "Fresher";
+};
+
 // A curated list of ATS boards that are easily scrapable (no heavy JS blocking)
 const TARGET_COMPANIES = [
   { name: "Stripe", url: "https://boards.greenhouse.io/stripe" },
@@ -125,7 +133,7 @@ const scrapeCareersPage = async (company) => {
           description: job.description || `Extracted via Gemini AI from ${company.name} careers page.`,
           skillsRequired: job.skillsRequired.slice(0, 5),
           educationRequired: "Not Specified",
-          experienceRequired: "Fresher", // Default
+          experienceRequired: extractExperience(job.title),
           applyUrl: finalUrl,
           isExternal: true,
           companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=random`
