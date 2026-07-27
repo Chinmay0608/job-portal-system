@@ -60,6 +60,9 @@ function Login() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Login Failed");
       localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
       toast.success("Google login successful");
       redirectUser(data.user);
     } catch (error) {

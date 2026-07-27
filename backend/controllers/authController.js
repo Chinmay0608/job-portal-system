@@ -28,6 +28,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     message: "User registered successfully",
+    token,
     user: {
       _id: user._id,
       name: user.name,
@@ -75,6 +76,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     message: "Login successful",
+    token,
     user: {
       _id: user._id,
       name: user.name,
@@ -117,6 +119,7 @@ const googleLogin = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     message: "Google login successful",
+    token,
     user: {
       _id: user._id,
       name: user.name,
