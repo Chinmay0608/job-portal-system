@@ -15,52 +15,55 @@ The platform is designed with a premium frontend UI and heavily optimized backen
 ## 🏗 System Architecture & Workflow
 
 ```mermaid
-graph TD
-    %% Frontend Layer
-    subgraph Frontend ["Client / Frontend (React + Vite)"]
-        UI["User Interface"]
-        AuthUI["Google OAuth / JWT Auth"]
-        UI -->|API Requests| API_Gateway
+graph LR
+    %% Custom Styles
+    classDef client fill:#61DAFB,stroke:#333,stroke-width:2px,color:#000
+    classDef api fill:#404d59,stroke:#fff,stroke-width:2px,color:#fff
+    classDef redis fill:#DC382D,stroke:#fff,stroke-width:2px,color:#fff
+    classDef mongo fill:#4ea94b,stroke:#fff,stroke-width:2px,color:#fff
+    classDef external fill:#f39c12,stroke:#fff,stroke-width:2px,color:#fff
+
+    %% Client Layer
+    subgraph Frontend ["🖥️ Client Layer"]
+        UI(["React + Vite UI"]):::client
     end
 
-    %% Backend API Layer
-    subgraph Backend ["Backend API (Express / Node.js)"]
-        API_Gateway["Express Routes"]
-        Middleware["Rate Limiting & Security Middlewares"]
-        Cache["Redis API Cache"]
-        Controllers["Controllers / Business Logic"]
-        
-        API_Gateway --> Middleware
-        Middleware --> Cache
-        Cache -->|"Cache Miss"| Controllers
-        Cache -->|"Cache Hit"| API_Gateway
+    %% API Layer
+    subgraph Backend ["⚙️ Core API & Logic"]
+        Router["Express Routes"]:::api
+        Auth{"Auth & Rate Limiting"}:::api
+        Cache[("Redis API Cache")]:::redis
+        Controllers["Business Logic"]:::api
     end
 
-    %% Background Workers Layer
-    subgraph Workers ["Background Workers (BullMQ / Node-Cron)"]
-        EmailWorker["Email Queue Worker"]
-        CronWorker["Job Cleanup Cron"]
-        DistributedLock["Redis Distributed Lock"]
-        
-        CronWorker -->|Acquires| DistributedLock
+    %% Background Workers
+    subgraph Workers ["🔄 Background Workers"]
+        EmailWorker>"BullMQ Email Worker"]:::api
+        CronWorker>"Scheduled Cron Jobs"]:::api
     end
 
-    %% Database & External Services
-    subgraph Infrastructure ["Data Layer & Services"]
-        MongoDB[("MongoDB Atlas")]
-        Redis[("Redis Cloud")]
-        Cloudinary["Cloudinary Storage"]
-        SMTP["Gmail SMTP / SendGrid"]
-        Firebase["Firebase Auth"]
+    %% Data Layer
+    subgraph Infrastructure ["🗄️ Database & Services"]
+        MongoDB[("MongoDB Atlas")]:::mongo
+        RedisState[("Redis (Queues & Locks)")]:::redis
+        Cloudinary["Cloudinary Storage"]:::external
     end
 
-    %% Connections
-    Controllers <--> MongoDB
-    Controllers <--> Cloudinary
-    AuthUI <--> Firebase
-    Controllers -->|"Add Jobs"| Redis
-    EmailWorker -->|"Pops Jobs"| Redis
-    EmailWorker -->|Sends| SMTP
+    %% Flow Connections (Thick arrows for synchronous, dotted for async)
+    UI ==>|"HTTP Requests"| Router
+    Router ==> Auth
+    Auth ==>|"Check Cache"| Cache
+    
+    Cache -.->|"Cache Hit (Fast Return)"| Router
+    Cache ==>|"Cache Miss"| Controllers
+    
+    Controllers ==>|"Read / Write"| MongoDB
+    Controllers -.->|"Secure Uploads"| Cloudinary
+    
+    Controllers -.->|"Push to Queue"| RedisState
+    RedisState -.->|"Pop from Queue"| EmailWorker
+    
+    CronWorker -.->|"Acquire Distributed Lock"| RedisState
 ```
 
 ---
