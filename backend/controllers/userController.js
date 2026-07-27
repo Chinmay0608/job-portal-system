@@ -2,8 +2,7 @@ const User = require("../models/user");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
 const bcrypt = require("bcryptjs");
-const fs = require("fs");
-const { PDFParse } = require("pdf-parse");
+const { extractSkillsFromResume, extractSkillsFromBuffer } = require("../services/resumeParserService");
 const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
 
@@ -56,52 +55,11 @@ const updateProfile = asyncHandler(async (req, res) => {
   // Resume Parsing Logic for Skill Extraction
   let newlyExtractedSkills = [];
   if (req.files?.resume?.[0]) {
-    try {
-      const resumePath = req.files.resume[0].path;
-
-      // Only attempt parse if it's a PDF
-      if (resumePath.toLowerCase().endsWith(".pdf")) {
-        logger.info("[Resume Parser] Parsing PDF for skills...");
-        const fileBuffer = fs.readFileSync(resumePath);
-        const uint8Array = new Uint8Array(fileBuffer);
-        const parser = new PDFParse(uint8Array);
-        const data = await parser.getText();
-        const resumeText = data.text.toLowerCase();
-
-        // Fetch all master skills
-        const allMasterSkills = await MasterSkill.find({});
-        const existingSkillsLower = user.skills.map((s) => s.toLowerCase());
-
-        allMasterSkills.forEach((masterSkill) => {
-          const skillName = masterSkill.name.toLowerCase();
-
-          // Only check if candidate doesn't already have it
-          if (!existingSkillsLower.includes(skillName)) {
-            // Use regex with word boundaries to prevent partial matches (e.g., "in" matching "in")
-            // Escape regex characters just in case a skill has C++ or similar
-            const escapedSkill = skillName.replace(
-              /[.*+?^${}()|[\]\\]/g,
-              "\\$&",
-            );
-            const regex = new RegExp(`\\b${escapedSkill}\\b`, "i");
-
-            if (regex.test(resumeText)) {
-              newlyExtractedSkills.push(masterSkill.name);
-            }
-          }
-        });
-
-        if (newlyExtractedSkills.length > 0) {
-          logger.info(
-            "[Resume Parser] Extracted new skills",
-            newlyExtractedSkills,
-          );
-          user.skills = [...user.skills, ...newlyExtractedSkills];
-        }
-      }
-    } catch (parseError) {
-      logger.error(parseError, "[Resume Parser] Failed to parse resume");
-      // Do not fail the profile update if parsing fails silently
+    const resumePath = req.files.resume[0].path;
+    newlyExtractedSkills = await extractSkillsFromResume(resumePath, user.skills);
+    
+    if (newlyExtractedSkills.length > 0) {
+      user.skills = [...user.skills, ...newlyExtractedSkills];
     }
   }
 
@@ -224,25 +182,8 @@ const extractSkills = asyncHandler(async (req, res) => {
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-  const parser = new PDFParse(uint8Array);
-  const data = await parser.getText();
-  const resumeText = data.text.toLowerCase();
-
-  const allMasterSkills = await MasterSkill.find({});
-  const existingSkillsLower = user.skills.map((s) => s.toLowerCase());
-  let newlyExtractedSkills = [];
-
-  allMasterSkills.forEach((masterSkill) => {
-    const skillName = masterSkill.name.toLowerCase();
-    if (!existingSkillsLower.includes(skillName)) {
-      const escapedSkill = skillName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`\\b${escapedSkill}\\b`, "i");
-      if (regex.test(resumeText)) {
-        newlyExtractedSkills.push(masterSkill.name);
-      }
-    }
-  });
+  
+  const newlyExtractedSkills = await extractSkillsFromBuffer(arrayBuffer, user.skills);
 
   if (newlyExtractedSkills.length > 0) {
     user.skills = [...user.skills, ...newlyExtractedSkills];

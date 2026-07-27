@@ -25,6 +25,28 @@ const protect = (req, res, next) => {
 };
 
 /* ==========================
+   OPTIONAL AUTH PROTECTION
+========================== */
+const optionalAuth = (req, res, next) => {
+  try {
+    let token = req.cookies.token;
+
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+    }
+    next();
+  } catch (error) {
+    // If token is invalid or expired, just ignore it and proceed as unauthenticated
+    next();
+  }
+};
+
+/* ==========================
    ROLE AUTHORIZATION
 ========================== */
 const authorizeRoles = (...roles) => {
@@ -38,5 +60,6 @@ const authorizeRoles = (...roles) => {
 
 module.exports = {
   protect,
+  optionalAuth,
   authorizeRoles,
 };

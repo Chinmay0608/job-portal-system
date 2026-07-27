@@ -103,6 +103,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    jobPreferences: {
+      externalOnly: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
   {
     timestamps: true,

@@ -1,7 +1,7 @@
 const Job = require("../models/job");
 const User = require("../models/user");
 const MasterSkill = require("../models/MasterSkill");
-const jwt = require("jsonwebtoken");
+const { calculateJobMatches } = require("../services/jobMatchService");
 const asyncHandler = require("express-async-handler");
 
 /* ==========================
@@ -44,21 +44,12 @@ const getAllJobs = asyncHandler(async (req, res) => {
   const query = { isActive: { $ne: false } };
 
   // 1. Filter out external jobs unless the user is the designated personal candidate
-  const personalEmail =
-    process.env.PERSONAL_CANDIDATE_EMAIL || "myemail@example.com";
   let isPersonalCandidate = false;
 
-  let userSkills = [];
-  if (req.cookies && req.cookies.token) {
-    try {
-      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id);
-      if (user && user.email === personalEmail) {
-        isPersonalCandidate = true;
-        userSkills = user.skills || [];
-      }
-    } catch (e) {
-      // Ignore invalid token
+  if (req.user) {
+    const user = await User.findById(req.user.id);
+    if (user && user.jobPreferences && user.jobPreferences.externalOnly) {
+      isPersonalCandidate = true;
     }
   }
 
@@ -123,8 +114,26 @@ const getAllJobs = asyncHandler(async (req, res) => {
    GET RECRUITER JOBS
 ========================== */
 const getRecruiterJobs = asyncHandler(async (req, res) => {
-  const jobs = await Job.find({ recruiter: req.user.id });
-  res.status(200).json({ jobs });
+  const { page = 1, limit = 20 } = req.query;
+
+  const currentPage = Number(page) > 0 ? Number(page) : 1;
+  const perPage = Number(limit) > 0 ? Number(limit) : 20;
+
+  const query = { recruiter: req.user.id };
+
+  const totalJobs = await Job.countDocuments(query);
+  const jobs = await Job.find(query)
+    .skip((currentPage - 1) * perPage)
+    .limit(perPage);
+
+  const totalPages = Math.ceil(totalJobs / perPage) || 1;
+
+  res.status(200).json({ 
+    jobs,
+    totalJobs,
+    totalPages,
+    currentPage,
+  });
 });
 
 /* ==========================
@@ -134,14 +143,13 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
   // Filter out external jobs unless it's the personal candidate
-  const personalEmail =
-    process.env.PERSONAL_CANDIDATE_EMAIL || "myemail@example.com";
   let query = { isActive: { $ne: false } };
-  if (user.email === personalEmail) {
+  
+  if (user && user.jobPreferences && user.jobPreferences.externalOnly) {
     query.isExternal = true;
     // Enforce International Visa / Remote Rule
     query.$or = [
-      { location: { $regex: /india/i } },
+      { location: { $regex: /india|worldwide|anywhere|global/i } },
       { location: { $regex: /remote/i } },
       { description: { $regex: /visa|sponsorship|sponsor|relocation/i } },
     ];
@@ -151,30 +159,7 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
 
   const jobs = await Job.find(query);
 
-  const recommendedJobs = jobs
-    .map((job) => {
-      const skillsRequired = Array.isArray(job.skillsRequired)
-        ? job.skillsRequired
-        : [];
-
-      const matchedSkills = skillsRequired.filter((skill) =>
-        user.skills?.some(
-          (userSkill) => userSkill.toLowerCase() === skill.toLowerCase(),
-        ),
-      );
-
-      const matchPercentage =
-        skillsRequired.length > 0
-          ? Math.round((matchedSkills.length / skillsRequired.length) * 100)
-          : 0;
-
-      return {
-        ...job.toObject(),
-        matchPercentage,
-      };
-    })
-    .filter((job) => job.matchPercentage > 0)
-    .sort((a, b) => b.matchPercentage - a.matchPercentage);
+  const recommendedJobs = calculateJobMatches(jobs, user.skills || []);
 
   res.status(200).json({
     jobs: recommendedJobs,
@@ -186,6 +171,7 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
 ========================== */
 const updateJob = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
+  const { title, role, company, location, salary, description, experienceRequired, skillsRequired } = req.body;
 
   const job = await Job.findById(jobId);
   if (!job) {
@@ -198,7 +184,17 @@ const updateJob = asyncHandler(async (req, res) => {
     throw new Error("Access denied");
   }
 
-  const updatedJob = await Job.findByIdAndUpdate(jobId, req.body, {
+  const updateData = {};
+  if (title !== undefined) updateData.title = title;
+  if (role !== undefined) updateData.role = role;
+  if (company !== undefined) updateData.company = company;
+  if (location !== undefined) updateData.location = location;
+  if (salary !== undefined) updateData.salary = salary;
+  if (description !== undefined) updateData.description = description;
+  if (experienceRequired !== undefined) updateData.experienceRequired = experienceRequired;
+  if (skillsRequired !== undefined) updateData.skillsRequired = skillsRequired;
+
+  const updatedJob = await Job.findByIdAndUpdate(jobId, updateData, {
     new: true,
   });
 

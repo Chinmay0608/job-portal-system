@@ -1,7 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
 const {
   createJob,
@@ -18,7 +18,7 @@ const router = express.Router();
 /* ==========================
    PUBLIC ROUTES
 ========================== */
-router.get("/", getAllJobs);
+router.get("/", optionalAuth, getAllJobs);
 router.get("/skills/search", searchMasterSkills);
 
 /* ==========================
