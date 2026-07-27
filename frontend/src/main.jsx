@@ -4,6 +4,10 @@ import { Toaster } from "react-hot-toast";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css"; 
 import "./index.css"; 
+import axios from "axios";
+
+// Global default headers to satisfy backend CSRF checks
+axios.defaults.headers.common["x-requested-with"] = "XMLHttpRequest";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

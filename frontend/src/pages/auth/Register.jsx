@@ -41,7 +41,10 @@ function Register() {
       const user = result.user;
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-requested-with": "XMLHttpRequest"
+        },
         credentials: "include",
         body: JSON.stringify({ name: user.displayName, email: user.email }),
       });
