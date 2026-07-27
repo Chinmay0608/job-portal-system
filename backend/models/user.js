@@ -70,6 +70,12 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    hiddenJobs: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Job",
+      default: [],
+    },
+
     profileImage: {
       type: String,
       default: "",

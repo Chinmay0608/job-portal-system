@@ -11,6 +11,7 @@ const {
   getRecommendedJobs,
   deleteJob,
   updateJob,
+  hideJob,
   searchMasterSkills,
 } = require("../controllers/jobController");
 
@@ -30,6 +31,12 @@ router.get(
   protect,
   authorizeRoles("candidate"),
   getRecommendedJobs,
+);
+router.post(
+  "/hide/:jobId",
+  protect,
+  authorizeRoles("candidate"),
+  hideJob,
 );
 
 /* ==========================

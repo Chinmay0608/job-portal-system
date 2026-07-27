@@ -51,6 +51,13 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   const query = { isActive: { $ne: false } };
 
+  if (req.user) {
+    const user = await User.findById(req.user.id);
+    if (user && user.hiddenJobs && user.hiddenJobs.length > 0) {
+      query._id = { $nin: user.hiddenJobs };
+    }
+  }
+
   if (search) {
     const safeSearch = escapeRegex(search);
     // If $or already exists (from visa logic), we must use $and to combine them
@@ -132,6 +139,10 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
   // Show all active jobs (both internal and external)
   let query = { isActive: { $ne: false } };
 
+  if (user && user.hiddenJobs && user.hiddenJobs.length > 0) {
+    query._id = { $nin: user.hiddenJobs };
+  }
+
   const jobs = await Job.find(query);
 
   const recommendedJobs = calculateJobMatches(jobs, user.skills || []);
@@ -205,6 +216,21 @@ const deleteJob = asyncHandler(async (req, res) => {
 });
 
 /* ==========================
+   HIDE JOB (CANDIDATE)
+========================== */
+const hideJob = asyncHandler(async (req, res) => {
+  const { jobId } = req.params;
+  const user = await User.findById(req.user.id);
+
+  if (!user.hiddenJobs.includes(jobId)) {
+    user.hiddenJobs.push(jobId);
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Job hidden successfully" });
+});
+
+/* ==========================
    SEARCH MASTER SKILLS
 ========================== */
 const searchMasterSkills = asyncHandler(async (req, res) => {
@@ -234,5 +260,6 @@ module.exports = {
   getRecommendedJobs,
   deleteJob,
   updateJob,
+  hideJob,
   searchMasterSkills,
 };

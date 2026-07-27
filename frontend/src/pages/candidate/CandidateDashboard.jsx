@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs } from "../../Services/jobService";
+import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob } from "../../Services/jobService";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
@@ -71,6 +71,10 @@ function CandidateDashboard() {
 
   // Mobile detail view toggle
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+
+  // Post-Apply Feedback Loop State
+  const [pendingFeedbackJob, setPendingFeedbackJob] = useState(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -187,6 +191,21 @@ function CandidateDashboard() {
     }
   }, [location.state]);
 
+  // Post-Apply Visibility Listener
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && pendingFeedbackJob) {
+        setTimeout(() => {
+          setShowFeedbackModal(true);
+        }, 500);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [pendingFeedbackJob]);
+
   useEffect(() => {
     setCurrentPage(1);
     debouncedFetchJobs({
@@ -259,23 +278,11 @@ function CandidateDashboard() {
     setUseSavedResume(null);
   };
 
-  // Triggered by "Apply Now". If the job is external, redirect and track.
+  // Triggered by "Apply Now". If the job is external, redirect and await feedback.
   const handleApplyNowClick = async () => {
     if (selectedJob?.isExternal) {
-      try {
-        setApplying(true);
-        // Track the application silently
-        await applyExternal(selectedJob._id);
-        setAppliedJobs((prev) => [...prev, selectedJob._id]);
-        toast.success("External application tracked!");
-        // Open the real application URL
-        window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
-      } catch (error) {
-        // If already tracked or fails, just open it anyway
-        window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
-      } finally {
-        setApplying(false);
-      }
+      setPendingFeedbackJob(selectedJob);
+      window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -284,6 +291,47 @@ function CandidateDashboard() {
     } else {
       setShowApplyPanel(true);
     }
+  };
+
+  // Feedback Modal Handlers
+  const closeFeedbackModal = () => {
+    setShowFeedbackModal(false);
+    setPendingFeedbackJob(null);
+  };
+
+  const handleFeedbackYes = async () => {
+    if (!pendingFeedbackJob) return;
+    try {
+      await applyExternal(pendingFeedbackJob._id);
+      setAppliedJobs((prev) => [...prev, pendingFeedbackJob._id]);
+      toast.success("Great! Application tracked.");
+    } catch (error) {
+      console.error(error);
+    }
+    closeFeedbackModal();
+  };
+
+  const handleFeedbackNo = () => {
+    closeFeedbackModal();
+  };
+
+  const handleFeedbackHide = async () => {
+    if (!pendingFeedbackJob) return;
+    try {
+      await hideJob(pendingFeedbackJob._id);
+      toast.success("Job hidden. You won't see this again.");
+      
+      setJobs((prev) => prev.filter(j => j._id !== pendingFeedbackJob._id));
+      setRecommendedJobsList((prev) => prev.filter(j => j._id !== pendingFeedbackJob._id));
+      
+      if (selectedJob?._id === pendingFeedbackJob._id) {
+        setSelectedJob(null);
+        setIsMobileDetailView(false);
+      }
+    } catch (error) {
+      toast.error("Failed to hide job");
+    }
+    closeFeedbackModal();
   };
 
   const handleToggleSave = async (jobId) => {
@@ -782,6 +830,42 @@ function CandidateDashboard() {
                 onClick={() => setShowProfileNudge(false)}
               >
                 Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POST-APPLY FEEDBACK MODAL */}
+      {showFeedbackModal && pendingFeedbackJob && (
+        <div className="ind-nudge-overlay" onClick={closeFeedbackModal}>
+          <div className="ind-nudge-card" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+            <span className="ind-nudge-icon">👋</span>
+            <h3 className="ind-nudge-title">Welcome back!</h3>
+            <p className="ind-nudge-text">
+              Did you apply for the <strong>{pendingFeedbackJob.title}</strong> role at {pendingFeedbackJob.company}?
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+              <button 
+                className="ind-primary-apply-btn" 
+                onClick={handleFeedbackYes}
+                style={{ width: "100%" }}
+              >
+                Yes, I applied
+              </button>
+              <button 
+                className="ind-nudge-ghost-btn" 
+                onClick={handleFeedbackNo}
+                style={{ width: "100%" }}
+              >
+                No, I didn't apply
+              </button>
+              <button 
+                onClick={handleFeedbackHide}
+                style={{ width: "100%", background: "transparent", color: "#dc2626", border: "1px solid #fca5a5", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
+              >
+                Not a fit / Hide this job
               </button>
             </div>
           </div>
