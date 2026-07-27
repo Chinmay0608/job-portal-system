@@ -724,15 +724,6 @@ function CandidateDashboard() {
                 </div>
 
                 <div className="ind-detail-scroll-body">
-                  <h4 className="ind-body-section-heading">Job details</h4>
-                  
-                  <div className="ind-meta-item">
-                    <span className="ind-meta-label">💼 Job Type</span>
-                    <span className="ind-meta-val">{selectedJob.role || "Full-time"}</span>
-                  </div>
-
-                  <hr className="ind-body-divider" />
-
                   <h4 className="ind-body-section-heading">Full Job Description</h4>
                   <div className="ind-description-content">
                     {selectedJob.isExternal ? (
