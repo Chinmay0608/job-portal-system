@@ -315,6 +315,7 @@
 @media (max-width: 1024px) {
   .register-page {
     height: auto;
+    min-height: 100vh;
     overflow: auto; 
   }
 
@@ -337,7 +338,7 @@
     top: 0;
     right: 0;
     margin-bottom: 20px;
-    align-self: flex-start;
+    align-self: center;
   }
   
   .register-form-inner {
