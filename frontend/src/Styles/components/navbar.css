@@ -137,10 +137,12 @@
   border: none;
   color: inherit;
   cursor: pointer;
-  padding: 4px;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .custom-navbar {
     padding: 14px 20px;
     justify-content: space-between;
@@ -258,4 +260,13 @@
 
 .custom-navbar:not(.navbar-dark) .logo-bridge {
   color: #0d1117;
+}
+
+/* Ensure dark navbar toggle is visible */
+.custom-navbar.navbar-dark .mobile-menu-toggle {
+  color: #ffffff !important;
+}
+
+.custom-navbar.navbar-dark .mobile-menu-toggle svg {
+  stroke: #ffffff !important;
 }

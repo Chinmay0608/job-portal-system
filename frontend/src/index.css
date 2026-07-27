@@ -13,6 +13,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (max-width: 480px) {
+  html {
+    font-size: 100%; /* Reset scale on mobile so text doesn't fall below ~14px */
+  }
+}
+
 body {
   background: #f7f7f5;
   font-family: Inter, system-ui, sans-serif;
@@ -41,10 +47,16 @@ select {
 }
 
 /* ==========================
-   ROOT VARIABLES
+   ROOT VARIABLES & TOKENS
 ========================== */
+/* BREAKPOINT SCALE (Use explicitly in media queries):
+   --bp-sm: max-width: 480px  (small phones)
+   --bp-md: max-width: 768px  (large phones / small tablets, portrait)
+   --bp-lg: max-width: 1024px (tablets / small laptops)
+*/
 
 :root {
+  /* Colors */
   --bg-color: #f7f7f5;
   --primary-color: #07111f;
   --secondary-text: #6b7280;
@@ -52,6 +64,15 @@ select {
   --danger-color: #ef4444;
   --success-color: #15803d;
   --warning-color: #b45309;
+
+  /* Spacing Scale */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
 
   font-family:
     system-ui,
@@ -397,7 +418,7 @@ select {
    RESPONSIVE
 ========================== */
 
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
 
   .auth-page {
     flex-direction: column;
@@ -426,7 +447,6 @@ select {
 }
 
 @media (max-width: 768px) {
-
   .brand-heading {
     font-size: 2.3rem;
   }
@@ -442,5 +462,15 @@ select {
 
   .auth-right {
     padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 80px 16px 40px;
+  }
+
+  .auth-right {
+    padding: 20px 16px;
   }
 }

@@ -534,7 +534,7 @@
 /* ==========================================================================
    RESPONSIVE
    ========================================================================== */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .profile-container {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -545,7 +545,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .profile-page {
     padding: 24px 16px 48px;
   }
@@ -568,5 +568,19 @@
 
   .save-btn {
     width: 100%;
+    min-height: 44px;
+  }
+  
+  .skill-chip button {
+    min-width: 44px;
+    min-height: 44px;
+    margin: -10px -16px -10px 0;
+  }
+  
+  .upload-avatar-btn {
+    width: 44px;
+    height: 44px;
+    bottom: -6px;
+    right: -6px;
   }
 }

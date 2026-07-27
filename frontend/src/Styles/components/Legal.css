@@ -139,7 +139,7 @@
    BREAKPOINTS
 ========================================== */
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .wf-legal-grid {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -148,10 +148,26 @@
 
   .wf-legal-sidebar {
     position: static;
-    width: 100%;
   }
 
+  .wf-sidebar-item {
+    padding: 14px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
   .wf-legal-panel {
     padding: 24px 20px;
+  }
+
+  .wf-panel-title {
+    font-size: 1.5rem;
+  }
+
+  .wf-panel-body p, 
+  .wf-panel-body li {
+    font-size: 1rem;
+    line-height: 1.6;
   }
 }

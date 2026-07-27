@@ -513,7 +513,7 @@
   font-family: inherit;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .ind-main-layout {
     grid-template-columns: 1fr;
     height: auto;
@@ -894,5 +894,14 @@
   .jobs-toggle {
     flex-wrap: wrap;
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ind-nudge-close {
+    width: 44px;
+    height: 44px;
+    top: 8px;
+    right: 8px;
   }
 }

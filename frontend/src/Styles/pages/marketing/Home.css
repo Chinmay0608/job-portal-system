@@ -632,7 +632,12 @@
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 60px 24px;
+    min-height: auto;
+  }
+
   .home-dual-section {
     grid-template-columns: 1fr;
   }
@@ -651,7 +656,7 @@
   }
 
   .home-stats-row {
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 28px;
   }
 
@@ -661,23 +666,27 @@
 
   .home-cta-row {
     flex-direction: column;
-    max-width: 320px;
+    max-width: 100%;
+  }
+
+  .home-cta-card {
+    text-align: center;
   }
 
   .home-cta-divider {
     flex-direction: row;
-    padding: 4px 0;
+    padding: 16px 0;
     height: auto;
   }
 
   .home-cta-divider::before,
   .home-cta-divider::after {
-    width: 60px;
+    width: 80px;
     height: 1px;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .home-hero-title {
     font-size: 2.3rem;
     letter-spacing: -1.2px;
@@ -689,5 +698,27 @@
 
   .home-cta-actions {
     flex-direction: column;
+    width: 100%;
+  }
+
+  .home-cta-actions > button,
+  .home-cta-actions > .home-cta-primary-btn,
+  .home-cta-actions > .home-cta-ghost-btn {
+    width: 100%;
+    padding: 14px 20px;
+  }
+
+  .home-panel-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-panel-actions > button {
+    width: 100%;
+  }
+
+  .home-cta-btn {
+    width: 100%;
+    padding: 14px 20px;
   }
 }
