@@ -45,13 +45,13 @@ const importJobsFromRemotive = async () => {
           company: job.company_name,
           location: job.candidate_required_location || "Remote",
           salary: job.salary || "Competitive",
-          description: job.description,
+          description: job.description ? job.description.replace(/<img[^>]*src=["']https:\/\/remotive\.com\/job\/track[^>]*>/gi, "") : "",
           skillsRequired,
           educationRequired: "Not Specified",
           experienceRequired: extractExperience(job.title),
           applyUrl: job.url,
           isExternal: true,
-          companyLogo: job.company_logo || "",
+          companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company_name)}&background=random`,
         };
         await Job.create(newJobData);
         newJobsCount++;
