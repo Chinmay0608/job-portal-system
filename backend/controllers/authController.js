@@ -18,7 +18,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Registration failed. Email may already be in use.");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 12);
   const user = await User.create({
     name,
     email: normalizedEmail,
@@ -96,7 +96,7 @@ const googleLogin = asyncHandler(async (req, res) => {
   let user = await User.findOne({ email: normalizedEmail });
   if (!user) {
     const randomPassword = crypto.randomBytes(32).toString("hex");
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    const hashedPassword = await bcrypt.hash(randomPassword, 12);
     user = await User.create({
       name,
       email: normalizedEmail,
@@ -200,7 +200,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Invalid or expired token");
   }
 
-  user.password = await bcrypt.hash(password, 10);
+  user.password = await bcrypt.hash(password, 12);
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
   await user.save();
