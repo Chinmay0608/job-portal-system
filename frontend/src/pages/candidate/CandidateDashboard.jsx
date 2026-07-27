@@ -508,7 +508,7 @@ function CandidateDashboard() {
                         className={`ind-job-card ${isSelected ? "active" : ""}`}
                         onClick={() => handleJobSelect(job)}
                       >
-                        <div className="ind-card-tag">{job.isExternal ? "EXTERNAL APPLY" : "Easily apply"}</div>
+                        <div className="ind-card-tag">{job.isExternal ? "External Apply" : "Internal Apply"}</div>
                         <h4 className="ind-card-title">{job.title}</h4>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {job.companyLogo && (

@@ -49,7 +49,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
     limit = 20,
   } = req.query;
 
-  const query = { isActive: { $ne: false }, isExternal: true };
+  const query = { isActive: { $ne: false } };
 
   if (search) {
     const safeSearch = escapeRegex(search);
@@ -129,8 +129,8 @@ const getRecruiterJobs = asyncHandler(async (req, res) => {
 const getRecommendedJobs = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
 
-  // Show only live external jobs
-  let query = { isActive: { $ne: false }, isExternal: true };
+  // Show all active jobs (both internal and external)
+  let query = { isActive: { $ne: false } };
 
   const jobs = await Job.find(query);
 
