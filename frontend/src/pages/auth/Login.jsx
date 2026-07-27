@@ -6,6 +6,7 @@ import { loginUser } from "../../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../../Styles/pages/auth/Login.css";
 import "../../Styles/pages/auth/mobile-bridge.css";
 
@@ -13,6 +14,7 @@ function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [loginRole, setLoginRole] = useState("candidate"); // Used for mobile UI context
@@ -164,14 +166,38 @@ function Login() {
             {/* PASSWORD BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
             <div className="login-input-group">
               <label className="login-field-label">Password</label>
-              <input
-                type="password"
-                placeholder="Enter password"
-                className="login-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="password-input-wrapper" style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter password"
+                  className="login-input"
+                  style={{ paddingRight: "40px" }}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#9ca3af",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 0
+                  }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
             </div>
 
             <p className="login-forgot">

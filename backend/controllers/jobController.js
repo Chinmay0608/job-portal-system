@@ -2,6 +2,7 @@ const Job = require("../models/job");
 const User = require("../models/user");
 const MasterSkill = require("../models/MasterSkill");
 const { calculateJobMatches } = require("../services/jobMatchService");
+const { clearCache } = require("../middleware/cacheMiddleware");
 const asyncHandler = require("express-async-handler");
 
 // Helper to escape regex characters and prevent ReDoS
@@ -29,6 +30,8 @@ const createJob = asyncHandler(async (req, res) => {
     description,
     recruiter: req.user.id,
   });
+
+  await clearCache("/api/jobs");
 
   res.status(201).json({ message: "Job created successfully", job });
 });
@@ -204,6 +207,8 @@ const updateJob = asyncHandler(async (req, res) => {
     new: true,
   });
 
+  await clearCache("/api/jobs");
+
   res
     .status(200)
     .json({ message: "Job updated successfully", job: updatedJob });
@@ -227,6 +232,8 @@ const deleteJob = asyncHandler(async (req, res) => {
   }
 
   await Job.findByIdAndDelete(jobId);
+
+  await clearCache("/api/jobs");
 
   res.status(200).json({ message: "Job deleted successfully" });
 });

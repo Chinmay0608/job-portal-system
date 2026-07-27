@@ -76,4 +76,9 @@ const jobSchema = new mongoose.Schema(
   },
 );
 
+// Add Indexes for performance
+jobSchema.index({ isActive: 1, isExternal: 1 });
+jobSchema.index({ location: 1 });
+jobSchema.index({ title: "text", company: "text" });
+
 module.exports = mongoose.model("Job", jobSchema);

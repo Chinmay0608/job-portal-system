@@ -6,6 +6,7 @@ import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "../../Styles/pages/auth/Register.css";
 import "../../Styles/pages/auth/mobile-bridge.css";
 
@@ -14,6 +15,7 @@ function Register() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -256,15 +258,39 @@ function Register() {
             {/* PASSWORD BLOCK */}
             <div className="register-input-group">
               <label className="register-field-label">Password</label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Min 6 characters"
-                className="register-input"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-input-wrapper" style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Min 6 characters"
+                  className="register-input"
+                  style={{ paddingRight: "40px" }}
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#9ca3af",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 0
+                  }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
             </div>
 
             {/* ROLE SELECTION BLOCK (Desktop Only) */}

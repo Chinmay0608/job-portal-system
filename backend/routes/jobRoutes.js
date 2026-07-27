@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
 const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMiddleware");
+const { cacheMiddleware } = require("../middleware/cacheMiddleware");
 const upload = require("../middleware/multer");
 const {
   createJob,
@@ -18,8 +19,8 @@ const router = express.Router();
 /* ==========================
    PUBLIC ROUTES
 ========================== */
-router.get("/", optionalAuth, getAllJobs);
-router.get("/skills/search", searchMasterSkills);
+router.get("/", optionalAuth, cacheMiddleware(300), getAllJobs);
+router.get("/skills/search", cacheMiddleware(3600), searchMasterSkills);
 
 /* ==========================
    CANDIDATE ROUTES
