@@ -5,7 +5,9 @@ import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
+import { FaChessRook, FaBuilding } from "react-icons/fa";
 import "../../Styles/pages/auth/Login.css";
+import "../../Styles/pages/auth/mobile-bridge.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [loginRole, setLoginRole] = useState("candidate"); // Used for mobile UI context
 
   const location = useLocation();
 
@@ -77,13 +80,56 @@ function Login() {
     <div className="login-page">
       {/* LEFT — FORM CONTROL VIEWPORT */}
       <div className="login-form-panel">
-        <div className="login-form-inner">
+        
+        {/* MOBILE SUSPENSION BRIDGE SVG (Hidden on Desktop) */}
+        <div className="mobile-bridge-svg-container">
+          <svg className="suspension-bridge-svg" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            {/* Left Tower */}
+            <line x1="40" y1="10" x2="40" y2="80" className="bridge-tower" />
+            <circle cx="40" cy="5" r="4" className="bridge-dot left-dot" />
+            {/* Right Tower */}
+            <line x1="260" y1="10" x2="260" y2="80" className="bridge-tower" />
+            <circle cx="260" cy="5" r="4" className="bridge-dot right-dot" />
+            {/* Left Cables */}
+            <line x1="40" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
+            <line x1="40" y1="35" x2="110" y2="75" className="bridge-cable cable-draw-2" />
+            <line x1="40" y1="55" x2="70" y2="75" className="bridge-cable cable-draw-3" />
+            {/* Right Cables */}
+            <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
+            <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
+            <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
+            {/* Base Deck Line */}
+            <line x1="0" y1="78" x2="300" y2="78" className="bridge-base" />
+          </svg>
+        </div>
+
+        <div className="login-form-inner deck-card">
+          <div className="deck-header">SKILLBRIDGE DECK</div>
+          
           <div className="login-brand" onClick={() => navigate("/")}>
             <span className="login-brand-dot">Skill</span>Bridge
           </div>
 
           <h1 className="login-title">Login</h1>
           <p className="login-subtitle">Find the job made for you!</p>
+
+          {/* MOBILE ROLE SELECTOR (Hidden on Desktop) */}
+          <div className="mobile-role-selector">
+            <button 
+              type="button"
+              className={`role-segment ${loginRole === "candidate" ? "active" : ""}`}
+              onClick={() => setLoginRole("candidate")}
+            >
+              <span className="role-icon"><FaChessRook /></span> Candidate side
+            </button>
+            <button 
+              type="button"
+              className={`role-segment ${loginRole === "recruiter" ? "active" : ""}`}
+              onClick={() => setLoginRole("recruiter")}
+            >
+              <span className="role-icon"><FaBuilding /></span> Recruiter side
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="login-form">
             <button
@@ -93,11 +139,11 @@ function Login() {
               disabled={googleLoading}
             >
               <FcGoogle size={20} />
-              {googleLoading ? "Please wait..." : "Log in with Google"}
+              {googleLoading ? "Please wait..." : "Continue with Google"}
             </button>
 
             <div className="login-divider">
-              <span>or Login with Email</span>
+              <span>or</span>
             </div>
 
             {/* EMAIL BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
@@ -132,15 +178,16 @@ function Login() {
               </span>
             </p>
 
-            <button type="submit" className="login-submit-btn" disabled={loading}>
-              {loading ? "Logging in..." : "Log in"}
+            <button type="submit" className="login-submit-btn" disabled={loading} aria-label="Log in">
+              {loading ? "Logging in..." : "Cross the bridge →"}
             </button>
 
             {/* STYLED TEXT SWITCHER SPAN */}
             <p className="login-bottom-text">
-              Not registered?{" "}
-              <span onClick={() => navigate("/register")}>
-                Create an Account
+              <span className="desktop-link-text">Not registered? </span>
+              <span className="mobile-link-text">First time on this side? </span>
+              <span className="link-action" onClick={() => navigate("/register", { state: { role: loginRole } })}>
+                Build your access
               </span>
             </p>
           </form>

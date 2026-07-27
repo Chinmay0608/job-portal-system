@@ -5,7 +5,9 @@ import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
+import { FaChessRook, FaBuilding } from "react-icons/fa";
 import "../../Styles/pages/auth/Register.css";
+import "../../Styles/pages/auth/mobile-bridge.css";
 
 function Register() {
   const navigate = useNavigate();
@@ -142,13 +144,56 @@ function Register() {
 
       {/* RIGHT PANEL — Sign Up Entry Credentials Section */}
       <div className="register-form-panel">
-        <div className="register-form-inner">
+        
+        {/* MOBILE SUSPENSION BRIDGE SVG (Hidden on Desktop) */}
+        <div className="mobile-bridge-svg-container">
+          <svg className="suspension-bridge-svg" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            {/* Left Tower */}
+            <line x1="40" y1="10" x2="40" y2="80" className="bridge-tower" />
+            <circle cx="40" cy="5" r="4" className="bridge-dot left-dot" />
+            {/* Right Tower */}
+            <line x1="260" y1="10" x2="260" y2="80" className="bridge-tower" />
+            <circle cx="260" cy="5" r="4" className="bridge-dot right-dot" />
+            {/* Left Cables */}
+            <line x1="40" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
+            <line x1="40" y1="35" x2="110" y2="75" className="bridge-cable cable-draw-2" />
+            <line x1="40" y1="55" x2="70" y2="75" className="bridge-cable cable-draw-3" />
+            {/* Right Cables */}
+            <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
+            <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
+            <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
+            {/* Base Deck Line */}
+            <line x1="0" y1="78" x2="300" y2="78" className="bridge-base" />
+          </svg>
+        </div>
+
+        <div className="register-form-inner deck-card">
+          <div className="deck-header">SKILLBRIDGE DECK</div>
+          
           <div className="register-brand" onClick={() => navigate("/")}>
             <span className="register-brand-dot">Skill</span>Bridge
           </div>
 
           <h1 className="register-title">Sign Up</h1>
           <p className="register-subtitle">Start your journey with SkillBridge</p>
+
+          {/* MOBILE ROLE SELECTOR (Hidden on Desktop) */}
+          <div className="mobile-role-selector">
+            <button 
+              type="button"
+              className={`role-segment ${formData.role === "candidate" ? "active" : ""}`}
+              onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
+            >
+              <span className="role-icon"><FaChessRook /></span> Candidate side
+            </button>
+            <button 
+              type="button"
+              className={`role-segment ${formData.role === "recruiter" ? "active" : ""}`}
+              onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
+            >
+              <span className="role-icon"><FaBuilding /></span> Recruiter side
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="register-form">
             <button
@@ -158,11 +203,11 @@ function Register() {
               disabled={googleLoading}
             >
               <FcGoogle size={20} />
-              {googleLoading ? "Please wait..." : "Sign up with Google"}
+              {googleLoading ? "Please wait..." : "Continue with Google"}
             </button>
 
             <div className="register-divider">
-              <span>or Sign up with Email</span>
+              <span>or</span>
             </div>
 
             {/* FULL NAME BLOCK */}
@@ -220,8 +265,8 @@ function Register() {
               />
             </div>
 
-            {/* ROLE SELECTION BLOCK */}
-            <div className="register-input-group">
+            {/* ROLE SELECTION BLOCK (Desktop Only) */}
+            <div className="register-input-group desktop-role-select">
               <label className="register-field-label">Join As</label>
               <select
                 name="role"
@@ -234,13 +279,14 @@ function Register() {
               </select>
             </div>
 
-            <button type="submit" className="register-submit-btn" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
+            <button type="submit" className="register-submit-btn" disabled={loading} aria-label="Create account">
+              {loading ? "Creating Account..." : "Build your access →"}
             </button>
 
             <p className="register-bottom-text">
-              Already have an account?{" "}
-              <span onClick={() => navigate("/login")}>Login</span>
+              <span className="desktop-link-text">Already have an account? </span>
+              <span className="mobile-link-text">Already have access? </span>
+              <span className="link-action" onClick={() => navigate("/login")}>Cross the bridge</span>
             </p>
           </form>
         </div>

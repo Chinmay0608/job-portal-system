@@ -1,0 +1,294 @@
+/* ==========================================================================
+   MOBILE SUSPENSION BRIDGE COMPONENT (Below 768px)
+   Shared between Login.jsx and Register.jsx
+   ========================================================================== */
+
+.mobile-bridge-svg-container {
+  display: none;
+}
+
+.deck-header {
+  display: none;
+}
+
+.mobile-role-selector {
+  display: none;
+}
+
+.mobile-link-text {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide Desktop specific elements */
+  .desktop-role-select {
+    display: none !important;
+  }
+  
+  .desktop-link-text {
+    display: none;
+  }
+  
+  .mobile-link-text {
+    display: inline;
+  }
+
+  .login-title, .login-subtitle, .register-title, .register-subtitle { 
+    display: none !important; 
+  }
+  
+  /* OVERRIDE PAGE BACKGROUND FOR MOBILE AUTH */
+  .login-page, .register-page { 
+    background: #18181b !important; 
+  }
+  
+  .login-form-panel, .register-form-panel { 
+    background: #18181b !important; 
+    padding: 20px 16px !important; 
+    align-items: flex-start !important; 
+    border: none !important;
+  }
+
+  /* SVG Container Layout */
+  .mobile-bridge-svg-container {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    margin-top: 16px;
+  }
+  
+  /* SVG Elements Styling */
+  .suspension-bridge-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+  
+  .bridge-tower, .bridge-base, .bridge-cable {
+    stroke: #3f3f46;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    fill: none;
+  }
+  
+  .bridge-dot.left-dot {
+    fill: #ef4444;
+  }
+  
+  .bridge-dot.right-dot {
+    fill: #ffffff;
+  }
+  
+  /* Deck Card Form Container */
+  .deck-card {
+    background: #27272a !important;
+    border: 1px solid #3f3f46 !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    box-shadow: none !important;
+    margin-top: -1px !important;
+    
+    /* Animation base state */
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  /* Deck Header Label */
+  .deck-header {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: #a1a1aa;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  /* Center the Brand Logo on mobile */
+  .login-brand, .register-brand {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    text-align: center;
+    margin-bottom: 24px !important;
+    align-self: center !important;
+    font-size: 1.6rem !important;
+    color: #ffffff !important;
+    letter-spacing: -0.5px !important;
+  }
+  
+  /* Mobile Role Selector */
+  .mobile-role-selector {
+    display: flex;
+    background: #18181b;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+  
+  .role-segment {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px; /* Ensure 44px minimum tap target */
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #a1a1aa;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+  }
+  
+  .role-segment.active {
+    background: #27272a;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .role-icon {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .role-segment:nth-child(1) .role-icon {
+    color: #ef4444; /* Red for candidate */
+  }
+
+  .role-segment:nth-child(2) .role-icon {
+    color: #a1a1aa; /* Grey for recruiter */
+  }
+
+  .link-action {
+    display: inline-block;
+    padding: 8px;
+    margin: -8px;
+    color: #3b82f6 !important;
+    text-decoration: none !important;
+  }
+  
+  /* Input fields override */
+  .login-input-group, .register-input-group {
+    margin-bottom: 16px !important;
+  }
+
+  .login-field-label, .register-field-label {
+    color: #a1a1aa !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 8px !important;
+  }
+
+  .login-input, .register-input, .register-select {
+    background: #27272a !important;
+    border: 1px solid #3f3f46 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+  }
+
+  .login-input::placeholder, .register-input::placeholder {
+    color: #71717a !important;
+  }
+
+  .login-input:focus, .register-input:focus {
+    border-color: #52525b !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.05) !important;
+  }
+
+  /* Forgot password */
+  .login-forgot span {
+    color: #a1a1aa !important;
+  }
+
+  /* Divider */
+  .login-divider, .register-divider {
+    color: #71717a !important;
+    margin: 20px 0 !important;
+  }
+
+  .login-divider::before, .login-divider::after,
+  .register-divider::before, .register-divider::after {
+    background: #3f3f46 !important;
+  }
+
+  /* Flex order for form to move Google button to bottom */
+  .login-form, .register-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .login-google-btn, .register-google-btn {
+    order: 10;
+    background: #27272a !important;
+    border: 1px solid #3f3f46 !important;
+    color: #ffffff !important;
+    margin-bottom: 16px !important;
+    border-radius: 8px !important;
+  }
+
+  .login-divider, .register-divider {
+    order: 9;
+  }
+
+  .login-bottom-text, .register-bottom-text {
+    order: 11;
+    color: #a1a1aa !important;
+    margin-top: 8px !important;
+  }
+
+  /* CTA Adjustments */
+  .login-submit-btn, .register-submit-btn {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 1rem !important;
+    border-radius: 8px !important;
+    margin-bottom: 0 !important;
+    transition: all 0.2s ease;
+  }
+  
+  .login-submit-btn:active, .register-submit-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* ==========================================================================
+     ANIMATIONS
+     ========================================================================== */
+  
+  @keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  .bridge-cable {
+    stroke-dasharray: 150;
+    stroke-dashoffset: 150;
+  }
+  
+  @keyframes drawCable {
+    0% { stroke-dashoffset: 150; }
+    100% { stroke-dashoffset: 0; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cable-draw-1 { animation: drawCable 0.4s ease-out forwards; }
+    .cable-draw-2 { animation: drawCable 0.4s ease-out 0.1s forwards; }
+    .cable-draw-3 { animation: drawCable 0.4s ease-out 0.2s forwards; }
+    .deck-card { animation: slideUpFade 0.25s ease-out 0.2s forwards; }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .deck-card { opacity: 1; transform: translateY(0); }
+    .bridge-cable { stroke-dashoffset: 0; }
+  }
+}
