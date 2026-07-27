@@ -48,35 +48,30 @@ router.put(
       maxCount: 1,
     },
   ]),
-  updateProfile
+  updateProfile,
 );
 
 router.put(
   "/change-password",
   protect,
   authorizeRoles("candidate", "recruiter"),
-  changePassword
+  changePassword,
 );
 
 router.post(
   "/extract-skills",
   protect,
   authorizeRoles("candidate"),
-  extractSkills
+  extractSkills,
 );
 
 router.post(
   "/saved-jobs/toggle",
   protect,
   authorizeRoles("candidate"),
-  toggleSaveJob
+  toggleSaveJob,
 );
 
-router.get(
-  "/saved-jobs",
-  protect,
-  authorizeRoles("candidate"),
-  getSavedJobs
-);
+router.get("/saved-jobs", protect, authorizeRoles("candidate"), getSavedJobs);
 
 module.exports = router;

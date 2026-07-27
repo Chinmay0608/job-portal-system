@@ -1,12 +1,12 @@
-require('dotenv').config();
-const connectDB = require('./config/db');
-const Job = require('./models/job');
+require("dotenv").config();
+const connectDB = require("./config/db");
+const Job = require("./models/job");
 
 const runMigration = async () => {
   try {
     await connectDB();
     const jobs = await Job.find({ isExternal: true });
-    
+
     let updatedCount = 0;
     for (const job of jobs) {
       let modified = false;
@@ -18,8 +18,14 @@ const runMigration = async () => {
       }
 
       // Fix tracking pixels in description
-      if (job.description && job.description.includes("remotive.com/job/track")) {
-        job.description = job.description.replace(/<img[^>]*src=["']https:\/\/remotive\.com\/job\/track[^>]*>/gi, "");
+      if (
+        job.description &&
+        job.description.includes("remotive.com/job/track")
+      ) {
+        job.description = job.description.replace(
+          /<img[^>]*src=["']https:\/\/remotive\.com\/job\/track[^>]*>/gi,
+          "",
+        );
         modified = true;
       }
 
@@ -28,7 +34,9 @@ const runMigration = async () => {
         updatedCount++;
       }
     }
-    console.log(`Successfully fixed logos and tracking pixels for ${updatedCount} external jobs.`);
+    console.log(
+      `Successfully fixed logos and tracking pixels for ${updatedCount} external jobs.`,
+    );
     process.exit(0);
   } catch (err) {
     console.error(err);

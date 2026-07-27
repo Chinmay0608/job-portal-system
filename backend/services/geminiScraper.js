@@ -8,9 +8,23 @@ const MasterSkill = require("../models/MasterSkill");
 
 const extractExperience = (title) => {
   const t = title.toLowerCase();
-  if (t.includes("senior") || t.includes("lead") || t.includes("director") || t.includes("principal") || t.includes("manager") || t.includes("head")) return "5+ Years";
-  if (t.includes("mid") || t.includes("intermediate") || t.includes("experienced")) return "2-5 Years";
-  if (t.includes("junior") || t.includes("associate") || t.includes("entry")) return "0-2 Years";
+  if (
+    t.includes("senior") ||
+    t.includes("lead") ||
+    t.includes("director") ||
+    t.includes("principal") ||
+    t.includes("manager") ||
+    t.includes("head")
+  )
+    return "5+ Years";
+  if (
+    t.includes("mid") ||
+    t.includes("intermediate") ||
+    t.includes("experienced")
+  )
+    return "2-5 Years";
+  if (t.includes("junior") || t.includes("associate") || t.includes("entry"))
+    return "0-2 Years";
   return "Fresher";
 };
 
@@ -18,7 +32,7 @@ const extractExperience = (title) => {
 const TARGET_COMPANIES = [
   { name: "Stripe", url: "https://boards.greenhouse.io/stripe" },
   { name: "Vercel", url: "https://boards.greenhouse.io/vercel" },
-  { name: "Discord", url: "https://boards.greenhouse.io/discord" }
+  { name: "Discord", url: "https://boards.greenhouse.io/discord" },
 ];
 
 // Helper to auto-add skills
@@ -29,7 +43,7 @@ const addSkillsToMaster = async (skills) => {
       await MasterSkill.updateOne(
         { name: new RegExp(`^${skill}$`, "i") },
         { $setOnInsert: { name: skill } },
-        { upsert: true }
+        { upsert: true },
       );
     } catch (err) {
       console.error(`[Gemini Scraper] Failed to add MasterSkill ${skill}`);
@@ -49,18 +63,20 @@ const scrapeCareersPage = async (company) => {
   try {
     ai = new GoogleGenAI({ apiKey: apiKey });
   } catch (e) {
-    console.log("[Gemini Scraper] Gemini SDK failed to initialize with the provided key.");
+    console.log(
+      "[Gemini Scraper] Gemini SDK failed to initialize with the provided key.",
+    );
     return 0;
   }
 
   console.log(`[Gemini Scraper] Fetching career page for ${company.name}...`);
   try {
     const { data: html } = await axios.get(company.url);
-    
+
     // Load HTML into cheerio and extract raw text (stripping scripts/styles)
     const $ = cheerio.load(html);
-    $('script, style, noscript, iframe, img, svg').remove();
-    let rawText = $('body').text().replace(/\s+/g, ' ').trim();
+    $("script, style, noscript, iframe, img, svg").remove();
+    let rawText = $("body").text().replace(/\s+/g, " ").trim();
 
     // To save tokens, we only take the first ~25,000 characters
     rawText = rawText.substring(0, 25000);
@@ -80,41 +96,52 @@ const scrapeCareersPage = async (company) => {
       type: "ARRAY",
       description: "List of job postings",
       items: {
-          type: "OBJECT",
-          properties: {
-              title: { type: "STRING" },
-              location: { type: "STRING" },
-              skillsRequired: { type: "ARRAY", items: { type: "STRING" } },
-              applyUrl: { type: "STRING" },
-              role: { type: "STRING" },
-              description: { type: "STRING" }
-          },
-          required: ["title", "location", "skillsRequired", "applyUrl", "role", "description"]
-      }
+        type: "OBJECT",
+        properties: {
+          title: { type: "STRING" },
+          location: { type: "STRING" },
+          skillsRequired: { type: "ARRAY", items: { type: "STRING" } },
+          applyUrl: { type: "STRING" },
+          role: { type: "STRING" },
+          description: { type: "STRING" },
+        },
+        required: [
+          "title",
+          "location",
+          "skillsRequired",
+          "applyUrl",
+          "role",
+          "description",
+        ],
+      },
     };
 
-    console.log(`[Gemini Scraper] Sending data to Gemini 2.5 Flash for ${company.name}...`);
-    
+    console.log(
+      `[Gemini Scraper] Sending data to Gemini 2.5 Flash for ${company.name}...`,
+    );
+
     const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash-lite',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
-        }
+      model: "gemini-3.5-flash-lite",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+      },
     });
 
     const jobsJson = JSON.parse(response.text);
-    
+
     if (!jobsJson || jobsJson.length === 0) {
-      console.log(`[Gemini Scraper] Gemini found no relevant jobs for ${company.name}.`);
+      console.log(
+        `[Gemini Scraper] Gemini found no relevant jobs for ${company.name}.`,
+      );
       return 0;
     }
 
     let insertedCount = 0;
     for (const job of jobsJson) {
       if (!job.applyUrl) continue;
-      
+
       // Ensure absolute URL
       let finalUrl = job.applyUrl;
       if (finalUrl.startsWith("/")) {
@@ -130,25 +157,31 @@ const scrapeCareersPage = async (company) => {
           company: company.name,
           location: job.location || "Remote",
           salary: "Competitive",
-          description: job.description || `Extracted via Gemini AI from ${company.name} careers page.`,
+          description:
+            job.description ||
+            `Extracted via Gemini AI from ${company.name} careers page.`,
           skillsRequired: job.skillsRequired.slice(0, 5),
           educationRequired: "Not Specified",
           experienceRequired: extractExperience(job.title),
           applyUrl: finalUrl,
           isExternal: true,
-          companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=random`
+          companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=random`,
         };
         await Job.create(newJob);
         await addSkillsToMaster(newJob.skillsRequired);
         insertedCount++;
       }
     }
-    
-    console.log(`[Gemini Scraper] Successfully added ${insertedCount} jobs for ${company.name}.`);
-    return insertedCount;
 
+    console.log(
+      `[Gemini Scraper] Successfully added ${insertedCount} jobs for ${company.name}.`,
+    );
+    return insertedCount;
   } catch (error) {
-    console.error(`[Gemini Scraper] Error scraping ${company.name}:`, error.message);
+    console.error(
+      `[Gemini Scraper] Error scraping ${company.name}:`,
+      error.message,
+    );
     return 0;
   }
 };
@@ -159,7 +192,9 @@ const runGeminiScraper = async () => {
   for (const company of TARGET_COMPANIES) {
     totalJobs += await scrapeCareersPage(company);
   }
-  console.log(`[Gemini Scraper] Finished. Extracted ${totalJobs} new jobs using Gemini!`);
+  console.log(
+    `[Gemini Scraper] Finished. Extracted ${totalJobs} new jobs using Gemini!`,
+  );
   return totalJobs;
 };
 

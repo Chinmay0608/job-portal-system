@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema(
       ref: "Job",
       default: [],
     },
-    
+
     profileImage: {
       type: String,
       default: "",
@@ -106,7 +106,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("User", userSchema);

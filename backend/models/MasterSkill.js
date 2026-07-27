@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const masterSkillSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true, trim: true }
+  name: { type: String, required: true, unique: true, trim: true },
 });
 
 masterSkillSchema.index({ name: "text" });

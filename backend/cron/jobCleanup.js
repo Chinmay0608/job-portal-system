@@ -5,7 +5,7 @@ const Job = require("../models/job");
 cron.schedule("0 0 * * *", async () => {
   try {
     console.log("[Job Cleanup] Running automated job cleanup...");
-    
+
     // Find jobs older than 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -18,13 +18,17 @@ cron.schedule("0 0 * * *", async () => {
       },
       {
         $set: { isActive: false },
-      }
+      },
     );
 
-    console.log(`[Job Cleanup] Automatically marked ${result.modifiedCount} old external jobs as inactive.`);
+    console.log(
+      `[Job Cleanup] Automatically marked ${result.modifiedCount} old external jobs as inactive.`,
+    );
   } catch (error) {
     console.error("[Job Cleanup] Error during cleanup:", error.message);
   }
 });
 
-console.log("[Job Cleanup] Cron job initialized. Will run every night at midnight.");
+console.log(
+  "[Job Cleanup] Cron job initialized. Will run every night at midnight.",
+);

@@ -1,7 +1,7 @@
-require('dotenv').config();
-const connectDB = require('./config/db');
-const Job = require('./models/job');
-const { runGeminiScraper } = require('./services/geminiScraper');
+require("dotenv").config();
+const connectDB = require("./config/db");
+const Job = require("./models/job");
+const { runGeminiScraper } = require("./services/geminiScraper");
 
 const test = async () => {
   await connectDB();

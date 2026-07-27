@@ -14,6 +14,7 @@ const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const userRoutes = require("./routes/userRoutes");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -25,14 +26,13 @@ connectDB();
 /* ==========================
    MIDDLEWARE
 ========================== */
-app.use(helmet({
-  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-}));
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.FRONTEND_URL,
-];
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
+const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
 
 app.use(
   cors({
@@ -48,7 +48,7 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
@@ -80,6 +80,8 @@ app.use("/api/users", userRoutes);
 app.get("/", (req, res) => {
   res.send("SkillBridge Backend Running 🚀");
 });
+
+app.use(errorHandler);
 
 /* ==========================
    SERVER & CRON

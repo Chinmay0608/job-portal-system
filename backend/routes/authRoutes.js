@@ -34,15 +34,20 @@ router.post(
   "/register",
   authLimiter,
   [
-    body("name").trim().isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
+    body("name")
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Name must be at least 2 characters"),
     body("email").isEmail().withMessage("Valid email is required"),
-    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
     body("role")
       .isIn(["candidate", "recruiter"])
       .withMessage("Role must be either candidate or recruiter"),
   ],
   validateRequest,
-  registerUser
+  registerUser,
 );
 router.post("/login", authLimiter, loginUser);
 router.post("/google-login", googleLogin);

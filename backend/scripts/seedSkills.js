@@ -9,12 +9,34 @@ const seedSkills = async () => {
 
   // Basic tech stack that should always be present
   const baseSkills = [
-    "Java", "Python", "JavaScript", "TypeScript", "React", "Node.js", "C++", "C#", 
-    "AWS", "Docker", "Kubernetes", "SQL", "MongoDB", "Express", "Angular", "Vue.js",
-    "PHP", "Ruby on Rails", "Go", "Rust", "Swift", "Kotlin", "HTML", "CSS", "Tailwind"
+    "Java",
+    "Python",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Node.js",
+    "C++",
+    "C#",
+    "AWS",
+    "Docker",
+    "Kubernetes",
+    "SQL",
+    "MongoDB",
+    "Express",
+    "Angular",
+    "Vue.js",
+    "PHP",
+    "Ruby on Rails",
+    "Go",
+    "Rust",
+    "Swift",
+    "Kotlin",
+    "HTML",
+    "CSS",
+    "Tailwind",
   ];
 
-  const skillSet = new Set(baseSkills.map(s => s.toLowerCase()));
+  const skillSet = new Set(baseSkills.map((s) => s.toLowerCase()));
   const actualSkillNames = [...baseSkills];
 
   // Extract from existing jobs
@@ -35,9 +57,9 @@ const seedSkills = async () => {
   for (const skill of actualSkillNames) {
     try {
       await MasterSkill.updateOne(
-        { name: new RegExp(`^${skill}$`, "i") }, 
-        { $setOnInsert: { name: skill } }, 
-        { upsert: true }
+        { name: new RegExp(`^${skill}$`, "i") },
+        { $setOnInsert: { name: skill } },
+        { upsert: true },
       );
       count++;
     } catch (error) {

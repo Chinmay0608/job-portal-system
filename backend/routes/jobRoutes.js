@@ -28,7 +28,7 @@ router.get(
   "/recommended",
   protect,
   authorizeRoles("candidate"),
-  getRecommendedJobs
+  getRecommendedJobs,
 );
 
 /* ==========================
@@ -40,7 +40,10 @@ router.post(
   protect,
   authorizeRoles("recruiter"),
   [
-    body("title").trim().isLength({ min: 3 }).withMessage("Job title must be at least 3 characters"),
+    body("title")
+      .trim()
+      .isLength({ min: 3 })
+      .withMessage("Job title must be at least 3 characters"),
     body("company").trim().notEmpty().withMessage("Company is required"),
     body("location").trim().notEmpty().withMessage("Location is required"),
     body("salary")
@@ -52,9 +55,14 @@ router.post(
       .withMessage("Description must be at least 10 characters"),
   ],
   validateRequest,
-  createJob
+  createJob,
 );
 router.put("/update/:jobId", protect, authorizeRoles("recruiter"), updateJob);
-router.delete("/delete/:jobId", protect, authorizeRoles("recruiter"), deleteJob);
+router.delete(
+  "/delete/:jobId",
+  protect,
+  authorizeRoles("recruiter"),
+  deleteJob,
+);
 
 module.exports = router;
