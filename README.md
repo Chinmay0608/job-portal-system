@@ -17,49 +17,49 @@ The platform is designed with a premium frontend UI and heavily optimized backen
 ```mermaid
 graph TD
     %% Frontend Layer
-    subgraph Frontend [Client / Frontend (React + Vite)]
-        UI[User Interface]
-        AuthUI[Google OAuth / JWT Auth]
+    subgraph Frontend ["Client / Frontend (React + Vite)"]
+        UI["User Interface"]
+        AuthUI["Google OAuth / JWT Auth"]
         UI -->|API Requests| API_Gateway
     end
 
     %% Backend API Layer
-    subgraph Backend [Backend API (Express / Node.js)]
-        API_Gateway[Express Routes]
-        Middleware[Rate Limiting & Security Middlewares]
-        Cache[Redis API Cache]
-        Controllers[Controllers / Business Logic]
+    subgraph Backend ["Backend API (Express / Node.js)"]
+        API_Gateway["Express Routes"]
+        Middleware["Rate Limiting & Security Middlewares"]
+        Cache["Redis API Cache"]
+        Controllers["Controllers / Business Logic"]
         
         API_Gateway --> Middleware
         Middleware --> Cache
-        Cache -->|Cache Miss| Controllers
-        Cache -->|Cache Hit| API_Gateway
+        Cache -->|"Cache Miss"| Controllers
+        Cache -->|"Cache Hit"| API_Gateway
     end
 
     %% Background Workers Layer
-    subgraph Workers [Background Workers (BullMQ / Node-Cron)]
-        EmailWorker[Email Queue Worker]
-        CronWorker[Job Cleanup Cron]
-        DistributedLock[Redis Distributed Lock]
+    subgraph Workers ["Background Workers (BullMQ / Node-Cron)"]
+        EmailWorker["Email Queue Worker"]
+        CronWorker["Job Cleanup Cron"]
+        DistributedLock["Redis Distributed Lock"]
         
         CronWorker -->|Acquires| DistributedLock
     end
 
     %% Database & External Services
-    subgraph Infrastructure [Data Layer & Services]
-        MongoDB[(MongoDB Atlas)]
-        Redis[(Redis Cloud)]
-        Cloudinary[Cloudinary Storage]
-        SMTP[Gmail SMTP / SendGrid]
-        Firebase[Firebase Auth]
+    subgraph Infrastructure ["Data Layer & Services"]
+        MongoDB[("MongoDB Atlas")]
+        Redis[("Redis Cloud")]
+        Cloudinary["Cloudinary Storage"]
+        SMTP["Gmail SMTP / SendGrid"]
+        Firebase["Firebase Auth"]
     end
 
     %% Connections
     Controllers <--> MongoDB
     Controllers <--> Cloudinary
     AuthUI <--> Firebase
-    Controllers -->|Add Jobs| Redis
-    EmailWorker -->|Pops Jobs| Redis
+    Controllers -->|"Add Jobs"| Redis
+    EmailWorker -->|"Pops Jobs"| Redis
     EmailWorker -->|Sends| SMTP
 ```
 
