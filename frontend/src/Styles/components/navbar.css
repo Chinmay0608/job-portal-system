@@ -196,6 +196,18 @@
     padding: 12px 16px;
     font-size: 14px;
   }
+
+  /* Candidate Dashboard mobile override */
+  .custom-navbar.candidate-nav {
+    background: #18181b;
+    border-bottom: none;
+  }
+  .custom-navbar.candidate-nav .logo-bridge {
+    color: #ffffff;
+  }
+  .custom-navbar.candidate-nav .mobile-menu-toggle {
+    color: #ffffff;
+  }
 }
 
 /* =========================

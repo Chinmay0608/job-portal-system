@@ -55,6 +55,7 @@ function Navbar() {
   }, [isMobileMenuOpen]);
 
   const isHome = location.pathname === "/";
+  const isCandidateDashboard = location.pathname === "/candidate-dashboard";
 
   const logout = async () => {
     await logoutUser();
@@ -69,7 +70,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}`}>
+    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isCandidateDashboard ? " candidate-nav" : ""}`}>
       {/* Logo */}
       <Link className="navbar-brand premium-logo" to="/">
         <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>
