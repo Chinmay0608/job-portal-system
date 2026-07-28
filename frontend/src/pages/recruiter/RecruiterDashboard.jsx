@@ -13,12 +13,20 @@ import {
   HiOutlineSquares2X2,
   HiOutlineListBullet,
   HiXMark,
-} from "react-icons/hi2";
+import { HiOutlineUserGroup } from "react-icons/hi2";
 
 const initialFormState = { title: "", role: "Full-time", company: "", location: "", salary: "", description: "" };
 const JOBS_PER_PAGE = 6;
 
 function RecruiterDashboard() {
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch (e) {
+      return null;
+    }
+  });
+
   const [formData, setFormData] = useState(initialFormState);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +187,13 @@ function RecruiterDashboard() {
       <main className="dashboard-main full-width-layout">
 
         {/* SUB-HEADER CONTEXT ROW */}
-        <section className="dashboard-topbar inline-subheading">
+        <div className="mobile-header-block-recruiter">
+          <p className="eyebrow-deck">RECRUITER DECK</p>
+          <h2 className="topbar-mobile-title">{user?.company || "Your Company"}</h2>
+          <hr className="dashed-cable-divider" />
+        </div>
+
+        <section className="dashboard-topbar inline-subheading desktop-only-topbar">
           <div className="topbar-copy">
             <h2>Welcome back, Recruiter! 👋</h2>
             <p className="eyebrow">Manage your jobs and find the best talent</p>
@@ -229,8 +243,8 @@ function RecruiterDashboard() {
             <div className="panel-heading-row-top">
               <h3>My Posted Jobs</h3>
               <div className="filter-controls-cluster">
-                {/* Real filter built from actual job "role" field values present in data */}
-                <div className="dropdown-filter-pill" ref={filterRef}>
+                {/* Desktop Dropdown */}
+                <div className="dropdown-filter-pill desktop-only-filter" ref={filterRef}>
                   <button
                     type="button"
                     className="filter-pill-trigger"
@@ -257,7 +271,21 @@ function RecruiterDashboard() {
                   )}
                 </div>
 
-                <div className="view-toggle-buttons">
+                {/* Mobile Scrollable Chips */}
+                <div className="mobile-chip-scroller mobile-only-filter">
+                  {availableRoleTypes.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={`scroll-chip ${statusFilter === type ? "active" : ""}`}
+                      onClick={() => handleSelectFilter(type)}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="view-toggle-buttons desktop-only-filter">
                   <button
                     type="button"
                     className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
@@ -290,18 +318,35 @@ function RecruiterDashboard() {
               ) : (
                 visibleJobs.map((job) => (
                   <article key={job._id} className="job-item-card">
+                    <div className="card-status-badge">
+                      <span className={job.isActive !== false ? "status-active" : "status-closed"}>
+                        {job.isActive !== false ? "Active" : "Closed"}
+                      </span>
+                      <span className="time-posted">
+                        {new Date(job.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
                     <div className="card-core-identity">
                       <h4>{job.title}</h4>
                       <p className="card-company-subtext">{job.company}</p>
                     </div>
 
-                    <div className="card-location-row-meta">
-                      <HiOutlineMapPin className="meta-pin-icon" />
-                      <span>{job.location || "Remote, India"}</span>
+                    <div className="card-meta-metrics">
+                      <div className="card-location-row-meta">
+                        <HiOutlineMapPin className="meta-pin-icon" />
+                        <span>{job.location || "Remote, India"}</span>
+                      </div>
+                      
+                      <div className="card-applicant-count">
+                        <HiOutlineUserGroup className="meta-pin-icon" />
+                        {/* Static approximation since applicant count isn't in job schema directly */}
+                        <span>Applicants</span>
+                      </div>
                     </div>
 
                     <div className="card-compensation-salary">
-                      ₹{Number(job.salary || 0).toLocaleString("en-IN")}
+                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")}`}
                     </div>
 
                     <div className="card-operational-ctas">
@@ -321,6 +366,11 @@ function RecruiterDashboard() {
           </section>
         </section>
       </main>
+
+      {/* MOBILE FLOATING ACTION BUTTON */}
+      <button className="mobile-fab-create-job" onClick={handleQuickCreate}>
+        <HiOutlinePlus size={20} /> Post a new job
+      </button>
 
       {/* CREATE / EDIT JOB MODAL — opens only when Create Job (or Edit) is clicked */}
       {showJobModal && (

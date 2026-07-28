@@ -55,7 +55,12 @@ function CandidateDashboard() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [showApplyPanel, setShowApplyPanel] = useState(false);
-  const [showRecommended, setShowRecommended] = useState(false);
+  
+  // Consolidate list tabs (All Jobs, Recommended, Saved)
+  const [activeTab, setActiveTab] = useState("All Jobs");
+
+  // Mobile-specific UI states
+  const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
 
   // Resume reuse flow: ask the candidate whether to reuse their saved
   // profile resume, or upload a different one for this specific application.
@@ -408,8 +413,10 @@ function CandidateDashboard() {
     return matchesExperience;
   });
 
-  const displayedJobs = showRecommended
+  const displayedJobs = activeTab === "Recommended"
     ? filteredRecommended
+    : activeTab === "Saved"
+    ? availableJobs.filter((job) => user?.savedJobs?.includes(job._id))
     : availableJobs;
 
   const visibleJobs = displayedJobs;
@@ -424,7 +431,7 @@ function CandidateDashboard() {
   // so a new search always starts back at the first 20 results.
   useEffect(() => {
     setVisibleCount(JOBS_PER_PAGE);
-  }, [search, locationFilter, salaryFilter, companyFilter, showRecommended]);
+  }, [search, locationFilter, salaryFilter, companyFilter, activeTab]);
 
   const profileCompletion = user ? calculateCompletion(user) : 0;
 
@@ -445,91 +452,173 @@ function CandidateDashboard() {
           <RetryBanner message={jobLoadError} onRetry={retryFetchJobs} />
         </div>
       )}
-      {/* SEARCH CONSOLE BAR */}
-      <div className="ind-search-bar">
-        <div className="ind-search-inner">
-          <div className="ind-input-wrapper">
-            <FiSearch className="ind-icon" />
-            <input
-              type="text"
-              placeholder="Job title, keywords, or company"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      
+      <div className="ind-content-container">
+        {/* MOBILE HEADER BLOCK (DECK theme) */}
+        <div className="mobile-header-block">
+          <div className="mobile-header-row">
+            <div>
+              <p className="eyebrow-deck">WELCOME BACK DECK</p>
+              <h2 className="ind-welcome-text">Hi, {user?.name?.split(" ")[0] || "Candidate"}!</h2>
+            </div>
+            {/* Circular Profile Completion Ring */}
+            <div 
+              className="profile-completion-ring" 
+              onClick={() => navigate("/profile")}
+              style={{ background: `conic-gradient(#ef4444 ${profileCompletion}%, #e5e7eb 0)` }}
+            >
+              <div className="ring-inner">
+                {profileCompletion}%
+              </div>
+            </div>
           </div>
-          <div className="ind-input-divider"></div>
-          <div className="ind-input-wrapper">
-            <HiOutlineLocationMarker className="ind-icon" />
-            <input
-              type="text"
-              placeholder="City, state, zip code, or 'remote'"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            />
-          </div>
-          <div className="ind-input-divider"></div>
-          <div className="ind-input-wrapper">
-            <select
-              value={experienceFilter}
-              onChange={(e) => setExperienceFilter(e.target.value)}
-              style={{
-                border: "none",
-                outline: "none",
-                width: "100%",
-                fontSize: "0.95rem",
-                color: "#1a1a2e",
-                fontFamily: "inherit",
-                backgroundColor: "transparent",
-                cursor: "pointer"
+          <hr className="dashed-cable-divider" />
+        </div>
+
+        {/* SEARCH CONSOLE BAR */}
+        <div className="ind-search-bar">
+          <div className="ind-search-inner mobile-collapsed-trigger" onClick={() => setIsMobileSearchExpanded(true)}>
+            <div className="ind-input-wrapper">
+              <FiSearch className="ind-icon" />
+              <input
+                type="text"
+                placeholder="Job title, keywords, or company"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                readOnly={window.innerWidth <= 768} /* Prevent keyboard pop if just opening bottom sheet */
+              />
+            </div>
+            <div className="ind-input-divider desktop-only"></div>
+            <div className="ind-input-wrapper desktop-only">
+              <HiOutlineLocationMarker className="ind-icon" />
+              <input
+                type="text"
+                placeholder="City, state, zip code, or 'remote'"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+              />
+            </div>
+            <div className="ind-input-divider desktop-only"></div>
+            <div className="ind-input-wrapper desktop-only">
+              <select
+                value={experienceFilter}
+                onChange={(e) => setExperienceFilter(e.target.value)}
+                className="desktop-experience-select"
+              >
+                <option value="All Experience">All Experience</option>
+                <option value="Fresher">Fresher</option>
+                <option value="0-2 Years">0-2 Years</option>
+                <option value="2-5 Years">2-5 Years</option>
+                <option value="5+ Years">5+ Years</option>
+              </select>
+            </div>
+            <button 
+              className="ind-search-btn desktop-only"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentPage(1);
+                fetchJobs({
+                  searchTerm: search,
+                  locationTerm: locationFilter,
+                  experienceTerm: experienceFilter,
+                  salaryTerm: salaryFilter,
+                  companyTerm: companyFilter,
+                  page: 1,
+                });
               }}
             >
-              <option value="All Experience">All Experience</option>
-              <option value="Fresher">Fresher</option>
-              <option value="0-2 Years">0-2 Years</option>
-              <option value="2-5 Years">2-5 Years</option>
-              <option value="5+ Years">5+ Years</option>
-            </select>
+              Find jobs
+            </button>
           </div>
-          <button 
-            className="ind-search-btn"
-            onClick={() => {
-              setCurrentPage(1);
-              fetchJobs({
-                searchTerm: search,
-                locationTerm: locationFilter,
-                experienceTerm: experienceFilter,
-                salaryTerm: salaryFilter,
-                companyTerm: companyFilter,
-                page: 1,
-              });
-            }}
-          >
-            Find jobs
-          </button>
         </div>
-      </div>
 
-      <div className="ind-content-container">
-        <h2 className="ind-welcome-text">Welcome, {user?.name || "Candidate"}</h2>
+        {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
+        {isMobileSearchExpanded && (
+          <div className="mobile-search-overlay" onClick={() => setIsMobileSearchExpanded(false)}>
+            <div className="mobile-search-sheet" onClick={e => e.stopPropagation()}>
+              <div className="sheet-header">
+                <h3>Search Filters</h3>
+                <button className="sheet-close" onClick={() => setIsMobileSearchExpanded(false)}>✕</button>
+              </div>
+              <div className="sheet-body">
+                <div className="sheet-input-group">
+                  <FiSearch className="sheet-icon" />
+                  <input
+                    type="text"
+                    placeholder="Job title, keywords, or company"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <div className="sheet-input-group">
+                  <HiOutlineLocationMarker className="sheet-icon" />
+                  <input
+                    type="text"
+                    placeholder="City, state, zip code, or 'remote'"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                  />
+                </div>
+                <div className="sheet-input-group">
+                  <select
+                    value={experienceFilter}
+                    onChange={(e) => setExperienceFilter(e.target.value)}
+                    className="sheet-select"
+                  >
+                    <option value="All Experience">All Experience</option>
+                    <option value="Fresher">Fresher</option>
+                    <option value="0-2 Years">0-2 Years</option>
+                    <option value="2-5 Years">2-5 Years</option>
+                    <option value="5+ Years">5+ Years</option>
+                  </select>
+                </div>
+                <button 
+                  className="ind-primary-apply-btn sheet-search-btn"
+                  onClick={() => {
+                    setIsMobileSearchExpanded(false);
+                    setCurrentPage(1);
+                    fetchJobs({
+                      searchTerm: search,
+                      locationTerm: locationFilter,
+                      experienceTerm: experienceFilter,
+                      salaryTerm: salaryFilter,
+                      companyTerm: companyFilter,
+                      page: 1,
+                    });
+                  }}
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={`ind-main-layout ${isMobileDetailView ? "mobile-detail-active" : ""}`}>
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div className="ind-list-column">
-            <div className="jobs-toggle">
-              <button
-                className={!showRecommended ? "active" : ""}
-                onClick={() => setShowRecommended(false)}
-              >
-                All Jobs
-              </button>
-
-              <button
-                className={showRecommended ? "active" : ""}
-                onClick={() => setShowRecommended(true)}
-              >
-                Recommended
-              </button>
+            
+            {/* SEGMENTED CONTROL ROW */}
+            <div className="segment-control-wrapper">
+              <div className="segment-control">
+                {["All Jobs", "Recommended", "Saved"].map(tab => (
+                  <button
+                    key={tab}
+                    className={`segment-btn ${activeTab === tab ? "active" : ""}`}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                ))}
+                <div 
+                  className="segment-indicator" 
+                  style={{ 
+                    transform: `translateX(${["All Jobs", "Recommended", "Saved"].indexOf(activeTab) * 100}%)` 
+                  }} 
+                />
+              </div>
             </div>
+            
             <h3 className="ind-section-title">Jobs for you</h3>
 
             {loading ? (
@@ -556,7 +645,25 @@ function CandidateDashboard() {
                         className={`ind-job-card ${isSelected ? "active" : ""}`}
                         onClick={() => handleJobSelect(job)}
                       >
-                        <div className="ind-card-tag">{job.isExternal ? "External Apply" : "Internal Apply"}</div>
+                        <div className="card-top-row">
+                          <div className="card-tags-group">
+                            <span className="ind-card-tag">{job.isExternal ? "External" : "Internal"}</span>
+                            {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
+                          </div>
+                          <button
+                            className="card-bookmark-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleSave(job._id);
+                            }}
+                          >
+                            {user?.savedJobs?.some((savedJobId) => savedJobId?.toString() === job?._id) ? (
+                              <FaBookmark size={18} color="#ef4444" />
+                            ) : (
+                              <FiBookmark size={18} color="#9ca3af" />
+                            )}
+                          </button>
+                        </div>
                         <h4 className="ind-card-title">{job.title}</h4>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {job.companyLogo && (
@@ -575,7 +682,7 @@ function CandidateDashboard() {
                           {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")} a year`}
                         </div>
 
-                            {showRecommended && (
+                            {activeTab === "Recommended" && (
                           <div className="match-badge">
                             ⭐ Recommended
                           </div>

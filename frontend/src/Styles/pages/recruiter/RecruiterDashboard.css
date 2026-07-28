@@ -94,6 +94,36 @@
 }
 
 /* ==========================================================================
+   MOBILE HEADER
+   ========================================================================== */
+.mobile-header-block-recruiter {
+  display: none;
+  margin-bottom: 20px;
+}
+
+.eyebrow-deck {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #9ca3af;
+  letter-spacing: 0.08em;
+  margin: 0 0 4px 0;
+}
+
+.topbar-mobile-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-dark);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.dashed-cable-divider {
+  border: 0;
+  border-top: 2px dashed #d1d5db;
+  margin: 16px 0 0 0;
+}
+
+/* ==========================================================================
    3. SCORECARDS
    ========================================================================== */
 .stats-grid {
@@ -298,6 +328,43 @@
   color: #ef4444;
 }
 
+/* MOBILE CHIP SCROLLER */
+.mobile-only-filter {
+  display: none;
+}
+
+.mobile-chip-scroller {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-chip-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-chip {
+  background: #ffffff;
+  border: 1.5px solid var(--border-color);
+  color: #374151;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scroll-chip.active {
+  background: #0d1117;
+  color: #ffffff;
+  border-color: #0d1117;
+}
+
 .view-toggle-buttons {
   display: flex;
   border: 1.5px solid var(--border-color);
@@ -383,6 +450,41 @@
   transform: translateY(-2px);
 }
 
+.card-status-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: -4px;
+}
+
+.status-active {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-closed {
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.time-posted {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .card-core-identity h4 {
   margin: 0 0 2px;
   font-size: 1.05rem;
@@ -398,13 +500,19 @@
   font-weight: 600;
 }
 
-.card-location-row-meta {
+.card-location-row-meta,
+.card-applicant-count {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
   color: #374151;
   font-weight: 500;
+}
+
+.card-meta-metrics {
+  display: flex;
+  gap: 16px;
 }
 
 .meta-pin-icon {
@@ -490,6 +598,35 @@
   background: #ffffff;
   border: 1.5px dashed var(--border-color);
   border-radius: 16px;
+}
+
+/* ==========================================================================
+   MOBILE FAB
+   ========================================================================== */
+.mobile-fab-create-job {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  background: var(--red-accent);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 12px 24px rgba(239, 68, 68, 0.3);
+  z-index: 90;
+  font-family: inherit;
+  transition: transform 0.2s;
+}
+
+.mobile-fab-create-job:active {
+  transform: scale(0.98);
 }
 
 /* ==========================================================================
@@ -720,6 +857,26 @@
 }
 
 @media (max-width: 768px) {
+  .desktop-only-topbar {
+    display: none !important;
+  }
+  .desktop-only-filter {
+    display: none !important;
+  }
+  .mobile-only-filter {
+    display: flex;
+    width: 100%;
+  }
+  .mobile-header-block-recruiter {
+    display: block;
+  }
+  .mobile-fab-create-job {
+    display: flex;
+  }
+  .dashboard-shell {
+    padding-bottom: 90px;
+  }
+  
   .jobs-grid-cards {
     grid-template-columns: 1fr;
   }
@@ -758,7 +915,7 @@
 
 @media (max-width: 480px) {
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .job-modal-close-btn {
