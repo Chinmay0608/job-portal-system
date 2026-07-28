@@ -26,6 +26,19 @@ const registerUser = asyncHandler(async (req, res) => {
     role,
   });
 
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "3d" },
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 3 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(201).json({
     message: "User registered successfully",
     token,
@@ -50,14 +63,14 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   if (!user) {
-    res.status(404);
-    throw new Error("User not found");
+    res.status(401);
+    throw new Error("Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    res.status(400);
+    res.status(401);
     throw new Error("Invalid credentials");
   }
 
