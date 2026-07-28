@@ -144,13 +144,13 @@
   }
 
   .footer-links-grid {
-    gap: 28px;
-    flex-wrap: wrap;
-    flex-direction: column; /* Stack columns on smaller screens */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 16px;
   }
 
   .footer-col {
-    min-width: 100%;
+    min-width: auto;
   }
 
   .footer-col a,
