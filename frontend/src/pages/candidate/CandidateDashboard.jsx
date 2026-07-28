@@ -458,8 +458,8 @@ function CandidateDashboard() {
         <div className="mobile-header-block">
           <div className="mobile-header-row">
             <div>
-              <p className="eyebrow-deck">WELCOME BACK DECK</p>
-              <h2 className="ind-welcome-text">Hi, {user?.name?.split(" ")[0] || "Candidate"}!</h2>
+              <p className="eyebrow-deck">WELCOME BACK</p>
+              <h2 className="ind-welcome-text-mobile">{user?.name?.split(" ")[0] || "Candidate"}</h2>
             </div>
             {/* Circular Profile Completion Ring */}
             <div 
@@ -646,10 +646,23 @@ function CandidateDashboard() {
                         onClick={() => handleJobSelect(job)}
                       >
                         <div className="card-top-row">
-                          <div className="card-tags-group">
-                            <span className="ind-card-tag">{job.isExternal ? "External" : "Internal"}</span>
-                            {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
+                          <div className="card-top-info">
+                            <h4 className="ind-card-title">{job.title}</h4>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {job.companyLogo && (
+                                <img 
+                                  src={job.companyLogo} 
+                                  alt={job.company} 
+                                  style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '4px' }} 
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              )}
+                              <p className="ind-card-company" style={{ margin: 0, color: '#6b7280', fontWeight: '500' }}>
+                                {job.company} &bull; {job.location}
+                              </p>
+                            </div>
                           </div>
+                          
                           <button
                             className="card-bookmark-btn"
                             onClick={(e) => {
@@ -660,33 +673,26 @@ function CandidateDashboard() {
                             {user?.savedJobs?.some((savedJobId) => savedJobId?.toString() === job?._id) ? (
                               <FaBookmark size={18} color="#ef4444" />
                             ) : (
-                              <FiBookmark size={18} color="#9ca3af" />
+                              <FiBookmark size={18} color="#ef4444" />
                             )}
                           </button>
                         </div>
-                        <h4 className="ind-card-title">{job.title}</h4>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {job.companyLogo && (
-                            <img 
-                              src={job.companyLogo} 
-                              alt={job.company} 
-                              style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '4px' }} 
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
+                        
+                        <div className="card-tags-group">
+                          {job.skills && job.skills.length > 0 ? (
+                            <span className="ind-card-tag skill-tag">{job.skills[0]}</span>
+                          ) : (
+                            <span className="ind-card-tag skill-tag">{job.isExternal ? "External" : "Internal"}</span>
                           )}
-                          <p className="ind-card-company" style={{ margin: 0 }}>{job.company}</p>
+                          
+                          {job.experience && job.experience !== "Fresher" ? (
+                            <span className="ind-card-tag exp-tag">{job.experience}</span>
+                          ) : (
+                            <span className="ind-card-tag exp-tag">Entry Level</span>
+                          )}
+                          
+                          {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
                         </div>
-                        <p className="ind-card-location">{job.location}</p>
-
-                        <div className="ind-card-salary-badge">
-                          {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")} a year`}
-                        </div>
-
-                            {activeTab === "Recommended" && (
-                          <div className="match-badge">
-                            ⭐ Recommended
-                          </div>
-                        )}
                       </div>
                     );
                   })}

@@ -1,58 +1,61 @@
 const { Queue, Worker } = require("bullmq");
 const nodemailer = require("nodemailer");
-
-const connection = {
-  host: process.env.REDIS_HOST || "localhost",
-  port: process.env.REDIS_PORT || 6379,
-  // Parse the redis URL if available
-};
-
-// If a REDIS_URL is provided, we can pass it directly. BullMQ takes connection options or an IORedis instance.
-// For simplicity, passing IORedis instance if REDIS_URL exists:
 const Redis = require("ioredis");
-const redisConnection = process.env.REDIS_URL 
-  ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
-  : new Redis({ host: "localhost", port: 6379, maxRetriesPerRequest: null });
 
-// Initialize Email Queue
-const emailQueue = new Queue("emailQueue", { connection: redisConnection });
+let emailQueue = null;
 
-// Initialize Email Worker
-const emailWorker = new Worker(
-  "emailQueue",
-  async (job) => {
-    const { to, subject, html } = job.data;
+if (process.env.REDIS_URL) {
+  const redisConnection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
 
-    // Move the transporter logic here so it only spins up in the worker process
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+  // Initialize Email Queue
+  emailQueue = new Queue("emailQueue", { connection: redisConnection });
 
-    const mailOptions = {
-      from: `SkillBridge <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    };
+  // Initialize Email Worker
+  const emailWorker = new Worker(
+    "emailQueue",
+    async (job) => {
+      const { to, subject, html } = job.data;
 
-    console.log(`[Email Worker] Sending email to ${to} for subject: ${subject}`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email Worker] Email sent to ${to}: ${info.response}`);
-    return info;
-  },
-  { connection: redisConnection }
-);
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
-emailWorker.on("completed", (job) => {
-  console.log(`[Email Worker] Job ${job.id} has completed!`);
-});
+      const mailOptions = {
+        from: `SkillBridge <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      };
 
-emailWorker.on("failed", (job, err) => {
-  console.error(`[Email Worker] Job ${job.id} has failed with ${err.message}`);
-});
+      console.log(`[Email Worker] Sending email to ${to} for subject: ${subject}`);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[Email Worker] Email sent to ${to}: ${info.response}`);
+      return info;
+    },
+    { connection: redisConnection }
+  );
+
+  emailWorker.on("completed", (job) => {
+    console.log(`[Email Worker] Job ${job.id} has completed!`);
+  });
+
+  emailWorker.on("failed", (job, err) => {
+    console.error(`[Email Worker] Job ${job.id} has failed with ${err.message}`);
+  });
+} else {
+  console.warn("[Email Queue] No REDIS_URL found. Email queue is operating in stub mode.");
+  
+  // Provide a dummy queue for local environments without Redis
+  emailQueue = {
+    add: async (name, data, opts) => {
+      console.log(`[Email Queue - Stub] Skipping sending email '${name}' to ${data?.to}`);
+      return { id: `stub-${Date.now()}` };
+    }
+  };
+}
 
 module.exports = { emailQueue };

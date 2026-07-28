@@ -256,9 +256,9 @@ function Register() {
             </div>
 
             {/* PASSWORD BLOCK */}
-            <div className="register-input-group">
+            <div className="register-input-group full-width">
               <label className="register-field-label">Password</label>
-              <div className="password-input-wrapper" style={{ position: "relative" }}>
+              <div className="password-input-wrapper" style={{ position: "relative", width: "100%" }}>
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"

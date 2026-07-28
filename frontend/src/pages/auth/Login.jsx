@@ -166,7 +166,7 @@ function Login() {
             {/* PASSWORD BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
             <div className="login-input-group">
               <label className="login-field-label">Password</label>
-              <div className="password-input-wrapper" style={{ position: "relative" }}>
+              <div className="password-input-wrapper" style={{ position: "relative", width: "100%" }}>
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter password"

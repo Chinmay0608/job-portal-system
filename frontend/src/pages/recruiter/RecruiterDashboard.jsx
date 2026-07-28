@@ -13,8 +13,8 @@ import {
   HiOutlineSquares2X2,
   HiOutlineListBullet,
   HiXMark,
-import { HiOutlineUserGroup } from "react-icons/hi2";
-
+  HiOutlineUserGroup
+} from "react-icons/hi2";
 const initialFormState = { title: "", role: "Full-time", company: "", location: "", salary: "", description: "" };
 const JOBS_PER_PAGE = 6;
 
