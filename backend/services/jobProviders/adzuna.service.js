@@ -59,7 +59,8 @@ class AdzunaProvider extends BaseProvider {
     if (rawJob.description && rawJob.description.toLowerCase().includes("javascript")) skillsRequired.push("JavaScript");
     if (rawJob.description && rawJob.description.toLowerCase().includes("react")) skillsRequired.push("React");
     if (rawJob.description && rawJob.description.toLowerCase().includes("node")) skillsRequired.push("Node.js");
-    if (skillsRequired.length === 0) skillsRequired.push("Software Development");
+    // If no specific technical skills are found, we don't force a fallback. 
+    // This prevents false positive matches on unrelated jobs.
 
     return {
       title: rawJob.title ? rawJob.title.replace(/<\/?[^>]+(>|$)/g, "") : "Unknown Title", // Basic HTML stripping
