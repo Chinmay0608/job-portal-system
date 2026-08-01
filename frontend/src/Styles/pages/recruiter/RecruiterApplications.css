@@ -314,6 +314,8 @@
   padding: 90px 40px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .empty-icon {
