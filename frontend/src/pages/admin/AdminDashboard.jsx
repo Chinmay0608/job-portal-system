@@ -5,17 +5,40 @@ import toast from "react-hot-toast";
 const AdminDashboard = () => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchStatus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/jobs/sync/status`);
+      // We must use withCredentials or our existing api instance to pass the auth cookie/token
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/api/jobs/sync/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setStatus(res.data.data);
     } catch (err) {
       toast.error("Failed to load sync status");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const triggerSync = async () => {
+    try {
+      setSyncing(true);
+      toast.loading("Syncing jobs in background...", { id: "sync" });
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API_URL}/api/jobs/sync`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message || "Sync triggered successfully", { id: "sync" });
+      fetchStatus();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to trigger sync", { id: "sync" });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -30,12 +53,21 @@ const AdminDashboard = () => {
       <div style={{ background: "#fff", borderRadius: "8px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Sync Engine Status</h2>
-          <button 
-            onClick={fetchStatus}
-            style={{ padding: "8px 16px", background: "#f3f4f6", border: "none", borderRadius: "4px", cursor: "pointer" }}
-          >
-            Refresh
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button 
+              onClick={fetchStatus}
+              style={{ padding: "8px 16px", background: "#f3f4f6", border: "none", borderRadius: "4px", cursor: "pointer" }}
+            >
+              Refresh
+            </button>
+            <button 
+              onClick={triggerSync}
+              disabled={syncing || (status && status.running)}
+              style={{ padding: "8px 16px", background: "#ef4444", color: "white", border: "none", borderRadius: "4px", cursor: (syncing || (status && status.running)) ? "not-allowed" : "pointer" }}
+            >
+              {syncing ? "Syncing..." : "Trigger Manual Sync"}
+            </button>
+          </div>
         </div>
 
         {loading ? (
