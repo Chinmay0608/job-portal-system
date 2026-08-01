@@ -44,8 +44,8 @@ router.post(
 /* ==========================
    ADMIN ROUTES
 ========================== */
-router.post("/sync", protect, authorizeRoles("admin"), triggerManualSync);
-router.get("/sync/status", protect, authorizeRoles("admin"), getSyncStatus);
+router.post("/sync", protect, authorizeRoles("recruiter"), triggerManualSync);
+router.get("/sync/status", protect, authorizeRoles("recruiter"), getSyncStatus);
 
 /* ==========================
    RECRUITER ROUTES

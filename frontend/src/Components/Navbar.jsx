@@ -112,8 +112,9 @@ function Navbar() {
             {/* Recruiter Navbar */}
             {user?.role === "recruiter" && (
               <>
-                <Link className="dashboard-btn nav-hover" to="/recruiter-dashboard">Dashboard</Link>
-                <Link className="dashboard-btn nav-hover" to="/recruiter-applications">Applicants</Link>
+                <Link className="dashboard-btn nav-hover" to="/recruiter-dashboard">Jobs</Link>
+                <Link className="dashboard-btn nav-hover" to="/recruiter-applications">Applications</Link>
+                <Link className="dashboard-btn nav-hover" to="/admin/dashboard">Admin Tools</Link>
                 <Link className="dashboard-btn nav-hover" to="/recruiter-profile">Profile</Link>
               </>
             )}
