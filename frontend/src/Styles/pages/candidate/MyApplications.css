@@ -216,7 +216,7 @@
 ========================== */
 @media (max-width: 768px) {
   .applications-page {
-    padding: 95px 18px 40px;
+    padding: 24px 18px 40px;
   }
   .applications-header h1 {
     font-size: 1.9rem;
