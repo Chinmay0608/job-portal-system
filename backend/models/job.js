@@ -70,6 +70,14 @@ const jobSchema = new mongoose.Schema(
         return !this.isExternal;
       },
     },
+
+    // --- Career OS / Aggregation Fields (Non-Breaking) ---
+    source: { type: String, default: 'INTERNAL' }, 
+    externalId: { type: String, default: null }, // Maps to Provider's job ID
+    expiresAt: { type: Date, default: null }, // For TTL auto-cleanup
+    companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
+    employmentType: { type: String, default: "" },
+    keywords: [{ type: String, default: [] }],
   },
   {
     timestamps: true,
