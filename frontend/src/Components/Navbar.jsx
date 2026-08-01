@@ -56,6 +56,8 @@ function Navbar() {
 
   const isHome = location.pathname === "/";
   const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/profile"].includes(location.pathname);
+  const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
+  const isDashboardTheme = isCandidatePage || isRecruiterPage;
 
   const logout = async () => {
     await logoutUser();
@@ -70,7 +72,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isCandidatePage ? " candidate-nav" : ""}`}>
+    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " candidate-nav" : ""}`}>
       {/* Logo */}
       <Link className="navbar-brand premium-logo" to="/">
         <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>

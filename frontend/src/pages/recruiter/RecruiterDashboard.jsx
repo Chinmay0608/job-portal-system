@@ -13,7 +13,9 @@ import {
   HiOutlineSquares2X2,
   HiOutlineListBullet,
   HiXMark,
-  HiOutlineUserGroup
+  HiOutlineUserGroup,
+  HiOutlineCheckCircle,
+  HiOutlineXCircle
 } from "react-icons/hi2";
 const initialFormState = { title: "", role: "Full-time", company: "", location: "", salary: "", description: "" };
 const JOBS_PER_PAGE = 6;
@@ -189,7 +191,12 @@ function RecruiterDashboard() {
         {/* SUB-HEADER CONTEXT ROW */}
         <div className="mobile-header-block-recruiter">
           <p className="eyebrow-deck">RECRUITER DECK</p>
-          <h2 className="topbar-mobile-title">{user?.company || "Your Company"}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 className="topbar-mobile-title">{user?.company || "Your Company"}</h2>
+            <button className="primary-accent-btn mobile-only-filter" onClick={handleQuickCreate} style={{ padding: '8px 16px', fontSize: '0.85rem', width: 'auto', borderRadius: '8px' }}>
+              <HiOutlinePlus style={{ marginRight: '4px' }} /> Post Job
+            </button>
+          </div>
           <hr className="dashed-cable-divider" />
         </div>
 
@@ -208,28 +215,28 @@ function RecruiterDashboard() {
         {/* SCORECARDS — all values are live from fetchStats(), no placeholders */}
         <section className="stats-grid">
           <div className="stat-box">
-            <div className="stat-icon stat-icon-purple">💼</div>
+            <div className="stat-icon stat-icon-purple"><HiOutlineBriefcase /></div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.totalJobs}</h3>
               <p className="stat-label">Total Jobs</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-icon stat-icon-blue">👥</div>
+            <div className="stat-icon stat-icon-blue"><HiOutlineUserGroup /></div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.totalApplications}</h3>
               <p className="stat-label">Applications</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-icon stat-icon-green">✓</div>
+            <div className="stat-icon stat-icon-green"><HiOutlineCheckCircle /></div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.shortlisted}</h3>
               <p className="stat-label">Shortlisted</p>
             </div>
           </div>
           <div className="stat-box">
-            <div className="stat-icon stat-icon-red">✕</div>
+            <div className="stat-icon stat-icon-red"><HiOutlineXCircle /></div>
             <div className="stat-info-block">
               <h3 className="stat-number">{stats.rejected}</h3>
               <p className="stat-label">Rejected</p>

@@ -98,19 +98,18 @@
    ========================================================================== */
 .mobile-header-block-recruiter {
   display: none;
-  margin-bottom: 20px;
 }
 
 .eyebrow-deck {
   font-size: 0.75rem;
   font-weight: 800;
   color: #9ca3af;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin: 0 0 4px 0;
 }
 
 .topbar-mobile-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 900;
   color: var(--text-dark);
   margin: 0;
@@ -120,7 +119,8 @@
 .dashed-cable-divider {
   border: 0;
   border-top: 2px dashed #d1d5db;
-  margin: 16px 0 0 0;
+  margin: 16px 0 24px 0;
+  width: 100%;
 }
 
 /* ==========================================================================
@@ -150,10 +150,10 @@
 }
 
 .stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 13px;
-  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
@@ -335,6 +335,7 @@
 
 .mobile-chip-scroller {
   display: flex;
+  align-items: center;
   overflow-x: auto;
   gap: 10px;
   padding-bottom: 4px;
@@ -850,9 +851,11 @@
   }
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
   .dashboard-main {
     padding: 24px;
+    gap: 16px;
   }
 }
 
@@ -879,6 +882,10 @@
   
   .jobs-grid-cards {
     grid-template-columns: 1fr;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
   .dashboard-topbar {
     flex-direction: column;
