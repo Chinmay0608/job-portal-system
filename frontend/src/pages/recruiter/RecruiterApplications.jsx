@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getRecruiterApplications, updateStatus } from "../../Services/jobService";
 import RetryBanner from "../../Components/RetryBanner";
 import toast from "react-hot-toast";
-import BackButton from "../../components/BackButton";
+import BackButton from "../../Components/BackButton";
 import "../../Styles/pages/recruiter/RecruiterApplications.css";
 
 function RecruiterApplications() {

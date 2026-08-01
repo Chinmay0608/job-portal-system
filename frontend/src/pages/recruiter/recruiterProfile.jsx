@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import BackButton from "../../components/BackButton";
+import BackButton from "../../Components/BackButton";
 import "../../Styles/pages/recruiter/recruiterProfile.css";
 import { changePassword, updateProfile } from "../../Services/jobService";
 

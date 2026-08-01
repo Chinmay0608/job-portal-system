@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import RetryBanner from "../../Components/RetryBanner";
 import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
-import BackButton from "../../components/BackButton";
+import BackButton from "../../Components/BackButton";
 import "../../Styles/pages/candidate/MyApplications.css";
 
 function MyApplications() {
