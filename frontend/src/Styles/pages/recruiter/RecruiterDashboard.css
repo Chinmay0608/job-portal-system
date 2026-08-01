@@ -350,7 +350,11 @@
   background: #ffffff;
   border: 1.5px solid var(--border-color);
   color: #374151;
-  padding: 8px 16px;
+  padding: 0 16px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -922,7 +926,7 @@
 
 @media (max-width: 480px) {
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
   
   .job-modal-close-btn {
