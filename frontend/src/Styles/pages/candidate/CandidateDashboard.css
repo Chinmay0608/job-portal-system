@@ -816,7 +816,7 @@
 
 .segment-control {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   background: #f6f5f1;
   padding: 4px;
   border-radius: 999px;
@@ -847,7 +847,7 @@
   top: 4px;
   left: 4px;
   bottom: 4px;
-  width: calc(33.333% - 2.6px);
+  width: calc((100% - 8px) / 3);
   background: #f87171;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);

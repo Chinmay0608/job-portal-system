@@ -13,6 +13,34 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ==========================
+   GLOBAL BACK BUTTON
+========================== */
+.global-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.2s ease;
+}
+.global-back-btn:hover {
+  color: #0d1117;
+}
+@media (max-width: 768px) {
+  .global-back-btn {
+    padding-left: 24px;
+    margin-top: 12px;
+  }
+}
+
+
 @media (max-width: 480px) {
   html {
     font-size: 100%; /* Reset scale on mobile so text doesn't fall below ~14px */
