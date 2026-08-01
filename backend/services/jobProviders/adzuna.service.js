@@ -23,7 +23,7 @@ class AdzunaProvider extends BaseProvider {
       // Fetch multiple pages to increase volume (e.g., 20 pages of 50 = 1000 jobs)
       let allResults = [];
       for (let page = 1; page <= 20; page++) {
-        const url = `${this.config.baseUrl}/us/search/${page}`;
+        const url = `${this.config.baseUrl}/in/search/${page}`;
         const response = await axios.get(url, {
           params: {
             app_id: this.config.appId,
@@ -71,7 +71,7 @@ class AdzunaProvider extends BaseProvider {
         : "Competitive",
       salaryMin: rawJob.salary_min ? Number(rawJob.salary_min) : null,
       salaryMax: rawJob.salary_max ? Number(rawJob.salary_max) : null,
-      salaryCurrency: "USD", // Adzuna returns mostly localized, but we can default or infer
+      salaryCurrency: "INR", // Adzuna returns localized currency (INR for India)
       description: rawJob.description || "No description provided.",
       skillsRequired: skillsRequired,
       educationRequired: "Not Specified",
