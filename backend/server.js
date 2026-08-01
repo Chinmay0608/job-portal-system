@@ -14,6 +14,7 @@ const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const userRoutes = require("./routes/userRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const csrfProtection = require("./middleware/csrfMiddleware");
 
@@ -78,12 +79,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 /* ==========================
    HEALTH CHECK
 ========================== */
+const queueManager = require('./services/sde/queues');
+
 app.get("/", (req, res) => {
-  res.send("SkillBridge Backend Running 🚀");
+  const sdeStatus = queueManager.isOnline ? "ONLINE" : "OFFLINE";
+  res.send(`SkillBridge Backend Running 🚀 | SDE: ${sdeStatus}`);
 });
 
 app.use(errorHandler);
@@ -98,6 +103,23 @@ app.listen(PORT, () => {
   // Import Config and new Sync Engine
   const jobAggConfig = require("./config/jobAggregation");
   const syncService = require("./services/sync.service");
+
+  // Initialize SDE (Discovery Engine) gracefully
+  (async () => {
+    console.log("[SDE] Initializing Discovery Engine...");
+    await queueManager.initialize();
+    
+    if (queueManager.isOnline) {
+      const crawlerWorker = require('./services/sde/workers/crawlerWorker');
+      crawlerWorker.start();
+      
+      const discoveryWorker = require('./services/sde/workers/discoveryWorker');
+      discoveryWorker.start();
+
+      const scheduler = require('./services/sde/scheduler');
+      scheduler.start();
+    }
+  })();
 
   // unified cron interval from config
   cron.schedule(jobAggConfig.syncInterval, async () => {
