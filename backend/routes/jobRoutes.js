@@ -14,6 +14,7 @@ const {
   hideJob,
   searchMasterSkills,
   triggerManualSync,
+  getSyncStatus,
 } = require("../controllers/jobController");
 
 const router = express.Router();
@@ -44,6 +45,7 @@ router.post(
    ADMIN ROUTES
 ========================== */
 router.post("/sync", protect, authorizeRoles("admin"), triggerManualSync);
+router.get("/sync/status", protect, authorizeRoles("admin"), getSyncStatus);
 
 /* ==========================
    RECRUITER ROUTES

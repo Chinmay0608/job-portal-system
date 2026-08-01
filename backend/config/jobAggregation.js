@@ -3,6 +3,8 @@ require("dotenv").config();
 module.exports = {
   isAggregationEnabled: process.env.ENABLE_JOB_AGGREGATION === "true",
   useNewSyncEngine: process.env.USE_NEW_SYNC_ENGINE === "true",
+  syncDryRun: process.env.SYNC_DRY_RUN === "true",
+  storeRawPayloads: process.env.STORE_RAW_PAYLOADS === "true",
   syncInterval: process.env.JOB_SYNC_INTERVAL || "0 */6 * * *", // Default: Every 6 hours
   providers: {
     adzuna: {

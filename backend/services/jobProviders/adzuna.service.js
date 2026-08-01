@@ -1,5 +1,6 @@
 const axios = require("axios");
 const BaseProvider = require("./baseProvider");
+const jobAggConfig = require("../../config/jobAggregation");
 
 class AdzunaProvider extends BaseProvider {
   constructor(config) {
@@ -28,7 +29,7 @@ class AdzunaProvider extends BaseProvider {
           app_key: this.config.apiKey,
           results_per_page: 50,
           what: "software developer",
-          content-type: "application/json",
+          "content-type": "application/json",
         },
       });
 
@@ -73,6 +74,7 @@ class AdzunaProvider extends BaseProvider {
       externalId: rawJob.id ? String(rawJob.id) : null,
       employmentType: rawJob.contract_type === "permanent" ? "Full-time" : rawJob.contract_type === "contract" ? "Contract" : "Full-time",
       keywords: skillsRequired,
+      providerMetadata: jobAggConfig.storeRawPayloads ? { raw: rawJob } : {},
     };
   }
 }

@@ -78,6 +78,7 @@ const jobSchema = new mongoose.Schema(
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
     employmentType: { type: String, default: "" },
     keywords: [{ type: String, default: [] }],
+    providerMetadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,

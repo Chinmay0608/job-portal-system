@@ -280,6 +280,34 @@ const triggerManualSync = async (req, res, next) => {
   }
 };
 
+// --- Career OS: Health / Status Endpoint ---
+const getSyncStatus = async (req, res, next) => {
+  try {
+    const jobAggConfig = require("../config/jobAggregation");
+    const Provider = require("../models/Provider");
+
+    const providers = await Provider.find({}).lean();
+    
+    const statusData = {
+      engine: jobAggConfig.useNewSyncEngine ? "NEW" : "LEGACY",
+      aggregationEnabled: jobAggConfig.isAggregationEnabled,
+      dryRun: jobAggConfig.syncDryRun,
+      providers: providers.map((p) => ({
+        name: p.name,
+        enabled: p.isEnabled,
+        status: p.lastStatus,
+        lastSync: p.lastSyncAt,
+        lastError: p.lastError,
+        jobsFetched: p.totalJobsFetched,
+      }))
+    };
+
+    res.status(200).json(statusData);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createJob,
   getAllJobs,
@@ -290,4 +318,5 @@ module.exports = {
   hideJob,
   searchMasterSkills,
   triggerManualSync,
+  getSyncStatus,
 };

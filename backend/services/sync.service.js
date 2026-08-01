@@ -78,15 +78,19 @@ class SyncService {
           }
 
           // Deduplication strategy: Use externalId + source.
-          // Fallback: title + company + location (if externalId is missing)
+          // Fallback: applyUrl (secondary reliable)
+          // Final Fallback: title + company + location + employmentType
           let filter = {};
           if (normalizedJob.externalId) {
             filter = { source: normalizedJob.source, externalId: normalizedJob.externalId };
+          } else if (normalizedJob.applyUrl) {
+            filter = { applyUrl: normalizedJob.applyUrl };
           } else {
             filter = {
               title: normalizedJob.title,
               company: normalizedJob.company,
               location: normalizedJob.location,
+              employmentType: normalizedJob.employmentType,
               isExternal: true
             };
           }
@@ -104,11 +108,18 @@ class SyncService {
       }
 
       if (bulkOperations.length > 0) {
-        // Execute bulk write (unordered to prevent one failure failing the batch)
-        const bulkResult = await Job.bulkWrite(bulkOperations, { ordered: false });
-        metrics.inserted = bulkResult.upsertedCount || 0;
-        metrics.updated = bulkResult.modifiedCount || 0;
-        metrics.skipped = bulkOperations.length - (metrics.inserted + metrics.updated);
+        const jobAggConfig = require("../config/jobAggregation");
+        if (jobAggConfig.syncDryRun) {
+          console.log(`[Sync Engine] [DRY RUN] Bypassing MongoDB bulkWrite for ${bulkOperations.length} operations.`);
+          metrics.inserted = bulkOperations.length; // simulated
+          metrics.skipped = 0; // simulated
+        } else {
+          // Execute bulk write (unordered to prevent one failure failing the batch)
+          const bulkResult = await Job.bulkWrite(bulkOperations, { ordered: false });
+          metrics.inserted = bulkResult.upsertedCount || 0;
+          metrics.updated = bulkResult.modifiedCount || 0;
+          metrics.skipped = bulkOperations.length - (metrics.inserted + metrics.updated);
+        }
       }
 
       metrics.duration = ((Date.now() - startTime) / 1000).toFixed(2) + "s";
