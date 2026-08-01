@@ -95,8 +95,18 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 
-  // Start cron job to fetch external jobs every day at midnight (0 0 * * *)
-  cron.schedule("0 0 * * *", () => {
-    importAllExternalJobs();
+  // Import Config and new Sync Engine
+  const jobAggConfig = require("./config/jobAggregation");
+  const syncService = require("./services/sync.service");
+
+  // unified cron interval from config
+  cron.schedule(jobAggConfig.syncInterval, async () => {
+    if (jobAggConfig.useNewSyncEngine) {
+      console.log("[Cron] Running NEW Job Aggregation Sync Engine...");
+      await syncService.runAllSync();
+    } else {
+      console.log("[Cron] Running LEGACY Job Fetcher...");
+      importAllExternalJobs();
+    }
   });
 });

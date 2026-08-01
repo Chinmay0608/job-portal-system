@@ -253,6 +253,33 @@ const searchMasterSkills = asyncHandler(async (req, res) => {
   res.status(200).json(skillNames);
 });
 
+// --- Career OS: Manual Sync Endpoint ---
+const triggerManualSync = async (req, res, next) => {
+  try {
+    const syncService = require("../services/sync.service");
+    const jobAggConfig = require("../config/jobAggregation");
+
+    if (!jobAggConfig.isAggregationEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: "Job Aggregation is disabled globally via configuration.",
+      });
+    }
+
+    // Fire and forget - do not await
+    syncService.runAllSync().catch(err => {
+      console.error("[Manual Sync] Background sync failed:", err.message);
+    });
+
+    res.status(202).json({
+      success: true,
+      message: "Job Sync started in the background. Check logs or Admin Dashboard for status.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createJob,
   getAllJobs,
@@ -262,4 +289,5 @@ module.exports = {
   updateJob,
   hideJob,
   searchMasterSkills,
+  triggerManualSync,
 };

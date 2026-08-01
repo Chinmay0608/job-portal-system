@@ -13,6 +13,7 @@ const {
   updateJob,
   hideJob,
   searchMasterSkills,
+  triggerManualSync,
 } = require("../controllers/jobController");
 
 const router = express.Router();
@@ -38,6 +39,11 @@ router.post(
   authorizeRoles("candidate"),
   hideJob,
 );
+
+/* ==========================
+   ADMIN ROUTES
+========================== */
+router.post("/sync", protect, authorizeRoles("admin"), triggerManualSync);
 
 /* ==========================
    RECRUITER ROUTES
