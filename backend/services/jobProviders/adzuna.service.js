@@ -20,23 +20,28 @@ class AdzunaProvider extends BaseProvider {
 
   async fetchJobs(lastSyncAt) {
     try {
-      // Fetch jobs from US as default for this example, with max results
-      // Adjust parameters based on required categories or locations
-      const url = `${this.config.baseUrl}/us/search/1`;
-      const response = await axios.get(url, {
-        params: {
-          app_id: this.config.appId,
-          app_key: this.config.apiKey,
-          results_per_page: 50,
-          what: "software developer",
-          "content-type": "application/json",
-        },
-      });
+      // Fetch multiple pages to increase volume (e.g., 20 pages of 50 = 1000 jobs)
+      let allResults = [];
+      for (let page = 1; page <= 20; page++) {
+        const url = `${this.config.baseUrl}/us/search/${page}`;
+        const response = await axios.get(url, {
+          params: {
+            app_id: this.config.appId,
+            app_key: this.config.apiKey,
+            results_per_page: 50,
+            what: "software developer",
+            "content-type": "application/json",
+          },
+        });
 
-      if (response.data && response.data.results) {
-        return response.data.results;
+        if (response.data && response.data.results) {
+          allResults = allResults.concat(response.data.results);
+        }
+        
+        // Brief delay to respect rate limits
+        await new Promise(res => setTimeout(res, 500));
       }
-      return [];
+      return allResults;
     } catch (error) {
       throw new Error(`Adzuna API Error: ${error.message}`);
     }

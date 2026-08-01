@@ -487,7 +487,7 @@ function CandidateDashboard() {
             {/* Circular Profile Completion Ring */}
             <div 
               className="profile-completion-ring" 
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/candidate-profile")}
               style={{ background: `conic-gradient(#ef4444 ${profileCompletion}%, #e5e7eb 0)` }}
             >
               <div className="ring-inner">
@@ -1072,7 +1072,7 @@ function CandidateDashboard() {
             <div className="ind-nudge-actions">
               <button
                 className="ind-nudge-primary-btn"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate("/candidate-profile")}
               >
                 Complete my profile
               </button>
