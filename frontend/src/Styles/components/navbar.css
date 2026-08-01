@@ -266,11 +266,11 @@
    OTHER PAGES LOGO COLORS
 ======================================== */
 
-.custom-navbar:not(.navbar-dark) .logo-skill {
+.custom-navbar:not(.navbar-dark):not(.candidate-nav) .logo-skill {
   color: #ef4444;
 }
 
-.custom-navbar:not(.navbar-dark) .logo-bridge {
+.custom-navbar:not(.navbar-dark):not(.candidate-nav) .logo-bridge {
   color: #0d1117;
 }
 
