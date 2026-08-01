@@ -6,7 +6,8 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 const crawlerQueue = new Queue('CrawlerQueue', { connection: { host: '127.0.0.1', port: 6379 } });
 
 async function run() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/job-portal-test');
+  require('dotenv').config();
+  await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/skillbridge');
   
   const companies = await Company.find({ status: 'DISCOVERED' });
   
