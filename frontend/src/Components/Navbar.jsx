@@ -55,7 +55,7 @@ function Navbar() {
   }, [isMobileMenuOpen]);
 
   const isHome = location.pathname === "/";
-  const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/profile"].includes(location.pathname);
+  const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/candidate-profile"].includes(location.pathname);
   const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
   const isDashboardTheme = isCandidatePage || isRecruiterPage;
 
@@ -105,7 +105,7 @@ function Navbar() {
               <>
                 <Link className="dashboard-btn nav-hover" to="/candidate-dashboard">Jobs</Link>
                 <Link className="dashboard-btn nav-hover" to="/my-applications">My Applications</Link>
-                <Link className="dashboard-btn nav-hover" to="/profile">Profile</Link>
+                <Link className="dashboard-btn nav-hover" to="/candidate-profile">Profile</Link>
               </>
             )}
 
