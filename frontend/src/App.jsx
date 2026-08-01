@@ -65,46 +65,48 @@ function AppContent() {
   return (
     <>
       {!hideLayout && <Navbar />}
-      <Routes>
-        {/* Immersive Public & Access Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <main className="main-content">
+        <Routes>
+          {/* Immersive Public & Access Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Role-Gated Candidate Spaces */}
-        <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
-        <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
-        <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
+          {/* Role-Gated Candidate Spaces */}
+          <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
+          <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
+          <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
 
-        {/* ========================================== */}
-        {/* ================= ADMIN ================== */}
-        <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter"><AdminDashboard /></ProtectedRoute>} />
+          {/* ========================================== */}
+          {/* ================= ADMIN ================== */}
+          <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter"><AdminDashboard /></ProtectedRoute>} />
 
-        {/* ========================================== */}
-        {/* ============== RECRUITER ================= */}
-        <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
-        <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
-        <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
+          {/* ========================================== */}
+          {/* ============== RECRUITER ================= */}
+          <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
+          <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
+          <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
 
-        {/* Informational Marketing & Legal Layout Trees */}
-        <Route path="/about" element={<About />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/careers" element={<Careers />} />
-        <Route path="/help-center" element={<HelpCenter />} />
-        <Route path="/salary-data" element={<SalaryData />} />
-        <Route path="/get-featured" element={<GetFeatured />} />
-        <Route path="/ai-recruiting" element={<AiRecruiting />} />
-        <Route path="/success-stories" element={<SuccessStories />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-use" element={<TermsOfUse />} />
-        <Route path="/cookie-policy" element={<CookiePolicy />} />
-        <Route path="/security" element={<Security />} />
-
-        {/* Catch-All Fault Tolerant Route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* Informational Marketing & Legal Layout Trees */}
+          <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/help-center" element={<HelpCenter />} />
+          <Route path="/salary-data" element={<SalaryData />} />
+          <Route path="/get-featured" element={<GetFeatured />} />
+          <Route path="/ai-recruiting" element={<AiRecruiting />} />
+          <Route path="/success-stories" element={<SuccessStories />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/security" element={<Security />} />
+          
+          {/* Default 404 Catcher */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
       {!hideLayout && <Footer />}
     </>
   );
