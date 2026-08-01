@@ -55,10 +55,10 @@ const AdminDashboard = () => {
         <div className="metric-card glass">
           <h3>Today's Deltas</h3>
           <ul className="delta-list">
-            <li><span className="dot green"></span> New Jobs: <strong>{metrics.todayDeltas.newJobs}</strong></li>
-            <li><span className="dot blue"></span> Updated Jobs: <strong>{metrics.todayDeltas.updatedJobs}</strong></li>
-            <li><span className="dot yellow"></span> Unchanged Jobs: <strong>{metrics.todayDeltas.unchangedJobs}</strong></li>
-            <li><span className="dot red"></span> Expired Jobs: <strong>{metrics.todayDeltas.expiredJobs}</strong></li>
+            <li><span className="dot green"></span> New Jobs: <strong>{metrics.todayDeltas?.newJobs || 0}</strong></li>
+            <li><span className="dot blue"></span> Updated Jobs: <strong>{metrics.todayDeltas?.updatedJobs || 0}</strong></li>
+            <li><span className="dot yellow"></span> Unchanged Jobs: <strong>{metrics.todayDeltas?.unchangedJobs || 0}</strong></li>
+            <li><span className="dot red"></span> Expired Jobs: <strong>{metrics.todayDeltas?.expiredJobs || 0}</strong></li>
           </ul>
         </div>
 
@@ -66,7 +66,7 @@ const AdminDashboard = () => {
         <div className="metric-card glass">
           <h3>Top Hiring Companies</h3>
           <ul className="hiring-list">
-            {metrics.topHiring.map((comp, i) => (
+            {metrics.topHiring?.map((comp, i) => (
               <li key={i}>{comp.name} <span>{comp.count}</span></li>
             ))}
           </ul>
