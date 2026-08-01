@@ -20,12 +20,12 @@
 
 .ind-search-inner {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
   border-radius: 12px;
-  width: 90%;
-  max-width: 940px;
+  width: calc(100% - 48px);
+  max-width: 1292px;
   height: 52px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   overflow: hidden;
@@ -50,7 +50,8 @@
   color: #9ca3af;
 }
 
-.ind-input-wrapper input {
+.ind-input-wrapper input,
+.ind-input-wrapper .ind-select {
   border: none;
   outline: none;
   width: 100%;
@@ -60,9 +61,20 @@
   background: transparent !important;
 }
 
+.ind-input-wrapper .ind-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  padding-right: 20px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right center !important;
+}
+
 .ind-input-divider {
   width: 1px;
-  height: 32px;
+  height: 100%;
   background-color: #e5e7eb;
 }
 
@@ -168,7 +180,8 @@
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 24px;
+  border-right: 1px solid #e5e7eb;
 }
 
 /* Custom scrollbar for webkit */
@@ -189,6 +202,7 @@
 .ind-section-title {
   font-size: 1.05rem;
   font-weight: 800;
+  margin-top: 24px;
   margin-bottom: 16px;
   color: #0d1117;
   letter-spacing: -0.2px;
@@ -204,7 +218,7 @@
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 20px;
   cursor: pointer;
   position: relative;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -218,6 +232,7 @@
 
 .ind-job-card.active {
   border-color: #ef4444;
+  background-color: #fef2f2;
   box-shadow: 0 0 0 1px #ef4444, 0 6px 16px rgba(239, 68, 68, 0.1);
 }
 
@@ -239,7 +254,8 @@
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 6px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
 }
 
 .ind-card-tag.skill-tag {
@@ -326,7 +342,7 @@
 }
 
 .ind-detail-header-card {
-  padding: 24px 28px;
+  padding: 32px 36px;
   border-bottom: 1px solid #f0f0ee;
   background: #ffffff;
 }
@@ -343,7 +359,7 @@
 .ind-detail-company-link {
   font-size: 1rem;
   font-weight: 700;
-  color: #ef4444;
+  color: #374151;
   margin: 0 0 4px 0;
 }
 
@@ -441,7 +457,7 @@
 
 /* DETAIL SCROLL BODY */
 .ind-detail-scroll-body {
-  padding: 20px 28px;
+  padding: 32px 36px 80px;
   overflow-y: auto;
   flex: 1;
 }
@@ -848,10 +864,10 @@
 
 .segment-indicator {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 33.3333%;
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  width: calc((100% - 8px) / 3);
   background: #f87171;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);

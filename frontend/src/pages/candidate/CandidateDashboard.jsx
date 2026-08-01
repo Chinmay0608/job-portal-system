@@ -503,7 +503,7 @@ function CandidateDashboard() {
               <select
                 value={experienceFilter}
                 onChange={(e) => setExperienceFilter(e.target.value)}
-                className="desktop-experience-select"
+                className="desktop-experience-select ind-select"
               >
                 <option value="All Experience">All Experience</option>
                 <option value="Fresher">Fresher</option>
@@ -563,7 +563,7 @@ function CandidateDashboard() {
                   <select
                     value={experienceFilter}
                     onChange={(e) => setExperienceFilter(e.target.value)}
-                    className="sheet-select"
+                    className="ind-select sheet-select"
                   >
                     <option value="All Experience">All Experience</option>
                     <option value="Fresher">Fresher</option>
@@ -772,7 +772,9 @@ function CandidateDashboard() {
                   
                   <div style={{ marginTop: '8px', marginBottom: '16px' }}>
                     <span style={{
-                      display: 'inline-block',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       background: '#f3f4f6',
                       color: '#374151',
                       padding: '4px 10px',
@@ -782,7 +784,7 @@ function CandidateDashboard() {
                       letterSpacing: '0.02em',
                       border: '1px solid #e5e7eb'
                     }}>
-                      💼 {selectedJob.role || "Full-time"}
+                      💼 <span>{selectedJob.role || "Full-time"}</span>
                     </span>
                   </div>
 
@@ -847,9 +849,8 @@ function CandidateDashboard() {
                           type="button"
                           onClick={() => handleToggleSave(selectedJob._id)}
                           style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            display: "grid",
+                            placeItems: "center",
                             width: 42,
                             height: 42,
                             border: "1px solid rgba(0,0,0,0.12)",
