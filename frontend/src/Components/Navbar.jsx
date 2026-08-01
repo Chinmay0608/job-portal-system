@@ -59,12 +59,20 @@ function Navbar() {
   const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
   const isDashboardTheme = isCandidatePage || isRecruiterPage;
 
-  const logout = async () => {
-    await logoutUser();
-    setIsLoggedIn(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-    navigate("/login", { replace: true });
+  const logout = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      setUser(null);
+      toast.success("Logged out successfully");
+      navigate("/login", { replace: true });
+    }
   };
 
   const toggleMobileMenu = () => {
@@ -112,7 +120,7 @@ function Navbar() {
 
             {/* Logout */}
             {isLoggedIn && (
-              <button className="logout-btn nav-hover" onClick={logout}>
+              <button type="button" className="logout-btn nav-hover" onClick={logout}>
                 Logout
               </button>
             )}

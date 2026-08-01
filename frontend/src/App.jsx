@@ -27,6 +27,7 @@ import CandidateProfile from "./pages/candidate/candidateProfile";
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
 import RecruiterApplications from "./pages/recruiter/RecruiterApplications";
 import RecruiterProfile from "./pages/recruiter/recruiterProfile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
@@ -75,9 +76,14 @@ function AppContent() {
         {/* Role-Gated Candidate Spaces */}
         <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
         <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
+        <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
 
-        {/* Role-Gated Recruiter Spaces */}
+        {/* ========================================== */}
+        {/* ================= ADMIN ================== */}
+        <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
+
+        {/* ========================================== */}
+        {/* ============== RECRUITER ================= */}
         <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
         <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
         <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />

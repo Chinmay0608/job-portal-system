@@ -4,13 +4,43 @@ import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, get
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
+import DOMPurify from "dompurify";
 import "../../Styles/pages/candidate/CandidateDashboard.css";
 import { FiSearch, FiBookmark } from "react-icons/fi";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { FaBookmark } from "react-icons/fa";
 
 const JOBS_PER_PAGE = 20;
-const PROFILE_NUDGE_THRESHOLD = 30; // show nudge if completion is below this %
+const PROFILE_NUDGE_THRESHOLD = 30;
+
+const getRelativeTime = (dateString) => {
+  if (!dateString) return "";
+  const diff = Date.now() - new Date(dateString).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Posted today";
+  if (days === 1) return "Posted yesterday";
+  return `Posted ${days} days ago`;
+};
+
+const formatSalary = (salaryText, min, max, currency) => {
+  if (min && max) {
+    const formatShorthand = (num) => {
+      if (num >= 100000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 100000}L`;
+      if (num >= 1000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 1000}k`;
+      return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num}`;
+    };
+    return `${formatShorthand(min)}–${formatShorthand(max)}`;
+  }
+  
+  if (typeof salaryText === 'string' && isNaN(Number(salaryText))) return salaryText;
+  if (!salaryText) return "Competitive";
+  return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
+};
+
+const capitalizeSource = (source) => {
+  if (!source) return "";
+  return source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
+};
 
 // Same field list used in Profile.jsx's calculateCompletion, kept identical
 // so the percentage shown here always matches the Profile page exactly.
@@ -47,6 +77,11 @@ function CandidateDashboard() {
   const [experienceFilter, setExperienceFilter] = useState("All Experience");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("All");
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState("All");
+  const [isRemoteFilter, setIsRemoteFilter] = useState("All");
+  
+  const [externalApplyActive, setExternalApplyActive] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -96,7 +131,7 @@ function CandidateDashboard() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Define all functions before useEffect hooks
-  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, page }) => {
+  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, page }) => {
     try {
       setJobLoadError("");
       setLoading(true);
@@ -105,6 +140,9 @@ function CandidateDashboard() {
         location: locationTerm,
         experience: experienceTerm,
         minSalary: salaryTerm,
+        source: sourceTerm,
+        employmentType: employmentTerm,
+        isRemote: remoteTerm === "true" ? "true" : undefined,
         page,
         limit: JOBS_PER_PAGE,
       });
@@ -157,6 +195,9 @@ function CandidateDashboard() {
         experienceTerm: experienceFilter,
         salaryTerm: salaryFilter,
         companyTerm: companyFilter,
+        sourceTerm: sourceFilter,
+        employmentTerm: employmentTypeFilter,
+        remoteTerm: isRemoteFilter,
         page: currentPage,
       });
 
@@ -219,9 +260,12 @@ function CandidateDashboard() {
       experienceTerm: experienceFilter,
       salaryTerm: salaryFilter,
       companyTerm: companyFilter,
+      sourceTerm: sourceFilter,
+      employmentTerm: employmentTypeFilter,
+      remoteTerm: isRemoteFilter,
       page: 1,
     });
-  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, debouncedFetchJobs]);
+  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, debouncedFetchJobs]);
 
   // Builds a full URL for the resume stored on the user's profile,
   // matching the same logic used in Profile.jsx's getResumeUrl.
@@ -286,8 +330,8 @@ function CandidateDashboard() {
   // Triggered by "Apply Now". If the job is external, redirect and await feedback.
   const handleApplyNowClick = async () => {
     if (selectedJob?.isExternal) {
-      setPendingFeedbackJob(selectedJob);
       window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      setExternalApplyActive(true);
       return;
     }
 
@@ -297,46 +341,17 @@ function CandidateDashboard() {
       setShowApplyPanel(true);
     }
   };
-
-  // Feedback Modal Handlers
-  const closeFeedbackModal = () => {
-    setShowFeedbackModal(false);
-    setPendingFeedbackJob(null);
-  };
-
-  const handleFeedbackYes = async () => {
-    if (!pendingFeedbackJob) return;
+  
+  const handleManualTrack = async () => {
+    if (!selectedJob) return;
     try {
-      await applyExternal(pendingFeedbackJob._id);
-      setAppliedJobs((prev) => [...prev, pendingFeedbackJob._id]);
-      toast.success("Great! Application tracked.");
+      await applyExternal(selectedJob._id);
+      setAppliedJobs((prev) => [...prev, selectedJob._id]);
+      toast.success("Application tracked!");
+      setExternalApplyActive(false);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to track external application:", error);
     }
-    closeFeedbackModal();
-  };
-
-  const handleFeedbackNo = () => {
-    closeFeedbackModal();
-  };
-
-  const handleFeedbackHide = async () => {
-    if (!pendingFeedbackJob) return;
-    try {
-      await hideJob(pendingFeedbackJob._id);
-      toast.success("Job hidden. You won't see this again.");
-      
-      setJobs((prev) => prev.filter(j => j._id !== pendingFeedbackJob._id));
-      setRecommendedJobsList((prev) => prev.filter(j => j._id !== pendingFeedbackJob._id));
-      
-      if (selectedJob?._id === pendingFeedbackJob._id) {
-        setSelectedJob(null);
-        setIsMobileDetailView(false);
-      }
-    } catch (error) {
-      toast.error("Failed to hide job");
-    }
-    closeFeedbackModal();
   };
 
   const handleToggleSave = async (jobId) => {
@@ -387,6 +402,14 @@ function CandidateDashboard() {
     setUseSavedResume(false);
     setResumeChoiceMode(false);
     setShowApplyPanel(true);
+  };
+
+  const handleJobClick = (job) => {
+    setSelectedJob(job);
+    setIsMobileDetailView(true);
+    setResumeChoiceMode(false);
+    setShowApplyPanel(false);
+    setExternalApplyActive(false);
   };
 
   const availableJobs = jobs.filter((job) => !appliedJobs.includes(job._id));
@@ -477,7 +500,7 @@ function CandidateDashboard() {
 
         {/* SEARCH CONSOLE BAR */}
         <div className="ind-search-bar">
-          <div className="ind-search-inner mobile-collapsed-trigger" onClick={() => setIsMobileSearchExpanded(true)}>
+          <div className="ind-search-inner mobile-collapsed-trigger" onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}>
             <div className="ind-input-wrapper">
               <FiSearch className="ind-icon" />
               <input
@@ -512,6 +535,29 @@ function CandidateDashboard() {
                 <option value="5+ Years">5+ Years</option>
               </select>
             </div>
+            <div className="ind-input-divider desktop-only"></div>
+            <div className="ind-input-wrapper desktop-only">
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="desktop-experience-select ind-select"
+              >
+                <option value="All">All Sources</option>
+                <option value="Internal">Internal Only</option>
+                <option value="ADZUNA">Adzuna</option>
+              </select>
+            </div>
+            <div className="ind-input-divider desktop-only"></div>
+            <div className="ind-input-wrapper desktop-only">
+              <select
+                value={isRemoteFilter}
+                onChange={(e) => setIsRemoteFilter(e.target.value)}
+                className="desktop-experience-select ind-select"
+              >
+                <option value="All">Any Location</option>
+                <option value="true">Remote Only</option>
+              </select>
+            </div>
             <button 
               className="ind-search-btn desktop-only"
               onClick={(e) => {
@@ -523,6 +569,9 @@ function CandidateDashboard() {
                   experienceTerm: experienceFilter,
                   salaryTerm: salaryFilter,
                   companyTerm: companyFilter,
+                  sourceTerm: sourceFilter,
+                  employmentTerm: employmentTypeFilter,
+                  remoteTerm: isRemoteFilter,
                   page: 1,
                 });
               }}
@@ -572,6 +621,27 @@ function CandidateDashboard() {
                     <option value="5+ Years">5+ Years</option>
                   </select>
                 </div>
+                <div className="sheet-input-group">
+                  <select
+                    value={sourceFilter}
+                    onChange={(e) => setSourceFilter(e.target.value)}
+                    className="ind-select sheet-select"
+                  >
+                    <option value="All">All Sources</option>
+                    <option value="Internal">Internal Only</option>
+                    <option value="ADZUNA">Adzuna</option>
+                  </select>
+                </div>
+                <div className="sheet-input-group">
+                  <select
+                    value={isRemoteFilter}
+                    onChange={(e) => setIsRemoteFilter(e.target.value)}
+                    className="ind-select sheet-select"
+                  >
+                    <option value="All">Any Location</option>
+                    <option value="true">Remote Only</option>
+                  </select>
+                </div>
                 <button 
                   className="ind-primary-apply-btn sheet-search-btn"
                   onClick={() => {
@@ -583,6 +653,9 @@ function CandidateDashboard() {
                       experienceTerm: experienceFilter,
                       salaryTerm: salaryFilter,
                       companyTerm: companyFilter,
+                      sourceTerm: sourceFilter,
+                      employmentTerm: employmentTypeFilter,
+                      remoteTerm: isRemoteFilter,
                       page: 1,
                     });
                   }}
@@ -685,6 +758,12 @@ function CandidateDashboard() {
                             <span className="ind-card-tag skill-tag">{job.isExternal ? "External" : "Internal"}</span>
                           )}
                           
+                          {job.isExternal && job.source && (
+                            <span className="ind-card-tag skill-tag" style={{ background: '#fef3c7', color: '#b45309' }}>
+                              via {capitalizeSource(job.source)}
+                            </span>
+                          )}
+                          
                           {job.experience && job.experience !== "Fresher" ? (
                             <span className="ind-card-tag exp-tag">{job.experience}</span>
                           ) : (
@@ -692,6 +771,10 @@ function CandidateDashboard() {
                           )}
                           
                           {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
+                        </div>
+                        
+                        <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#9ca3af' }}>
+                          {getRelativeTime(job.createdAt)}
                         </div>
                       </div>
                     );
@@ -767,10 +850,10 @@ function CandidateDashboard() {
                   </div>
                   <p className="ind-detail-location-text">{selectedJob.location}</p>
                   <p className="ind-detail-salary-text">
-                    {typeof selectedJob.salary === 'string' && isNaN(Number(selectedJob.salary)) ? selectedJob.salary : `₹${Number(selectedJob.salary).toLocaleString("en-IN")} a year`}
+                    {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}
                   </p>
                   
-                  <div style={{ marginTop: '8px', marginBottom: '16px' }}>
+                  <div style={{ marginTop: '8px', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <span style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -784,12 +867,47 @@ function CandidateDashboard() {
                       letterSpacing: '0.02em',
                       border: '1px solid #e5e7eb'
                     }}>
-                      💼 <span>{selectedJob.role || "Full-time"}</span>
+                      💼 <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
+                    </span>
+                    {selectedJob.isExternal && (
+                      <span style={{
+                        display: 'inline-flex',
+                        background: '#e0f2fe',
+                        color: '#0369a1',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        border: '1px solid #bae6fd'
+                      }}>
+                        External
+                      </span>
+                    )}
+                    {selectedJob.isExternal && selectedJob.source && (
+                      <span style={{
+                        display: 'inline-flex',
+                        background: '#fef3c7',
+                        color: '#b45309',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        border: '1px solid #fde68a'
+                      }}>
+                        via {capitalizeSource(selectedJob.source)}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
+                      {getRelativeTime(selectedJob.createdAt)}
                     </span>
                   </div>
 
                   <div className="ind-actions-row">
-                    {appliedJobs?.includes(selectedJob._id) ? (
+                    {selectedJob.expiresAt && new Date(selectedJob.expiresAt) < new Date() ? (
+                      <button className="ind-applied-status-btn" style={{background: '#fee2e2', color: '#991b1b', border: 'none'}} disabled>
+                        This job is no longer available
+                      </button>
+                    ) : appliedJobs?.includes(selectedJob._id) ? (
                       <button className="ind-applied-status-btn" disabled>
                         Applied Already
                       </button>
@@ -839,12 +957,31 @@ function CandidateDashboard() {
                       </div>
                     ) : (
                       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                        <button 
-                          className="ind-primary-apply-btn"
-                          onClick={handleApplyNowClick}
-                        >
-                          Apply Now
-                        </button>
+                        {!externalApplyActive ? (
+                          <button 
+                            className="ind-primary-apply-btn"
+                            onClick={handleApplyNowClick}
+                          >
+                            Apply Now
+                          </button>
+                        ) : (
+                          <>
+                            <button 
+                              className="ind-primary-apply-btn"
+                              style={{ background: '#10b981' }}
+                              onClick={handleManualTrack}
+                            >
+                              Mark as Applied
+                            </button>
+                            <button 
+                              className="ind-primary-apply-btn"
+                              style={{ background: '#6b7280' }}
+                              onClick={handleApplyNowClick}
+                            >
+                              Open Again
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleToggleSave(selectedJob._id)}
@@ -889,7 +1026,7 @@ function CandidateDashboard() {
                   <h4 className="ind-body-section-heading">Full Job Description</h4>
                   <div className="ind-description-content">
                     {selectedJob.isExternal ? (
-                      <div dangerouslySetInnerHTML={{ __html: selectedJob.description }} />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJob.description) }} />
                     ) : (
                       <p>{selectedJob.description}</p>
                     )}

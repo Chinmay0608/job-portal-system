@@ -64,12 +64,16 @@ class AdzunaProvider extends BaseProvider {
       salary: rawJob.salary_min && rawJob.salary_max 
         ? `$${rawJob.salary_min} - $${rawJob.salary_max}` 
         : "Competitive",
+      salaryMin: rawJob.salary_min ? Number(rawJob.salary_min) : null,
+      salaryMax: rawJob.salary_max ? Number(rawJob.salary_max) : null,
+      salaryCurrency: "USD", // Adzuna returns mostly localized, but we can default or infer
       description: rawJob.description || "No description provided.",
       skillsRequired: skillsRequired,
       educationRequired: "Not Specified",
       experienceRequired: "Not Specified", 
       applyUrl: rawJob.redirect_url,
       isExternal: true,
+      isRemote: (rawJob.location && rawJob.location.display_name && rawJob.location.display_name.toLowerCase().includes("remote")) ? true : false,
       source: this.name,
       externalId: rawJob.id ? String(rawJob.id) : null,
       employmentType: rawJob.contract_type === "permanent" ? "Full-time" : rawJob.contract_type === "contract" ? "Contract" : "Full-time",

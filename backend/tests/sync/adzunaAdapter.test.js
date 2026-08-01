@@ -28,9 +28,13 @@ describe("AdzunaProvider Normalization", () => {
     expect(normalized.company).toBe("Tech Corp");
     expect(normalized.location).toBe("New York, US");
     expect(normalized.salary).toBe("$100000 - $150000");
+    expect(normalized.salaryMin).toBe(100000);
+    expect(normalized.salaryMax).toBe(150000);
+    expect(normalized.salaryCurrency).toBe("USD");
     expect(normalized.applyUrl).toBe("https://adzuna.com/apply/123");
     expect(normalized.employmentType).toBe("Full-time");
     expect(normalized.isExternal).toBe(true);
+    expect(normalized.isRemote).toBe(false);
     expect(normalized.source).toBe("ADZUNA");
     expect(normalized.externalId).toBe("123456789");
     
@@ -43,7 +47,7 @@ describe("AdzunaProvider Normalization", () => {
     const normalized = {
       title: "Dev",
       company: "Company",
-      applyUrl: "url",
+      applyUrl: "https://example.com/apply",
       location: "remote"
     };
     expect(provider.validateJob(normalized)).toBe(true);
@@ -53,9 +57,27 @@ describe("AdzunaProvider Normalization", () => {
     const invalid = {
       title: "Dev",
       company: "",
-      applyUrl: "",
+      applyUrl: "https://example.com/apply",
       location: "remote"
     };
     expect(provider.validateJob(invalid)).toBe(false);
+  });
+
+  it("should fail validation for invalid or dangerous URLs", () => {
+    const dangerousJob = {
+      title: "Hacker",
+      company: "Evil Corp",
+      location: "Remote",
+      applyUrl: "javascript:alert(1)",
+    };
+    expect(provider.validateJob(dangerousJob)).toBe(false);
+
+    const noProto = {
+      title: "Hacker",
+      company: "Evil Corp",
+      location: "Remote",
+      applyUrl: "www.google.com",
+    };
+    expect(provider.validateJob(noProto)).toBe(false);
   });
 });

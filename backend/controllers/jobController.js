@@ -45,11 +45,20 @@ const getAllJobs = asyncHandler(async (req, res) => {
     location,
     minSalary,
     experience,
+    source,
+    isRemote,
+    employmentType,
     page = 1,
     limit = 20,
   } = req.query;
 
-  const query = { isActive: { $ne: false } };
+  const query = { 
+    isActive: { $ne: false },
+    $or: [
+      { expiresAt: null },
+      { expiresAt: { $gt: new Date() } }
+    ]
+  };
 
   if (req.user) {
     const user = await User.findById(req.user.id);
@@ -60,11 +69,11 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   if (search) {
     const safeSearch = escapeRegex(search);
-    // If $or already exists (from visa logic), we must use $and to combine them
     const searchCondition = {
       $or: [
         { title: { $regex: safeSearch, $options: "i" } },
         { company: { $regex: safeSearch, $options: "i" } },
+        { keywords: { $regex: safeSearch, $options: "i" } }
       ],
     };
 
@@ -81,8 +90,27 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (experience && experience !== "All Experience") {
-    // Check the experienceRequired field
     query.experienceRequired = experience;
+  }
+  
+  if (source && source !== "All") {
+    if (source === "Internal") {
+      query.isExternal = { $ne: true };
+    } else {
+      query.source = source;
+    }
+  }
+
+  if (isRemote === "true") {
+    query.isRemote = true;
+  }
+
+  if (employmentType && employmentType !== "All") {
+    query.employmentType = employmentType;
+  }
+
+  if (minSalary && !isNaN(minSalary)) {
+    query.salaryMin = { $gte: Number(minSalary) };
   }
 
   const currentPage = Number(page) > 0 ? Number(page) : 1;

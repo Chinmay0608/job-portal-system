@@ -38,6 +38,14 @@ class BaseProvider {
     if (!normalizedJob.title || !normalizedJob.company || !normalizedJob.applyUrl || !normalizedJob.location) {
       return false;
     }
+    try {
+      const parsedUrl = new URL(normalizedJob.applyUrl);
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
     return true;
   }
 

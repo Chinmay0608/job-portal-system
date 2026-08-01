@@ -77,6 +77,10 @@ const jobSchema = new mongoose.Schema(
     expiresAt: { type: Date, default: null }, // For TTL auto-cleanup
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
     employmentType: { type: String, default: "" },
+    isRemote: { type: Boolean, default: false },
+    salaryMin: { type: Number, default: null },
+    salaryMax: { type: Number, default: null },
+    salaryCurrency: { type: String, default: "USD" },
     keywords: [{ type: String, default: [] }],
     providerMetadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
@@ -87,7 +91,17 @@ const jobSchema = new mongoose.Schema(
 
 // Add Indexes for performance
 jobSchema.index({ isActive: 1, isExternal: 1 });
+// Indexing for search
+jobSchema.index({ title: "text", company: "text", keywords: "text" });
+
+// Provider and querying indexes
+jobSchema.index({ source: 1 });
+jobSchema.index({ externalId: 1 });
+jobSchema.index({ expiresAt: 1 });
+jobSchema.index({ isExternal: 1 });
+jobSchema.index({ company: 1 });
 jobSchema.index({ location: 1 });
-jobSchema.index({ title: "text", company: "text" });
+jobSchema.index({ employmentType: 1 });
+jobSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Job", jobSchema);
