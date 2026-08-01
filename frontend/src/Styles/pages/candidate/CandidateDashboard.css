@@ -695,6 +695,10 @@
     border-color: #e5e7eb;
   }
 
+  .mobile-collapsed-trigger .ind-input-wrapper {
+    border-bottom: none !important;
+  }
+
   .segment-control-wrapper {
     margin-bottom: 24px;
   }
