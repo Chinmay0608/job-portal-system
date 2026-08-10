@@ -69,6 +69,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   if (search) {
     const safeSearch = escapeRegex(search);
+    // TODO: Switch to $text search for better efficiency instead of $regex
     const searchCondition = {
       $or: [
         { title: { $regex: safeSearch, $options: "i" } },
@@ -163,6 +164,7 @@ const getRecruiterJobs = asyncHandler(async (req, res) => {
 ========================== */
 const getRecommendedJobs = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
 
   // Show all active jobs (both internal and external)
   let query = { isActive: { $ne: false } };
@@ -186,6 +188,19 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
 const updateJob = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
   const { title, role, company, location, salary, description, experienceRequired, skillsRequired } = req.body;
+
+  if (title !== undefined && title.trim().length < 3) {
+    res.status(400);
+    throw new Error("Job title must be at least 3 characters");
+  }
+  if (salary !== undefined && Number(salary) < 0) {
+    res.status(400);
+    throw new Error("Salary must be a positive number");
+  }
+  if (description !== undefined && description.trim().length < 10) {
+    res.status(400);
+    throw new Error("Job description must be at least 10 characters");
+  }
 
   const job = await Job.findById(jobId);
   if (!job) {
@@ -238,7 +253,10 @@ const deleteJob = asyncHandler(async (req, res) => {
 
   await Job.findByIdAndDelete(jobId);
 
-  await clearCache("/api/jobs");
+  await User.updateMany(
+    {},
+    { $pull: { hiddenJobs: jobId, savedJobs: jobId } }
+  );
 
   res.status(200).json({ message: "Job deleted successfully" });
 });
@@ -249,6 +267,10 @@ const deleteJob = asyncHandler(async (req, res) => {
 const hideJob = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
   const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const jobExists = await Job.exists({ _id: jobId });
+  if (!jobExists) return res.status(404).json({ message: "Job not found" });
 
   if (!user.hiddenJobs.includes(jobId)) {
     user.hiddenJobs.push(jobId);

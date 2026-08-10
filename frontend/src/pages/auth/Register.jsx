@@ -41,6 +41,7 @@ function Register() {
       setGoogleLoading(true);
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      const idToken = await user.getIdToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
         method: "POST",
         headers: { 
@@ -48,7 +49,7 @@ function Register() {
           "x-requested-with": "XMLHttpRequest"
         },
         credentials: "include",
-        body: JSON.stringify({ name: user.displayName, email: user.email }),
+        body: JSON.stringify({ name: user.displayName, email: user.email, idToken }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Authentication Failed");

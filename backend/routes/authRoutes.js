@@ -41,14 +41,14 @@ router.post(
   registerUser,
 );
 router.post("/login", authLimiter, loginUser);
-router.post("/google-login", googleLogin);
+router.post("/google-login", authLimiter, googleLogin);
 router.post("/logout", logoutUser);
 
 /* ==========================
    PASSWORD RESET
 ========================== */
 router.post("/forgot-password", authLimiter, forgotPassword);
-router.post("/reset-password/:token", resetPassword);
+router.post("/reset-password/:token", authLimiter, resetPassword);
 
 /* ==========================
    RESUME UPLOAD

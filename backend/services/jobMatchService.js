@@ -11,17 +11,18 @@ const calculateJobMatches = (jobs, userSkills = []) => {
         ),
       );
 
-      const matchPercentage =
-        skillsRequired.length > 0
-          ? Math.round((matchedSkills.length / skillsRequired.length) * 100)
-          : 0;
+      const noRequirements = skillsRequired.length === 0;
+      const matchPercentage = noRequirements
+          ? 0
+          : Math.round((matchedSkills.length / skillsRequired.length) * 100);
 
       return {
         ...job.toObject(),
         matchPercentage,
+        noRequirements
       };
     })
-    .filter((job) => job.matchPercentage > 0)
+    .filter((job) => job.matchPercentage > 0 || job.noRequirements)
     .sort((a, b) => b.matchPercentage - a.matchPercentage);
 };
 

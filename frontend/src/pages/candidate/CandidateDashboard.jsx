@@ -22,6 +22,12 @@ const getRelativeTime = (dateString) => {
   return `Posted ${days} days ago`;
 };
 
+const decodeHTMLEntities = (text) => {
+  if (!text) return '';
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  return doc.documentElement.textContent;
+};
+
 const formatSalary = (salaryText, min, max, currency) => {
   if (min && max) {
     const formatShorthand = (num) => {
@@ -33,13 +39,14 @@ const formatSalary = (salaryText, min, max, currency) => {
   }
   
   if (typeof salaryText === 'string' && isNaN(Number(salaryText))) return salaryText;
-  if (!salaryText) return "Competitive";
+  if (!salaryText || Number(salaryText) === 0) return "Competitive";
   return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
 };
 
 const capitalizeSource = (source) => {
   if (!source) return "";
-  return source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
+  const cleaned = source.replace('SDE_', '').toLowerCase();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
 // Same field list used in Profile.jsx's calculateCompletion, kept identical
@@ -1026,7 +1033,7 @@ function CandidateDashboard() {
                   <h4 className="ind-body-section-heading">Full Job Description</h4>
                   <div className="ind-description-content">
                     {selectedJob.isExternal ? (
-                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJob.description) }} />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decodeHTMLEntities(selectedJob.description)) }} />
                     ) : (
                       <p>{selectedJob.description}</p>
                     )}

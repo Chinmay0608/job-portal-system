@@ -21,6 +21,16 @@ router.put(
   "/update-profile",
   protect,
   authorizeRoles("candidate", "recruiter"),
+  upload.fields([
+    {
+      name: "resume",
+      maxCount: 1,
+    },
+    {
+      name: "profileImage",
+      maxCount: 1,
+    },
+  ]),
   [
     body("name")
       .optional()
@@ -39,16 +49,6 @@ router.put(
       .withMessage("Company website must be a valid URL"),
   ],
   validateRequest,
-  upload.fields([
-    {
-      name: "resume",
-      maxCount: 1,
-    },
-    {
-      name: "profileImage",
-      maxCount: 1,
-    },
-  ]),
   updateProfile,
 );
 

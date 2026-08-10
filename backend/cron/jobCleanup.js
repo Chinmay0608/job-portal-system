@@ -43,6 +43,25 @@ cron.schedule("0 0 * * *", async () => {
     console.log(
       `[Job Cleanup] Automatically marked ${result.modifiedCount} old external jobs as inactive.`,
     );
+
+    // Find internal jobs older than 90 days
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const internalResult = await Job.updateMany(
+      {
+        isExternal: { $ne: true },
+        isActive: { $ne: false },
+        updatedAt: { $lt: ninetyDaysAgo },
+      },
+      {
+        $set: { isActive: false },
+      },
+    );
+
+    console.log(
+      `[Job Cleanup] Automatically marked ${internalResult.modifiedCount} old internal jobs as inactive.`,
+    );
   } catch (error) {
     console.error("[Job Cleanup] Error during cleanup:", error.message);
   }

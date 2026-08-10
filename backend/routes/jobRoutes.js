@@ -22,7 +22,10 @@ const router = express.Router();
 /* ==========================
    PUBLIC ROUTES
 ========================== */
-router.get("/", optionalAuth, cacheMiddleware(300), getAllJobs);
+// NOTE: GET /api/jobs is intentionally not cached.
+// The response is personalized per-user (e.g. filtered by req.user.hiddenJobs),
+// so caching by URL alone would leak hidden jobs across users or return stale data.
+router.get("/", optionalAuth, getAllJobs);
 router.get("/skills/search", cacheMiddleware(3600), searchMasterSkills);
 
 /* ==========================

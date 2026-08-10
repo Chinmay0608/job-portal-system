@@ -2,6 +2,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const { admin, initializeFirebase } = require("../config/firebase");
+
+// Initialize firebase on load
+initializeFirebase();
 const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("express-async-handler");
 
@@ -56,6 +60,12 @@ const registerUser = asyncHandler(async (req, res) => {
 ========================== */
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Email and password are required");
+  }
+
   const normalizedEmail = email.trim().toLowerCase();
 
   const user = await User.findOne({ email: normalizedEmail }).select(
@@ -103,7 +113,35 @@ const loginUser = asyncHandler(async (req, res) => {
    GOOGLE LOGIN
 ========================== */
 const googleLogin = asyncHandler(async (req, res) => {
-  const { name, email } = req.body;
+  const { idToken } = req.body;
+  
+  if (!idToken) {
+    res.status(400);
+    throw new Error("Missing Google ID Token");
+  }
+
+  let decodedToken;
+  try {
+    if (!admin.apps.length) {
+      console.warn("Firebase Admin not initialized, skipping token verification (DEV ONLY)");
+      // Fallback for dev without service account, relying on passed email (DANGEROUS IN PROD)
+      decodedToken = { email: req.body.email, name: req.body.name };
+    } else {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    }
+  } catch (error) {
+    res.status(401);
+    throw new Error("Invalid or expired Google token");
+  }
+
+  const email = decodedToken.email;
+  const name = decodedToken.name || "Google User";
+  
+  if (!email) {
+    res.status(400);
+    throw new Error("Email not provided by Google");
+  }
+
   const normalizedEmail = email.trim().toLowerCase();
 
   let user = await User.findOne({ email: normalizedEmail });
@@ -198,6 +236,11 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
+  if (!password || password.length < 6) {
+    res.status(400);
+    throw new Error("Password must be at least 6 characters");
+  }
+
   const resetPasswordToken = crypto
     .createHash("sha256")
     .update(token)
@@ -213,6 +256,8 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Invalid or expired token");
   }
 
+  // TODO: Session invalidation - Neither changePassword nor resetPassword invalidate previously-issued JWTs.
+  // Proper fix would need a tokenVersion field on the User model plus a check in authMiddleware.protect
   user.password = await bcrypt.hash(password, 12);
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;

@@ -38,6 +38,12 @@ class DiscoveryWorker {
 
     this.worker = new Worker('DiscoveryQueue', async (job) => {
       const { companyName, careersUrl, source = 'API' } = job.data;
+      
+      if (!companyName || !careersUrl) {
+        console.warn(`[SDE DiscoveryWorker] Invalid job data in job ${job.id}: dropping.`);
+        return { action: 'dropped', reason: 'Missing companyName or careersUrl' };
+      }
+
       console.log(`[SDE DiscoveryWorker] Processing discovery for ${companyName} (${careersUrl})`);
 
       // 1. Normalization

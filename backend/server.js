@@ -23,7 +23,7 @@ const app = express();
 /* ==========================
    DATABASE
 ========================== */
-connectDB();
+// Connection happens before starting the server below
 
 /* ==========================
    MIDDLEWARE
@@ -97,38 +97,40 @@ app.use(errorHandler);
    SERVER & CRON
 ========================== */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 
-  // Import Config and new Sync Engine
-  const jobAggConfig = require("./config/jobAggregation");
-  const syncService = require("./services/sync.service");
+    // Import Config and new Sync Engine
+    const jobAggConfig = require("./config/jobAggregation");
+    const syncService = require("./services/sync.service");
 
-  // Initialize SDE (Discovery Engine) gracefully
-  (async () => {
-    console.log("[SDE] Initializing Discovery Engine...");
-    await queueManager.initialize();
-    
-    if (queueManager.isOnline) {
-      const crawlerWorker = require('./services/sde/workers/crawlerWorker');
-      crawlerWorker.start();
+    // Initialize SDE (Discovery Engine) gracefully
+    (async () => {
+      console.log("[SDE] Initializing Discovery Engine...");
+      await queueManager.initialize();
       
-      const discoveryWorker = require('./services/sde/workers/discoveryWorker');
-      discoveryWorker.start();
+      if (queueManager.isOnline) {
+        const crawlerWorker = require('./services/sde/workers/crawlerWorker');
+        crawlerWorker.start();
+        
+        const discoveryWorker = require('./services/sde/workers/discoveryWorker');
+        discoveryWorker.start();
 
-      const scheduler = require('./services/sde/scheduler');
-      scheduler.start();
-    }
-  })();
+        const scheduler = require('./services/sde/scheduler');
+        scheduler.start();
+      }
+    })();
 
-  // unified cron interval from config
-  cron.schedule(jobAggConfig.syncInterval, async () => {
-    if (jobAggConfig.useNewSyncEngine) {
-      console.log("[Cron] Running NEW Job Aggregation Sync Engine...");
-      await syncService.runAllSync();
-    } else {
-      console.log("[Cron] Running LEGACY Job Fetcher...");
-      importAllExternalJobs();
-    }
+    // unified cron interval from config
+    cron.schedule(jobAggConfig.syncInterval, async () => {
+      if (jobAggConfig.useNewSyncEngine) {
+        console.log("[Cron] Running NEW Job Aggregation Sync Engine...");
+        await syncService.runAllSync();
+      } else {
+        console.log("[Cron] Running LEGACY Job Fetcher...");
+        importAllExternalJobs();
+      }
+    });
   });
 });

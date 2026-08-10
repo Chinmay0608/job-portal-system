@@ -7,6 +7,9 @@ const asyncHandler = require("express-async-handler");
 const applyJob = asyncHandler(async (req, res) => {
   const { jobId } = req.body;
 
+  const job = await Job.findById(jobId);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+
   let resumeUrl = "";
 
   if (req.file && req.file.path) {
@@ -138,6 +141,11 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
   const { applicationId } = req.params;
   const { status } = req.body;
 
+  const validStatuses = ['pending', 'shortlisted', 'rejected', 'applied_externally'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
   const application = await Application.findById(applicationId)
     .populate({ path: "job", select: "recruiter title company" })
     .populate({ path: "candidate", select: "name email" });
@@ -158,7 +166,7 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
   }
 
   application.status = status;
-  await application.save({ validateBeforeSave: false });
+  await application.save();
 
   const emailSubject = "Application Status Update";
   const emailHtml =

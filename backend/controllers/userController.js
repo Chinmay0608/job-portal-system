@@ -37,7 +37,15 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.about = about || "";
   user.education = education || "";
   user.experienceLevel = experienceLevel || "Fresher";
-  user.skills = skills ? JSON.parse(skills) : [];
+  if (skills) {
+    try {
+      user.skills = JSON.parse(skills);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
+    }
+  } else {
+    user.skills = [];
+  }
   user.designation = designation || "";
   user.companyName = companyName || "";
   user.companyWebsite = companyWebsite || "";
