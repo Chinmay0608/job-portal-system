@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
@@ -17,38 +17,38 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // ==========================================================================
 // 2. CANDIDATE ISOLATED PLATFORM SUITE IMPORT SEGMENT
 // ==========================================================================
-import CandidateDashboard from "./pages/candidate/CandidateDashboard";
-import MyApplications from "./pages/candidate/MyApplications";
-import CandidateProfile from "./pages/candidate/candidateProfile";
+const CandidateDashboard = lazy(() => import("./pages/candidate/CandidateDashboard"));
+const MyApplications = lazy(() => import("./pages/candidate/MyApplications"));
+const CandidateProfile = lazy(() => import("./pages/candidate/candidateProfile"));
 
 // ==========================================================================
 // 3. RECRUITER ADMINISTRATIVE MANAGEMENT IMPORT SEGMENT
 // ==========================================================================
-import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
-import RecruiterApplications from "./pages/recruiter/RecruiterApplications";
-import RecruiterProfile from "./pages/recruiter/recruiterProfile";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+const RecruiterDashboard = lazy(() => import("./pages/recruiter/RecruiterDashboard"));
+const RecruiterApplications = lazy(() => import("./pages/recruiter/RecruiterApplications"));
+const RecruiterProfile = lazy(() => import("./pages/recruiter/recruiterProfile"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
 // ==========================================================================
 import Home from "./pages/marketing/Home";
-import About from "./pages/marketing/About";
-import Blog from "./pages/marketing/Blog";
-import Careers from "./pages/marketing/Careers";
-import SalaryData from "./pages/marketing/SalaryData";
-import GetFeatured from "./pages/marketing/GetFeatured";
-import AiRecruiting from "./pages/marketing/AiRecruiting";
-import SuccessStories from "./pages/marketing/SuccessStories";
+const About = lazy(() => import("./pages/marketing/About"));
+const Blog = lazy(() => import("./pages/marketing/Blog"));
+const Careers = lazy(() => import("./pages/marketing/Careers"));
+const SalaryData = lazy(() => import("./pages/marketing/SalaryData"));
+const GetFeatured = lazy(() => import("./pages/marketing/GetFeatured"));
+const AiRecruiting = lazy(() => import("./pages/marketing/AiRecruiting"));
+const SuccessStories = lazy(() => import("./pages/marketing/SuccessStories"));
 
 // ==========================================================================
 // 5. LEGAL COMPLIANCE & REGULATORY DECLARATIONS IMPORT SEGMENT
 // ==========================================================================
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import TermsOfUse from "./pages/legal/TermsOfUse";
-import CookiePolicy from "./pages/legal/CookiePolicy";
-import Security from "./pages/legal/Security";
-import HelpCenter from "./pages/legal/HelpCenter";
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfUse = lazy(() => import("./pages/legal/TermsOfUse"));
+const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
+const Security = lazy(() => import("./pages/legal/Security"));
+const HelpCenter = lazy(() => import("./pages/legal/HelpCenter"));
 
 // ==========================================================================
 // 6. UNIVERSAL UTILITY SHIFT SHARED LAYOUT IMPORT SEGMENT
@@ -66,46 +66,48 @@ function AppContent() {
     <>
       {!hideLayout && <Navbar />}
       <main className="main-content">
-        <Routes>
-          {/* Immersive Public & Access Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+          <Routes>
+            {/* Immersive Public & Access Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          {/* Role-Gated Candidate Spaces */}
-          <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
-          <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
-          <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
+            {/* Role-Gated Candidate Spaces */}
+            <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
+            <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
+            <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
 
-          {/* ========================================== */}
-          {/* ================= ADMIN ================== */}
-          <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter"><AdminDashboard /></ProtectedRoute>} />
+            {/* ========================================== */}
+            {/* ================= ADMIN ================== */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter"><AdminDashboard /></ProtectedRoute>} />
 
-          {/* ========================================== */}
-          {/* ============== RECRUITER ================= */}
-          <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
-          <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
-          <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
+            {/* ========================================== */}
+            {/* ============== RECRUITER ================= */}
+            <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
+            <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
+            <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
 
-          {/* Informational Marketing & Legal Layout Trees */}
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/help-center" element={<HelpCenter />} />
-          <Route path="/salary-data" element={<SalaryData />} />
-          <Route path="/get-featured" element={<GetFeatured />} />
-          <Route path="/ai-recruiting" element={<AiRecruiting />} />
-          <Route path="/success-stories" element={<SuccessStories />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-use" element={<TermsOfUse />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route path="/security" element={<Security />} />
-          
-          {/* Default 404 Catcher */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Informational Marketing & Legal Layout Trees */}
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/salary-data" element={<SalaryData />} />
+            <Route path="/get-featured" element={<GetFeatured />} />
+            <Route path="/ai-recruiting" element={<AiRecruiting />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/security" element={<Security />} />
+            
+            {/* Default 404 Catcher */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </main>
       {!hideLayout && <Footer />}
     </>

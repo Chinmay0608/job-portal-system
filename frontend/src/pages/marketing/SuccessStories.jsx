@@ -95,7 +95,7 @@ function SuccessStories() {
         <div className="stories-grid">
           {stories.map((story, index) => (
             <div className="story-card" key={index}>
-              <img src={story.image} alt={story.name} />
+              <img src={story.image} alt={story.name} width="400" height="300" />
               <div className="story-card-content">
                 <span>{story.role}</span>
                 <h3>{story.name}</h3>

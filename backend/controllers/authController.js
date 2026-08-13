@@ -121,10 +121,16 @@ const googleLogin = asyncHandler(async (req, res) => {
   }
 
   let decodedToken;
+
+  if (!admin.apps.length && process.env.NODE_ENV === "production") {
+    console.error("[AUTH] Google authentication misconfigured in production: Firebase Admin not initialized.");
+    res.status(500);
+    throw new Error("Google authentication is misconfigured. Please contact support.");
+  }
+
   try {
     if (!admin.apps.length) {
-      console.warn("Firebase Admin not initialized, skipping token verification (DEV ONLY)");
-      // Fallback for dev without service account, relying on passed email (DANGEROUS IN PROD)
+      console.warn("Firebase Admin not initialized, skipping token verification (DEV ONLY — this must never happen in production)");
       decodedToken = { email: req.body.email, name: req.body.name };
     } else {
       decodedToken = await admin.auth().verifyIdToken(idToken);

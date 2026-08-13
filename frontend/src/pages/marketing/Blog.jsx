@@ -91,7 +91,7 @@ function Blog() {
         <div className="articles-grid">
           {featuredArticles.map((article, index) => (
             <div className="article-card" key={index}>
-              <img src={article.image} alt={article.title} />
+              <img src={article.image} alt={article.title} width="600" height="400" />
 
               <div className="article-content">
                 <span>{article.category}</span>

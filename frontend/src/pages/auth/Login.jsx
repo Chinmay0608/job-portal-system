@@ -182,17 +182,19 @@ function Login() {
                   className="password-toggle-btn"
                   style={{
                     position: "absolute",
-                    right: "12px",
+                    right: "4px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#9ca3af",
+                    color: "#4b5563",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: 0
+                    padding: "12px",
+                    minWidth: "44px",
+                    minHeight: "44px",
                   }}
                   onClick={() => setShowPassword(!showPassword)}
                 >

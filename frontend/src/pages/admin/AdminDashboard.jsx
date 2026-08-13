@@ -35,17 +35,17 @@ const AdminDashboard = () => {
       <div className="metrics-grid">
         {/* Core Metrics */}
         <div className="metric-card glass">
-          <h3>Registry Size</h3>
+          <h2>Registry Size</h2>
           <div className="metric-value">{metrics.registrySize}</div>
         </div>
 
         <div className="metric-card glass">
-          <h3>Crawler Success</h3>
+          <h2>Crawler Success</h2>
           <div className="metric-value">{metrics.crawlerSuccess}</div>
         </div>
 
         <div className="metric-card glass">
-          <h3>Avg Crawl Time</h3>
+          <h2>Avg Crawl Time</h2>
           <div className="metric-value">{metrics.averageCrawlTime}ms</div>
         </div>
       </div>
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
       <div className="metrics-grid col-2">
         {/* Delta Tracking */}
         <div className="metric-card glass">
-          <h3>Today's Deltas</h3>
+          <h2>Today's Deltas</h2>
           <ul className="delta-list">
             <li><span className="dot green"></span> New Jobs: <strong>{metrics.todayDeltas?.newJobs || 0}</strong></li>
             <li><span className="dot blue"></span> Updated Jobs: <strong>{metrics.todayDeltas?.updatedJobs || 0}</strong></li>
@@ -64,7 +64,7 @@ const AdminDashboard = () => {
 
         {/* Top Hiring */}
         <div className="metric-card glass">
-          <h3>Top Hiring Companies</h3>
+          <h2>Top Hiring Companies</h2>
           <ul className="hiring-list">
             {metrics.topHiring?.map((comp, i) => (
               <li key={i}>{comp.name} <span>{comp.count}</span></li>

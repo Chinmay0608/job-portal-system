@@ -10,14 +10,22 @@ const initializeFirebase = () => {
   try {
     const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
     if (!serviceAccountPath) {
-      console.warn("[Firebase Admin] WARNING: FIREBASE_SERVICE_ACCOUNT_PATH is not defined. Google login verification will be bypassed (DANGEROUS IN PRODUCTION).");
+      if (process.env.NODE_ENV === "production") {
+        console.error("[STARTUP] FIREBASE ADMIN FAILED TO INITIALIZE — Google login will be broken/insecure in production");
+      } else {
+        console.warn("[Firebase Admin] WARNING: FIREBASE_SERVICE_ACCOUNT_PATH is not defined. Google login verification will be bypassed (DANGEROUS IN PRODUCTION).");
+      }
       return null;
     }
 
     const absolutePath = path.resolve(__dirname, '..', serviceAccountPath);
     
     if (!fs.existsSync(absolutePath)) {
-      console.warn(`[Firebase Admin] WARNING: Service account file not found at ${absolutePath}. Google login verification will be bypassed.`);
+      if (process.env.NODE_ENV === "production") {
+        console.error("[STARTUP] FIREBASE ADMIN FAILED TO INITIALIZE — Google login will be broken/insecure in production");
+      } else {
+        console.warn(`[Firebase Admin] WARNING: Service account file not found at ${absolutePath}. Google login verification will be bypassed.`);
+      }
       return null;
     }
 
@@ -30,7 +38,11 @@ const initializeFirebase = () => {
     console.log("[Firebase Admin] Initialized successfully");
     return firebaseApp;
   } catch (error) {
-    console.error("[Firebase Admin] Initialization failed:", error);
+    if (process.env.NODE_ENV === "production") {
+      console.error("[STARTUP] FIREBASE ADMIN FAILED TO INITIALIZE — Google login will be broken/insecure in production", error);
+    } else {
+      console.error("[Firebase Admin] Initialization failed:", error);
+    }
     return null;
   }
 };

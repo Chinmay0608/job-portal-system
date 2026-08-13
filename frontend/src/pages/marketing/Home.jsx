@@ -152,7 +152,7 @@ function Home() {
               rel="noopener noreferrer" 
               className="home-logo-item"
             >
-              <img src={c.logo} alt={c.name} />
+              <img src={c.logo} alt={c.name} width="120" height="40" />
             </a>
           ))}
         </div>
