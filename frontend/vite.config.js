@@ -7,4 +7,9 @@ export default defineConfig({
   build: {
     sourcemap: true,
   },
+  server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+    }
+  }
 })
