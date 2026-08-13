@@ -4,8 +4,9 @@ const HealthMonitor = require('../services/sde/HealthMonitor');
 const CrawlDeltaLog = require('../models/CrawlDeltaLog');
 const Company = require('../models/Company');
 const RawJobPayload = require('../models/RawJobPayload');
+const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
-router.get('/sde/health', async (req, res) => {
+router.get('/sde/health', protect, authorizeRoles('recruiter'), async (req, res) => {
   try {
     const metrics = await HealthMonitor.getMetrics();
     

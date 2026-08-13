@@ -1,10 +1,30 @@
 const User = require("../models/user");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
+const Application = require("../models/Application");
 const bcrypt = require("bcryptjs");
 const { extractSkillsFromResume, extractSkillsFromBuffer } = require("../services/resumeParserService");
 const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
+
+// Helper to generate a signed Cloudinary URL for a resume
+const generateSignedResumeUrl = (resumeUrl) => {
+  const urlParts = resumeUrl.split("/upload/");
+  if (urlParts.length !== 2) {
+    return resumeUrl; // Fallback for old unauthenticated local paths if any
+  }
+  const pathWithoutUpload = urlParts[1];
+  const versionRegex = /^v\d+\//;
+  let publicIdWithExtension = pathWithoutUpload.replace(versionRegex, "");
+  
+  const cloudinary = require("../config/cloudinary");
+  return cloudinary.utils.url(publicIdWithExtension, {
+    resource_type: "raw",
+    type: "authenticated",
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + 15 * 60, // 15 mins
+  });
+};
 
 const updateProfile = asyncHandler(async (req, res) => {
   const {
@@ -182,7 +202,8 @@ const extractSkills = asyncHandler(async (req, res) => {
   }
 
   logger.info("[Resume Parser] Downloading saved resume for extraction...");
-  const response = await fetch(user.resume);
+  const signedUrl = generateSignedResumeUrl(user.resume);
+  const response = await fetch(signedUrl);
   if (!response.ok) {
     throw new Error(
       `Failed to fetch resume from Cloudinary: ${response.statusText}`,
@@ -220,37 +241,29 @@ const getSignedResumeUrl = asyncHandler(async (req, res) => {
     throw new Error("Access denied");
   }
 
+  // If recruiter, check they have an application linking them to this candidate
+  if (req.user.role === "recruiter") {
+    const recruiterJobIds = await Job.find({ recruiter: req.user.id }).select("_id");
+    const jobIdList = recruiterJobIds.map((j) => j._id);
+
+    const hasApplied = await Application.exists({
+      candidate: userId,
+      job: { $in: jobIdList },
+    });
+
+    if (!hasApplied) {
+      res.status(403);
+      throw new Error("Access denied");
+    }
+  }
+
   const targetUser = await User.findById(userId);
   if (!targetUser || !targetUser.resume) {
     res.status(404);
     throw new Error("Resume not found");
   }
 
-  // The resume is stored as a full Cloudinary URL.
-  // We need to extract the public ID.
-  // Example: https://res.cloudinary.com/dxyz/raw/authenticated/upload/v1234/skillbridge/resumes/filename.pdf
-  // The public ID is everything after the "upload/v[0-9]+/" part.
-  const urlParts = targetUser.resume.split("/upload/");
-  if (urlParts.length !== 2) {
-    return res.redirect(targetUser.resume); // Fallback for old unauthenticated local paths if any
-  }
-
-  // Remove the version string (e.g., v1613243/)
-  const pathWithoutUpload = urlParts[1];
-  const versionRegex = /^v\d+\//;
-  let publicIdWithExtension = pathWithoutUpload.replace(versionRegex, "");
-
-  // Cloudinary raw resources typically require the extension in the public ID, 
-  // but let's just generate the signed URL using the cloudinary utils.
-  const cloudinary = require("../config/cloudinary");
-  
-  const signedUrl = cloudinary.utils.url(publicIdWithExtension, {
-    resource_type: "raw",
-    type: "authenticated",
-    sign_url: true,
-    expires_at: Math.floor(Date.now() / 1000) + 15 * 60, // 15 mins
-  });
-
+  const signedUrl = generateSignedResumeUrl(targetUser.resume);
   res.redirect(signedUrl);
 });
 
