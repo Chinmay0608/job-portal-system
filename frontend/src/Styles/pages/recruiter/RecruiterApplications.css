@@ -308,32 +308,45 @@
    EMPTY STATE
 ========================== */
 .empty-applications {
-  background: white;
-  border-radius: 34px;
-  border: 1px solid #ececec;
-  padding: 90px 40px;
+  background: #f9fafb;
+  border-radius: 20px;
+  border: 1px dashed #d1d5db;
+  padding: 60px 24px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 600px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-icon {
-  font-size: 5rem;
-  margin-bottom: 20px;
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.8;
+  background: white;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .empty-applications h2 {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: #07111f;
-  margin-bottom: 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
 }
 
 .empty-applications p {
   color: #6b7280;
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 /* ==========================
