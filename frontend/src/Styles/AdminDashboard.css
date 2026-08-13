@@ -1,7 +1,9 @@
 .admin-dashboard-container {
-  padding: 2rem;
-  background-color: #0f172a;
-  color: #f8fafc;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 100px 24px 40px;
+  background-color: #f9fafb;
+  color: #111827;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
 }
@@ -11,17 +13,25 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid #e5e7eb;
   padding-bottom: 1rem;
 }
 
+.admin-header h1 {
+  font-size: 2.3rem;
+  font-weight: 800;
+  color: #07111f;
+  margin: 0;
+}
+
 .status-badge {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  background: #dcfce7;
+  color: #15803d;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-weight: 600;
-  border: 1px solid #10b981;
+  border: 1px solid #bbf7d0;
+  font-size: 0.875rem;
 }
 
 .pulse-green {
@@ -29,9 +39,9 @@
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(21, 128, 61, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0); }
 }
 
 .metrics-grid {
@@ -45,27 +55,33 @@
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
 }
 
-.metric-card.glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+.metric-card {
+  background: white;
+  border: 1px solid #ececec;
+  padding: 1.75rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
 }
 
-.metric-card h3 {
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+}
+
+.metric-card h2 {
   margin: 0 0 1rem 0;
-  color: #94a3b8;
-  font-size: 0.875rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .metric-value {
   font-size: 2.5rem;
-  font-weight: 700;
-  color: #fff;
+  font-weight: 800;
+  color: #07111f;
 }
 
 .delta-list, .hiring-list {
@@ -79,11 +95,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+  font-weight: 500;
 }
 
 .delta-list li:last-child, .hiring-list li:last-child {
   border-bottom: none;
+}
+
+.delta-list li strong, .hiring-list li span {
+  font-weight: 700;
+  color: #111827;
 }
 
 .dot {
@@ -104,7 +127,8 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #f9fafb;
+  color: #111827;
   font-size: 1.25rem;
+  font-weight: 500;
 }
