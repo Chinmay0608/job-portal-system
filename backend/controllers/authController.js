@@ -109,6 +109,8 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
+const { getAuth } = require("firebase-admin/auth");
+
 /* ==========================
    GOOGLE LOGIN
 ========================== */
@@ -122,18 +124,18 @@ const googleLogin = asyncHandler(async (req, res) => {
 
   let decodedToken;
 
-  if (!admin.apps.length && process.env.NODE_ENV === "production") {
+  if (!admin.getApps().length && process.env.NODE_ENV === "production") {
     console.error("[AUTH] Google authentication misconfigured in production: Firebase Admin not initialized.");
     res.status(500);
     throw new Error("Google authentication is misconfigured. Please contact support.");
   }
 
   try {
-    if (!admin.apps.length) {
+    if (!admin.getApps().length) {
       console.warn("Firebase Admin not initialized, skipping token verification (DEV ONLY — this must never happen in production)");
       decodedToken = { email: req.body.email, name: req.body.name };
     } else {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
+      decodedToken = await getAuth().verifyIdToken(idToken);
     }
   } catch (error) {
     res.status(401);
