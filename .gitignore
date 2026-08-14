@@ -3,6 +3,9 @@ node_modules
 uploads
 dist*.pdf
 
+*.report.html
+pagespeed-logs/
+pagespeed_log.js
 
 backend/uploads/*.pdf
 backend/uploads/*.docx
