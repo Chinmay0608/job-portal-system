@@ -26,7 +26,6 @@
   max-width: 410px;
   display: flex;
   flex-direction: column;
-  padding-top: 80px;
 }
 
 .login-brand {
@@ -35,7 +34,7 @@
   left: 15px;
   font-size: 3.2rem;
   font-weight: 900;
-  color: #0d1117;
+  color: #1B2A4A;
 
   letter-spacing: -1.5px;
   line-height: 1;
@@ -45,7 +44,7 @@
 }
 
 .login-brand-dot {
-  color: #ef4444;
+  color: #E8833A;
 }
 
 .login-title {
@@ -95,7 +94,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-  color: #c4c4c4;
+  color: #6b7280;
   font-size: 13px;
 }
 
@@ -142,7 +141,7 @@
 }
 
 .login-input::placeholder {
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 .login-options {

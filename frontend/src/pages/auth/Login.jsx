@@ -203,22 +203,22 @@ function Login() {
               </div>
             </div>
 
-            <p className="login-forgot">
-              <span onClick={() => navigate("/forgot-password")}>
+            <p className="login-forgot" style={{ textAlign: "right", margin: "4px 0 16px 0" }}>
+              <span className="forgot-password-link" onClick={() => navigate("/forgot-password")} style={{ fontSize: "13.5px" }}>
                 Forgot password?
               </span>
             </p>
 
             <button type="submit" className="login-submit-btn" disabled={loading} aria-label="Log in">
-              {loading ? "Logging in..." : "Cross the bridge →"}
+              {loading ? "Logging in..." : "Sign In"}
             </button>
 
             {/* STYLED TEXT SWITCHER SPAN */}
             <p className="login-bottom-text">
               <span className="desktop-link-text">Not registered? </span>
-              <span className="mobile-link-text">First time on this side? </span>
+              <span className="mobile-link-text">Not registered? </span>
               <span className="link-action" onClick={() => navigate("/register", { state: { role: loginRole } })}>
-                Build your access
+                Sign up
               </span>
             </p>
           </form>
@@ -255,6 +255,8 @@ function Login() {
           </p>
 
           <div className="stats-container">
+            {/* TODO: These stats ("50K+ Jobs", "1K+ Recruiters", "20K+ Candidates") are currently hardcoded placeholders. 
+                They should be wired to a real API endpoint returning live counts, or explicitly relabeled as illustrative/example figures. */}
             <div className="stats-card">
               <div className="stats-icon pink">💼</div>
               <h3>50K+</h3>

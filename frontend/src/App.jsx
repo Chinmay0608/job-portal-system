@@ -59,8 +59,8 @@ function AppContent() {
   const location = useLocation();
 
   // Integrated /recruiter-dashboard layout toggle rule parameters
-  const hideLayout = ["/login", "/register", "/forgot-password"].includes(location.pathname) || 
-                     location.pathname.startsWith("/reset-password");
+  const hideLayout = ["/login", "/register", "/forgot-password"].includes(location.pathname.toLowerCase()) || 
+                     location.pathname.toLowerCase().startsWith("/reset-password");
 
   return (
     <>
