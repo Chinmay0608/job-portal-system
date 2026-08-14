@@ -35,7 +35,7 @@
 
 .footer-tagline {
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.38);
+  color: rgba(255,255,255,0.72);
   line-height: 1.7;
   max-width: 220px;
   margin-bottom: 24px;
@@ -55,7 +55,7 @@
   border-radius: 9px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.75);
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
@@ -81,12 +81,12 @@
   gap: 11px;
 }
 
-.footer-col h4 {
+.footer-col-heading {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.75);
   margin-bottom: 4px;
 }
 
@@ -94,7 +94,7 @@
 .footer-col a,
 .footer-col button {
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.52);
+  color: rgba(255,255,255,0.72);
   text-decoration: none;
   transition: color 0.2s;
   line-height: 1;
@@ -111,7 +111,7 @@
 /* Hover */
 .footer-col a:hover,
 .footer-col button:hover {
-  color: rgba(255,255,255,0.88);
+  color: #ffffff;
 }
 
 /* BOTTOM BAR */
@@ -124,12 +124,12 @@
 
 .footer-bottom span {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.65);
 }
 
 .footer-bottom-right {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.65);
 }
 
 /* RESPONSIVE */

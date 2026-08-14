@@ -38,7 +38,7 @@ function Footer() {
         {/* Links Navigation Grid */}
         <div className="footer-links-grid">
           <div className="footer-col">
-            <h4>For Candidates</h4>
+            <div className="footer-col-heading">For Candidates</div>
             <button onClick={() => handleJobNavigation("all")}>Browse Jobs</button>
             <button onClick={() => handleJobNavigation("remote")}>Remote Roles</button>
             <button onClick={() => delayedNavigate("/salary-data")}>Salary Data</button>
@@ -46,7 +46,7 @@ function Footer() {
           </div>
 
           <div className="footer-col">
-            <h4>For Companies</h4>
+            <div className="footer-col-heading">For Companies</div>
             <button onClick={() => navigate("/register", {state: { role: "recruiter" }, })}>Post a Job</button>
             <button onClick={() => delayedNavigate("/ai-recruiting")}>AI Recruiting</button>
             <button onClick={() => delayedNavigate("/register")}>Pricing</button>
@@ -54,7 +54,7 @@ function Footer() {
           </div>
 
           <div className="footer-col">
-            <h4>Company</h4>
+            <div className="footer-col-heading">Company</div>
             <button onClick={() => delayedNavigate("/about")}>About</button>
             <button onClick={() => delayedNavigate("/blog")}>Blog</button>
             <button onClick={() => delayedNavigate("/careers")}>Careers</button>
@@ -62,7 +62,7 @@ function Footer() {
           </div>
 
           <div className="footer-col">
-            <h4>Legal</h4>
+            <div className="footer-col-heading">Legal</div>
             <button onClick={() => delayedNavigate("/privacy-policy")}>Privacy Policy</button>
             <button onClick={() => delayedNavigate("/terms-of-use")}>Terms of Use</button>
             <button onClick={() => delayedNavigate("/cookie-policy")}>Cookie Policy</button>
