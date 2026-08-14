@@ -227,7 +227,7 @@
   padding: 0 24px;
 }
 
-.home-stat-item h2 {
+.home-stat-number {
   font-size: 2.4rem;
   font-weight: 900;
   letter-spacing: -1.5px;
@@ -238,8 +238,8 @@
 
 .home-stat-item p {
   font-size: 0.88rem;
-  color: #6b7280;
-  font-weight: 500;
+  color: #4b5563;
+  font-weight: 600;
 }
 
 .home-stat-divider {
@@ -254,7 +254,7 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: #4b5563;
   margin-bottom: 26px;
 }
 

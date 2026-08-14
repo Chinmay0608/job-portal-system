@@ -122,22 +122,22 @@ function Home() {
       <section className="home-stats-section">
         <div className="home-stats-row">
           <div className="home-stat-item">
-            <h2>10M+</h2>
+            <div className="home-stat-number">10M+</div>
             <p>Startup-ready candidates</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <h2>130K+</h2>
+            <div className="home-stat-number">130K+</div>
             <p>Active tech jobs</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <h2>8M+</h2>
+            <div className="home-stat-number">8M+</div>
             <p>Matches made</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <h2>50K+</h2>
+            <div className="home-stat-number">50K+</div>
             <p>Companies hiring</p>
           </div>
         </div>
