@@ -746,6 +746,7 @@ function CandidateDashboard() {
                           
                           <button
                             className="card-bookmark-btn"
+                            aria-label="Save job"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleSave(job._id);
@@ -781,7 +782,7 @@ function CandidateDashboard() {
                           {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
                         </div>
                         
-                        <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#9ca3af' }}>
+                        <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#4b5563', fontWeight: '500' }}>
                           {getRelativeTime(job.createdAt)}
                         </div>
                       </div>

@@ -277,7 +277,9 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
   display: grid;
   place-items: center;
 }
@@ -300,7 +302,7 @@
 
 .ind-card-location {
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: #4b5563;
   margin: 0 0 10px 0;
 }
 
