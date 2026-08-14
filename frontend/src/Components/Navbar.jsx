@@ -114,7 +114,9 @@ function Navbar() {
               <>
                 <Link className="dashboard-btn nav-hover" to="/recruiter-dashboard">Jobs</Link>
                 <Link className="dashboard-btn nav-hover" to="/recruiter-applications">Applications</Link>
-                <Link className="dashboard-btn nav-hover" to="/admin/dashboard">Admin Tools</Link>
+                {user?.email?.toLowerCase() === "admin@gmail.com" && (
+                  <Link className="dashboard-btn nav-hover" to="/admin/dashboard">Admin Tools</Link>
+                )}
                 <Link className="dashboard-btn nav-hover" to="/recruiter-profile">Profile</Link>
               </>
             )}

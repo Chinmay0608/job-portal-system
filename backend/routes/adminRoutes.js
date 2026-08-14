@@ -6,8 +6,15 @@ const Company = require('../models/Company');
 const RawJobPayload = require('../models/RawJobPayload');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 
+const User = require('../models/user');
+
 router.get('/sde/health', protect, authorizeRoles('recruiter'), async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.email.toLowerCase() !== 'admin@gmail.com') {
+      return res.status(403).json({ error: 'Access denied: Admins only' });
+    }
+
     const metrics = await HealthMonitor.getMetrics();
     
     // Get today's global deltas

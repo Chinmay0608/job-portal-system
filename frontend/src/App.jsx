@@ -82,7 +82,7 @@ function AppContent() {
 
             {/* ========================================== */}
             {/* ================= ADMIN ================== */}
-            <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute role="recruiter" email="admin@gmail.com"><AdminDashboard /></ProtectedRoute>} />
 
             {/* ========================================== */}
             {/* ============== RECRUITER ================= */}

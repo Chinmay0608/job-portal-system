@@ -15,7 +15,7 @@ const companySchema = new mongoose.Schema(
     normalizedDomain: {
       type: String,
       unique: true,
-      sparse: true, // Sparse because legacy companies might not have it initially
+      sparse: true, 
     },
     careerPage: {
       type: String,
