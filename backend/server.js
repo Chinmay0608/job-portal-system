@@ -20,6 +20,9 @@ const csrfProtection = require("./middleware/csrfMiddleware");
 
 const app = express();
 
+// Trust reverse proxy for rate-limiting behind Render/Vercel
+app.set("trust proxy", 1);
+
 /* ==========================
    DATABASE
 ========================== */
