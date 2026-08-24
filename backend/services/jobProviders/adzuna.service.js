@@ -83,6 +83,7 @@ class AdzunaProvider extends BaseProvider {
       source: this.name,
       externalId: rawJob.id ? String(rawJob.id) : null,
       employmentType: rawJob.contract_type === "permanent" ? "Full-time" : rawJob.contract_type === "contract" ? "Contract" : "Full-time",
+      expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
       keywords: skillsRequired,
       providerMetadata: jobAggConfig.storeRawPayloads ? { raw: rawJob } : {},
     };
@@ -90,3 +91,4 @@ class AdzunaProvider extends BaseProvider {
 }
 
 module.exports = AdzunaProvider;
+
