@@ -14,6 +14,7 @@ const {
   hideJob,
   searchMasterSkills,
   triggerManualSync,
+  triggerScheduledSync,
   getSyncStatus,
 } = require("../controllers/jobController");
 
@@ -48,6 +49,7 @@ router.post(
    ADMIN ROUTES
 ========================== */
 router.post("/sync", protect, authorizeRoles("recruiter"), triggerManualSync);
+router.post("/internal-sync", triggerScheduledSync);
 router.get("/sync/status", protect, authorizeRoles("recruiter"), getSyncStatus);
 
 /* ==========================
@@ -85,3 +87,4 @@ router.delete(
 );
 
 module.exports = router;
+

@@ -118,6 +118,7 @@ function CandidateDashboard() {
 
   // Mobile detail view toggle
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Post-Apply Feedback Loop State
   const [pendingFeedbackJob, setPendingFeedbackJob] = useState(null);
@@ -455,6 +456,7 @@ function CandidateDashboard() {
     setSelectedJob(job);
     resetApplyState();
     setIsMobileDetailView(true);
+    setIsDescriptionExpanded(false);
   };
 
   // Reset pagination whenever the filters or the All/Recommended toggle change,
@@ -1032,14 +1034,63 @@ function CandidateDashboard() {
                 </div>
 
                 <div className="ind-detail-scroll-body">
-                  <h4 className="ind-body-section-heading">Full Job Description</h4>
-                  <div className="ind-description-content">
-                    {selectedJob.isExternal ? (
-                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decodeHTMLEntities(selectedJob.description)) }} />
-                    ) : (
-                      <p>{selectedJob.description}</p>
-                    )}
+                  
+                  {/* GLASS-DOOR STYLE QUALIFICATIONS MATCH BOX */}
+                  <div className="ind-qualifications-box">
+                    <h4 className="ind-qualifications-heading">Your qualifications for this job</h4>
+                    
+                    <div className="ind-qualifications-list">
+                      {selectedJob.educationRequired && (
+                        <div className="ind-qualification-item">
+                          <span className="ind-check-icon match">✓</span>
+                          <span>{selectedJob.educationRequired}</span>
+                        </div>
+                      )}
+                      
+                      {selectedJob.skillsRequired && selectedJob.skillsRequired.length > 0 ? (
+                         selectedJob.skillsRequired.map((skill, idx) => {
+                            const isMatch = user?.skills?.map(s => s.toLowerCase()).includes(skill.toLowerCase());
+                            return (
+                                <div key={idx} className="ind-qualification-item">
+                                  <span className={`ind-check-icon ${isMatch ? 'match' : 'unmatched'}`}>
+                                    {isMatch ? '✓' : '○'}
+                                  </span>
+                                  <span>{skill}</span>
+                                </div>
+                            );
+                         })
+                      ) : (
+                         <div className="ind-qualification-item">
+                           <span className="ind-check-icon match">✓</span>
+                           <span>{selectedJob.experienceRequired || "Entry Level"}</span>
+                         </div>
+                      )}
+                    </div>
                   </div>
+
+                  <h4 className="ind-body-section-heading" style={{ marginTop: '24px' }}>Full Job Description</h4>
+                  
+                  <div className={`ind-description-container ${isDescriptionExpanded ? 'expanded' : 'collapsed'}`}>
+                    <div className="ind-description-content">
+                      {selectedJob.isExternal ? (
+                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decodeHTMLEntities(selectedJob.description)) }} />
+                      ) : (
+                        <div>
+                          {selectedJob.description.split('\n').map((p, i) => (
+                            <p key={i}>{p}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {!isDescriptionExpanded && <div className="ind-fade-overlay"></div>}
+                  </div>
+
+                  <button 
+                    className="ind-show-more-btn"
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  >
+                    {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                  </button>
                 </div>
               </div>
             ) : (

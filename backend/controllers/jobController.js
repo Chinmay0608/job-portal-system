@@ -358,6 +358,41 @@ const getSyncStatus = async (req, res, next) => {
   }
 };
 
+const triggerScheduledSync = async (req, res, next) => {
+  const providedSecret = req.headers["x-sync-secret"];
+
+  if (!process.env.SYNC_SECRET_KEY || providedSecret !== process.env.SYNC_SECRET_KEY) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  try {
+    const syncService = require("../services/sync.service");
+    const jobAggConfig = require("../config/jobAggregation");
+
+    if (!jobAggConfig.isAggregationEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: "Job Aggregation is disabled globally via configuration.",
+      });
+    }
+
+    console.log("[Scheduled Sync] Triggered via external cron at", new Date().toISOString());
+
+    // Await this one (unlike the manual endpoint) so GitHub Actions gets a
+    // real pass/fail result and logs, rather than firing-and-forgetting.
+    const metrics = await syncService.runAllSync();
+
+    res.status(200).json({
+      success: true,
+      message: "Job sync completed.",
+      metrics,
+    });
+  } catch (error) {
+    console.error("[Scheduled Sync] Failed:", error.message);
+    res.status(500).json({ success: false, message: "Sync failed", error: error.message });
+  }
+};
+
 module.exports = {
   createJob,
   getAllJobs,
@@ -368,5 +403,7 @@ module.exports = {
   hideJob,
   searchMasterSkills,
   triggerManualSync,
+  triggerScheduledSync,
   getSyncStatus,
 };
+

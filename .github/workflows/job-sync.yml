@@ -1,0 +1,27 @@
+name: Scheduled Job Sync
+
+on:
+  schedule:
+    # Every 6 hours. Adjust as needed — GitHub Actions cron times are in UTC
+    # and may run a few minutes late during high-load periods; that's fine here.
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}  # allows manually triggering a run from the GitHub Actions tab too
+
+jobs:
+  trigger-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call backend sync endpoint
+        run: |
+          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            --max-time 120 \
+            -X POST "${{ secrets.BACKEND_URL }}/api/jobs/internal-sync" \
+            -H "x-sync-secret: ${{ secrets.SYNC_SECRET_KEY }}")
+
+          echo "HTTP status: $response"
+          cat /tmp/response.json
+
+          if [ "$response" -ge 400 ]; then
+            echo "Sync request failed with status $response"
+            exit 1
+          fi
