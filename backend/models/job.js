@@ -97,7 +97,7 @@ jobSchema.index({ title: "text", company: "text", keywords: "text" });
 // Provider and querying indexes
 jobSchema.index({ source: 1 });
 jobSchema.index({ externalId: 1 });
-jobSchema.index({ expiresAt: 1 });
+jobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 jobSchema.index({ isExternal: 1 });
 jobSchema.index({ company: 1 });
 jobSchema.index({ location: 1 });
@@ -105,3 +105,4 @@ jobSchema.index({ employmentType: 1 });
 jobSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Job", jobSchema);
+
