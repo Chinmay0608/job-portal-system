@@ -77,7 +77,7 @@ class PriorityScheduler {
           await crawlerQueue.add('extractJobs', {
             companyId: company._id,
             providerName: company.platformRef,
-            identifier: company.platformRef === 'LEVER' ? company.name.toLowerCase() : company.name.toLowerCase() // Simple fallback mapping
+            identifier: company.providerIdentifier || company.name.toLowerCase().replace(/\s+/g, '')
           }, { 
             jobId: `crawl_${company._id}_${now.getTime()}` // Prevent duplicates in queue
           });
@@ -91,3 +91,4 @@ class PriorityScheduler {
 }
 
 module.exports = new PriorityScheduler();
+

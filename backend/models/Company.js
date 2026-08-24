@@ -30,9 +30,16 @@ const companySchema = new mongoose.Schema(
       default: "",
     },
     // --- SDE Phase B Extensions ---
-    platformRef: {
+        platformRef: {
       type: String,
       default: "UNKNOWN",
+    },
+    providerIdentifier: {
+      type: String,
+      default: "",
+      // The company's actual board token / account slug on their ATS platform
+      // (e.g. Greenhouse board token, Lever account slug). This is frequently
+      // different from the company's display name.
     },
     status: {
       type: String,
@@ -55,3 +62,4 @@ const companySchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Company", companySchema);
+
