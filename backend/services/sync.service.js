@@ -1,3 +1,4 @@
+const { isJobRelevant } = require("./jobRelevanceFilter");
 const providers = require("./jobProviders");
 const Job = require("../models/job");
 const Provider = require("../models/Provider");
@@ -42,6 +43,7 @@ class SyncService {
       inserted: 0,
       updated: 0,
       skipped: 0,
+      irrelevant: 0,
       invalid: 0,
       failed: 0,
       duration: "0s"
@@ -74,6 +76,11 @@ class SyncService {
 
           if (!provider.validateJob(normalizedJob)) {
             metrics.invalid++;
+            continue;
+          }
+
+          if (!isJobRelevant(normalizedJob)) {
+            metrics.irrelevant++;
             continue;
           }
 
