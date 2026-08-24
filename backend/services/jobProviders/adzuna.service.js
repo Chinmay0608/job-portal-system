@@ -25,13 +25,15 @@ class AdzunaProvider extends BaseProvider {
       for (let page = 1; page <= 20; page++) {
         const url = `${this.config.baseUrl}/in/search/${page}`;
         const response = await axios.get(url, {
-          params: {
-            app_id: this.config.appId,
-            app_key: this.config.apiKey,
-            results_per_page: 50,
-            what: "software developer",
-            "content-type": "application/json",
-          },
+                      params: {
+              app_id: this.config.appId,
+              app_key: this.config.apiKey,
+              results_per_page: 50,
+              what: "software developer OR full stack developer OR MERN developer OR java developer",
+              title_only: "software developer OR full stack developer OR MERN developer OR java developer",
+              max_days_old: 30,
+              "content-type": "application/json",
+            },
         });
 
         if (response.data && response.data.results) {
@@ -91,4 +93,5 @@ class AdzunaProvider extends BaseProvider {
 }
 
 module.exports = AdzunaProvider;
+
 

@@ -1,3 +1,4 @@
+const { isJobRelevant } = require("./jobRelevanceFilter");
 const axios = require("axios");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
@@ -51,6 +52,7 @@ const importJobsFromRemotive = async () => {
     if (externalJobs.length === 0) return 0;
 
     let newJobsCount = 0;
+    let skippedCount = 0;
     for (const job of externalJobs) {
       const existingJob = await Job.findOne({ applyUrl: job.url });
       if (!existingJob) {
