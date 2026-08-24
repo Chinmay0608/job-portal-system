@@ -19,7 +19,7 @@ const CANDIDATES = [
 
 const validateGreenhouse = async (token) => {
   try {
-    const res = await axios.get(`https://boards-api.greenhouse.io/v1/boards//jobs`, { timeout: 8000 });
+    const res = await axios.get(`https://boards-api.greenhouse.io/v1/boards/${token}/jobs`, { timeout: 8000 });
     return Array.isArray(res.data?.jobs) && res.data.jobs.length > 0;
   } catch {
     return false;
@@ -28,7 +28,7 @@ const validateGreenhouse = async (token) => {
 
 const validateLever = async (slug) => {
   try {
-    const res = await axios.get(`https://api.lever.co/v0/postings/?mode=json`, { timeout: 8000 });
+    const res = await axios.get(`https://api.lever.co/v0/postings/${slug}?mode=json`, { timeout: 8000 });
     return Array.isArray(res.data) && res.data.length > 0;
   } catch {
     return false;
@@ -36,7 +36,7 @@ const validateLever = async (slug) => {
 };
 
 const seed = async () => {
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
   console.log("[Seed] Connected to MongoDB");
 
   let inserted = 0;
@@ -46,7 +46,7 @@ const seed = async () => {
   for (const candidate of CANDIDATES) {
     const exists = await Company.findOne({ name: candidate.name });
     if (exists) {
-      console.log(`[Seed] Skipping  — already exists`);
+      console.log(`[Seed] Skipping ${candidate.name} — already exists`);
       skippedExisting++;
       continue;
     }
@@ -57,7 +57,7 @@ const seed = async () => {
         : await validateLever(candidate.providerIdentifier);
 
     if (!isValid) {
-      console.warn(`[Seed] SKIPPED  — board token "" returned no jobs or failed. This company may have migrated ATS platforms since this script was written; remove or update this entry.`);
+      console.warn(`[Seed] SKIPPED ${candidate.name} — board token "${candidate.providerIdentifier}" returned no jobs or failed. This company may have migrated ATS platforms since this script was written; remove or update this entry.`);
       skippedInvalid++;
       continue;
     }
@@ -68,11 +68,11 @@ const seed = async () => {
       priority: 5,
       verificationLevel: "Seed Database",
     });
-    console.log(`[Seed] Inserted  (validated live, )`);
+    console.log(`[Seed] Inserted ${candidate.name} (validated live, ${candidate.providerIdentifier})`);
     inserted++;
   }
 
-  console.log(`\n[Seed] Done. Inserted: , skipped (invalid/stale token): , skipped (already existed): `);
+  console.log(`\n[Seed] Done. Inserted: ${inserted}, skipped (invalid/stale token): ${skippedInvalid}, skipped (already existed): ${skippedExisting}`);
   await mongoose.disconnect();
   process.exit(0);
 };
