@@ -60,4 +60,21 @@ router.get('/sde/health', protect, authorizeRoles('recruiter'), async (req, res)
   }
 });
 
+
+router.get('/users', protect, authorizeRoles('recruiter'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.email.toLowerCase() !== 'admin@gmail.com') {
+      return res.status(403).json({ error: 'Access denied: Admins only' });
+    }
+
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('[Admin API] Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 module.exports = router;
+

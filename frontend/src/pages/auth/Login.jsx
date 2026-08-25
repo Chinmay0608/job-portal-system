@@ -31,7 +31,7 @@ function Login() {
         }
       });
     } else {
-      navigate("/recruiter-dashboard");
+      if (user?.email?.toLowerCase() === "admin@gmail.com") { navigate("/admin/dashboard"); } else { navigate("/recruiter-dashboard"); }
     }
   };
 
