@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../../Styles/AdminDashboard.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [users, setUsers] = useState([]);
@@ -12,7 +15,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const { data } = await axios.get('/api/admin/sde/health');
+        const { data } = await axios.get(`${API_BASE_URL}/api/admin/sde/health`, getAuthHeaders());
         setMetrics(data);
       } catch (err) {
         console.error("Failed to fetch SDE metrics", err);
@@ -23,7 +26,7 @@ const AdminDashboard = () => {
     
     const fetchUsers = async () => {
       try {
-        const { data } = await axios.get('/api/admin/users');
+        const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, getAuthHeaders());
         setUsers(data);
       } catch (err) {
         console.error("Failed to fetch users", err);
