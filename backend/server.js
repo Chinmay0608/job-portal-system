@@ -108,7 +108,9 @@ connectDB().then(() => {
     const jobAggConfig = require("./config/jobAggregation");
     const syncService = require("./services/sync.service");
 
-    // Initialize SDE (Discovery Engine) gracefully
+    // SDE (Discovery Engine) INITIALIZATION COMPLETELY DISABLED
+    // TO PREVENT BULLMQ FROM DRAINING FREE REDIS TOKENS
+    /*
     (async () => {
       console.log("[SDE] Initializing Discovery Engine...");
       await queueManager.initialize();
@@ -124,6 +126,7 @@ connectDB().then(() => {
         scheduler.start();
       }
     })();
+    */
 
     // unified cron interval from config
     cron.schedule(jobAggConfig.syncInterval, async () => {
@@ -137,3 +140,4 @@ connectDB().then(() => {
     });
   });
 });
+

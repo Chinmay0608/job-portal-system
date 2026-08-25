@@ -4,7 +4,7 @@ const Redis = require("ioredis");
 
 let emailQueue = null;
 
-if (process.env.REDIS_URL) {
+if (false /* DISABLED TO SAVE REDIS TOKENS: process.env.REDIS_URL */) {
   const redisConnection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
   // Initialize Email Queue
   emailQueue = new Queue("emailQueue", { connection: redisConnection });
@@ -19,3 +19,4 @@ if (process.env.REDIS_URL) {
 }
 
 module.exports = { emailQueue };
+
