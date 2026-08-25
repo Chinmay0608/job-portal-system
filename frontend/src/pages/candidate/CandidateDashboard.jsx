@@ -5,6 +5,7 @@ import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
 import DOMPurify from "dompurify";
+import { marked } from "marked";
 import "../../Styles/pages/candidate/CandidateDashboard.css";
 import { FiSearch, FiBookmark } from "react-icons/fi";
 import { HiOutlineLocationMarker } from "react-icons/hi";
@@ -22,7 +23,27 @@ const getRelativeTime = (dateString) => {
   return `Posted ${days} days ago`;
 };
 
-const decodeHTMLEntities = (text) => {
+  const renderExternalDescription = (text) => {
+    if (!text) return null;
+    let decoded = decodeHTMLEntities(text);
+    
+    // Heuristic: If it looks like raw markdown that lost its newlines (e.g. multiple spaces between sentences)
+    // Convert multiple spaces to newlines if it starts with markdown headers.
+    if (decoded.includes("##")) {
+      // Replace 3+ spaces with a double newline
+      decoded = decoded.replace(/\s{3,}/g, '\n\n');
+      // Ensure headers have newlines before them
+      decoded = decoded.replace(/(?<!\n)(#{1,6}\s)/g, '\n\n$1');
+      // Ensure list items have newlines before them
+      decoded = decoded.replace(/(?<!\n)(-\s)/g, '\n$1');
+    }
+    
+    // Parse with marked. Marked will safely parse HTML tags too.
+    const htmlContent = marked.parse(decoded);
+    return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />;
+  };
+
+  const decodeHTMLEntities = (text) => {
   if (!text) return '';
   const doc = new DOMParser().parseFromString(text, 'text/html');
   return doc.documentElement.textContent;
@@ -1073,7 +1094,7 @@ function CandidateDashboard() {
                   <div className={`ind-description-container ${isDescriptionExpanded ? 'expanded' : 'collapsed'}`}>
                     <div className="ind-description-content">
                       {selectedJob.isExternal ? (
-                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decodeHTMLEntities(selectedJob.description)) }} />
+                        renderExternalDescription(selectedJob.description)
                       ) : (
                         <div>
                           {selectedJob.description.split('\n').map((p, i) => (
@@ -1187,3 +1208,5 @@ function CandidateDashboard() {
 }
 
 export default CandidateDashboard;
+
+
