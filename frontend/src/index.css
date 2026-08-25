@@ -1,3 +1,6 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /* ==========================
    GLOBAL RESET
 ========================== */
@@ -524,4 +527,5 @@ input[type="submit"]:active:not(:disabled),
   transform: scale(0.95) !important;
   opacity: 0.9;
 }
+
 
