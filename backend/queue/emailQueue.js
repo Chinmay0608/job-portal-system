@@ -8,7 +8,7 @@ if (process.env.REDIS_URL) {
   const redisConnection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
 
   // Initialize Email Queue
-  emailQueue = new Queue("emailQueue", { connection: redisConnection });
+  emailQueue = new Queue("emailQueue", { connection: redisConnection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
 
   // Initialize Email Worker
   const emailWorker = new Worker(
@@ -36,7 +36,7 @@ if (process.env.REDIS_URL) {
       console.log(`[Email Worker] Email sent to ${to}: ${info.response}`);
       return info;
     },
-    { connection: redisConnection }
+    { connection: redisConnection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } }
   );
 
   emailWorker.on("completed", (job) => {
@@ -59,3 +59,4 @@ if (process.env.REDIS_URL) {
 }
 
 module.exports = { emailQueue };
+

@@ -133,7 +133,7 @@ class CrawlerWorker {
       }
 
       return { processed: rawJobs.length, changed: newOrUpdatedJobs.length };
-    }, { connection: queueManager.connection });
+    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
 
     this.worker.on('failed', (job, err) => {
       console.error(`[SDE CrawlerWorker] Job ${job.id} failed:`, err.message);
@@ -144,3 +144,4 @@ class CrawlerWorker {
 }
 
 module.exports = new CrawlerWorker();
+
