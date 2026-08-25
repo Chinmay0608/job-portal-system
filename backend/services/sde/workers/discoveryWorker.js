@@ -104,7 +104,7 @@ class DiscoveryWorker {
       console.log(`[SDE DiscoveryWorker] Successfully registered ${companyName} (${signature.platform})`);
       return { action: 'registered', companyId: newCompany._id };
 
-    }, { connection: queueManager.connection });
+    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
 
     this.worker.on('failed', (job, err) => {
       console.error(`[SDE DiscoveryWorker] Job ${job.id} failed:`, err.message);
@@ -115,3 +115,4 @@ class DiscoveryWorker {
 }
 
 module.exports = new DiscoveryWorker();
+
