@@ -11,6 +11,13 @@ class CrawlerWorker {
     this.worker = null;
   }
 
+    wakeUp() {
+    if (this.worker && (this.worker.isPaused() || !this.worker.isRunning())) {
+      console.log('[SDE CrawlerWorker] Waking up to process scheduled jobs...');
+      this.worker.resume();
+    }
+  }
+
   start() {
     if (!queueManager.isOnline) {
       console.log('[SDE CrawlerWorker] Skipped startup because SDE Queues are offline.');
@@ -133,7 +140,12 @@ class CrawlerWorker {
       }
 
       return { processed: rawJobs.length, changed: newOrUpdatedJobs.length };
-    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
+    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 }, autorun: false });
+
+        this.worker.on('drained', () => {
+      console.log('[SDE CrawlerWorker] Queue empty. Going to sleep to save Redis commands.');
+      this.worker.pause();
+    });
 
     this.worker.on('failed', (job, err) => {
       console.error(`[SDE CrawlerWorker] Job ${job.id} failed:`, err.message);
@@ -144,4 +156,5 @@ class CrawlerWorker {
 }
 
 module.exports = new CrawlerWorker();
+
 
