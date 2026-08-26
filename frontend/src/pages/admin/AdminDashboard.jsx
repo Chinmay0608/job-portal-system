@@ -6,6 +6,7 @@ import {
   TrendingUp, CircleDot, Briefcase, ServerCrash, Home
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -99,7 +100,7 @@ const DashboardSkeleton = () => (
   </div>
 );
 
-const MetricsView = ({ metrics, fetchHealth }) => {
+const MetricsView = ({ metrics, fetchHealth, handleTriggerCrawl, triggeringCrawl, setActiveTab }) => {
   if (!metrics) return (
     <div className="h-full flex flex-col items-center justify-center text-center p-8">
       <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 mb-4 border border-rose-100 shadow-sm">
@@ -188,9 +189,9 @@ const MetricsView = ({ metrics, fetchHealth }) => {
               <h3 className="font-semibold text-slate-900">Top Hiring Companies</h3>
               <p className="text-xs text-slate-500 mt-1">Companies with most active registry listings</p>
             </div>
-            <button className="text-sm text-blue-600 font-medium hover:text-blue-700 px-3 py-1.5 hover:bg-blue-50 rounded-lg transition-colors">
-              View All
-            </button>
+            <button onClick={() => setActiveTab('jobs')} className="text-sm text-blue-600 font-medium hover:text-blue-700 px-3 py-1.5 hover:bg-blue-50 rounded-lg transition-colors">
+                View All
+              </button>
           </div>
           <div className="flex-1 overflow-x-auto">
             {metrics.topHiring?.length > 0 ? (
@@ -220,7 +221,7 @@ const MetricsView = ({ metrics, fetchHealth }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-slate-400 hover:text-blue-600 transition-colors text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded hover:bg-blue-50">
+                        <button onClick={() => toast("Company inspect view coming soon")} className="text-slate-400 hover:text-blue-600 transition-colors text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded hover:bg-blue-50">
                           Inspect
                         </button>
                       </td>
@@ -235,8 +236,12 @@ const MetricsView = ({ metrics, fetchHealth }) => {
                 </div>
                 <h4 className="text-slate-900 font-semibold mb-1">No Indexed Companies</h4>
                 <p className="text-slate-500 text-sm max-w-xs mx-auto mb-5">There are no active listings in the registry. The crawler queue may be empty.</p>
-                <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-all shadow-sm active:scale-95">
-                  Trigger Manual Crawl
+                <button 
+                  onClick={handleTriggerCrawl}
+                  disabled={triggeringCrawl}
+                  className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {triggeringCrawl ? "Triggering..." : "Trigger Manual Crawl"}
                 </button>
               </div>
             )}
@@ -256,10 +261,16 @@ const UsersView = ({ users }) => (
           <p className="text-xs text-slate-500 mt-1">Total registered candidates and recruiters: {users.length}</p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+          <button 
+            onClick={() => toast("CSV Export feature coming soon")}
+            className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
+          >
             Export CSV
           </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+          <button 
+            onClick={() => toast("Add User feature coming soon")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+          >
             Add User
           </button>
         </div>
@@ -301,7 +312,10 @@ const UsersView = ({ users }) => (
                   {new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-slate-400 hover:text-slate-900 transition-colors p-2 hover:bg-slate-100 rounded-lg">
+                  <button 
+                    onClick={() => toast(`Settings for ${u.name} coming soon`)}
+                    className="text-slate-400 hover:text-slate-900 transition-colors p-2 hover:bg-slate-100 rounded-lg"
+                  >
                     <Settings size={16} />
                   </button>
                 </td>
@@ -329,6 +343,21 @@ const AdminDashboard = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [activeTab, setActiveTab] = useState('metrics'); // 'metrics' or 'users'
   const navigate = useNavigate();
+
+    const [triggeringCrawl, setTriggeringCrawl] = useState(false);
+
+  const handleTriggerCrawl = async () => {
+    setTriggeringCrawl(true);
+    try {
+      await axios.post(`${API_BASE_URL}/api/jobs/sync`, {}, getAuthHeaders());
+      toast.success("Manual crawl triggered successfully!");
+      setTimeout(() => fetchHealth(), 4000);
+    } catch (err) {
+      toast.error("Failed to trigger manual crawl");
+    } finally {
+      setTriggeringCrawl(false);
+    }
+  };
 
   const fetchHealth = async () => {
     setLoadingMetrics(true);
@@ -389,13 +418,13 @@ const AdminDashboard = () => {
           <nav className="space-y-1">
             <SidebarItem icon={<LayoutDashboard size={18} />} label="SDE Metrics" active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} />
             <SidebarItem icon={<Users size={18} />} label="User Management" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
-            <SidebarItem icon={<Database size={18} />} label="Jobs Registry" />
-            <SidebarItem icon={<Briefcase size={18} />} label="Applications" />
+            <SidebarItem icon={<Database size={18} />} label="Jobs Registry" active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} />
+            <SidebarItem icon={<Briefcase size={18} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
           </nav>
           
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 mt-8 px-3">System</div>
           <nav className="space-y-1">
-            <SidebarItem icon={<Settings size={18} />} label="Configuration" />
+            <SidebarItem icon={<Settings size={18} />} label="Configuration" active={activeTab === 'configuration'} onClick={() => setActiveTab('configuration')} />
           </nav>
         </div>
 
@@ -429,7 +458,12 @@ const AdminDashboard = () => {
             <ChevronRight size={14} className="text-slate-300" />
             <span className="hover:text-slate-900 cursor-pointer transition-colors">Overview</span>
             <ChevronRight size={14} className="text-slate-300" />
-            <span className="font-bold text-slate-900">{activeTab === 'metrics' ? 'SDE Metrics' : 'User Management'}</span>
+            <span className="font-bold text-slate-900">
+                {activeTab === 'metrics' ? 'SDE Metrics' : 
+                 activeTab === 'users' ? 'User Management' : 
+                 activeTab === 'jobs' ? 'Jobs Registry' : 
+                 activeTab === 'applications' ? 'Applications' : 'Configuration'}
+              </span>
           </div>
           
           {/* Right Utilities */}
@@ -437,11 +471,11 @@ const AdminDashboard = () => {
             {/* Live System Status Pill */}
             <div className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-[11px] font-bold border border-emerald-100 shadow-sm uppercase tracking-wide">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Crawler: Active • 100%
-            </div>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${metrics?.isOnline !== false ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${metrics?.isOnline !== false ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                </span>
+                {metrics?.isOnline !== false ? `Crawler: Active • ${metrics?.crawlerSuccess || '100%'}` : "Crawler: Offline"}
+              </div>
             
             <div className="hidden md:block w-px h-6 bg-slate-200 mx-2"></div>
             
@@ -452,10 +486,9 @@ const AdminDashboard = () => {
               <kbd className="hidden sm:inline-block font-sans text-[10px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-500 font-bold">⌘K</kbd>
             </button>
 
-            <button className="text-slate-400 hover:text-slate-600 transition-colors relative p-2 hover:bg-slate-100 rounded-lg">
-              <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 border-2 border-white rounded-full"></span>
-            </button>
+            <button onClick={() => toast("No new notifications")} className="text-slate-400 hover:text-slate-600 transition-colors relative p-2 hover:bg-slate-100 rounded-lg">
+                <Bell size={18} />
+              </button>
             <button 
               onClick={() => { fetchHealth(); fetchUsers(); }} 
               className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg"
@@ -471,10 +504,18 @@ const AdminDashboard = () => {
           {(loadingMetrics || loadingUsers) && !metrics ? (
             <DashboardSkeleton />
           ) : activeTab === 'metrics' ? (
-            <MetricsView metrics={metrics} fetchHealth={fetchHealth} />
-          ) : (
-            <UsersView users={users} />
-          )}
+              <MetricsView metrics={metrics} fetchHealth={fetchHealth} handleTriggerCrawl={handleTriggerCrawl} triggeringCrawl={triggeringCrawl} setActiveTab={setActiveTab} />
+            ) : activeTab === 'users' ? (
+              <UsersView users={users} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-4 border border-slate-200">
+                  <Activity size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">View Coming Soon</h3>
+                <p className="text-slate-500 max-w-md">The {activeTab === 'jobs' ? 'Jobs Registry' : activeTab === 'applications' ? 'Applications' : 'Configuration'} dashboard is currently under development. Please check back later.</p>
+              </div>
+            )}
         </div>
       </main>
     </div>
