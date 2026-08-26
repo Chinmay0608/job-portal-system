@@ -222,7 +222,7 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>Phone Number</label>
-                <input type="text" placeholder="Enter phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <input type="text" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
 
               <div className="input-group">
@@ -237,7 +237,7 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>LinkedIn</label>
-                <input type="text" placeholder="LinkedIn URL" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+                <input type="text" placeholder="linkedin.com/in/yourname" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ function RecruiterProfile() {
             </div>
           </div>
 
-          <div className="profile-section-card">
+          <div className="profile-section-card password-card">
             <h2 className="profile-section-title">Change password</h2>
             <div className="profile-grid">
               <div className="input-group">
@@ -305,7 +305,7 @@ function RecruiterProfile() {
               </div>
             </div>
             <div className="profile-save-bar">
-              <button type="button" className="save-btn" onClick={handleChangePassword} disabled={loading}>
+              <button type="button" className="update-password-btn" onClick={handleChangePassword} disabled={loading}>
                 {loading ? "Updating..." : "Update Password"}
               </button>
             </div>

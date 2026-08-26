@@ -67,8 +67,9 @@
 
 .upload-avatar-btn {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
+  bottom: 0;
+  right: 0;
+  border: 3px solid #ffffff;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   width: 30px;
@@ -103,8 +104,8 @@
 }
 
 .role-badge {
-  background: #fff1f1;
-  color: #ef4444;
+  background: #fef3c7;
+  color: #E8833A;
   padding: 5px 14px;
   border-radius: 999px;
   font-size: 0.7rem;
@@ -153,9 +154,9 @@
 
 .progress-fill {
   height: 100%;
-  background: #ef4444;
+  background: linear-gradient(90deg, #E8833A 0%, #10b981 100%);
   border-radius: 999px;
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* STATS */
@@ -437,9 +438,9 @@
 }
 
 .add-skill-btn {
-  background: #0d1117;
-  color: #ffffff;
-  border: none;
+  background: transparent;
+  color: #1B2A4A;
+  border: 1px solid #1B2A4A;
   padding: 0 20px;
   border-radius: 10px;
   font-size: 0.85rem;
@@ -450,7 +451,8 @@
 }
 
 .add-skill-btn:hover {
-  opacity: 0.85;
+  background: #f3f4f6;
+  opacity: 1;
 }
 
 .skills-tags {
@@ -507,7 +509,7 @@
 }
 
 .save-btn {
-  background: #ef4444;
+  background: #1B2A4A;
   color: #ffffff;
   border: none;
   padding: 13px 32px;
@@ -520,7 +522,7 @@
 }
 
 .save-btn:hover {
-  background: #dc2626;
+  background: #0f182b;
   transform: translateY(-1px);
 }
 
@@ -583,4 +585,33 @@
     bottom: -6px;
     right: -6px;
   }
+}
+.profile-section-title { color: #1B2A4A !important; }
+
+.update-password-btn {
+  background: transparent;
+  color: #1B2A4A;
+  border: 2px solid #1B2A4A;
+  padding: 11px 30px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.update-password-btn:hover {
+  background: #f8fafc;
+}
+
+.update-password-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Password Card Visual Separation */
+.password-card {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
 }
