@@ -85,6 +85,34 @@ const createJob = asyncHandler(async (req, res) => {
 /* ==========================
    GET ALL JOBS
 ========================== */
+
+// Helper to build active jobs query dynamically (compensates for sleeping cron jobs on free tiers)
+const getBaseActiveJobQuery = () => {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  return {
+    isActive: { $ne: false },
+    $and: [
+      {
+        $or: [
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      },
+      {
+        $or: [
+          { isExternal: true, createdAt: { $gte: thirtyDaysAgo } },
+          { isExternal: { $ne: true }, updatedAt: { $gte: ninetyDaysAgo } }
+        ]
+      }
+    ]
+  };
+};
+
 const getAllJobs = asyncHandler(async (req, res) => {
   const {
     search,
@@ -98,13 +126,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
     limit = 20,
   } = req.query;
 
-  const query = { 
-    isActive: { $ne: false },
-    $or: [
-      { expiresAt: null },
-      { expiresAt: { $gt: new Date() } }
-    ]
-  };
+  const query = getBaseActiveJobQuery();
 
   if (req.user) {
     const user = await User.findById(req.user.id);
@@ -213,7 +235,7 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // Show all active jobs (both internal and external)
-  let query = { isActive: { $ne: false } };
+  let query = getBaseActiveJobQuery();
 
   if (user && user.hiddenJobs && user.hiddenJobs.length > 0) {
     query._id = { $nin: user.hiddenJobs };
