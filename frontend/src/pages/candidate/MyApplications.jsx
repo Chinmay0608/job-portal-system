@@ -123,7 +123,7 @@ function MyApplications() {
           <div className="empty-icon">📁</div>
           <h2>You haven't applied to any jobs yet</h2>
           <p>Start applying to jobs and track them here.</p>
-          <Link to="/" className="browse-jobs-btn">Browse Jobs</Link>
+          <Link to="/candidate-dashboard" className="browse-jobs-btn">Browse Jobs</Link>
         </div>
       ) : (
         <div className="applications-list-container">
@@ -210,7 +210,7 @@ function MyApplications() {
           
           {/* Global Browse Jobs CTA (Item 6) */}
           <div className="browse-more-container">
-            <Link to="/" className="browse-jobs-btn-secondary">Explore More Jobs</Link>
+            <Link to="/candidate-dashboard" className="browse-jobs-btn-secondary">Explore More Jobs</Link>
           </div>
         </div>
       )}
