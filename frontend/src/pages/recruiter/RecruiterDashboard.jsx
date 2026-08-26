@@ -36,6 +36,7 @@ function RecruiterDashboard() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [stats, setStats] = useState({ totalJobs: 0, totalApplications: 0, shortlisted: 0, rejected: 0 });
 
@@ -75,6 +76,29 @@ function RecruiterDashboard() {
     setShowJobModal(false);
     setEditingJob(null);
     setFormData(initialFormState);
+  };
+
+
+  const generateAIDescription = async () => {
+    if (!formData.title || !formData.company) {
+      toast.error('Please enter a Job Title and Company first!');
+      return;
+    }
+    setIsGeneratingAI(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/jobs/generate-description`,
+        { title: formData.title, company: formData.company, role: formData.role },
+        getAuthHeaders()
+      );
+      setFormData(prev => ({ ...prev, description: response.data.description }));
+      toast.success('AI Description Generated successfully!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to generate description with AI.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   const handleSubmit = async (e) => {
