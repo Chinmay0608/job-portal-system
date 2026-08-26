@@ -1,4 +1,4 @@
-﻿.ind-dashboard {
+.ind-dashboard {
   background-color: #f6f5f1;
   min-height: 100vh;
   width: 100%;
@@ -11,9 +11,9 @@
    SEARCH BAR PANEL
 ========================================== */
 .ind-search-bar {
-  background: #ffffff;
+  background: transparent;
   padding: 24px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: none;
   display: flex;
   justify-content: center;
 }
