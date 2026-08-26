@@ -6,6 +6,7 @@ const { cacheMiddleware } = require("../middleware/cacheMiddleware");
 const upload = require("../middleware/multer");
 const {
   createJob,
+  generateJobDescription,
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,
@@ -56,6 +57,19 @@ router.get("/sync/status", protect, authorizeRoles("recruiter"), getSyncStatus);
    RECRUITER ROUTES
 ========================== */
 router.get("/my-jobs", protect, authorizeRoles("recruiter"), getRecruiterJobs);
+// AI Job Description Generator Route
+router.post(
+  "/generate-description",
+  protect,
+  authorizeRoles("recruiter", "admin"),
+  [
+    body("title").notEmpty().withMessage("Title is required"),
+    body("company").notEmpty().withMessage("Company is required"),
+  ],
+  validateRequest,
+  generateJobDescription
+);
+
 router.post(
   "/create",
   protect,

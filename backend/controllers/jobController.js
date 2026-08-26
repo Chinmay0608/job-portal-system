@@ -11,6 +11,52 @@ const escapeRegex = (string) => {
 };
 
 /* ==========================
+   GENERATE AI JOB DESCRIPTION
+========================== */
+const { GoogleGenAI } = require('@google/genai');
+
+const generateJobDescription = asyncHandler(async (req, res) => {
+  const { title, company, role } = req.body;
+  if (!title || !company) {
+    res.status(400);
+    throw new Error('Title and Company are required to generate a description');
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  
+  const prompt = `Act as an expert technical recruiter. Write a professional, comprehensive, and engaging job description for the following position:
+  
+  Job Title: ${title}
+  Company: ${company}
+  Role Type: ${role || 'Full-time'}
+  
+  The description should be formatted with clean HTML tags (like <h3>, <p>, <ul>, <li>, <strong>) and include:
+  1. A compelling "About the Role" section
+  2. "Key Responsibilities" (bullet points)
+  3. "Requirements & Qualifications" (bullet points)
+  4. "What We Offer" (perks/benefits)
+  
+  Return ONLY the HTML output. Do not include markdown codeblocks or any conversational wrapper text.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    
+    let description = response.text.trim();
+    if (description.startsWith('```html')) description = description.slice(7);
+    if (description.startsWith('```')) description = description.slice(3);
+    if (description.endsWith('```')) description = description.slice(0, -3);
+    
+    res.status(200).json({ description: description.trim() });
+  } catch (error) {
+    console.error('[Gemini AI Error]:', error);
+    res.status(500).json({ message: 'Failed to generate job description', error: error.message });
+  }
+});
+
+/* ==========================
    CREATE JOB
 ========================== */
 const createJob = asyncHandler(async (req, res) => {
@@ -395,6 +441,7 @@ const triggerScheduledSync = async (req, res, next) => {
 
 module.exports = {
   createJob,
+  generateJobDescription,
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,
