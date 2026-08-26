@@ -383,7 +383,7 @@ function RecruiterDashboard() {
                     </div>
 
                     <div className="card-compensation-salary">
-                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")}`}
+                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `${Number(job.salary).toLocaleString("en-US")}`}
                     </div>
 
                     <div className="card-operational-ctas">

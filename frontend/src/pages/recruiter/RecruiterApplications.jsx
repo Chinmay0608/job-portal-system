@@ -202,7 +202,7 @@ function RecruiterApplications() {
                 </div>
                 <div className="modal-section">
                   <span className="modal-label">Salary</span>
-                  <p>₹ {selectedApplication.job?.salary || "N/A"}</p>
+                  <p>{selectedApplication.job?.salary || "N/A"}</p>
                 </div>
               </div>
 
