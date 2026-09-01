@@ -1,5 +1,5 @@
 const express = require("express");
-const {
+const { getApplicationsAdmin, 
   applyJob,
   applyExternal,
   getMyApplications,
@@ -7,7 +7,7 @@ const {
   getRecruiterStats,
   updateApplicationStatus,
   withdrawApplication,
-} = require("../controllers/applicationController");
+ } = require("../controllers/applicationController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
 
@@ -65,3 +65,5 @@ router.patch(
 );
 
 module.exports = router;
+
+router.get("/admin/all", protect, authorizeRoles("recruiter"), getApplicationsAdmin);
