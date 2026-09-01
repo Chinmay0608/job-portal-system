@@ -1,4 +1,4 @@
-const isDashboardTheme = false; // Deprecated dark mode for dashboardsimport React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiMenu, FiX } from "react-icons/fi";
@@ -57,7 +57,8 @@ function Navbar() {
   const isHome = location.pathname === "/";
   const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/candidate-profile"].includes(location.pathname);
   const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
-  const isDashboardTheme = isCandidatePage || isRecruiterPage;
+  
+  const isDashboardTheme = false;
 
   const logout = async (e) => {
     if (e) e.preventDefault();
