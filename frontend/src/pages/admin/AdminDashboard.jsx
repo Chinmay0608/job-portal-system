@@ -404,7 +404,7 @@ const AdminDashboard = () => {
         
         {/* BRANDING LOGO */}
         <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <div className="flex items-center gap-2.5 text-slate-900 font-bold text-lg tracking-tight cursor-pointer" onClick={() => navigate("/")}>
+          <div className="flex items-center gap-2.5 text-slate-900 font-bold text-lg tracking-tight cursor-pointer" onClick={() => window.location.reload()}>
             <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
               <Activity size={18} className="text-white" />
             </div>
