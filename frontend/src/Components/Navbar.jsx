@@ -82,7 +82,19 @@ function Navbar() {
   return (
     <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " candidate-nav" : ""}`}>
       {/* Logo */}
-      <Link className="navbar-brand premium-logo" to="/">
+      <Link 
+        className="navbar-brand premium-logo" 
+        to={isLoggedIn ? (user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard') : '/'}
+        onClick={(e) => {
+          if (isLoggedIn) {
+            const dashboardUrl = user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard';
+            if (location.pathname === dashboardUrl) {
+              e.preventDefault();
+              window.location.reload();
+            }
+          }
+        }}
+      >
         <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>
       </Link>
 
