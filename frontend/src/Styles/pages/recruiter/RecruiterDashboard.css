@@ -934,3 +934,12 @@
     min-height: 44px;
   }
 }
+/* GLOBAL DASHBOARD WAVE BACKGROUND */
+.dashboard-bg-wave {
+  background-color: #f7f7f5 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 600'%3E%3Cpath fill='%23eaf0fa' fill-opacity='1' d='M0,0L1440,0L1440,400C1100,50 800,600 0,300Z'%3E%3C/path%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: top center !important;
+  background-attachment: fixed !important;
+}
