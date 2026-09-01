@@ -103,10 +103,10 @@ function CandidateDashboard() {
 
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
-  const [experienceFilter, setExperienceFilter] = useState("All Experience");
+  const [experienceFilter, setExperienceFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("All");
+  const [sourceFilter, setSourceFilter] = useState("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("All");
   const [isRemoteFilter, setIsRemoteFilter] = useState("All");
   
@@ -559,7 +559,7 @@ function CandidateDashboard() {
                   options={[{ value: "", label: "All Experience" }, { value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
                   value={experienceFilter}
                   onChange={(e) => setExperienceFilter(e.target.value)}
-                  className="desktop-experience-select ind-select"
+                  placeholder="Select..." className="desktop-experience-select ind-select"
                 />
             </div>
             <div className="ind-input-divider desktop-only"></div>
@@ -568,7 +568,7 @@ function CandidateDashboard() {
                   options={[{ value: "", label: "All Sources" }, { value: "internal", label: "SkillBridge (Internal)" }, { value: "external", label: "Third-party (External)" }]}
                   value={sourceFilter}
                   onChange={(e) => setSourceFilter(e.target.value)}
-                  className="desktop-experience-select ind-select"
+                  placeholder="Select..." className="desktop-experience-select ind-select"
                 />
             </div>
             
