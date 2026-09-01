@@ -201,30 +201,13 @@
 /* =========================
    CANDIDATE DASHBOARD GLOBAL
 ========================= */
-.custom-navbar.candidate-nav {
-  background: #18181b;
-  border-bottom: none;
-}
-.custom-navbar.candidate-nav .logo-bridge {
-  color: #ffffff !important;
-}
-.custom-navbar.candidate-nav .mobile-menu-toggle {
-  color: #ffffff;
-}
-.custom-navbar.candidate-nav .nav-link {
-  color: rgba(255, 255, 255, 0.7);
-}
-.custom-navbar.candidate-nav .nav-link:hover {
-  color: #ffffff;
-}
-.custom-navbar.candidate-nav .dashboard-btn {
-  background: transparent;
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-.custom-navbar.candidate-nav .dashboard-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+
+
+
+
+
+
+
 
 /* =========================
    HOME PAGE: dark navbar override
@@ -282,11 +265,11 @@
    OTHER PAGES LOGO COLORS
 ======================================== */
 
-.custom-navbar:not(.navbar-dark):not(.candidate-nav) .logo-skill {
+.custom-navbar:not(.navbar-dark) .logo-skill {
   color: #ef4444;
 }
 
-.custom-navbar:not(.navbar-dark):not(.candidate-nav) .logo-bridge {
+.custom-navbar:not(.navbar-dark) .logo-bridge {
   color: #0d1117;
 }
 
