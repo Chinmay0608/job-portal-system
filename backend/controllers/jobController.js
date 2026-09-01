@@ -89,7 +89,7 @@ const createJob = asyncHandler(async (req, res) => {
 // Helper to build active jobs query dynamically (compensates for sleeping cron jobs on free tiers)
 const getBaseActiveJobQuery = () => {
   const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 60); // Extended to 60 for demo purposes
   
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
