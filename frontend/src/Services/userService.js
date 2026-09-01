@@ -42,3 +42,7 @@ export const withdrawApplication = async (applicationId) => {
 
   return response.data;
 };
+export const updateApplicationStatus = async (applicationId, status) => {
+  const { data } = await api.patch(`/api/applications/update/${applicationId}`, { status });
+  return data;
+};
