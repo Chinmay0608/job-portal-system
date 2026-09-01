@@ -118,13 +118,13 @@ function App() {
   // Splash should only ever appear on the very first visit.
   // Check localStorage synchronously on first render so the splash
   // never flashes on subsequent visits/refreshes.
-  const hasSeenSplash = localStorage.getItem("sb_has_seen_splash") === "true";
+  
 
-  const [showSplash, setShowSplash] = useState(!hasSeenSplash);
+  const [showSplash, setShowSplash] = useState(true);
   const [isSplashExiting, setIsSplashExiting] = useState(false);
 
   useEffect(() => {
-    if (hasSeenSplash) return; // already shown before, skip entirely
+    
 
     // Hold the splash on screen, then trigger the fade-out animation
     const exitTimer = setTimeout(() => setIsSplashExiting(true), 1400);
@@ -133,7 +133,7 @@ function App() {
     // and record that it has now been seen so it never shows again.
     const removeTimer = setTimeout(() => {
       setShowSplash(false);
-      localStorage.setItem("sb_has_seen_splash", "true");
+      
     }, 1900);
 
     return () => {
