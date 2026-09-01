@@ -155,7 +155,11 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (location) {
-    query.location = { $regex: escapeRegex(location), $options: "i" };
+    if (location.trim().toLowerCase() === "remote") {
+      query.isRemote = true;
+    } else {
+      query.location = { $regex: escapeRegex(location), $options: "i" };
+    }
   }
 
   if (experience && experience !== "All Experience") {

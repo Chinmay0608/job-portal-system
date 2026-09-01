@@ -578,17 +578,7 @@ function CandidateDashboard() {
                 <option value="ADZUNA">Adzuna</option>
               </select>
             </div>
-            <div className="ind-input-divider desktop-only"></div>
-            <div className="ind-input-wrapper desktop-only">
-              <select
-                value={isRemoteFilter}
-                onChange={(e) => setIsRemoteFilter(e.target.value)}
-                className="desktop-experience-select ind-select"
-              >
-                <option value="All">Any Location</option>
-                <option value="true">Remote Only</option>
-              </select>
-            </div>
+            
             <button 
               className="ind-search-btn desktop-only"
               onClick={(e) => {
@@ -663,16 +653,7 @@ function CandidateDashboard() {
                     <option value="ADZUNA">Adzuna</option>
                   </select>
                 </div>
-                <div className="sheet-input-group">
-                  <select
-                    value={isRemoteFilter}
-                    onChange={(e) => setIsRemoteFilter(e.target.value)}
-                    className="ind-select sheet-select"
-                  >
-                    <option value="All">Any Location</option>
-                    <option value="true">Remote Only</option>
-                  </select>
-                </div>
+                
                 <button 
                   className="ind-primary-apply-btn sheet-search-btn"
                   onClick={() => {
