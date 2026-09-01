@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import CustomSelect from "../../Components/CustomSelect";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob } from "../../Services/jobService";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
@@ -554,29 +555,21 @@ function CandidateDashboard() {
             </div>
             <div className="ind-input-divider desktop-only"></div>
             <div className="ind-input-wrapper desktop-only">
-              <select
-                value={experienceFilter}
-                onChange={(e) => setExperienceFilter(e.target.value)}
-                className="desktop-experience-select ind-select"
-              >
-                <option value="All Experience">All Experience</option>
-                <option value="Fresher">Fresher</option>
-                <option value="0-2 Years">0-2 Years</option>
-                <option value="2-5 Years">2-5 Years</option>
-                <option value="5+ Years">5+ Years</option>
-              </select>
+              <CustomSelect
+                  options={[{ value: "", label: "All Experience" }, { value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
+                  value={experienceFilter}
+                  onChange={(e) => setExperienceFilter(e.target.value)}
+                  className="desktop-experience-select ind-select"
+                />
             </div>
             <div className="ind-input-divider desktop-only"></div>
             <div className="ind-input-wrapper desktop-only">
-              <select
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value)}
-                className="desktop-experience-select ind-select"
-              >
-                <option value="All">All Sources</option>
-                <option value="Internal">Internal Only</option>
-                <option value="ADZUNA">Adzuna</option>
-              </select>
+              <CustomSelect
+                  options={[{ value: "", label: "All Sources" }, { value: "internal", label: "SkillBridge (Internal)" }, { value: "external", label: "Third-party (External)" }]}
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                  className="desktop-experience-select ind-select"
+                />
             </div>
             
             <button 
@@ -630,28 +623,20 @@ function CandidateDashboard() {
                   />
                 </div>
                 <div className="sheet-input-group">
-                  <select
-                    value={experienceFilter}
-                    onChange={(e) => setExperienceFilter(e.target.value)}
-                    className="ind-select sheet-select"
-                  >
-                    <option value="All Experience">All Experience</option>
-                    <option value="Fresher">Fresher</option>
-                    <option value="0-2 Years">0-2 Years</option>
-                    <option value="2-5 Years">2-5 Years</option>
-                    <option value="5+ Years">5+ Years</option>
-                  </select>
+                  <CustomSelect
+                      options={[{ value: "", label: "All Experience" }, { value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
+                      value={experienceFilter}
+                      onChange={(e) => setExperienceFilter(e.target.value)}
+                      className="ind-select sheet-select"
+                    />
                 </div>
                 <div className="sheet-input-group">
-                  <select
-                    value={sourceFilter}
-                    onChange={(e) => setSourceFilter(e.target.value)}
-                    className="ind-select sheet-select"
-                  >
-                    <option value="All">All Sources</option>
-                    <option value="Internal">Internal Only</option>
-                    <option value="ADZUNA">Adzuna</option>
-                  </select>
+                  <CustomSelect
+                      options={[{ value: "", label: "All Sources" }, { value: "internal", label: "SkillBridge (Internal)" }, { value: "external", label: "Third-party (External)" }]}
+                      value={sourceFilter}
+                      onChange={(e) => setSourceFilter(e.target.value)}
+                      className="ind-select sheet-select"
+                    />
                 </div>
                 
                 <button 

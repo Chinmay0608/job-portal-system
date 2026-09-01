@@ -456,14 +456,14 @@ function RecruiterDashboard() {
                     <input name="salary" value={formData.salary} onChange={handleChange} placeholder="e.g. 1800000" inputMode="numeric" required />
                   </div>
                 </div>
-                <div className="custom-dropdown-container">
-                  <select name="role" value={formData.role} onChange={handleChange} className="form-select-native">
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                  </select>
-                  <HiChevronDown className="select-dropdown-arrow" />
-                </div>
+                <div style={{ flex: 1 }}>
+                    <CustomSelect
+                      name="role"
+                      options={[{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, { value: "Contract", label: "Contract" }]}
+                      value={formData.role}
+                      onChange={handleChange}
+                    />
+                  </div>
               </div>
 
               <div className="input-field-box textarea-field-box">
