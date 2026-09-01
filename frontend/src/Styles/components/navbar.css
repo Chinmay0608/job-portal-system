@@ -281,3 +281,14 @@
 .custom-navbar.navbar-dark .mobile-menu-toggle svg {
   stroke: #ffffff !important;
 }
+/* MATCH DASHBOARD WAVE BACKGROUND */
+.custom-navbar.dashboard-nav {
+  background-color: #e8f1ff !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+.custom-navbar.dashboard-nav .login-btn,
+.custom-navbar.dashboard-nav .dashboard-btn {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
