@@ -141,7 +141,7 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
   const { applicationId } = req.params;
   const { status } = req.body;
 
-  const validStatuses = ['pending', 'shortlisted', 'rejected', 'applied_externally'];
+  const validStatuses = ['pending', 'shortlisted', 'rejected', 'applied_externally', 'selected'];
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ message: "Invalid status" });
   }
@@ -160,7 +160,7 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     throw new Error("Job not found");
   }
 
-  if (application.job.recruiter.toString() !== req.user.id) {
+  if (application.job.recruiter.toString() !== req.user.id && application.candidate._id.toString() !== req.user.id) {
     res.status(403);
     throw new Error("Access denied");
   }
