@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+const isDashboardTheme = false; // Deprecated dark mode for dashboardsimport React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiMenu, FiX } from "react-icons/fi";
