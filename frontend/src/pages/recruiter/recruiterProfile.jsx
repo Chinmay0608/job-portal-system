@@ -222,12 +222,12 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>Phone Number</label>
-                <input type="text" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <input type="text" placeholder="e.g., +91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
 
               <div className="input-group">
                 <label>Location</label>
-                <input type="text" placeholder="Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
+                <input type="text" placeholder="e.g., Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
               </div>
 
               <div className="input-group">
@@ -237,7 +237,7 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>LinkedIn</label>
-                <input type="text" placeholder="linkedin.com/in/yourname" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+                <input type="text" placeholder="e.g., linkedin.com/in/yourname" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
               </div>
             </div>
           </div>
@@ -254,7 +254,7 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>Company Website</label>
-                <input type="text" placeholder="https://yourcompany.com" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
+                <input type="text" placeholder="e.g., https://yourcompany.com" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} />
               </div>
             </div>
           </div>
