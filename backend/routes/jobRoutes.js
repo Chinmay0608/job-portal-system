@@ -1,5 +1,5 @@
 const express = require("express");
-const { body } = require("express-validator");
+const { getJobsAdmin,  body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
 const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMiddleware");
 const { cacheMiddleware } = require("../middleware/cacheMiddleware");
@@ -17,7 +17,7 @@ const {
   triggerManualSync,
   triggerScheduledSync,
   getSyncStatus,
-} = require("../controllers/jobController");
+ } = require("../controllers/jobController");
 
 const router = express.Router();
 
