@@ -58,7 +58,7 @@ function Navbar() {
   const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/candidate-profile"].includes(location.pathname);
   const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
   
-  const isDashboardTheme = false;
+  const isDashboardTheme = isCandidatePage || isRecruiterPage || location.pathname.includes("/admin");
 
   const logout = async (e) => {
     if (e) e.preventDefault();
@@ -81,7 +81,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " candidate-nav" : ""}`}>
+    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " dashboard-nav" : ""}`}>
       {/* Logo */}
       <Link 
         className="navbar-brand premium-logo" 
