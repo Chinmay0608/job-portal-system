@@ -73,7 +73,7 @@ function Footer() {
 
       <div className="footer-bottom">
         <span>© 2026 SkillBridge. All rights reserved.</span>
-        <span className="footer-bottom-right">Made with ❤️ for builders everywhere</span>
+        
       </div>
     </footer>
   );
