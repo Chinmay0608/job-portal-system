@@ -154,7 +154,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #E8833A 0%, #10b981 100%);
+  background: #1B2A4A;
   border-radius: 999px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
