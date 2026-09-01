@@ -76,5 +76,16 @@ router.get('/users', protect, authorizeRoles('recruiter'), async (req, res) => {
   }
 });
 
+
+const { getConfig, setConfig, getCompaniesAdmin, updateCompanyAdmin } = require('../controllers/adminConfigController');
+
+// Config Routes
+router.get('/config', protect, authorizeRoles('recruiter'), getConfig);
+router.put('/config/:key', protect, authorizeRoles('recruiter'), setConfig);
+
+// Company Registry Admin Routes
+router.get('/companies', protect, authorizeRoles('recruiter'), getCompaniesAdmin);
+router.put('/companies/:id', protect, authorizeRoles('recruiter'), updateCompanyAdmin);
+
 module.exports = router;
 
