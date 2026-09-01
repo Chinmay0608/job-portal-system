@@ -32,18 +32,15 @@ router.put(
     },
   ]),
   [
-    body("name")
-      .optional()
+    body("name").optional({ checkFalsy: true })
       .trim()
       .isLength({ min: 2 })
       .withMessage("Name must be at least 2 characters"),
-    body("phone")
-      .optional()
+    body("phone").optional({ checkFalsy: true })
       .trim()
       .isNumeric()
       .withMessage("Phone must be numeric"),
-    body("companyWebsite")
-      .optional()
+    body("companyWebsite").optional({ checkFalsy: true })
       .trim()
       .isURL()
       .withMessage("Company website must be a valid URL"),
