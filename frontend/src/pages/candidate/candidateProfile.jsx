@@ -42,6 +42,7 @@ function CandidateProfile() {
   const [skillInput, setSkillInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [skillError, setSkillError] = useState("");
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
   // 3. File Uploads State
   const [profileImage, setProfileImage] = useState(null);
@@ -285,6 +286,7 @@ function CandidateProfile() {
   );
 
   const handleSkillInputChange = (value) => {
+    setActiveSuggestionIndex(-1);
     setSkillInput(value);
 
     // Only trigger API call if input has content
@@ -510,11 +512,26 @@ function CandidateProfile() {
                   value={skillInput}
                   onChange={(e) => handleSkillInputChange(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSkill(skillInput);
-                    }
-                  }}
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        if (activeSuggestionIndex < suggestions.length - 1) {
+                          setActiveSuggestionIndex((prev) => prev + 1);
+                        }
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        if (activeSuggestionIndex > 0) {
+                          setActiveSuggestionIndex((prev) => prev - 1);
+                        }
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+                          handleAddSkill(suggestions[activeSuggestionIndex]);
+                        } else {
+                          handleAddSkill(skillInput);
+                        }
+                        setActiveSuggestionIndex(-1);
+                      }
+                    }}
                 />
                 <button type="button" className="add-skill-btn" onClick={() => handleAddSkill(skillInput)}>
                   Add
@@ -537,29 +554,32 @@ function CandidateProfile() {
                       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
                     }}
                   >
-                    {suggestions.map((suggestion) => (
-                      <button
-                        type="button"
-                        key={suggestion}
-                        className="skill-suggestion-item"
-                        style={{
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "10px 12px",
-                          border: "none",
-                          backgroundColor: "transparent",
-                          cursor: "pointer",
-                          display: "block",
-                          fontSize: "14px",
-                          transition: "background-color 0.2s"
-                        }}
-                        onMouseEnter={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                        onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
-                        onClick={() => handleAddSkill(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
+                    {suggestions.map((suggestion, index) => (
+                        <button
+                          type="button"
+                          key={suggestion}
+                          className="skill-suggestion-item"
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "10px 12px",
+                            border: "none",
+                            backgroundColor: index === activeSuggestionIndex ? "#f0f0f0" : "transparent",
+                            cursor: "pointer",
+                            display: "block",
+                            fontSize: "14px",
+                            transition: "background-color 0.2s"
+                          }}
+                          onMouseEnter={() => setActiveSuggestionIndex(index)}
+                          onMouseLeave={() => setActiveSuggestionIndex(-1)}
+                          onClick={() => {
+                            handleAddSkill(suggestion);
+                            setActiveSuggestionIndex(-1);
+                          }}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
                   </div>
                 )}
               </div>
