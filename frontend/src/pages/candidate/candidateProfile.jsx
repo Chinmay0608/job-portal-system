@@ -450,24 +450,21 @@ function CandidateProfile() {
               {/* Dropdown 1: Select Degree Group */}
               <div className="input-group">
                 <label>Highest Qualification</label>
-                <select value={education} onChange={(e) => setEducation(e.target.value)}>
-                  <option value="">Select Degree</option>
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="M.Tech">M.Tech</option>
-                  <option value="BCA">BCA</option>
-                  <option value="MCA">MCA</option>
-                </select>
+                <CustomSelect
+                  options={[{ value: "", label: "Select Degree" }, { value: "B.Tech", label: "B.Tech" }, { value: "M.Tech", label: "M.Tech" }, { value: "BCA", label: "BCA" }, { value: "MCA", label: "MCA" }]}
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                />
               </div>
 
               {/* Dropdown 2: Experience Level Group */}
               <div className="input-group">
                 <label>Experience Level</label>
-                <select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
-                  <option value="Fresher">Fresher</option>
-                  <option value="0-2 Years">0-2 Years</option>
-                  <option value="2-5 Years">2-5 Years</option>
-                  <option value="5+ Years">5+ Years</option>
-                </select>
+                <CustomSelect
+                  options={[{ value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
+                  value={experienceLevel}
+                  onChange={(e) => setExperienceLevel(e.target.value)}
+                />
               </div>
 
               {/* Field 5: LinkedIn */}

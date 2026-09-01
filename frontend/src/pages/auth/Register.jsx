@@ -299,15 +299,13 @@ function Register() {
             {/* ROLE SELECTION BLOCK (Desktop Only) */}
             <div className="register-input-group desktop-role-select">
               <label className="register-field-label">Join As</label>
-              <select
-                name="role"
-                className="register-select"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="candidate">Candidate</option>
-                <option value="recruiter">Recruiter</option>
-              </select>
+              <CustomSelect
+                  name="role"
+                  className="register-select"
+                  value={formData.role}
+                  onChange={handleChange}
+                  options={[{ value: "candidate", label: "Candidate" }, { value: "recruiter", label: "Recruiter" }]}
+                />
             </div>
 
             <button type="submit" className="register-submit-btn" disabled={loading} aria-label="Create account">
