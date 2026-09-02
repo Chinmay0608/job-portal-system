@@ -67,9 +67,9 @@ function Navbar() {
   const isSalaryGuide = location.pathname === "/salary-data";
   const isCompanyReviews = location.pathname === "/about";
 
-  const isCandidatePage = isCandidateDashboard || isMyApplications || isProfile;
-  const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications"].includes(location.pathname) || isProfile;
-  const isDashboardTheme = isCandidatePage || isRecruiterPage || location.pathname.includes("/admin");
+  // Only main dashboard pages feature the top vector wave background (#e8f1ff).
+  // Other candidate/recruiter pages (like /my-applications, /candidate-profile) use clean white/gray background.
+  const isDashboardWavePage = ["/candidate-dashboard", "/recruiter-dashboard"].includes(location.pathname) || location.pathname.includes("/admin");
 
   const logout = async (e) => {
     if (e) e.preventDefault();
@@ -100,7 +100,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " dashboard-nav" : ""}`}>
+    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardWavePage ? " dashboard-nav" : ""}`}>
       {/* Top Accent Strip */}
       <div className="indeed-top-strip"></div>
 
@@ -132,12 +132,6 @@ function Navbar() {
                   className={`nav-tab-link ${isCandidateDashboard || isHome ? "active" : ""}`}
                 >
                   Home
-                </Link>
-                <Link 
-                  to="/about" 
-                  className={`nav-tab-link ${isCompanyReviews ? "active" : ""}`}
-                >
-                  Company reviews
                 </Link>
                 <Link 
                   to="/salary-data" 
