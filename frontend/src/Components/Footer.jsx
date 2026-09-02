@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png";
+import SkillBridgeLogo from "./SkillBridgeLogo";
 import "../Styles/components/Footer.css";
 
 function Footer() {
@@ -28,7 +28,7 @@ function Footer() {
         {/* Brand Column */}
         <div className="footer-brand-col">
           <button className="footer-logo" onClick={() => delayedNavigate("/")}>
-            <img src={logo} alt="SkillBridge" style={{ height: '36px', width: 'auto' }} />
+            <SkillBridgeLogo width={150} />
           </button>
           <p className="footer-tagline">Connecting talent and opportunity.<br />Built for the next generation of work.</p>
           <div className="footer-socials">
@@ -76,7 +76,6 @@ function Footer() {
 
       <div className="footer-bottom">
         <span>© 2026 SkillBridge. All rights reserved.</span>
-        
       </div>
     </footer>
   );
