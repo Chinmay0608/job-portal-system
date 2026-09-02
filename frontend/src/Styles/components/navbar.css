@@ -1,17 +1,18 @@
 /* =========================
-   NAVBAR
+   NAVBAR BASE
 ========================= */
 .custom-navbar {
   position: sticky;
   top: 0;
-  z-index: 999;
+  z-index: 1000;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 14px 56px 14px 24px;
+  justify-content: space-between;
+  padding: 16px 40px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-  box-shadow: none;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* =========================
@@ -20,41 +21,38 @@
 .premium-logo {
   display: inline-flex;
   align-items: center;
-  font-size: 2.0rem !important;
-  font-weight: 900;
-  letter-spacing: -1px;
   text-decoration: none;
   line-height: 1;
-  white-space: nowrap;
-
-   width: auto !important;
-  max-width: none !important;
-  min-width: max-content;
-
-  overflow: visible !important;
   flex-shrink: 0;
+  padding: 0;
 }
 
 .premium-logo:hover {
-  opacity: 0.8;
+  opacity: 0.85;
   transform: none;
 }
 
-/* Logo split coloring: "Skill" red, "Bridge" navy/black */
-.logo-skill {
-  color: #ef4444;
-}
-
-.logo-bridge {
-  color: #0d1117 ;
-}
-
-
-/* Remove weird border if logo image exists */
-.premium-logo img {
+/* Image logo sizing */
+.navbar-logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+  object-fit: contain;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Mobile logo size */
+@media (max-width: 768px) {
+  .navbar-logo-img {
+    height: 30px;
+  }
+}
+
+/* On dark homepage hero — slight brightness boost if logo has dark edges */
+.custom-navbar.navbar-dark .navbar-logo-img {
+  filter: brightness(1.05);
 }
 
 /* =========================
@@ -149,10 +147,6 @@
     flex-wrap: wrap;
   }
 
-  .premium-logo {
-    font-size: 1.4rem !important;
-  }
-
   .mobile-menu-toggle {
     display: flex;
     align-items: center;
@@ -164,15 +158,15 @@
     width: 100%;
     flex-direction: column;
     gap: 10px;
-    
+
     max-height: 0;
     opacity: 0;
     overflow: hidden;
     padding-top: 0;
     padding-bottom: 0;
-    
-    transition: max-height 0.4s cubic-bezier(0, 1, 0, 1), 
-                opacity 0.3s ease-in-out, 
+
+    transition: max-height 0.4s cubic-bezier(0, 1, 0, 1),
+                opacity 0.3s ease-in-out,
                 padding 0.3s ease-in-out;
   }
 
@@ -181,9 +175,9 @@
     opacity: 1;
     padding-top: 16px;
     padding-bottom: 8px;
-    
-    transition: max-height 0.6s ease-in-out, 
-                opacity 0.4s ease-in-out, 
+
+    transition: max-height 0.6s ease-in-out,
+                opacity 0.4s ease-in-out,
                 padding 0.4s ease-in-out;
   }
 
@@ -197,17 +191,6 @@
     font-size: 14px;
   }
 }
-
-/* =========================
-   CANDIDATE DASHBOARD GLOBAL
-========================= */
-
-
-
-
-
-
-
 
 /* =========================
    HOME PAGE: dark navbar override
@@ -249,30 +232,6 @@
   color: #ffffff;
 }
 
-/* ========================================
-   HOME PAGE LOGO COLORS
-======================================== */
-
-.custom-navbar.navbar-dark .logo-skill {
-  color: #ef4444;
-}
-
-.custom-navbar.navbar-dark .logo-bridge {
-  color: #ffffff;
-}
-
-/* ========================================
-   OTHER PAGES LOGO COLORS
-======================================== */
-
-.custom-navbar:not(.navbar-dark) .logo-skill {
-  color: #ef4444;
-}
-
-.custom-navbar:not(.navbar-dark) .logo-bridge {
-  color: #0d1117;
-}
-
 /* Ensure dark navbar toggle is visible */
 .custom-navbar.navbar-dark .mobile-menu-toggle {
   color: #ffffff !important;
@@ -281,12 +240,16 @@
 .custom-navbar.navbar-dark .mobile-menu-toggle svg {
   stroke: #ffffff !important;
 }
-/* MATCH DASHBOARD WAVE BACKGROUND */
+
+/* =========================
+   DASHBOARD NAVBAR — matches wave background
+========================= */
 .custom-navbar.dashboard-nav {
   background-color: #e8f1ff !important;
   border-bottom: none !important;
   box-shadow: none !important;
 }
+
 .custom-navbar.dashboard-nav .login-btn,
 .custom-navbar.dashboard-nav .dashboard-btn {
   background: #ffffff;

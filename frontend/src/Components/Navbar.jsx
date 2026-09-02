@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import logo from "../assets/logo.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiMenu, FiX } from "react-icons/fi";
@@ -96,7 +97,7 @@ function Navbar() {
           }
         }}
       >
-        <span className="logo-skill">Skill</span><span className="logo-bridge">Bridge</span>
+        <img src={logo} alt="SkillBridge" className="navbar-logo-img" />
       </Link>
 
       {/* Hamburger Toggle */}
