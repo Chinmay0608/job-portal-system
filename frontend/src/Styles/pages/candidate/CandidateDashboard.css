@@ -709,8 +709,8 @@
   .mobile-collapsed-trigger {
     border-radius: 999px;
     padding: 4px 6px;
-    background: #f6f5f1;
-    border-color: #e5e7eb;
+    background: #ffffff;
+    border-color: #d0e1fd;
   }
 
   .mobile-collapsed-trigger .ind-input-wrapper {
@@ -839,11 +839,12 @@
 .segment-control {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  background: #f6f5f1;
+  background: #ffffff;
   padding: 4px;
   border-radius: 999px;
   position: relative;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d0e1fd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .segment-btn {
