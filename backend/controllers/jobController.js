@@ -197,6 +197,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
   const totalJobs = await Job.countDocuments(query);
   const jobs = await Job.find(query)
     .populate("recruiter", "name email")
+    .sort({ createdAt: -1 })
     .skip((currentPage - 1) * perPage)
     .limit(perPage);
 
@@ -223,6 +224,7 @@ const getRecruiterJobs = asyncHandler(async (req, res) => {
 
   const totalJobs = await Job.countDocuments(query);
   const jobs = await Job.find(query)
+    .sort({ createdAt: -1 })
     .skip((currentPage - 1) * perPage)
     .limit(perPage);
 
