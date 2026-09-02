@@ -18,8 +18,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      logoutUser();
-      window.location.href = "/login";
+      // FIX I-12: Skip the logout redirect when the 401 comes from auth endpoints.
+      // Previously, a wrong-password login attempt would trigger the interceptor,
+      // redirect to /login, and prevent the error toast from ever rendering.
+      const requestUrl = error.config?.url || "";
+      const isAuthEndpoint =
+        requestUrl.includes("/auth/login") ||
+        requestUrl.includes("/auth/register") ||
+        requestUrl.includes("/auth/google");
+      if (!isAuthEndpoint) {
+        logoutUser();
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
