@@ -101,9 +101,6 @@ function Navbar() {
 
   return (
     <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardWavePage ? " dashboard-nav" : ""}`}>
-      {/* Top Accent Strip */}
-      <div className="indeed-top-strip"></div>
-
       <div className="navbar-container">
         {/* Left Section: Logo + Main Text Links */}
         <div className="nav-left">
