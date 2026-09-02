@@ -188,7 +188,7 @@ function Navbar() {
                 <>
                   {/* Bookmark Icon (My Jobs) */}
                   <div className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}>
-                    <Link to="/my-applications" className="icon-btn-link" title="My jobs">
+                    <Link to="/my-applications" className="icon-btn-link" aria-label="My jobs">
                       <BsBookmarkFill className="header-icon" />
                       <span className="mobile-only-label">My jobs</span>
                     </Link>
@@ -197,7 +197,7 @@ function Navbar() {
 
                   {/* Message Icon */}
                   <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleMessageClick} title="Messages">
+                    <button type="button" className="icon-btn-link" onClick={handleMessageClick} aria-label="Messages">
                       <BsChatSquareTextFill className="header-icon" />
                       <span className="mobile-only-label">Messages</span>
                     </button>
@@ -206,7 +206,7 @@ function Navbar() {
 
                   {/* Bell Icon */}
                   <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} title="Notifications">
+                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Notifications">
                       <BsBellFill className="header-icon" />
                       <span className="mobile-only-label">Notifications</span>
                     </button>
@@ -215,7 +215,7 @@ function Navbar() {
 
                   {/* Profile User Icon */}
                   <div className={`icon-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}>
-                    <Link to="/candidate-profile" className="icon-btn-link" title="Profile">
+                    <Link to="/candidate-profile" className="icon-btn-link" aria-label="Profile">
                       <BsPersonFill className="header-icon" />
                       <span className="mobile-only-label">Profile</span>
                     </Link>
@@ -228,7 +228,7 @@ function Navbar() {
               {user?.role === "recruiter" && (
                 <>
                   <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
-                    <Link to="/recruiter-profile" className="icon-btn-link" title="Profile">
+                    <Link to="/recruiter-profile" className="icon-btn-link" aria-label="Profile">
                       <BsPersonFill className="header-icon" />
                       <span className="mobile-only-label">Profile</span>
                     </Link>
