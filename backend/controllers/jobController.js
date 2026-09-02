@@ -107,6 +107,7 @@ const getBaseActiveJobQuery = () => {
       {
         $or: [
           { isExternal: true, createdAt: { $gte: thirtyDaysAgo } },
+          { isExternal: true, updatedAt: { $gte: thirtyDaysAgo } },
           { isExternal: { $ne: true }, updatedAt: { $gte: ninetyDaysAgo } }
         ]
       }
