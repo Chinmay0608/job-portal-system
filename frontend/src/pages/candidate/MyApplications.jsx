@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import RetryBanner from "../../Components/RetryBanner";
-import { getMyApplicationsAPI, withdrawApplication, updateApplicationStatus } from "../../Services/userService";
+import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
 import BackButton from "../../Components/BackButton";
 import { Link } from "react-router-dom";
@@ -10,7 +10,6 @@ function MyApplications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
-  const [updatingId, setUpdatingId] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [filter, setFilter] = useState("All");
 
@@ -24,7 +23,6 @@ function MyApplications() {
     try {
       setFetchError("");
       setLoading(true);
-
       const response = await getMyApplicationsAPI();
       setApplications(response?.applications || []);
     } catch (error) {
@@ -34,21 +32,6 @@ function MyApplications() {
       setApplications([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  
-  const handleStatusChange = async (applicationId, newStatus) => {
-    try {
-      setUpdatingId(applicationId);
-      await updateApplicationStatus(applicationId, newStatus);
-      toast.success("Status updated successfully!");
-      fetchApplications();
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to update status");
-    } finally {
-      setUpdatingId(null);
     }
   };
 
@@ -186,18 +169,12 @@ function MyApplications() {
                   </div>
 
                   <div className="status-wrapper">
-                    <select 
-                      className={`status-badge ${application.status?.toLowerCase()}`}
-                      value={application.status?.toLowerCase() || "pending"}
-                      onChange={(e) => handleStatusChange(application._id, e.target.value)}
-                      style={{ cursor: 'pointer', border: '1px solid #e5e7eb', outline: 'none', appearance: 'auto', paddingRight: '20px' }}
-                      disabled={updatingId === application._id}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="shortlisted">Shortlisted</option>
-                      <option value="selected">Selected</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
+                    {/* READ-ONLY status badge — only recruiters can change application status */}
+                    <span className={`status-badge ${application.status?.toLowerCase()}`}>
+                      {application.status
+                        ? application.status.charAt(0).toUpperCase() + application.status.slice(1).replace(/_/g, " ")
+                        : "Pending"}
+                    </span>
 
                     <div className="action-buttons">
                       {application.resume && (

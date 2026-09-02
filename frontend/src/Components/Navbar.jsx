@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from "react";
-import logo from "../assets/logo.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FiMenu, FiX } from "react-icons/fi";
+import { 
+  FiBookmark, 
+  FiMessageSquare, 
+  FiBell, 
+  FiUser, 
+  FiLogOut, 
+  FiMenu, 
+  FiX, 
+  FiPlusCircle 
+} from "react-icons/fi";
 import { logoutUser } from "../Services/authUtils";
+import SkillBridgeLogo from "./SkillBridgeLogo";
 import "../Styles/components/navbar.css";
 
 function Navbar() {
@@ -56,9 +65,14 @@ function Navbar() {
   }, [isMobileMenuOpen]);
 
   const isHome = location.pathname === "/";
-  const isCandidatePage = ["/candidate-dashboard", "/my-applications", "/candidate-profile"].includes(location.pathname);
-  const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications", "/recruiter-profile"].includes(location.pathname);
-  
+  const isCandidateDashboard = location.pathname === "/candidate-dashboard";
+  const isMyApplications = location.pathname === "/my-applications";
+  const isProfile = ["/candidate-profile", "/recruiter-profile"].includes(location.pathname);
+  const isSalaryGuide = location.pathname === "/salary-data";
+  const isCompanyReviews = location.pathname === "/about";
+
+  const isCandidatePage = isCandidateDashboard || isMyApplications || isProfile;
+  const isRecruiterPage = ["/recruiter-dashboard", "/recruiter-applications"].includes(location.pathname) || isProfile;
   const isDashboardTheme = isCandidatePage || isRecruiterPage || location.pathname.includes("/admin");
 
   const logout = async (e) => {
@@ -81,68 +95,178 @@ function Navbar() {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleNotificationClick = () => {
+    toast("No new notifications", { icon: "🔔" });
+  };
+
+  const handleMessageClick = () => {
+    toast("No new messages", { icon: "💬" });
+  };
+
   return (
-    <nav className={`custom-navbar glass-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " dashboard-nav" : ""}`}>
-      {/* Logo */}
-      <Link 
-        className="navbar-brand premium-logo" 
-        to={isLoggedIn ? (user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard') : '/'}
-        onClick={(e) => {
-          if (isLoggedIn) {
-            const dashboardUrl = user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard';
-            if (location.pathname === dashboardUrl) {
-              e.preventDefault();
-              window.location.reload();
-            }
-          }
-        }}
-      >
-        <img src={logo} alt="SkillBridge" className="navbar-logo-img" />
-      </Link>
+    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " dashboard-nav" : ""}`}>
+      <div className="navbar-container">
+        {/* Left Section: Logo + Main Text Navigation */}
+        <div className="nav-left">
+          <Link 
+            className="navbar-brand-logo" 
+            to={isLoggedIn ? (user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard') : '/'}
+            onClick={(e) => {
+              if (isLoggedIn) {
+                const dashboardUrl = user?.role === 'recruiter' ? '/recruiter-dashboard' : user?.role === 'admin' ? '/admin-dashboard' : '/candidate-dashboard';
+                if (location.pathname === dashboardUrl) {
+                  e.preventDefault();
+                  window.location.reload();
+                }
+              }
+            }}
+          >
+            <SkillBridgeLogo width={160} className="brand-svg-logo" />
+          </Link>
 
-      {/* Hamburger Toggle */}
-      <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
-        {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-      </button>
-
-      {/* Right Side Buttons */}
-      <div className={`nav-buttons ${isMobileMenuOpen ? "mobile-open" : ""}`}>
-        {isHome ? (
-          <>
-            <Link className="login-btn nav-hover" to="/login">Log In</Link>
-            <Link className="signup-btn nav-hover" to="/register">Sign Up</Link>
-          </>
-        ) : (
-          <>
-            {/* Candidate Navbar */}
-            {user?.role === "candidate" && (
+          {/* Indeed-style Text Navigation (Desktop) */}
+          <div className="nav-links-left desktop-only">
+            {(!isLoggedIn || user?.role === "candidate") && (
               <>
-                <Link className="dashboard-btn nav-hover" to="/candidate-dashboard">Jobs</Link>
-                <Link className="dashboard-btn nav-hover" to="/my-applications">My Applications</Link>
-                <Link className="dashboard-btn nav-hover" to="/candidate-profile">Profile</Link>
+                <Link 
+                  to={isLoggedIn ? "/candidate-dashboard" : "/"} 
+                  className={`nav-tab-link ${isCandidateDashboard || isHome ? "active" : ""}`}
+                >
+                  Find jobs
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={`nav-tab-link ${isCompanyReviews ? "active" : ""}`}
+                >
+                  Company reviews
+                </Link>
+                <Link 
+                  to="/salary-data" 
+                  className={`nav-tab-link ${isSalaryGuide ? "active" : ""}`}
+                >
+                  Salary guide
+                </Link>
               </>
             )}
 
-            {/* Recruiter Navbar */}
             {user?.role === "recruiter" && (
               <>
-                <Link className="dashboard-btn nav-hover" to="/recruiter-dashboard">Jobs</Link>
-                <Link className="dashboard-btn nav-hover" to="/recruiter-applications">Applications</Link>
+                <Link 
+                  to="/recruiter-dashboard" 
+                  className={`nav-tab-link ${location.pathname === "/recruiter-dashboard" ? "active" : ""}`}
+                >
+                  Manage Jobs
+                </Link>
+                <Link 
+                  to="/recruiter-applications" 
+                  className={`nav-tab-link ${location.pathname === "/recruiter-applications" ? "active" : ""}`}
+                >
+                  Applicants
+                </Link>
                 {user?.email?.toLowerCase() === "admin@gmail.com" && (
-                  <Link className="dashboard-btn nav-hover" to="/admin/dashboard">Admin Tools</Link>
+                  <Link 
+                    to="/admin/dashboard" 
+                    className={`nav-tab-link ${location.pathname.includes("/admin") ? "active" : ""}`}
+                  >
+                    Admin System
+                  </Link>
                 )}
-                <Link className="dashboard-btn nav-hover" to="/recruiter-profile">Profile</Link>
               </>
             )}
+          </div>
+        </div>
 
-            {/* Logout */}
-            {isLoggedIn && (
-              <button type="button" className="logout-btn nav-hover" onClick={logout}>
-                Logout
+        {/* Mobile Menu Hamburger */}
+        <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
+          {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+
+        {/* Right Section: Indeed-style Action Icons + Profile + Action Button */}
+        <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+          {!isLoggedIn ? (
+            <div className="auth-buttons">
+              <Link className="login-btn nav-hover" to="/login">Sign in</Link>
+              <Link className="signup-btn nav-hover" to="/register">Create Account</Link>
+            </div>
+          ) : (
+            <div className="user-icon-bar">
+              {/* Candidates Icon Suite */}
+              {user?.role === "candidate" && (
+                <>
+                  {/* Saved / My Jobs (Bookmark) */}
+                  <div className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}>
+                    <Link to="/my-applications" className="icon-btn-link" title="My jobs">
+                      <FiBookmark className="header-icon" />
+                      <span className="mobile-only-label">My jobs</span>
+                    </Link>
+                    <div className="tooltip-bubble">My jobs</div>
+                  </div>
+
+                  {/* Messages Icon */}
+                  <div className="icon-tab-wrapper">
+                    <button type="button" className="icon-btn-link" onClick={handleMessageClick} title="Messages">
+                      <FiMessageSquare className="header-icon" />
+                      <span className="mobile-only-label">Messages</span>
+                    </button>
+                    <div className="tooltip-bubble">Messages</div>
+                  </div>
+
+                  {/* Notifications Icon */}
+                  <div className="icon-tab-wrapper">
+                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} title="Notifications">
+                      <FiBell className="header-icon" />
+                      <span className="mobile-only-label">Notifications</span>
+                    </button>
+                    <div className="tooltip-bubble">Notifications</div>
+                  </div>
+
+                  {/* Profile Icon */}
+                  <div className={`icon-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}>
+                    <Link to="/candidate-profile" className="icon-btn-link" title="Profile">
+                      <FiUser className="header-icon" />
+                      <span className="mobile-only-label">Profile</span>
+                    </Link>
+                    <div className="tooltip-bubble">Profile</div>
+                  </div>
+                </>
+              )}
+
+              {/* Recruiter Icon Suite */}
+              {user?.role === "recruiter" && (
+                <>
+                  <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
+                    <Link to="/recruiter-profile" className="icon-btn-link" title="Profile">
+                      <FiUser className="header-icon" />
+                      <span className="mobile-only-label">Profile</span>
+                    </Link>
+                    <div className="tooltip-bubble">Profile</div>
+                  </div>
+                </>
+              )}
+
+              {/* Vertical Divider Line */}
+              <div className="nav-divider desktop-only"></div>
+
+              {/* Recruiter CTA / Logout Button */}
+              {user?.role === "recruiter" ? (
+                <Link to="/recruiter-dashboard" className="employer-post-link desktop-only">
+                  Employers / Post Job
+                </Link>
+              ) : null}
+
+              {/* Logout Button */}
+              <button 
+                type="button" 
+                className="logout-icon-btn" 
+                onClick={logout}
+                title="Sign out"
+              >
+                <FiLogOut className="header-icon" />
+                <span className="logout-text">Logout</span>
               </button>
-            )}
-          </>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
