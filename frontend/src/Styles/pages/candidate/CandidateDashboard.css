@@ -152,7 +152,7 @@
    LAYOUT STRUCTURE
 ========================================== */
 .ind-content-container {
-  max-width: 1340px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -167,8 +167,8 @@
 
 .ind-main-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 20px;
+  grid-template-columns: 310px 1fr;
+  gap: 24px;
   align-items: start;
   height: calc(100vh - 150px);
 }
@@ -344,38 +344,38 @@
 }
 
 .ind-detail-header-card {
-  padding: 32px 36px;
+  padding: 36px 42px;
   border-bottom: 1px solid #f0f0ee;
   background: #ffffff;
 }
 
 .ind-detail-main-title {
-  font-size: 1.35rem;
+  font-size: 1.65rem;
   font-weight: 900;
   color: #0d1117;
   margin: 0 0 6px 0;
-  line-height: 1.2;
+  line-height: 1.25;
   letter-spacing: -0.5px;
 }
 
 .ind-detail-company-link {
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 700;
   color: #374151;
   margin: 0 0 4px 0;
 }
 
 .ind-detail-location-text {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: #6b7280;
   margin: 0 0 12px 0;
 }
 
 .ind-detail-salary-text {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #0d1117;
-  margin: 0 0 16px 0;
+  margin: 0 0 18px 0;
 }
 
 /* ACTIONS & FILTERS ROW */
