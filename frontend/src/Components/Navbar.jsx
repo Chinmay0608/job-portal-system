@@ -117,7 +117,7 @@ function Navbar() {
               }
             }}
           >
-            <SkillBridgeLogo width={150} className="brand-svg-logo" />
+            <SkillBridgeLogo width={160} className="brand-svg-logo" />
           </Link>
 
           {/* Left Text Navigation Links */}
