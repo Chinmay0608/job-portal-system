@@ -237,16 +237,18 @@ function Navbar() {
                 </>
               )}
 
-              {/* Vertical Separator Divider */}
-              <div className="nav-divider desktop-only"></div>
-
-              {/* Employers / Post Job Link */}
-              <Link 
-                to={user?.role === "recruiter" ? "/recruiter-dashboard" : "/register?role=recruiter"} 
-                className="employer-post-link desktop-only"
-              >
-                Employers / Post Job
-              </Link>
+              {/* Vertical Separator Divider & Employers / Post Job Link (Recruiters & Guests only) */}
+              {user?.role === "recruiter" && (
+                <>
+                  <div className="nav-divider desktop-only"></div>
+                  <Link 
+                    to="/recruiter-dashboard" 
+                    className="employer-post-link desktop-only"
+                  >
+                    Employers / Post Job
+                  </Link>
+                </>
+              )}
 
               {/* Logout Button */}
               <button 
