@@ -505,3 +505,38 @@
   color: #ffffff !important;
 }
 
+/* Auth Buttons on Dark Hero Landing Header */
+.indeed-navbar.navbar-dark .login-btn {
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.indeed-navbar.navbar-dark .login-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .signup-btn {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: 1.5px solid #2563eb !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.indeed-navbar.navbar-dark .signup-btn:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+

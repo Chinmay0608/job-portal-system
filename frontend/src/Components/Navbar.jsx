@@ -120,50 +120,52 @@ function Navbar() {
             <SkillBridgeLogo width={160} className="brand-svg-logo" />
           </Link>
 
-          {/* Left Text Navigation Links */}
-          <div className="nav-links-left desktop-only">
-            {(!isLoggedIn || user?.role === "candidate") && (
-              <>
-                <Link 
-                  to={isLoggedIn ? "/candidate-dashboard" : "/"} 
-                  className={`nav-tab-link ${isCandidateDashboard || isHome ? "active" : ""}`}
-                >
-                  Home
-                </Link>
-                <Link 
-                  to="/salary-data" 
-                  className={`nav-tab-link ${isSalaryGuide ? "active" : ""}`}
-                >
-                  Salary guide
-                </Link>
-              </>
-            )}
-
-            {user?.role === "recruiter" && (
-              <>
-                <Link 
-                  to="/recruiter-dashboard" 
-                  className={`nav-tab-link ${location.pathname === "/recruiter-dashboard" ? "active" : ""}`}
-                >
-                  Manage Jobs
-                </Link>
-                <Link 
-                  to="/recruiter-applications" 
-                  className={`nav-tab-link ${location.pathname === "/recruiter-applications" ? "active" : ""}`}
-                >
-                  Applicants
-                </Link>
-                {user?.email?.toLowerCase() === "admin@gmail.com" && (
+          {/* Left Text Navigation Links (Only on inner app pages, not landing page) */}
+          {!isHome && (
+            <div className="nav-links-left desktop-only">
+              {(!isLoggedIn || user?.role === "candidate") && (
+                <>
                   <Link 
-                    to="/admin/dashboard" 
-                    className={`nav-tab-link ${location.pathname.includes("/admin") ? "active" : ""}`}
+                    to={isLoggedIn ? "/candidate-dashboard" : "/"} 
+                    className={`nav-tab-link ${isCandidateDashboard ? "active" : ""}`}
                   >
-                    Admin System
+                    Home
                   </Link>
-                )}
-              </>
-            )}
-          </div>
+                  <Link 
+                    to="/salary-data" 
+                    className={`nav-tab-link ${isSalaryGuide ? "active" : ""}`}
+                  >
+                    Salary guide
+                  </Link>
+                </>
+              )}
+
+              {user?.role === "recruiter" && (
+                <>
+                  <Link 
+                    to="/recruiter-dashboard" 
+                    className={`nav-tab-link ${location.pathname === "/recruiter-dashboard" ? "active" : ""}`}
+                  >
+                    Manage Jobs
+                  </Link>
+                  <Link 
+                    to="/recruiter-applications" 
+                    className={`nav-tab-link ${location.pathname === "/recruiter-applications" ? "active" : ""}`}
+                  >
+                    Applicants
+                  </Link>
+                  {user?.email?.toLowerCase() === "admin@gmail.com" && (
+                    <Link 
+                      to="/admin/dashboard" 
+                      className={`nav-tab-link ${location.pathname.includes("/admin") ? "active" : ""}`}
+                    >
+                      Admin System
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -171,12 +173,12 @@ function Navbar() {
           {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
         </button>
 
-        {/* Right Section: Action Icons + Separator + Post Job / Logout */}
+        {/* Right Section: Auth Buttons (Landing / Guest) OR Application Action Bar (Inner Dashboard Pages) */}
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
-          {!isLoggedIn ? (
+          {(!isLoggedIn || isHome) ? (
             <div className="auth-buttons">
-              <Link className="login-btn nav-hover" to="/login">Sign in</Link>
-              <Link className="signup-btn nav-hover" to="/register">Create Account</Link>
+              <Link className="login-btn nav-hover" to="/login">Login</Link>
+              <Link className="signup-btn nav-hover" to="/register">Sign Up</Link>
             </div>
           ) : (
             <div className="user-icon-bar">
