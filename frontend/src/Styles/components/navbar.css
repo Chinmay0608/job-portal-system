@@ -13,6 +13,13 @@
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
+/* Dark top accent strip matching Indeed header screenshot */
+.indeed-top-strip {
+  width: 100%;
+  height: 4px;
+  background-color: #1e293b;
+}
+
 /* Matching top vector wave on dashboards */
 .indeed-navbar.dashboard-nav {
   background-color: #e8f1ff !important;
@@ -24,7 +31,7 @@
   max-width: 1350px;
   margin: 0 auto;
   padding: 0 24px;
-  height: 60px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,16 +62,16 @@
 }
 
 .brand-svg-logo {
-  height: 38px;
+  height: 34px;
   width: auto;
   display: block;
 }
 
-/* Text Navigation Links (Find Jobs, Company Reviews, Salary Guide) */
+/* Text Navigation Links (Home, Company reviews, Salary guide) */
 .nav-links-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   height: 100%;
 }
 
@@ -72,8 +79,8 @@
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 4px;
-  font-size: 0.95rem;
+  padding: 0 2px;
+  font-size: 0.92rem;
   font-weight: 500;
   color: #2d3748;
   text-decoration: none;
@@ -83,12 +90,12 @@
 }
 
 .nav-tab-link:hover {
-  color: #1d4ed8;
+  color: #2563eb;
 }
 
 /* Active Tab Blue Underline Bar (Indeed style) */
 .nav-tab-link.active {
-  color: #1d4ed8;
+  color: #2563eb;
   font-weight: 600;
 }
 
@@ -117,7 +124,7 @@
 .user-icon-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   height: 100%;
 }
 
@@ -128,7 +135,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .icon-btn-link {
@@ -137,7 +144,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #2d3748;
+  color: #1e293b;
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
@@ -147,25 +154,24 @@
 
 .icon-btn-link:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
+  color: #2563eb;
 }
 
 .header-icon {
-  font-size: 1.35rem;
-  stroke-width: 2.2;
+  font-size: 1.25rem;
 }
 
 /* Active Icon Blue Underline (Indeed style bookmark/profile) */
 .icon-tab-wrapper.active .icon-btn-link {
-  color: #1d4ed8;
+  color: #2563eb;
 }
 
 .icon-tab-wrapper.active::after {
   content: "";
   position: absolute;
   bottom: -1px;
-  left: 10px;
-  right: 10px;
+  left: 6px;
+  right: 6px;
   height: 3px;
   background-color: #2563eb;
   border-top-left-radius: 2px;
@@ -178,22 +184,22 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%) translateY(4px);
-  background-color: #1e293b;
+  background-color: #2d3748;
   color: #ffffff;
   font-size: 0.78rem;
   font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   z-index: 1100;
 }
 
-/* Tooltip Arrow */
+/* Tooltip Top Triangle Arrow */
 .tooltip-bubble::before {
   content: "";
   position: absolute;
@@ -202,26 +208,26 @@
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent #1e293b transparent;
+  border-color: transparent transparent #2d3748 transparent;
 }
 
 .icon-tab-wrapper:hover .tooltip-bubble {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(8px);
+  transform: translateX(-50%) translateY(6px);
 }
 
 /* Vertical Separator Divider */
 .nav-divider {
   width: 1px;
-  height: 24px;
+  height: 22px;
   background-color: #cbd5e1;
-  margin: 0 8px;
+  margin: 0 10px;
 }
 
 /* Employer Post Job Link */
 .employer-post-link {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
   color: #2d3748;
   text-decoration: none;
@@ -233,7 +239,7 @@
 
 .employer-post-link:hover {
   background-color: rgba(0, 0, 0, 0.05);
-  color: #1d4ed8;
+  color: #2563eb;
 }
 
 /* Logout Button */
@@ -244,19 +250,23 @@
   background-color: transparent;
   border: 1px solid #cbd5e1;
   color: #ef4444;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: 4px;
+  margin-left: 6px;
 }
 
 .logout-icon-btn:hover {
   background-color: #ef4444;
   color: #ffffff;
   border-color: #ef4444;
+}
+
+.logout-icon {
+  font-size: 0.95rem;
 }
 
 /* Guest Auth Buttons */
@@ -267,11 +277,11 @@
 }
 
 .login-btn {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #2563eb;
   text-decoration: none;
-  padding: 7px 16px;
+  padding: 6px 14px;
   border-radius: 8px;
   border: 1.5px solid #2563eb;
   transition: all 0.2s ease;
@@ -282,12 +292,12 @@
 }
 
 .signup-btn {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #ffffff;
   background-color: #2563eb;
   text-decoration: none;
-  padding: 8px 18px;
+  padding: 7px 16px;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
@@ -356,7 +366,6 @@
     width: 100%;
     gap: 8px;
     align-items: stretch;
-
   }
 
   .icon-tab-wrapper {

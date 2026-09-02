@@ -2,15 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { 
-  FiBookmark, 
-  FiMessageSquare, 
-  FiBell, 
-  FiUser, 
-  FiLogOut, 
-  FiMenu, 
-  FiX, 
-  FiPlusCircle 
-} from "react-icons/fi";
+  BsBookmarkFill, 
+  BsChatSquareTextFill, 
+  BsBellFill, 
+  BsPersonFill, 
+  BsBoxArrowRight 
+} from "react-icons/bs";
+import { FiMenu, FiX } from "react-icons/fi";
 import { logoutUser } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
 import "../Styles/components/navbar.css";
@@ -47,12 +45,10 @@ function Navbar() {
     };
   }, [location.pathname]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -105,8 +101,11 @@ function Navbar() {
 
   return (
     <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardTheme ? " dashboard-nav" : ""}`}>
+      {/* Top Accent Strip */}
+      <div className="indeed-top-strip"></div>
+
       <div className="navbar-container">
-        {/* Left Section: Logo + Main Text Navigation */}
+        {/* Left Section: Logo + Main Text Links */}
         <div className="nav-left">
           <Link 
             className="navbar-brand-logo" 
@@ -121,10 +120,10 @@ function Navbar() {
               }
             }}
           >
-            <SkillBridgeLogo width={160} className="brand-svg-logo" />
+            <SkillBridgeLogo width={150} className="brand-svg-logo" />
           </Link>
 
-          {/* Indeed-style Text Navigation (Desktop) */}
+          {/* Left Text Navigation Links */}
           <div className="nav-links-left desktop-only">
             {(!isLoggedIn || user?.role === "candidate") && (
               <>
@@ -132,7 +131,7 @@ function Navbar() {
                   to={isLoggedIn ? "/candidate-dashboard" : "/"} 
                   className={`nav-tab-link ${isCandidateDashboard || isHome ? "active" : ""}`}
                 >
-                  Find jobs
+                  Home
                 </Link>
                 <Link 
                   to="/about" 
@@ -176,12 +175,12 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu Hamburger */}
+        {/* Mobile Hamburger Toggle */}
         <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
           {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
         </button>
 
-        {/* Right Section: Indeed-style Action Icons + Profile + Action Button */}
+        {/* Right Section: Action Icons + Separator + Post Job / Logout */}
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           {!isLoggedIn ? (
             <div className="auth-buttons">
@@ -193,37 +192,37 @@ function Navbar() {
               {/* Candidates Icon Suite */}
               {user?.role === "candidate" && (
                 <>
-                  {/* Saved / My Jobs (Bookmark) */}
+                  {/* Bookmark Icon (My Jobs) */}
                   <div className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}>
                     <Link to="/my-applications" className="icon-btn-link" title="My jobs">
-                      <FiBookmark className="header-icon" />
+                      <BsBookmarkFill className="header-icon" />
                       <span className="mobile-only-label">My jobs</span>
                     </Link>
                     <div className="tooltip-bubble">My jobs</div>
                   </div>
 
-                  {/* Messages Icon */}
+                  {/* Message Icon */}
                   <div className="icon-tab-wrapper">
                     <button type="button" className="icon-btn-link" onClick={handleMessageClick} title="Messages">
-                      <FiMessageSquare className="header-icon" />
+                      <BsChatSquareTextFill className="header-icon" />
                       <span className="mobile-only-label">Messages</span>
                     </button>
                     <div className="tooltip-bubble">Messages</div>
                   </div>
 
-                  {/* Notifications Icon */}
+                  {/* Bell Icon */}
                   <div className="icon-tab-wrapper">
                     <button type="button" className="icon-btn-link" onClick={handleNotificationClick} title="Notifications">
-                      <FiBell className="header-icon" />
+                      <BsBellFill className="header-icon" />
                       <span className="mobile-only-label">Notifications</span>
                     </button>
                     <div className="tooltip-bubble">Notifications</div>
                   </div>
 
-                  {/* Profile Icon */}
+                  {/* Profile User Icon */}
                   <div className={`icon-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}>
                     <Link to="/candidate-profile" className="icon-btn-link" title="Profile">
-                      <FiUser className="header-icon" />
+                      <BsPersonFill className="header-icon" />
                       <span className="mobile-only-label">Profile</span>
                     </Link>
                     <div className="tooltip-bubble">Profile</div>
@@ -236,7 +235,7 @@ function Navbar() {
                 <>
                   <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
                     <Link to="/recruiter-profile" className="icon-btn-link" title="Profile">
-                      <FiUser className="header-icon" />
+                      <BsPersonFill className="header-icon" />
                       <span className="mobile-only-label">Profile</span>
                     </Link>
                     <div className="tooltip-bubble">Profile</div>
@@ -244,15 +243,16 @@ function Navbar() {
                 </>
               )}
 
-              {/* Vertical Divider Line */}
+              {/* Vertical Separator Divider */}
               <div className="nav-divider desktop-only"></div>
 
-              {/* Recruiter CTA / Logout Button */}
-              {user?.role === "recruiter" ? (
-                <Link to="/recruiter-dashboard" className="employer-post-link desktop-only">
-                  Employers / Post Job
-                </Link>
-              ) : null}
+              {/* Employers / Post Job Link */}
+              <Link 
+                to={user?.role === "recruiter" ? "/recruiter-dashboard" : "/register?role=recruiter"} 
+                className="employer-post-link desktop-only"
+              >
+                Employers / Post Job
+              </Link>
 
               {/* Logout Button */}
               <button 
@@ -261,7 +261,7 @@ function Navbar() {
                 onClick={logout}
                 title="Sign out"
               >
-                <FiLogOut className="header-icon" />
+                <BsBoxArrowRight className="logout-icon" />
                 <span className="logout-text">Logout</span>
               </button>
             </div>
