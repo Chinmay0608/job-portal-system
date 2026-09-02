@@ -1,10 +1,12 @@
 const express = require("express");
-const { getJobsAdmin,  body } = require("express-validator");
+// FIX I-08: Split imports — getJobsAdmin now correctly imported from jobController,
+// previously it was being destructured from "express-validator" which caused a TypeError on server startup.
+const { body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
 const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMiddleware");
 const { cacheMiddleware } = require("../middleware/cacheMiddleware");
-const upload = require("../middleware/multer");
 const {
+  getJobsAdmin,
   createJob,
   generateJobDescription,
   getAllJobs,
@@ -17,7 +19,7 @@ const {
   triggerManualSync,
   triggerScheduledSync,
   getSyncStatus,
- } = require("../controllers/jobController");
+} = require("../controllers/jobController");
 
 const router = express.Router();
 
@@ -49,6 +51,7 @@ router.post(
 /* ==========================
    ADMIN ROUTES
 ========================== */
+router.get("/admin/all", protect, authorizeRoles("recruiter"), getJobsAdmin);
 router.post("/sync", protect, authorizeRoles("recruiter"), triggerManualSync);
 router.post("/internal-sync", triggerScheduledSync);
 router.get("/sync/status", protect, authorizeRoles("recruiter"), getSyncStatus);
@@ -57,6 +60,7 @@ router.get("/sync/status", protect, authorizeRoles("recruiter"), getSyncStatus);
    RECRUITER ROUTES
 ========================== */
 router.get("/my-jobs", protect, authorizeRoles("recruiter"), getRecruiterJobs);
+
 // AI Job Description Generator Route
 router.post(
   "/generate-description",
@@ -101,4 +105,3 @@ router.delete(
 );
 
 module.exports = router;
-

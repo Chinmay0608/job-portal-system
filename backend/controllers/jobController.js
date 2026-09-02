@@ -1,5 +1,6 @@
 const Job = require("../models/job");
 const User = require("../models/user");
+const Application = require("../models/Application"); // FIX I-03: Correct casing (Linux FS is case-sensitive)
 const MasterSkill = require("../models/MasterSkill");
 const { calculateJobMatches } = require("../services/jobMatchService");
 const { clearCache } = require("../middleware/cacheMiddleware");
@@ -165,9 +166,12 @@ const getAllJobs = asyncHandler(async (req, res) => {
   if (experience && experience !== "All Experience") {
     query.experienceRequired = experience;
   }
-  
+
   if (source && source !== "All") {
-    if (source === "Internal") {
+    // FIX I-13: Use case-insensitive comparison — frontend sends "internal" (lowercase)
+    // but controller was checking "Internal" (capital I), causing the filter to never match.
+    const sourceLower = source.toLowerCase();
+    if (sourceLower === "internal") {
       query.isExternal = { $ne: true };
     } else {
       query.source = source;
@@ -247,6 +251,7 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
 
   const jobs = await Job.find(query);
 
+  // FIX I-04 (partial): Pass skills safely — calculateJobMatches guards null internally
   const recommendedJobs = calculateJobMatches(jobs, user.skills || []);
 
   res.status(200).json({
@@ -325,6 +330,9 @@ const deleteJob = asyncHandler(async (req, res) => {
 
   await Job.findByIdAndDelete(jobId);
 
+  // FIX I-14: Cascade-delete all applications for this job to prevent orphaned records.
+  // Previously only hiddenJobs/savedJobs were cleaned up, leaving Application records dangling.
+  await Application.deleteMany({ job: jobId });
   await User.updateMany(
     {},
     { $pull: { hiddenJobs: jobId, savedJobs: jobId } }
@@ -465,7 +473,9 @@ const triggerScheduledSync = async (req, res, next) => {
   }
 };
 
-
+/* ==========================
+   ADMIN: GET ALL JOBS REGISTRY
+========================== */
 const getJobsAdmin = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
@@ -475,11 +485,13 @@ const getJobsAdmin = asyncHandler(async (req, res) => {
   if (source === "internal") filter.isExternal = { $ne: true };
   if (source === "external") filter.isExternal = true;
 
-  if (status === "active") filter.status = "open";
-  if (status === "inactive") filter.status = "closed";
+  // FIX I-02: Job schema has no 'status' field — it uses 'isActive' Boolean.
+  // Previously using status:"open"/"closed" always returned 0.
+  if (status === "active") filter.isActive = { $ne: false };
+  if (status === "inactive") filter.isActive = false;
 
   if (search) {
-    const searchRegex = new RegExp(search, "i");
+    const searchRegex = new RegExp(escapeRegex(search), "i");
     filter.$or = [
       { title: searchRegex },
       { company: searchRegex },
@@ -487,9 +499,9 @@ const getJobsAdmin = asyncHandler(async (req, res) => {
     ];
   }
 
-  // Calculate stats
+  // FIX I-02: Stats use isActive field, not status
   const totalJobs = await Job.countDocuments();
-  const activeJobs = await Job.countDocuments({ status: "open" });
+  const activeJobs = await Job.countDocuments({ isActive: { $ne: false } });
   const externalJobs = await Job.countDocuments({ isExternal: true });
   const internalJobs = await Job.countDocuments({ isExternal: { $ne: true } });
   
@@ -514,7 +526,6 @@ const getJobsAdmin = asyncHandler(async (req, res) => {
     .lean();
 
   // Aggregate application counts
-  const Application = require('../models/application');
   const jobIds = jobs.map(j => j._id);
   const applicationCounts = await Application.aggregate([
     { $match: { job: { $in: jobIds } } },
@@ -558,4 +569,3 @@ module.exports = {
   triggerScheduledSync,
   getSyncStatus,
 };
-

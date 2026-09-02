@@ -64,6 +64,10 @@ router.patch(
   updateApplicationStatus,
 );
 
-module.exports = router;
-
+/* ==========================
+   ADMIN ROUTES
+========================== */
+// FIX I-01: Moved above module.exports — was dead (unreachable) after export
 router.get("/admin/all", protect, authorizeRoles("recruiter"), getApplicationsAdmin);
+
+module.exports = router;

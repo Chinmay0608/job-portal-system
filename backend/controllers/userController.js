@@ -59,7 +59,13 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.experienceLevel = experienceLevel || "Fresher";
   if (skills) {
     try {
-      user.skills = JSON.parse(skills);
+      const parsedSkills = JSON.parse(skills);
+      // FIX I-11: JSON.parse succeeds on non-array values like "{}" or "null".
+      // Validate the result is actually an array to prevent silent data corruption.
+      if (!Array.isArray(parsedSkills)) {
+        return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
+      }
+      user.skills = parsedSkills;
     } catch (error) {
       return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
     }
@@ -93,9 +99,29 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   await user.save();
 
+  // FIX I-10: Return a clean DTO instead of the full user document.
+  // The raw document exposes internal arrays (hiddenJobs, savedJobs) unnecessarily.
   res.status(200).json({
     message: "Profile updated successfully",
-    user,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      location: user.location,
+      linkedin: user.linkedin,
+      github: user.github,
+      about: user.about,
+      skills: user.skills,
+      education: user.education,
+      experienceLevel: user.experienceLevel,
+      designation: user.designation,
+      companyName: user.companyName,
+      companyWebsite: user.companyWebsite,
+      resume: user.resume,
+      profileImage: user.profileImage,
+    },
     extractedSkills: newlyExtractedSkills,
   });
 });

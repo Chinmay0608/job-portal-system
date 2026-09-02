@@ -160,7 +160,11 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     throw new Error("Job not found");
   }
 
-  if (application.job.recruiter.toString() !== req.user.id && application.candidate._id.toString() !== req.user.id) {
+  // FIX I-15: Removed the OR clause that allowed candidates to update their own status.
+  // Only the recruiter who owns the job may change application statuses.
+  // (The route already guards with authorizeRoles("recruiter") but the in-controller
+  // check was also wrong and dangerous if ever the route guard is relaxed.)
+  if (application.job.recruiter.toString() !== req.user.id) {
     res.status(403);
     throw new Error("Access denied");
   }
@@ -250,7 +254,8 @@ const getApplicationsAdmin = asyncHandler(async (req, res) => {
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const appsToday = await Application.countDocuments({ appliedAt: { $gte: today } });
+  // FIX I-05: Application schema has no 'appliedAt' field — timestamps: true creates 'createdAt'.
+  const appsToday = await Application.countDocuments({ createdAt: { $gte: today } });
 
   const stats = {
     total: totalApps,
@@ -263,7 +268,7 @@ const getApplicationsAdmin = asyncHandler(async (req, res) => {
   // Get applications
   const skip = (page - 1) * limit;
   let applications = await Application.find(filter)
-    .sort({ appliedAt: -1 })
+    .sort({ createdAt: -1 }) // FIX I-06: 'appliedAt' does not exist; use Mongoose timestamp 'createdAt'
     .populate("candidate", "name email resume")
     .populate("job", "title company isExternal applyUrl")
     .skip(skip)
