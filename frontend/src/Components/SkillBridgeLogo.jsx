@@ -3,7 +3,7 @@ import React from "react";
 /**
  * SkillBridge Startup Wordmark Logo
  * Modern, geometric SaaS-style wordmark designed for high visual authority.
- * Features unified typography ("Skill" in Deep Navy #0F172A, "Bridge" in Primary Blue #2563EB)
+ * Features unified typography ("Skill" in Deep Navy #0F172A / White #FFFFFF on dark theme, "Bridge" in Primary Blue #2563EB)
  * with an integrated bridge connection accent at the base junction.
  */
 const SkillBridgeLogo = ({ width = 165, height, className = "" }) => {
@@ -28,8 +28,8 @@ const SkillBridgeLogo = ({ width = 165, height, className = "" }) => {
         fontWeight="800"
         letterSpacing="-1.2px"
       >
-        <tspan fill="#0F172A">Skill</tspan>
-        <tspan fill="#2563EB">Bridge</tspan>
+        <tspan className="logo-skill-text" fill="#0F172A">Skill</tspan>
+        <tspan className="logo-bridge-text" fill="#2563EB">Bridge</tspan>
       </text>
 
       {/* Integrated Typography Accent: Micro Bridge Arc joining Skill & Bridge at baseline */}

@@ -421,3 +421,94 @@
     text-align: center;
   }
 }
+
+/* ==========================================================================
+   HOMEPAGE DARK NAVBAR OVERRIDES
+========================================================================== */
+
+.indeed-navbar.navbar-dark {
+  background-color: #0d1117 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+.indeed-navbar.navbar-dark .indeed-top-strip {
+  background-color: #2563eb !important;
+}
+
+/* Logo Text on Dark Hero */
+.indeed-navbar.navbar-dark .logo-skill-text {
+  fill: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .logo-bridge-text {
+  fill: #3b82f6 !important;
+}
+
+/* Nav Links on Dark Hero */
+.indeed-navbar.navbar-dark .nav-tab-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.indeed-navbar.navbar-dark .nav-tab-link:hover {
+  color: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .nav-tab-link.active {
+  color: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .nav-tab-link.active::after {
+  background-color: #3b82f6 !important;
+}
+
+/* Icon Buttons on Dark Hero */
+.indeed-navbar.navbar-dark .icon-btn-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.indeed-navbar.navbar-dark .icon-btn-link:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .icon-tab-wrapper.active .icon-btn-link {
+  color: #ffffff !important;
+}
+
+.indeed-navbar.navbar-dark .icon-tab-wrapper.active::after {
+  background-color: #3b82f6 !important;
+}
+
+/* Vertical Separator Divider on Dark Hero */
+.indeed-navbar.navbar-dark .nav-divider {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Employer Link on Dark Hero */
+.indeed-navbar.navbar-dark .employer-post-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.indeed-navbar.navbar-dark .employer-post-link:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Logout Button on Dark Hero */
+.indeed-navbar.navbar-dark .logout-icon-btn {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #f87171 !important;
+}
+
+.indeed-navbar.navbar-dark .logout-icon-btn:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Mobile Toggle on Dark Hero */
+.indeed-navbar.navbar-dark .mobile-menu-toggle {
+  color: #ffffff !important;
+}
+
