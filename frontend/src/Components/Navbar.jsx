@@ -253,7 +253,7 @@ function Navbar() {
                 type="button" 
                 className="logout-icon-btn" 
                 onClick={logout}
-                title="Sign out"
+                aria-label="Sign out"
               >
                 <BsBoxArrowRight className="logout-icon" />
                 <span className="logout-text">Logout</span>
