@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
+
 function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -34,6 +36,9 @@ function ForgotPassword() {
   return (
     <div className="auth-page">
       <div className="auth-right">
+        <div style={{ marginBottom: "20px", cursor: "pointer" }} onClick={() => navigate("/")}>
+          <SkillBridgeLogo width={160} />
+        </div>
         <h1 className="auth-title">Forgot Password</h1>
         <p className="auth-subtitle">Enter your email to receive reset link</p>
 
