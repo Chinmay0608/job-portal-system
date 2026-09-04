@@ -115,33 +115,35 @@ function AppContent() {
 }
 
 function App() {
-  // Splash should only ever appear on the very first visit.
-  // Check localStorage synchronously on first render so the splash
-  // never flashes on subsequent visits/refreshes.
-  
-
-  const [showSplash, setShowSplash] = useState(true);
+  // Splash screen only appears on initial session entry.
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem("hasSeenSplash");
+    } catch {
+      return true;
+    }
+  });
   const [isSplashExiting, setIsSplashExiting] = useState(false);
 
   useEffect(() => {
-    
+    if (!showSplash) return;
 
-    // Hold the splash on screen, then trigger the fade-out animation
-    const exitTimer = setTimeout(() => setIsSplashExiting(true), 1400);
+    // Smooth exit trigger after 800ms
+    const exitTimer = setTimeout(() => setIsSplashExiting(true), 800);
 
-    // Fully remove the splash from the DOM once the fade-out animation finishes,
-    // and record that it has now been seen so it never shows again.
+    // Unmount splash from DOM after exit animation completes
     const removeTimer = setTimeout(() => {
       setShowSplash(false);
-      
-    }, 1900);
+      try {
+        sessionStorage.setItem("hasSeenSplash", "true");
+      } catch {}
+    }, 1200);
 
     return () => {
       clearTimeout(exitTimer);
       clearTimeout(removeTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showSplash]);
 
   return (
     <BrowserRouter>
