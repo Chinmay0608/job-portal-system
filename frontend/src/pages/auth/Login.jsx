@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
 import "../../Styles/pages/auth/Login.css";
 import "../../Styles/pages/auth/mobile-bridge.css";
 
@@ -112,7 +113,7 @@ function Login() {
           <div className="deck-header">SKILLBRIDGE DECK</div>
           
           <div className="login-brand" onClick={() => navigate("/")}>
-            <span className="login-brand-dot">Skill</span>Bridge
+            <SkillBridgeLogo width={160} />
           </div>
 
           <h1 className="login-title">Login</h1>

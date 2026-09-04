@@ -29,22 +29,10 @@
 }
 
 .login-brand {
-  position: absolute;
-  top: 5px;
-  left: 15px;
-  font-size: 3.2rem;
-  font-weight: 900;
-  color: #0d1117;
-
-  letter-spacing: -1.5px;
-  line-height: 1;
-
-  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
   cursor: pointer;
-}
-
-.login-brand-dot {
-  color: #ef4444;
 }
 
 .login-title {
@@ -58,7 +46,7 @@
 
 .login-subtitle {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #6b7280;
   margin-bottom: 16px;
 }
 
@@ -166,7 +154,7 @@
 }
 
 .forgot-password-link {
-  color: #0d1117;
+  color: #2563eb;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -179,19 +167,21 @@
 .login-submit-btn {
   width: 100%;
   height: 44px;
-  background: #000000;
+  background: #2563eb;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
   margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
 .login-submit-btn:hover {
-  background: #1f2937;
+  background: #1d4ed8;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
 }
 
 .login-bottom-text {
@@ -201,7 +191,7 @@
 }
 
 .login-bottom-text span {
-  color: #0d1117;
+  color: #2563eb;
   font-weight: bold;
   text-decoration: underline;
   cursor: pointer;
@@ -215,7 +205,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #f8f8f5;
+  background: radial-gradient(circle at 70% 30%, #e0edff 0%, #f0f6ff 50%, #e8f1ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
