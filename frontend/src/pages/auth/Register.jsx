@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
 import "../../Styles/pages/auth/Register.css";
 import "../../Styles/pages/auth/mobile-bridge.css";
 
@@ -168,7 +169,6 @@ function Register() {
             <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
             <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
             <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
-            {/* Base Deck Line Removed to let card border act as the deck */}
           </svg>
         </div>
 
@@ -176,13 +176,11 @@ function Register() {
           <div className="deck-header">SKILLBRIDGE DECK</div>
           
           <div className="register-brand" onClick={() => navigate("/")}>
-            <span className="register-brand-dot">Skill</span>Bridge
+            <SkillBridgeLogo width={160} />
           </div>
 
           <h1 className="register-title">Sign Up</h1>
           <p className="register-subtitle">Start your journey with SkillBridge</p>
-
-          {/* MOBILE ROLE SELECTOR (Hidden on Desktop) */}
           <div className="mobile-role-selector">
             <button 
               type="button"
