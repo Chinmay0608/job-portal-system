@@ -21,8 +21,21 @@ class AdzunaProvider extends BaseProvider {
   async fetchJobs(lastSyncAt) {
     try {
       let allResults = [];
-      // Clean tech keywords to query sequentially without invalid boolean syntax
-      const searchTerms = ["developer", "engineer", "software", "full stack", "react", "python"];
+      // Multi-domain search terms to cover all job fields (Tech, Management, Sales, Marketing, HR, Finance, Design, Data, Operations)
+      const searchTerms = [
+        "developer",
+        "engineer",
+        "manager",
+        "designer",
+        "marketing",
+        "sales",
+        "analyst",
+        "accountant",
+        "hr",
+        "operations",
+        "support",
+        "consultant"
+      ];
       
       for (const term of searchTerms) {
         for (let page = 1; page <= 3; page++) {
@@ -58,7 +71,7 @@ class AdzunaProvider extends BaseProvider {
         }
       });
 
-      console.log(`[Adzuna Engine] Fetched ${allResults.length} total results, ${uniqueMap.size} unique live jobs.`);
+      console.log(`[Adzuna Engine] Fetched ${allResults.length} total results, ${uniqueMap.size} unique live jobs across all domains.`);
       return Array.from(uniqueMap.values());
     } catch (error) {
       throw new Error(`Adzuna API Error: ${error.message}`);
@@ -78,11 +91,16 @@ class AdzunaProvider extends BaseProvider {
     if (desc.includes("python")) skillsRequired.push("Python");
     if (desc.includes("java")) skillsRequired.push("Java");
     if (desc.includes("sql")) skillsRequired.push("SQL");
+    if (desc.includes("marketing")) skillsRequired.push("Marketing");
+    if (desc.includes("sales")) skillsRequired.push("Sales");
+    if (desc.includes("design") || desc.includes("figma")) skillsRequired.push("UI/UX Design");
+    if (desc.includes("finance") || desc.includes("excel")) skillsRequired.push("Finance");
+    if (desc.includes("management") || desc.includes("leadership")) skillsRequired.push("Management");
 
     return {
-      title: rawJob.title ? rawJob.title.replace(/<\/?[^>]+(>|$)/g, "") : "Software Engineer",
-      role: rawJob.category && rawJob.category.label ? rawJob.category.label : "Development",
-      company: rawJob.company && rawJob.company.display_name ? rawJob.company.display_name : "Tech Enterprise",
+      title: rawJob.title ? rawJob.title.replace(/<\/?[^>]+(>|$)/g, "") : "Professional Position",
+      role: rawJob.category && rawJob.category.label ? rawJob.category.label : "General",
+      company: rawJob.company && rawJob.company.display_name ? rawJob.company.display_name : "Hiring Enterprise",
       location: rawJob.location && rawJob.location.display_name ? rawJob.location.display_name : "India",
       salary: rawJob.salary_min && rawJob.salary_max 
         ? `₹${Number(rawJob.salary_min).toLocaleString()} - ₹${Number(rawJob.salary_max).toLocaleString()}` 
@@ -90,8 +108,8 @@ class AdzunaProvider extends BaseProvider {
       salaryMin: rawJob.salary_min ? Number(rawJob.salary_min) : null,
       salaryMax: rawJob.salary_max ? Number(rawJob.salary_max) : null,
       salaryCurrency: "INR",
-      description: rawJob.description || "Exciting opportunity for a qualified software engineer to join a dynamic team.",
-      skillsRequired: skillsRequired.length > 0 ? skillsRequired : ["Software Engineering", "Problem Solving"],
+      description: rawJob.description || "Exciting career opportunity to join a dynamic professional team.",
+      skillsRequired: skillsRequired.length > 0 ? skillsRequired : [rawJob.category?.label || "General", "Communication"],
       educationRequired: "Bachelor's Degree",
       experienceRequired: "Not Specified",
       applyUrl: rawJob.redirect_url,
