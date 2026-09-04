@@ -176,7 +176,7 @@ function Register() {
           <div className="deck-header">SKILLBRIDGE DECK</div>
           
           <div className="register-brand" onClick={() => navigate("/")}>
-            <SkillBridgeLogo width={160} />
+            <SkillBridgeLogo width={210} />
           </div>
 
           <h1 className="register-title">Sign Up</h1>

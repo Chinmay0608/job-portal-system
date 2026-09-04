@@ -29,9 +29,11 @@
 }
 
 .login-brand {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 24px;
+  width: 100%;
+  margin: 0 auto 28px auto;
   cursor: pointer;
 }
 
