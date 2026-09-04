@@ -36,8 +36,8 @@ function ForgotPassword() {
   return (
     <div className="auth-page">
       <div className="auth-right">
-        <div style={{ marginBottom: "20px", cursor: "pointer" }} onClick={() => navigate("/")}>
-          <SkillBridgeLogo width={160} />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px", cursor: "pointer" }} onClick={() => navigate("/")}>
+          <SkillBridgeLogo width={210} />
         </div>
         <h1 className="auth-title">Forgot Password</h1>
         <p className="auth-subtitle">Enter your email to receive reset link</p>
