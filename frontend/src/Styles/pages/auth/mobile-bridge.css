@@ -80,7 +80,7 @@
   }
   
   .bridge-dot.left-dot {
-    fill: #ef4444;
+    fill: #2563eb;
   }
   
   .bridge-dot.right-dot {
@@ -170,7 +170,7 @@
   }
 
   .role-segment:nth-child(1) .role-icon {
-    color: #ef4444; /* Red for candidate */
+    color: #3b82f6; /* Blue for candidate */
   }
 
   .role-segment:nth-child(2) .role-icon {

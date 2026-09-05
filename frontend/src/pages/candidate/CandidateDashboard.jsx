@@ -520,7 +520,7 @@ function CandidateDashboard() {
             <div 
               className="profile-completion-ring" 
               onClick={() => navigate("/candidate-profile")}
-              style={{ background: `conic-gradient(#ef4444 ${profileCompletion}%, #e5e7eb 0)` }}
+              style={{ background: `conic-gradient(#2563eb ${profileCompletion}%, #e5e7eb 0)` }}
             >
               <div className="ring-inner">
                 {profileCompletion}%
@@ -742,9 +742,9 @@ function CandidateDashboard() {
                             }}
                           >
                             {user?.savedJobs?.some((savedJobId) => savedJobId?.toString() === job?._id) ? (
-                              <FaBookmark size={18} color="#ef4444" />
+                              <FaBookmark size={18} color="#2563eb" />
                             ) : (
-                              <FiBookmark size={18} color="#ef4444" />
+                              <FiBookmark size={18} color="#2563eb" />
                             )}
                           </button>
                         </div>

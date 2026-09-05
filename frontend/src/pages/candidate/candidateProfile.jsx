@@ -492,7 +492,7 @@ function CandidateProfile() {
                     onClick={handleExtractSkills}
                     disabled={loading}
                     style={{
-                      background: "#ef4444", color: "white", border: "none", 
+                      background: "#2563eb", color: "white", border: "none", 
                       padding: "6px 12px", borderRadius: "6px", fontSize: "0.8rem", 
                       fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
                       opacity: loading ? 0.7 : 1

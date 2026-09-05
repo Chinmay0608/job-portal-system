@@ -1,6 +1,6 @@
 /* ==========================================================================
    CANDIDATE PROFILE PAGE — Wellfound-inspired
-   Palette: navy #0d1117, off-white #f6f5f1, accent red #ef4444
+   Palette: navy #0d1117, off-white #f6f5f1, brand royal blue #2563eb
    ========================================================================== */
 
 .profile-page {
@@ -234,7 +234,7 @@
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #ef4444;
+  color: #2563eb;
   cursor: pointer;
 }
 
@@ -267,7 +267,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ef4444;
+  color: #2563eb;
   margin-bottom: 8px;
 }
 
@@ -509,7 +509,7 @@
 }
 
 .save-btn {
-  background: #1B2A4A;
+  background: #2563eb;
   color: #ffffff;
   border: none;
   padding: 13px 32px;
@@ -522,7 +522,7 @@
 }
 
 .save-btn:hover {
-  background: #0f182b;
+  background: #1d4ed8;
   transform: translateY(-1px);
 }
 
