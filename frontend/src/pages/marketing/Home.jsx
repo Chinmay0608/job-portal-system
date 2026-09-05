@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../Styles/pages/marketing/Home.css";
+import { FiSearch, FiMapPin } from "react-icons/fi";
 import {
   HiOutlineUserGroup,
   HiOutlineCurrencyDollar,
@@ -16,6 +18,8 @@ import {
 
 function Home() {
   const navigate = useNavigate();
+  const [homeSearch, setHomeSearch] = useState("");
+  const [homeLocation, setHomeLocation] = useState("");
 
   const tags = [
     "Frontend", "Backend", "Full Stack", "AI / ML", "React", "Node.js",
@@ -92,6 +96,39 @@ function Home() {
           <p className="home-hero-subtitle">
             Apply privately to thousands of tech jobs with one profile. See salary and equity upfront.
           </p>
+
+          {/* HERO PILL SEARCH BAR */}
+          <div className="home-hero-search-wrapper">
+            <div className="home-hero-search-inner">
+              <div className="home-search-field">
+                <FiSearch className="home-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Job title, keywords, or company"
+                  value={homeSearch}
+                  onChange={(e) => setHomeSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && navigate("/register")}
+                />
+              </div>
+              <div className="home-search-divider"></div>
+              <div className="home-search-field">
+                <FiMapPin className="home-search-icon" />
+                <input
+                  type="text"
+                  placeholder="India"
+                  value={homeLocation}
+                  onChange={(e) => setHomeLocation(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && navigate("/register")}
+                />
+              </div>
+              <button
+                className="home-search-submit-btn"
+                onClick={() => navigate("/register")}
+              >
+                Find jobs
+              </button>
+            </div>
+          </div>
 
           <div className="home-cta-row">
             <div className="home-cta-card" onClick={() => navigate("/register")}>

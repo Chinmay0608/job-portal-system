@@ -8,8 +8,7 @@ import RetryBanner from "../../Components/RetryBanner";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import "../../Styles/pages/candidate/CandidateDashboard.css";
-import { FiSearch, FiBookmark } from "react-icons/fi";
-import { HiOutlineLocationMarker } from "react-icons/hi";
+import { FiSearch, FiMapPin, FiBookmark } from "react-icons/fi";
 import { FaBookmark } from "react-icons/fa";
 
 const JOBS_PER_PAGE = 20;
@@ -545,10 +544,10 @@ function CandidateDashboard() {
             </div>
             <div className="ind-input-divider desktop-only"></div>
             <div className="ind-input-wrapper desktop-only">
-              <HiOutlineLocationMarker className="ind-icon" />
+              <FiMapPin className="ind-icon" />
               <input
                 type="text"
-                placeholder="City, state, zip code, or 'remote'"
+                placeholder="India"
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
               />

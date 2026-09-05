@@ -12,42 +12,49 @@
 ========================================== */
 .ind-search-bar {
   background: transparent;
-  padding: 24px 0;
+  padding: 24px 0 16px;
   border-bottom: none;
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .ind-search-inner {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   background: #ffffff;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
   width: calc(100% - 48px);
-  max-width: 1292px;
-  height: 52px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  max-width: 1240px;
+  height: 56px;
+  padding: 4px 6px 4px 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
 }
 
-.ind-search-inner:hover {
-  border-color: #d1d5db;
+.ind-search-inner:hover,
+.ind-search-inner:focus-within {
+  border-color: #9ca3af;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .ind-input-wrapper {
   display: flex;
   align-items: center;
   flex: 1;
-  padding: 0 16px;
+  padding: 0 14px;
   height: 100%;
+  position: relative;
 }
 
 .ind-icon {
-  font-size: 1.1rem;
-  margin-right: 10px;
-  color: #9ca3af;
+  font-size: 1.2rem;
+  margin-right: 12px;
+  color: #374151;
+  flex-shrink: 0;
 }
 
 .ind-input-wrapper input,
@@ -56,9 +63,15 @@
   outline: none;
   width: 100%;
   font-size: 0.95rem;
-  color: #1a1a2e;
+  color: #1f2937;
+  font-weight: 500;
   font-family: inherit;
   background: transparent !important;
+}
+
+.ind-input-wrapper input::placeholder {
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .ind-input-wrapper .ind-select {
@@ -67,32 +80,39 @@
   -moz-appearance: none;
   cursor: pointer;
   padding-right: 20px;
-  /* removed caret bg */
   background-repeat: no-repeat !important;
   background-position: right center !important;
 }
 
 .ind-input-divider {
   width: 1px;
-  height: 100%;
+  height: 28px;
   background-color: #e5e7eb;
+  flex-shrink: 0;
+  margin: 0 4px;
 }
 
 .ind-search-btn {
-  background-color: #0d1117;
+  background-color: #2563eb;
   color: #ffffff;
   border: none;
-  height: 100%;
+  height: 44px;
   padding: 0 28px;
-  font-size: 1rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  transition: background-color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .ind-search-btn:hover {
-  background-color: #1e293b;
+  background-color: #1d4ed8;
 }
 
 /* ==========================================
