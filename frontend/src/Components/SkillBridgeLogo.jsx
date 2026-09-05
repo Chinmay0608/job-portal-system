@@ -6,7 +6,9 @@ import React from "react";
  * Features unified typography ("Skill" in Deep Navy #0F172A / White #FFFFFF on dark theme,
  * "Bridge" in Primary Royal Blue #2563EB) with an architectural bridge accent.
  */
-const SkillBridgeLogo = ({ width = 165, height, className = "" }) => {
+const SkillBridgeLogo = ({ width = 165, height, className = "", variant = "light", isDark = false, textColor }) => {
+  const skillFill = (variant === "dark" || isDark || textColor === "white" || textColor === "#FFFFFF") ? "#FFFFFF" : "#0F172A";
+
   return (
     <svg
       width={width}
@@ -35,7 +37,7 @@ const SkillBridgeLogo = ({ width = 165, height, className = "" }) => {
         fontWeight="900"
         letterSpacing="-1.4px"
       >
-        <tspan className="logo-skill-text" fill="#0F172A">Skill</tspan>
+        <tspan className="logo-skill-text" fill={skillFill}>Skill</tspan>
         <tspan className="logo-bridge-text" fill="url(#bridgeGradient)">Bridge</tspan>
       </text>
 
