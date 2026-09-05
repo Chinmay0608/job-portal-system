@@ -17,7 +17,7 @@ const SkillBridgeLogo = ({ width = 165, height, className = "" }) => {
       className={className}
       aria-label="SkillBridge"
       role="img"
-      style={{ display: "block" }}
+      style={{ display: "block", maxWidth: "100%", height: "auto" }}
     >
       <defs>
         <linearGradient id="bridgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
