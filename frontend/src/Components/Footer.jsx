@@ -28,7 +28,7 @@ function Footer() {
         {/* Brand Column */}
         <div className="footer-brand-col">
           <button className="footer-logo" onClick={() => delayedNavigate("/")}>
-            <SkillBridgeLogo width={150} />
+            <SkillBridgeLogo width={150} isDark={true} />
           </button>
           <p className="footer-tagline">Connecting talent and opportunity.<br />Built for the next generation of work.</p>
           <div className="footer-socials">
