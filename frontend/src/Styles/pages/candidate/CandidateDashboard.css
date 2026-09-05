@@ -187,7 +187,7 @@
 
 .ind-main-layout {
   display: grid;
-  grid-template-columns: 310px 1fr;
+  grid-template-columns: 440px 1fr;
   gap: 24px;
   align-items: start;
   height: calc(100vh - 150px);
@@ -891,9 +891,9 @@
   left: 4px;
   bottom: 4px;
   width: calc((100% - 8px) / 3);
-  background: #f87171;
+  background: #2563eb;
   border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 1;
 }
