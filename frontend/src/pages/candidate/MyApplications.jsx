@@ -89,7 +89,6 @@ function MyApplications() {
 
   return (
     <div className="applications-page">
-      <BackButton />
       <div className="applications-header">
         <h1>My Applications</h1>
         <p>Track your applied jobs and status</p>
