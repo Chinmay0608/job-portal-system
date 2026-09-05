@@ -1,13 +1,13 @@
 :root {
-  --primary-accent: #0d1117;
-  --accent-hover: #1e293b;
+  --primary-accent: #2563eb;
+  --accent-hover: #1d4ed8;
   --bg-main: #f6f5f1;
   --text-dark: #0d1117;
   --text-muted: #9ca3af;
   --border-color: #e5e7eb;
-  --accent-light: #fff1f1;
-  --red-accent: #ef4444;
-  --red-accent-hover: #dc2626;
+  --accent-light: #eff6ff;
+  --red-accent: #2563eb;
+  --red-accent-hover: #1d4ed8;
 
   --green-light: #dcfce7;
   --red-light: #fff1f1;
@@ -163,7 +163,7 @@
 .stat-icon-purple { background: #f6f5f1; color: #0d1117; }
 .stat-icon-blue   { background: #f6f5f1; color: #0d1117; }
 .stat-icon-green  { background: #dcfce7; color: #15803d; }
-.stat-icon-red    { background: #fff1f1; color: #ef4444; }
+.stat-icon-red    { background: #eff6ff; color: #2563eb; }
 
 .stat-info-block {
   display: flex;
@@ -324,8 +324,8 @@
 }
 
 .filter-dropdown-item.selected {
-  background: #fff1f1;
-  color: #ef4444;
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 /* MOBILE CHIP SCROLLER */
