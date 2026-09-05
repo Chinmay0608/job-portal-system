@@ -177,7 +177,11 @@ function CandidateDashboard() {
       });
 
       const rawJobs = response?.jobs || [];
-      setJobs(rawJobs);
+      // Deduplicate by _id in case the API returns the same job from multiple sources
+      const uniqueJobs = rawJobs.filter(
+        (job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx
+      );
+      setJobs(uniqueJobs);
       setTotalJobs(response?.totalJobs || 0);
       setTotalPages(response?.totalPages || 1);
       setCurrentPage(response?.currentPage || 1);
@@ -441,7 +445,9 @@ function CandidateDashboard() {
     setExternalApplyActive(false);
   };
 
-  const availableJobs = jobs.filter((job) => !appliedJobs.includes(job._id));
+  const availableJobs = jobs
+    .filter((job) => !appliedJobs.includes(job._id))
+    .filter((job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx); // dedupe
   const availableRecommended = recommendedJobsList.filter((job) => !appliedJobs.includes(job._id));
 
   // If user is a junior/fresher, hide explicit senior/lead roles from recommended
@@ -465,11 +471,19 @@ function CandidateDashboard() {
     return matchesExperience;
   });
 
-  const displayedJobs = activeTab === "Recommended"
+  const rawDisplayed = activeTab === "Recommended"
     ? filteredRecommended
     : activeTab === "Saved"
     ? availableJobs.filter((job) => user?.savedJobs?.includes(job._id))
     : availableJobs;
+
+  // Final deduplication guard — ensures no duplicate _id regardless of source
+  const seen = new Set();
+  const displayedJobs = rawDisplayed.filter((job) => {
+    if (!job._id || seen.has(job._id)) return false;
+    seen.add(job._id);
+    return true;
+  });
 
   const visibleJobs = displayedJobs;
 
@@ -555,19 +569,21 @@ function CandidateDashboard() {
             <div className="ind-input-divider desktop-only"></div>
             <div className="ind-input-wrapper desktop-only">
               <CustomSelect
+                  borderless
                   options={[{ value: "", label: "All Experience" }, { value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
                   value={experienceFilter}
                   onChange={(e) => setExperienceFilter(e.target.value)}
-                  placeholder="Select..." className="desktop-experience-select ind-select"
+                  placeholder="All Experience" className="desktop-experience-select ind-select"
                 />
             </div>
             <div className="ind-input-divider desktop-only"></div>
             <div className="ind-input-wrapper desktop-only">
               <CustomSelect
+                  borderless
                   options={[{ value: "", label: "All Sources" }, { value: "internal", label: "SkillBridge (Internal)" }, { value: "external", label: "Third-party (External)" }]}
                   value={sourceFilter}
                   onChange={(e) => setSourceFilter(e.target.value)}
-                  placeholder="Select..." className="desktop-experience-select ind-select"
+                  placeholder="All Sources" className="desktop-experience-select ind-select"
                 />
             </div>
             
@@ -688,7 +704,6 @@ function CandidateDashboard() {
               </div>
             </div>
             
-            <h3 className="ind-section-title">Jobs for you</h3>
 
             {loading ? (
               <div className="ind-loader-box">

@@ -1,17 +1,23 @@
 import React from 'react';
 import Select from 'react-select';
 
-const customStyles = {
+const getCustomStyles = (borderless) => ({
   control: (provided, state) => ({
     ...provided,
-    backgroundColor: '#fff',
-    borderColor: state.isFocused ? '#2563eb' : '#e5e7eb',
-    boxShadow: state.isFocused ? '0 0 0 1px #2563eb' : 'none',
+    backgroundColor: borderless ? 'transparent' : '#fff',
+    borderColor: borderless 
+      ? 'transparent' 
+      : state.isFocused ? '#2563eb' : '#e5e7eb',
+    boxShadow: borderless 
+      ? 'none' 
+      : state.isFocused ? '0 0 0 1px #2563eb' : 'none',
     '&:hover': {
-      borderColor: state.isFocused ? '#2563eb' : '#d1d5db',
+      borderColor: borderless 
+        ? 'transparent' 
+        : state.isFocused ? '#2563eb' : '#d1d5db',
     },
     borderRadius: '0.5rem',
-    minHeight: '42px',
+    minHeight: borderless ? '38px' : '42px',
     cursor: 'pointer',
   }),
   option: (provided, state) => ({
@@ -20,9 +26,11 @@ const customStyles = {
       ? '#2563eb' 
       : state.isFocused 
         ? '#eff6ff' 
-        : 'transparent',
+        : '#ffffff',
     color: state.isSelected ? '#fff' : '#1f2937',
     cursor: 'pointer',
+    padding: '8px 12px',
+    fontSize: '0.9rem',
     '&:active': {
       backgroundColor: '#2563eb',
       color: '#fff',
@@ -31,38 +39,63 @@ const customStyles = {
   menu: (provided) => ({
     ...provided,
     borderRadius: '0.5rem',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
-    zIndex: 50,
+    zIndex: 99999,
+  }),
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 99999,
   }),
   singleValue: (provided) => ({
     ...provided,
     color: '#1f2937',
+    fontWeight: 500,
+    fontSize: '0.92rem',
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#9ca3af',
+    color: '#6b7280',
+    fontSize: '0.92rem',
   }),
   indicatorSeparator: () => ({
     display: 'none',
   }),
-};
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#9ca3af',
+    padding: '4px',
+    '&:hover': {
+      color: '#4b5563',
+    },
+  }),
+});
 
-const CustomSelect = ({ options, value, onChange, placeholder, className, isSearchable = false, isDisabled = false, name }) => {
-  // Find the full option object that matches the value string/number
-  const selectedOption = options.find(opt => opt.value === value) || null;
+const CustomSelect = ({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder, 
+  className, 
+  isSearchable = false, 
+  isDisabled = false, 
+  name,
+  borderless = false
+}) => {
+  const selectedOption = options?.find(opt => opt.value === value) || null;
 
   return (
     <Select
       className={className}
-      styles={customStyles}
+      styles={getCustomStyles(borderless)}
       options={options}
       value={selectedOption}
-      onChange={(selected) => onChange({ target: { name, value: selected.value } })}
+      onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
       placeholder={placeholder}
       isSearchable={isSearchable}
       isDisabled={isDisabled}
       name={name}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
     />
   );
 };
