@@ -65,7 +65,6 @@ function RecruiterApplications() {
 
   return (
     <div className="applications-page">
-      <BackButton />
       {/* Header */}
       <div className="applications-header">
         <h1>Applicants</h1>

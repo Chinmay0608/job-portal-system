@@ -306,9 +306,6 @@ function CandidateProfile() {
 
   return (
     <div className="profile-page">
-      <div style={{ maxWidth: '1140px', margin: '0 auto' }}>
-        <BackButton />
-      </div>
       <div className="profile-container">
 
         {/* LEFT COLUMN: SIDEBAR */}

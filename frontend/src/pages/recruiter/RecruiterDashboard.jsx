@@ -217,9 +217,6 @@ function RecruiterDashboard() {
 
         {/* SUB-HEADER CONTEXT ROW */}
         <div className="mobile-header-block-recruiter">
-          <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', fontWeight: 600, padding: 0, cursor: 'pointer', marginBottom: '12px' }}>
-            <HiOutlineArrowLeft /> Back
-          </button>
           <p className="eyebrow-deck">RECRUITER DECK</p>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="topbar-mobile-title">{user?.company || "Your Company"}</h2>
