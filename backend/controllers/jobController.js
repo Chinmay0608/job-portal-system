@@ -241,12 +241,70 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
 
   const jobs = await Job.find(query);
 
-  // FIX I-04 (partial): Pass skills safely — calculateJobMatches guards null internally
-  const recommendedJobs = calculateJobMatches(jobs, user.skills || []);
+  // Scores jobs against candidate's field & skills, filtering out domain mismatches (like Marketing)
+  const recommendedJobs = calculateJobMatches(jobs, user);
 
   res.status(200).json({
     jobs: recommendedJobs,
   });
+});
+
+/* ==========================
+   AI CAREER COACH ASSISTANT
+========================== */
+const aiCareerCoach = asyncHandler(async (req, res) => {
+  const { messages } = req.body;
+  const user = await User.findById(req.user.id);
+  
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    const lastMsg = (messages?.[messages.length - 1]?.content || "").toLowerCase();
+    let reply = `Hello ${user.name}! As your AI Career Assistant, I analyzed your profile (**${user.field || "Software Engineering"}**, Skills: ${user.skills?.slice(0, 4).join(", ") || "React"}). Focus on roles matching your target domain for top recommendations!`;
+
+    if (lastMsg.includes("recommend") || lastMsg.includes("job") || lastMsg.includes("top")) {
+      reply = `Based on your target domain (**${user.field || "Software Engineering"}**) and skills (${user.skills?.join(", ") || "React"}), check out the top matched jobs under your Recommended tab!`;
+    }
+
+    return res.status(200).json({ role: "assistant", content: reply });
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const userContext = `Candidate Context:
+- Name: ${user.name}
+- Domain/Field: ${user.field || "Software Engineering"}
+- Experience Level: ${user.experienceLevel || "Fresher"}
+- Skills: ${user.skills?.join(", ") || "React, JavaScript"}
+- Location: ${user.location || "Remote"}`;
+
+    const prompt = `You are SkillBridge's AI Career Coach & Skill Analyst.
+${userContext}
+
+User Question:
+${messages?.[messages.length - 1]?.content || "Help me analyze my top job matches"}
+
+Provide concise, highly actionable, encouraging advice for the candidate.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    const reply = response.text.trim();
+    res.status(200).json({ role: "assistant", content: reply });
+  } catch (error) {
+    console.error("AI Coach Error:", error);
+    res.status(200).json({ 
+      role: "assistant", 
+      content: `Hello ${user.name}! I am analyzing your profile in ${user.field || "Software Engineering"}. Focus on roles matching your core skills (${user.skills?.slice(0, 3).join(", ")}) for the best response rate!` 
+    });
+  }
 });
 
 /* ==========================
@@ -548,6 +606,7 @@ module.exports = {
   getJobsAdmin,
   createJob,
   generateJobDescription,
+  aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,

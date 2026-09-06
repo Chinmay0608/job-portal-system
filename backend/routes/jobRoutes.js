@@ -9,6 +9,7 @@ const {
   getJobsAdmin,
   createJob,
   generateJobDescription,
+  aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,
@@ -40,6 +41,12 @@ router.get(
   protect,
   authorizeRoles("candidate"),
   getRecommendedJobs,
+);
+router.post(
+  "/ai/chat",
+  protect,
+  authorizeRoles("candidate"),
+  aiCareerCoach,
 );
 router.post(
   "/hide/:jobId",
