@@ -648,7 +648,7 @@ function CandidateDashboard() {
     <div className="ind-dashboard">
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
       {jobLoadError && (
-        <div className="page-alert-wrap">
+        <div className="page-alert-wrap" style={{ display: "flex", justifyContent: "flex-end", padding: "0 24px", width: "100%" }}>
           <RetryBanner message={jobLoadError} onRetry={retryFetchJobs} />
         </div>
       )}
