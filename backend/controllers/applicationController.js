@@ -54,8 +54,8 @@ const applyExternal = asyncHandler(async (req, res) => {
       .json({ message: "External application tracked", application });
   } catch (error) {
     if (error.code === 11000) {
-      res.status(400);
-      throw new Error("Already tracked application");
+      const existingApp = await Application.findOne({ candidate: req.user.id, job: jobId });
+      return res.status(200).json({ message: "Already tracked application", application: existingApp });
     }
     throw error;
   }
@@ -72,7 +72,7 @@ const getMyApplications = asyncHandler(async (req, res) => {
   const applications = await Application.find(query)
     .populate({
       path: "job",
-      select: "title company location description salary",
+      select: "title company location description salary salaryMin salaryMax salaryCurrency isExternal source companyLogo applyUrl",
     })
     .skip((currentPage - 1) * perPage)
     .limit(perPage);
