@@ -87,7 +87,7 @@ const getCustomStyles = (borderless) => ({
     ...provided,
     color: state.isFocused ? '#2563eb' : '#9ca3af',
     padding: '4px 6px',
-    transition: 'color 0.15s ease, transform 0.2s ease',
+    transition: 'color 0.4s ease, transform 0.4s ease',
     transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     '&:hover': {
       color: '#2563eb',
