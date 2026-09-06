@@ -4,7 +4,9 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { admin, initializeFirebase } = require("../config/firebase");
 
-// Initialize firebase on load
+initializeFirebase();
+const sendEmail = require("../utils/sendEmail");
+const asyncHandler = require("express-async-handler");
 const Application = require("../models/Application");
 
 const formatUserDTO = (user, applicationsCount = 0) => ({
