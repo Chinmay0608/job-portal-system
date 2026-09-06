@@ -57,7 +57,7 @@ const getCustomStyles = (borderless) => ({
     overflow: 'hidden',
     marginTop: '6px',
     zIndex: 99999,
-    animation: 'dropdownRollDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+    animation: 'dropdownRollDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
     transformOrigin: 'top center',
   }),
   menuList: (provided) => ({
