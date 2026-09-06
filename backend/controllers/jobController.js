@@ -322,6 +322,23 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
 
   // 3. Build dynamic smart reply
   const buildSmartFallbackReply = () => {
+    // Priority 1: Interview & Preparation Tips
+    if (lastMsgLower.includes("interview") || lastMsgLower.includes("prep") || lastMsgLower.includes("tip")) {
+      const topJob = matchedJobs[0];
+      const jobTitle = topJob ? `**${topJob.title}** at **${topJob.company}**` : `your top **${userField}** matches`;
+      const reqSkills = topJob && Array.isArray(topJob.skillsRequired) && topJob.skillsRequired.length > 0 
+        ? topJob.skillsRequired.join(", ") 
+        : (userSkills.join(", ") || "core technical stack");
+
+      return `🎯 **Interview Preparation Tips for ${jobTitle}**:
+
+• **Technical Focus**: Prepare to showcase hands-on experience with **${reqSkills}**. Practice explaining architectural choices and code trade-offs.
+• **System & Problem Solving**: Review core data structures, algorithms, and domain design patterns for **${userField}** roles.
+• **STAR Behavioral Method**: Structure past project experiences using Situation, Task, Action, and Result to demonstrate impact.
+• **Company Insight**: Research ${topJob ? topJob.company : "the target company"}'s engineering culture and recent projects before your interview!`;
+    }
+
+    // Priority 2: Skill Gap Analysis
     if (lastMsgLower.includes("skill gap") || lastMsgLower.includes("gap") || lastMsgLower.includes("analyze")) {
       const allRequiredSkills = new Set();
       matchedJobs.forEach((j) => {
@@ -345,7 +362,8 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
 💡 **Action Plan**: Adding 2-3 of these in-demand skills to your profile can boost your match score by up to **35%**!`;
     }
 
-    if (searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("top") || lastMsgLower.includes("provide") || lastMsgLower.includes("show")) {
+    // Priority 3: Job Listings & Recommendations
+    if (searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("opening") || lastMsgLower.includes("provide") || lastMsgLower.includes("show")) {
       if (matchedJobs.length > 0) {
         const jobListStr = matchedJobs
           .slice(0, 3)
@@ -373,14 +391,6 @@ ${jobListStr}
 
 💡 **Career Tip**: Ensure these skills are listed on your profile to maximize your match score!`;
       }
-    }
-
-    if (lastMsgLower.includes("interview") || lastMsgLower.includes("prep") || lastMsgLower.includes("tip")) {
-      return `**Interview Preparation Tips for ${userField} Roles**:
-
-1. **Highlight Technical Projects**: Be ready to explain 2 key projects featuring your skills (${userSkills.slice(0, 3).join(", ") || "your primary stack"}).
-2. **System & Problem Solving**: Practice common ${userField} interview questions and technical architecture trade-offs.
-3. **STAR Method**: Structure behavioral responses around Situation, Task, Action, and Result.`;
     }
 
     return `Hello **${user.name}**! I analyzed your profile in **${userField}** (Skills: ${userSkills.join(", ") || "None listed"}).
@@ -417,9 +427,13 @@ Candidate Context:
 Available Matching Jobs in Database:
 ${jobSummaries || "No direct matches found"}
 
+Task & Intent Guidance:
+1. If the candidate asks for INTERVIEW TIPS or PREPARATION (e.g. "Interview tips for my top match"): Provide 3-4 specific, actionable interview preparation tips for their top matching job (or target domain). Do NOT output a job list unless explicitly requested.
+2. If the candidate asks for SKILL GAPS: Detail their active skills vs missing in-demand skills.
+3. If the candidate asks for JOB RECOMMENDATIONS or OPENINGS: List the top matching jobs cleanly.
+
 Formatting Instructions:
-- Format job listings cleanly with numbered titles (**Job Title** at **Company**).
-- Use clear icons: 📍 for location, 💼 for salary (never output $0, use Competitive Salary if zero), ⚡ for skills.
+- Use clear icons: 🎯 for interview tips, 📍 for location, 💼 for salary, ⚡ for skills.
 - Format key recommendations with bullet points and bolding (**bold**). Keep responses crisp, professional, and encouraging.`;
 
       const groqRes = await axios.post(
