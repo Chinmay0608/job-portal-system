@@ -111,10 +111,10 @@ export default function AIChatWidget({ user }) {
           type="button"
           onClick={() => setIsOpen(true)}
           style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            zIndex: 9999,
+            position: "absolute",
+            bottom: "16px",
+            right: "32px",
+            zIndex: 900,
             display: "flex",
             alignItems: "center",
             gap: "10px",
@@ -143,10 +143,10 @@ export default function AIChatWidget({ user }) {
       {isOpen && (
         <div
           style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            zIndex: 10000,
+            position: "absolute",
+            bottom: "16px",
+            right: "32px",
+            zIndex: 950,
             width: "380px",
             maxWidth: "92vw",
             height: "560px",
