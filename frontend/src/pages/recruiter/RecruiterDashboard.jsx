@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/recruiter/RecruiterDashboard.css";
 
 import {

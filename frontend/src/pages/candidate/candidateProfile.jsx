@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import debounce from "lodash.debounce";
 import BackButton from "../../Components/BackButton";
+import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/candidate/candidateProfile.css";
 import { changePassword, updateProfile, extractSkillsAPI } from "../../Services/jobService";
 
