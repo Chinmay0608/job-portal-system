@@ -244,21 +244,16 @@ function CandidateProfile() {
       return;
     }
 
-    // STRICT SUGGESTION CHECK: Find case-insensitive match in suggestions array
+    // Find case-insensitive match in suggestions array if available
     const matchedSkill = suggestions.find(
       (suggestion) => suggestion.toLowerCase() === trimmed.toLowerCase()
     );
 
-    // If matched suggestion found, add the correctly-cased version
-    if (matchedSkill) {
-      setSkills((prevSkills) => [...prevSkills, matchedSkill]);
-      setSkillInput("");
-      setSuggestions([]);
-      setSkillError("");
-    } else {
-      // No match found in suggestions — block addition and show error
-      setSkillError("Please select a valid technical skill from the suggestion dropdown menu.");
-    }
+    const skillToAdd = matchedSkill || trimmed;
+    setSkills((prevSkills) => [...prevSkills, skillToAdd]);
+    setSkillInput("");
+    setSuggestions([]);
+    setSkillError("");
   };
 
   const handleExtractSkills = async () => {
