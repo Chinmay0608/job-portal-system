@@ -71,8 +71,11 @@
 /* LINKS GRID */
 .footer-links-grid {
   display: flex;
-  gap: 40px;
+  gap: 48px;
   flex: 2;
+  justify-content: space-between;
+  margin-left: auto;
+  padding-left: 40px;
 }
 
 .footer-col {
@@ -147,6 +150,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 32px 16px;
+    margin-left: 0;
+    padding-left: 0;
   }
 
   .footer-col {
