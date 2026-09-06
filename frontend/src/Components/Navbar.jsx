@@ -67,9 +67,8 @@ function Navbar() {
   const isSalaryGuide = location.pathname === "/salary-data";
   const isCompanyReviews = location.pathname === "/about";
 
-  // Only main dashboard pages feature the top vector wave background (#e8f1ff).
-  // Other candidate/recruiter pages (like /my-applications, /candidate-profile) use clean white/gray background.
-  const isDashboardWavePage = ["/candidate-dashboard", "/recruiter-dashboard"].includes(location.pathname) || location.pathname.includes("/admin");
+  // All inner candidate, recruiter, admin & app pages feature the cohesive theme header background (#e8f1ff)
+  const isDashboardWavePage = !isHome;
 
   const logout = async (e) => {
     if (e) e.preventDefault();

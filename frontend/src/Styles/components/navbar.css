@@ -15,11 +15,18 @@
 
 
 
-/* Matching top vector wave on dashboards */
+/* Matching top vector wave on dashboards and inner app pages */
 .indeed-navbar.dashboard-nav {
   background-color: #e8f1ff !important;
   border-bottom: 1px solid #d0e1fd !important;
   box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  .indeed-navbar.dashboard-nav .nav-right {
+    background-color: #e8f1ff !important;
+    border-bottom: 1px solid #d0e1fd !important;
+  }
 }
 
 .navbar-container {
