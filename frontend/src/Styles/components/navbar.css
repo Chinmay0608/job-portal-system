@@ -429,6 +429,23 @@
   box-shadow: none !important;
 }
 
+.indeed-navbar.navbar-dark .navbar-brand-logo {
+  margin-left: 28px;
+}
+
+.indeed-navbar.navbar-dark .auth-buttons {
+  transform: translateX(16px);
+}
+
+@media (max-width: 900px) {
+  .indeed-navbar.navbar-dark .navbar-brand-logo {
+    margin-left: 0;
+  }
+  .indeed-navbar.navbar-dark .auth-buttons {
+    transform: none;
+  }
+}
+
 
 /* Logo Text on Dark Hero */
 .indeed-navbar.navbar-dark .logo-skill-text {
