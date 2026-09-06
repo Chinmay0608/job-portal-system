@@ -26,6 +26,29 @@ const generateSignedResumeUrl = (resumeUrl) => {
   });
 };
 
+// Helper to save missing skills into MasterSkill collection in MongoDB
+const saveSkillsToMaster = async (skills = []) => {
+  if (!Array.isArray(skills) || skills.length === 0) return;
+  for (const skill of skills) {
+    if (!skill || typeof skill !== "string" || !skill.trim()) continue;
+    const cleanSkill = skill.trim();
+    try {
+      const escaped = cleanSkill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const existing = await MasterSkill.findOne({
+        name: { $regex: new RegExp(`^${escaped}$`, "i") },
+      });
+      if (!existing) {
+        await MasterSkill.create({ name: cleanSkill });
+        logger.info(`[MasterSkill] Auto-added missing skill to database: ${cleanSkill}`);
+      }
+    } catch (err) {
+      if (err.code !== 11000) {
+        logger.warn(`[MasterSkill] Skill insert notice for '${cleanSkill}':`, err.message);
+      }
+    }
+  }
+};
+
 const updateProfile = asyncHandler(async (req, res) => {
   const {
     name,
@@ -66,6 +89,8 @@ const updateProfile = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
       }
       user.skills = parsedSkills;
+      // Auto-save user skills to MasterSkill collection
+      await saveSkillsToMaster(parsedSkills);
     } catch (error) {
       return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
     }
@@ -128,6 +153,9 @@ const updateProfile = asyncHandler(async (req, res) => {
     }
 
     if (fullData.skills && fullData.skills.length > 0) {
+      // Auto-add newly extracted skills to MasterSkill collection
+      await saveSkillsToMaster(fullData.skills);
+
       const existingLower = new Set((user.skills || []).map((s) => s.toLowerCase()));
       const newSkills = fullData.skills.filter((s) => s && !existingLower.has(s.toLowerCase()));
       if (newSkills.length > 0) {
@@ -322,6 +350,9 @@ const extractSkills = asyncHandler(async (req, res) => {
   }
 
   if (fullData.skills && fullData.skills.length > 0) {
+    // Auto-add newly extracted skills to MasterSkill collection
+    await saveSkillsToMaster(fullData.skills);
+
     const existingLower = new Set((user.skills || []).map((s) => s.toLowerCase()));
     const newSkills = fullData.skills.filter((s) => s && !existingLower.has(s.toLowerCase()));
     if (newSkills.length > 0) {
