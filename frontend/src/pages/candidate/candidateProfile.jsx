@@ -32,6 +32,7 @@ function CandidateProfile() {
   const [about, setAbout] = useState(user?.about || "");
   const [education, setEducation] = useState(user?.education || "");
   const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
+  const [field, setField] = useState(user?.field || "Software Engineering");
 
   // Password update state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -61,6 +62,7 @@ function CandidateProfile() {
       profileUser?.about,
       profileUser?.education,
       profileUser?.experienceLevel,
+      profileUser?.field,
       profileUser?.skills?.length > 0,
       profileUser?.resume,
       profileUser?.profileImage,
@@ -84,6 +86,7 @@ function CandidateProfile() {
       setSkills(user.skills || []);
       setEducation(user.education || "");
       setExperienceLevel(user.experienceLevel || "Fresher");
+      setField(user.field || "Software Engineering");
     }
   }, [user]);
 
@@ -108,6 +111,7 @@ function CandidateProfile() {
       formData.append("skills", JSON.stringify(skills));
       formData.append("education", education);
       formData.append("experienceLevel", experienceLevel);
+      formData.append("field", field);
 
       if (resume) formData.append("resume", resume);
       if (profileImage) formData.append("profileImage", profileImage);
@@ -462,6 +466,27 @@ function CandidateProfile() {
                   options={[{ value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
                   value={experienceLevel}
                   onChange={(e) => setExperienceLevel(e.target.value)}
+                />
+              </div>
+
+              {/* Dropdown 3: Domain / Field of Work */}
+              <div className="input-group">
+                <label>Domain / Field of Work</label>
+                <CustomSelect
+                  options={[
+                    { value: "Software Engineering", label: "Software Engineering / IT" },
+                    { value: "Data Science & Analytics", label: "Data Science & Analytics" },
+                    { value: "Product Management", label: "Product Management" },
+                    { value: "UI/UX & Design", label: "UI/UX & Design" },
+                    { value: "DevOps & Cloud", label: "DevOps & Infrastructure" },
+                    { value: "Marketing & Growth", label: "Marketing & Content" },
+                    { value: "Sales & BD", label: "Sales & Business Development" },
+                    { value: "Finance & Accounting", label: "Finance & Accounting" },
+                    { value: "HR & Operations", label: "HR & People Operations" },
+                    { value: "Core Engineering", label: "Core / Mechanical Engineering" }
+                  ]}
+                  value={field}
+                  onChange={(e) => setField(e.target.value)}
                 />
               </div>
 
