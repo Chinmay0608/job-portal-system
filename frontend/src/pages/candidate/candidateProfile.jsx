@@ -4,7 +4,7 @@ import debounce from "lodash.debounce";
 import BackButton from "../../Components/BackButton";
 import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/candidate/candidateProfile.css";
-import { changePassword, updateProfile, extractSkillsAPI, getUserProfile } from "../../Services/jobService";
+import { changePassword, updateProfile, extractSkillsAPI, getUserProfile, getMyApplications } from "../../Services/jobService";
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -50,6 +50,13 @@ function CandidateProfile() {
   const [profileImage, setProfileImage] = useState(null);
   const [resume, setResume] = useState(null);
 
+  const [applicationsCount, setApplicationsCount] = useState(
+    storedUser?.applicationsCount !== undefined ? storedUser.applicationsCount : 0
+  );
+  const [savedJobsCount, setSavedJobsCount] = useState(
+    storedUser?.savedJobsCount !== undefined ? storedUser.savedJobsCount : (storedUser?.savedJobs?.length || 0)
+  );
+
   // Profile Completion Calculation Matrix — candidate-specific fields
   const calculateCompletion = (profileUser) => {
     const fields = [
@@ -72,17 +79,31 @@ function CandidateProfile() {
     return Math.round((completed / fields.length) * 100);
   };
 
-  // Mount effect: Fetch fresh user profile from backend
+  // Mount effect: Fetch fresh user profile and applications count from backend
   useEffect(() => {
     const fetchFreshProfile = async () => {
       try {
-        const res = await getUserProfile();
+        const [res, appRes] = await Promise.all([
+          getUserProfile().catch(() => null),
+          getMyApplications().catch(() => null),
+        ]);
+
         if (res?.user) {
           setUser(res.user);
           localStorage.setItem("user", JSON.stringify(res.user));
+          if (res.user.applicationsCount !== undefined) {
+            setApplicationsCount(res.user.applicationsCount);
+          }
+          if (res.user.savedJobs) {
+            setSavedJobsCount(res.user.savedJobs.length);
+          }
+        }
+
+        if (appRes?.applications) {
+          setApplicationsCount(appRes.applications.length);
         }
       } catch (err) {
-        console.error("Failed to fetch fresh profile:", err);
+        console.error("Failed to fetch fresh profile data:", err);
       }
     };
     fetchFreshProfile();
@@ -375,11 +396,11 @@ function CandidateProfile() {
             <div className="profile-stats">
               <div className="stat-card">
                 <p>Applications</p>
-                <h3>{user?.applications?.length || 0}</h3>
+                <h3>{applicationsCount}</h3>
               </div>
               <div className="stat-card">
                 <p>Saved Jobs</p>
-                <h3>0</h3>
+                <h3>{savedJobsCount}</h3>
               </div>
             </div>
           </div>

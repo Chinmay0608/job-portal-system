@@ -5,11 +5,9 @@ const crypto = require("crypto");
 const { admin, initializeFirebase } = require("../config/firebase");
 
 // Initialize firebase on load
-initializeFirebase();
-const sendEmail = require("../utils/sendEmail");
-const asyncHandler = require("express-async-handler");
+const Application = require("../models/Application");
 
-const formatUserDTO = (user) => ({
+const formatUserDTO = (user, applicationsCount = 0) => ({
   _id: user._id,
   name: user.name,
   email: user.email,
@@ -28,6 +26,9 @@ const formatUserDTO = (user) => ({
   companyWebsite: user.companyWebsite || "",
   resume: user.resume || "",
   profileImage: user.profileImage || "",
+  savedJobs: user.savedJobs || [],
+  applicationsCount,
+  savedJobsCount: user.savedJobs?.length || 0,
 });
 
 /* ==========================
@@ -113,10 +114,12 @@ const loginUser = asyncHandler(async (req, res) => {
     maxAge: 3 * 24 * 60 * 60 * 1000,
   });
 
+  const applicationsCount = await Application.countDocuments({ candidate: user._id });
+
   res.status(200).json({
     message: "Login successful",
     token,
-    user: formatUserDTO(user),
+    user: formatUserDTO(user, applicationsCount),
   });
 });
 
