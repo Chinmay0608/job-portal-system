@@ -430,10 +430,18 @@ function CandidateDashboard() {
     setUseSavedResume(null);
   };
 
-  // Triggered by "Apply Now". If the job is external, redirect and await feedback.
+  // Triggered by "Apply Now". If the job is external, redirect and auto-track in My Applications.
   const handleApplyNowClick = async () => {
     if (selectedJob?.isExternal) {
       window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      try {
+        await applyExternal(selectedJob._id);
+        setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
+        toast.success("Application tracked in My Applications!");
+      } catch (error) {
+        console.error("Auto track external application notice:", error);
+        setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
+      }
       setExternalApplyActive(true);
       return;
     }
@@ -449,8 +457,8 @@ function CandidateDashboard() {
     if (!selectedJob) return;
     try {
       await applyExternal(selectedJob._id);
-      setAppliedJobs((prev) => [...prev, selectedJob._id]);
-      toast.success("Application tracked!");
+      setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
+      toast.success("Application tracked in My Applications!");
       setExternalApplyActive(false);
     } catch (error) {
       console.error("Failed to track external application:", error);
