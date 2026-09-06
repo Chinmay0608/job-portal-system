@@ -189,7 +189,7 @@
 
 .ind-main-layout {
   display: grid;
-  grid-template-columns: 440px 1fr;
+  grid-template-columns: 370px 1fr;
   gap: 24px;
   align-items: start;
   height: calc(100vh - 150px);
@@ -202,7 +202,8 @@
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  padding-right: 24px;
+  padding-right: 16px;
+  padding-bottom: 40px;
   border-right: 1px solid #e5e7eb;
 }
 
@@ -233,14 +234,14 @@
 .ind-cards-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .ind-job-card {
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 22px 20px 30px 20px;
   cursor: pointer;
   position: relative;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
