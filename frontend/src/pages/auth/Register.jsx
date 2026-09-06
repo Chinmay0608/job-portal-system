@@ -8,6 +8,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
+import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/auth/Register.css";
 import "../../Styles/pages/auth/mobile-bridge.css";
 
