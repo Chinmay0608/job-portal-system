@@ -653,21 +653,7 @@ function CandidateDashboard() {
                 className="desktop-experience-select ind-select"
               />
             </div>
-            <div className="ind-input-divider desktop-only"></div>
-            <div className="ind-input-wrapper desktop-only">
-              <CustomSelect
-                borderless
-                options={[
-                  { value: "", label: "All Sources" },
-                  { value: "internal", label: "SkillBridge (Internal)" },
-                  { value: "external", label: "Third-party (External)" }
-                ]}
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value)}
-                placeholder="All Sources"
-                className="desktop-experience-select ind-select"
-              />
-            </div>
+
             
             <button 
               className="ind-search-btn desktop-only"
@@ -733,18 +719,7 @@ function CandidateDashboard() {
                     className="ind-select sheet-select"
                   />
                 </div>
-                <div className="sheet-input-group">
-                  <CustomSelect
-                    options={[
-                      { value: "", label: "All Sources" },
-                      { value: "internal", label: "SkillBridge (Internal)" },
-                      { value: "external", label: "Third-party (External)" }
-                    ]}
-                    value={sourceFilter}
-                    onChange={(e) => setSourceFilter(e.target.value)}
-                    className="ind-select sheet-select"
-                  />
-                </div>
+
                 
                 <button 
                   className="ind-primary-apply-btn sheet-search-btn"
