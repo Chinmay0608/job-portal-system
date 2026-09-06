@@ -43,6 +43,12 @@ export const createJob = async (jobData) => (await api.post("/api/jobs/create", 
 export const updateJob = async (jobId, jobData) => (await api.put(`/api/jobs/update/${jobId}`, jobData)).data;
 export const deleteJob = async (jobId) => (await api.delete(`/api/jobs/delete/${jobId}`)).data;
 export const hideJob = async (jobId) => (await api.post(`/api/jobs/hide/${jobId}`)).data;
+
+export const postAIChatMessage = async (messages) => {
+  const response = await api.post("/api/jobs/ai/chat", { messages });
+  return response.data;
+};
+
 export const getRecruiterJobs = async () => (await api.get("/api/jobs/my-jobs")).data;
 export const getRecommendedJobs = async () => (await api.get("/api/jobs/recommended")).data;
 

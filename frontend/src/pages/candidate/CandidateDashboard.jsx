@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
+import AIChatWidget from "../../Components/AIChatWidget";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob } from "../../Services/jobService";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
@@ -1323,6 +1324,9 @@ function CandidateDashboard() {
           </div>
         </div>
       )}
+
+      {/* FLOATING GEMINI AI CAREER COACH ASSISTANT */}
+      <AIChatWidget user={user} />
     </div>
   );
 }
