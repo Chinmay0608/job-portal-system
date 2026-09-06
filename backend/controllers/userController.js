@@ -3,7 +3,7 @@ const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
 const Application = require("../models/Application");
 const bcrypt = require("bcryptjs");
-const { extractSkillsFromResume, extractSkillsFromBuffer } = require("../services/resumeParserService");
+const { extractSkillsFromResume, extractSkillsFromBuffer, parseFullResumeFromFile, parseFullResumeFromBuffer } = require("../services/resumeParserService");
 const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
 
@@ -87,23 +87,68 @@ const updateProfile = asyncHandler(async (req, res) => {
     user.profileImage = req.files.profileImage[0].path;
   }
 
-  // Resume Parsing Logic for Skill Extraction
+  // Resume Parsing & Auto-filling Logic for Blank Profile Fields
   let newlyExtractedSkills = [];
+  let newlyFilledFields = [];
   if (req.files?.resume?.[0]) {
     const resumePath = req.files.resume[0].path;
-    newlyExtractedSkills = await extractSkillsFromResume(resumePath, user.skills);
-    
-    if (newlyExtractedSkills.length > 0) {
-      user.skills = [...user.skills, ...newlyExtractedSkills];
+    const fullData = await parseFullResumeFromFile(resumePath, user);
+
+    if ((!user.phone || !user.phone.trim()) && fullData.phone) {
+      user.phone = fullData.phone;
+      newlyFilledFields.push("Phone");
+    }
+    if ((!user.location || !user.location.trim()) && fullData.location) {
+      user.location = fullData.location;
+      newlyFilledFields.push("Location");
+    }
+    if ((!user.linkedin || !user.linkedin.trim()) && fullData.linkedin) {
+      user.linkedin = fullData.linkedin;
+      newlyFilledFields.push("LinkedIn");
+    }
+    if ((!user.github || !user.github.trim()) && fullData.github) {
+      user.github = fullData.github;
+      newlyFilledFields.push("GitHub");
+    }
+    if ((!user.about || !user.about.trim()) && fullData.about) {
+      user.about = fullData.about;
+      newlyFilledFields.push("About");
+    }
+    if ((!user.education || !user.education.trim()) && fullData.education) {
+      user.education = fullData.education;
+      newlyFilledFields.push("Education");
+    }
+    if ((!user.experienceLevel || user.experienceLevel === "Fresher") && fullData.experienceLevel) {
+      user.experienceLevel = fullData.experienceLevel;
+      newlyFilledFields.push("Experience Level");
+    }
+    if ((!user.field || user.field === "Software Engineering") && fullData.field) {
+      user.field = fullData.field;
+      newlyFilledFields.push("Field");
+    }
+
+    if (fullData.skills && fullData.skills.length > 0) {
+      const existingLower = new Set((user.skills || []).map((s) => s.toLowerCase()));
+      const newSkills = fullData.skills.filter((s) => s && !existingLower.has(s.toLowerCase()));
+      if (newSkills.length > 0) {
+        user.skills = [...(user.skills || []), ...newSkills];
+        newlyExtractedSkills = newSkills;
+        newlyFilledFields.push(`${newSkills.length} new skills`);
+      }
     }
   }
 
   await user.save();
 
+  const successMessage = newlyFilledFields.length > 0
+    ? `Profile updated & magically filled out: ${newlyFilledFields.join(", ")}!`
+    : "Profile updated successfully";
+
   // FIX I-10: Return a clean DTO instead of the full user document.
   // The raw document exposes internal arrays (hiddenJobs, savedJobs) unnecessarily.
   res.status(200).json({
-    message: "Profile updated successfully",
+    message: successMessage,
+    extractedSkills: newlyExtractedSkills,
     user: {
       _id: user._id,
       name: user.name,
@@ -239,18 +284,61 @@ const extractSkills = asyncHandler(async (req, res) => {
 
   const arrayBuffer = await response.arrayBuffer();
   
-  const newlyExtractedSkills = await extractSkillsFromBuffer(arrayBuffer, user.skills);
+  const fullData = await parseFullResumeFromBuffer(arrayBuffer, user);
+  let newlyFilledFields = [];
+  let newlyExtractedSkills = [];
 
-  if (newlyExtractedSkills.length > 0) {
-    user.skills = [...user.skills, ...newlyExtractedSkills];
-    await user.save();
+  if ((!user.phone || !user.phone.trim()) && fullData.phone) {
+    user.phone = fullData.phone;
+    newlyFilledFields.push("Phone");
+  }
+  if ((!user.location || !user.location.trim()) && fullData.location) {
+    user.location = fullData.location;
+    newlyFilledFields.push("Location");
+  }
+  if ((!user.linkedin || !user.linkedin.trim()) && fullData.linkedin) {
+    user.linkedin = fullData.linkedin;
+    newlyFilledFields.push("LinkedIn");
+  }
+  if ((!user.github || !user.github.trim()) && fullData.github) {
+    user.github = fullData.github;
+    newlyFilledFields.push("GitHub");
+  }
+  if ((!user.about || !user.about.trim()) && fullData.about) {
+    user.about = fullData.about;
+    newlyFilledFields.push("About");
+  }
+  if ((!user.education || !user.education.trim()) && fullData.education) {
+    user.education = fullData.education;
+    newlyFilledFields.push("Education");
+  }
+  if ((!user.experienceLevel || user.experienceLevel === "Fresher") && fullData.experienceLevel) {
+    user.experienceLevel = fullData.experienceLevel;
+    newlyFilledFields.push("Experience Level");
+  }
+  if ((!user.field || user.field === "Software Engineering") && fullData.field) {
+    user.field = fullData.field;
+    newlyFilledFields.push("Field");
   }
 
+  if (fullData.skills && fullData.skills.length > 0) {
+    const existingLower = new Set((user.skills || []).map((s) => s.toLowerCase()));
+    const newSkills = fullData.skills.filter((s) => s && !existingLower.has(s.toLowerCase()));
+    if (newSkills.length > 0) {
+      user.skills = [...(user.skills || []), ...newSkills];
+      newlyExtractedSkills = newSkills;
+      newlyFilledFields.push(`${newSkills.length} new skills`);
+    }
+  }
+
+  await user.save();
+
+  const successMessage = newlyFilledFields.length > 0
+    ? `Magically extracted & pre-filled: ${newlyFilledFields.join(", ")}!`
+    : "No new profile details found in your resume.";
+
   res.status(200).json({
-    message:
-      newlyExtractedSkills.length > 0
-        ? `Successfully extracted ${newlyExtractedSkills.length} new skills!`
-        : "No new skills found in your resume.",
+    message: successMessage,
     user,
     extractedSkills: newlyExtractedSkills,
   });
