@@ -64,11 +64,14 @@ body {
 @keyframes dropdownRollDown {
   0% {
     opacity: 0;
-    transform: translateY(-8px) scale(0.97);
+    transform: translateY(-16px) scaleY(0.85);
+  }
+  60% {
+    opacity: 0.9;
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scaleY(1);
   }
 }
 
