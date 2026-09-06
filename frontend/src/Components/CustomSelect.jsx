@@ -4,21 +4,25 @@ import Select from 'react-select';
 const getCustomStyles = (borderless) => ({
   control: (provided, state) => ({
     ...provided,
-    backgroundColor: borderless ? 'transparent' : '#fff',
+    backgroundColor: borderless ? 'transparent' : '#ffffff',
     borderColor: borderless 
       ? 'transparent' 
       : state.isFocused ? '#2563eb' : '#e5e7eb',
     boxShadow: borderless 
       ? 'none' 
-      : state.isFocused ? '0 0 0 1px #2563eb' : 'none',
+      : state.isFocused ? '0 0 0 2px rgba(37, 99, 235, 0.15)' : 'none',
     '&:hover': {
       borderColor: borderless 
         ? 'transparent' 
         : state.isFocused ? '#2563eb' : '#d1d5db',
     },
-    borderRadius: '0.5rem',
-    minHeight: borderless ? '38px' : '42px',
+    borderRadius: borderless ? '999px' : '0.625rem',
+    minHeight: '42px',
     cursor: 'pointer',
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: borderless ? '0 4px' : '0 10px',
   }),
   option: (provided, state) => ({
     ...provided,
@@ -27,21 +31,36 @@ const getCustomStyles = (borderless) => ({
       : state.isFocused 
         ? '#eff6ff' 
         : '#ffffff',
-    color: state.isSelected ? '#fff' : '#1f2937',
+    color: state.isSelected 
+      ? '#ffffff' 
+      : state.isFocused 
+        ? '#2563eb' 
+        : '#1f2937',
     cursor: 'pointer',
-    padding: '8px 12px',
-    fontSize: '0.9rem',
+    padding: '9px 14px',
+    margin: '2px 0',
+    borderRadius: '8px',
+    fontSize: '0.92rem',
+    fontWeight: state.isSelected ? '600' : '500',
+    transition: 'background-color 0.15s ease, color 0.15s ease',
     '&:active': {
       backgroundColor: '#2563eb',
-      color: '#fff',
+      color: '#ffffff',
     },
   }),
   menu: (provided) => ({
     ...provided,
-    borderRadius: '0.5rem',
-    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+    borderRadius: '14px',
+    border: '1px solid rgba(0, 0, 0, 0.08)',
+    boxShadow: '0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
+    padding: '6px',
     overflow: 'hidden',
+    marginTop: '6px',
     zIndex: 99999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: '0',
   }),
   menuPortal: (provided) => ({
     ...provided,
@@ -51,22 +70,25 @@ const getCustomStyles = (borderless) => ({
     ...provided,
     color: '#1f2937',
     fontWeight: 500,
-    fontSize: '0.92rem',
+    fontSize: '0.93rem',
   }),
   placeholder: (provided) => ({
     ...provided,
     color: '#6b7280',
-    fontSize: '0.92rem',
+    fontSize: '0.93rem',
+    fontWeight: 400,
   }),
   indicatorSeparator: () => ({
     display: 'none',
   }),
-  dropdownIndicator: (provided) => ({
+  dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: '#9ca3af',
-    padding: '4px',
+    color: state.isFocused ? '#2563eb' : '#9ca3af',
+    padding: '4px 6px',
+    transition: 'color 0.15s ease, transform 0.2s ease',
+    transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     '&:hover': {
-      color: '#4b5563',
+      color: '#2563eb',
     },
   }),
 });
