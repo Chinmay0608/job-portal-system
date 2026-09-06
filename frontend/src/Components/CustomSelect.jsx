@@ -50,13 +50,15 @@ const getCustomStyles = (borderless) => ({
   }),
   menu: (provided) => ({
     ...provided,
-    borderRadius: '14px',
-    border: '1px solid rgba(0, 0, 0, 0.08)',
-    boxShadow: '0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
+    borderRadius: '16px',
+    border: 'none',
+    boxShadow: '0 16px 44px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04)',
     padding: '6px',
     overflow: 'hidden',
     marginTop: '6px',
     zIndex: 99999,
+    animation: 'dropdownRollDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+    transformOrigin: 'top center',
   }),
   menuList: (provided) => ({
     ...provided,
