@@ -37,6 +37,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     skills,
     education,
     experienceLevel,
+    field,
     designation,
     companyName,
     companyWebsite,
@@ -57,6 +58,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.about = about || "";
   user.education = education || "";
   user.experienceLevel = experienceLevel || "Fresher";
+  user.field = field || user.field || "Software Engineering";
   if (skills) {
     try {
       const parsedSkills = JSON.parse(skills);

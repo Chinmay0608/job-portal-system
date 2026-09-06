@@ -91,6 +91,11 @@ const userSchema = new mongoose.Schema(
       default: "Fresher",
     },
 
+    field: {
+      type: String,
+      default: "Software Engineering",
+    },
+
     /* ==========================
        RECRUITER-ONLY FIELDS
        Populated only when role === "recruiter"
