@@ -887,7 +887,7 @@ function CandidateDashboard() {
                     {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}
                   </p>
                   
-                  <div style={{ marginTop: '8px', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ marginTop: '4px', marginBottom: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <span style={{
                       display: 'inline-flex',
                       alignItems: 'center',
