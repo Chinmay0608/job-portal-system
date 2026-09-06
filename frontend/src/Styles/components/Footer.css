@@ -1,30 +1,30 @@
 .site-footer {
   background: #090d12;
   border-top: 1px solid rgba(255,255,255,0.06);
-  padding: 32px 6% 0;
+  padding: 20px 6% 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .footer-inner {
   display: flex;
-  gap: 48px;
-  padding-bottom: 28px;
+  gap: 36px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 /* BRAND COLUMN */
 .footer-brand-col {
-  flex: 1.2;
-  min-width: 200px;
+  flex: 1.1;
+  min-width: 180px;
 }
 
 .footer-logo {
   display: block;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 900;
   color: #ffffff;
   letter-spacing: -0.5px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 
   background: none;
   border: none;
@@ -34,29 +34,29 @@
 }
 
 .footer-tagline {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: rgba(255,255,255,0.72);
-  line-height: 1.7;
+  line-height: 1.5;
   max-width: 220px;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .footer-socials {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .footer-social-link {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.04);
   color: rgba(255,255,255,0.75);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
@@ -71,33 +71,33 @@
 /* LINKS GRID */
 .footer-links-grid {
   display: flex;
-  gap: 52px;
+  gap: 40px;
   flex: 2;
 }
 
 .footer-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .footer-col-heading {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.75);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 /* FOOTER LINKS */
 .footer-col a,
 .footer-col button {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: rgba(255,255,255,0.72);
   text-decoration: none;
   transition: color 0.2s;
-  line-height: 1;
+  line-height: 1.2;
 
   background: none;
   border: none;
@@ -119,16 +119,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
+  padding: 8px 0;
 }
 
 .footer-bottom span {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: rgba(255,255,255,0.65);
 }
 
 .footer-bottom-right {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: rgba(255,255,255,0.65);
 }
 
