@@ -89,29 +89,16 @@ const createJob = asyncHandler(async (req, res) => {
 
 // Helper to build active jobs query dynamically (compensates for sleeping cron jobs on free tiers)
 const getBaseActiveJobQuery = () => {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
   return {
     isActive: { $ne: false },
-    $and: [
-      {
-        $or: [
-          { expiresAt: null },
-          { expiresAt: { $gt: new Date() } }
-        ]
-      },
-      {
-        $or: [
-          { isExternal: true, createdAt: { $gte: thirtyDaysAgo } },
-          { isExternal: true, updatedAt: { $gte: thirtyDaysAgo } },
-          { isExternal: { $ne: true }, updatedAt: { $gte: ninetyDaysAgo } }
-        ]
-      }
-    ]
+    $or: [
+      { expiresAt: null },
+      { expiresAt: { $gt: new Date() } }
+    ],
+    updatedAt: { $gte: ninetyDaysAgo }
   };
 };
 
