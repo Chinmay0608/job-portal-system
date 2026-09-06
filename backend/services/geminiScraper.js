@@ -28,11 +28,20 @@ const extractExperience = (title) => {
   return "Fresher";
 };
 
-// A curated list of ATS boards that are easily scrapable (no heavy JS blocking)
+// A curated list of ATS boards (Ashby, Greenhouse, Lever) that are scrapable
 const TARGET_COMPANIES = [
+  // Greenhouse Boards
   { name: "Stripe", url: "https://boards.greenhouse.io/stripe" },
   { name: "Vercel", url: "https://boards.greenhouse.io/vercel" },
   { name: "Discord", url: "https://boards.greenhouse.io/discord" },
+  { name: "Figma", url: "https://boards.greenhouse.io/figma" },
+  { name: "OpenAI", url: "https://boards.greenhouse.io/openai" },
+  { name: "Notion", url: "https://boards.greenhouse.io/notion" },
+  // Ashby Boards
+  { name: "Linear", url: "https://jobs.ashbyhq.com/linear" },
+  { name: "Ramp", url: "https://jobs.ashbyhq.com/ramp" },
+  // Lever Boards
+  { name: "Spotify", url: "https://jobs.lever.co/spotify" },
 ];
 
 // Helper to auto-add skills
