@@ -437,11 +437,11 @@
 }
 
 .indeed-navbar.navbar-dark .navbar-brand-logo {
-  margin-left: 28px;
+  margin-left: -4px;
 }
 
 .indeed-navbar.navbar-dark .auth-buttons {
-  transform: translateX(16px);
+  transform: none;
 }
 
 @media (max-width: 900px) {
