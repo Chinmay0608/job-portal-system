@@ -92,6 +92,71 @@ const calculateCompletion = (profileUser) => {
   return Math.round((completed / fields.length) * 100);
 };
 
+const calculateJobMatchScore = (job, user) => {
+  if (!job || !user) return { score: 75, matchedSkills: [], isDomainMatch: true };
+
+  const userField = (user.field || "Software Engineering").toLowerCase();
+  const userSkills = user.skills || [];
+  const userExp = (user.experienceLevel || "Fresher").toLowerCase();
+
+  const titleLower = (job.title || "").toLowerCase();
+  const roleLower = (job.role || job.employmentType || "").toLowerCase();
+  const descLower = (job.description || "").toLowerCase();
+  const reqLower = Array.isArray(job.skillsRequired)
+    ? job.skillsRequired.join(" ").toLowerCase()
+    : String(job.skillsRequired || "").toLowerCase();
+
+  const fullText = `${titleLower} ${roleLower} ${descLower} ${reqLower}`;
+
+  // 1. Domain / Field Matching (Max 40 pts)
+  const fieldKeywordsMap = {
+    "software engineering": ["software", "developer", "engineer", "frontend", "backend", "fullstack", "react", "node", "java", "python", "javascript", "web", "sde", "code", "tech"],
+    "data science & analytics": ["data", "analyst", "analytics", "scientist", "sql", "machine learning", "python", "bi", "tableau", "insights"],
+    "product management": ["product", "manager", "pm", "scrum", "agile", "roadmap", "feature", "strategy"],
+    "ui/ux & design": ["design", "designer", "ui", "ux", "figma", "sketch", "visual", "creative"],
+    "devops & cloud": ["devops", "cloud", "aws", "sre", "docker", "kubernetes", "infrastructure", "linux", "sysadmin"],
+    "marketing & growth": ["marketing", "seo", "growth", "content", "campaign", "social media", "brand"],
+    "sales & bd": ["sales", "business development", "bd", "account", "revenue", "client", "deals"],
+    "finance & accounting": ["finance", "accountant", "accounting", "audit", "tax", "banking", "financial"],
+    "hr & operations": ["hr", "human resources", "recruiter", "talent", "people", "operations", "admin"],
+    "core engineering": ["mechanical", "civil", "electrical", "hardware", "engineering", "cad", "site"]
+  };
+
+  const keywords = fieldKeywordsMap[userField] || [userField];
+  const isDomainMatch = keywords.some((kw) => fullText.includes(kw));
+  const domainScore = isDomainMatch ? 40 : 15;
+
+  // 2. Skill Matching from Job Description (Max 40 pts)
+  const matchedSkills = [];
+  userSkills.forEach((skill) => {
+    const sLower = skill.toLowerCase();
+    if (fullText.includes(sLower)) {
+      matchedSkills.push(skill);
+    }
+  });
+
+  const skillCount = userSkills.length || 1;
+  const skillRatio = matchedSkills.length / skillCount;
+  const skillScore = Math.min(40, Math.round(skillRatio * 40));
+
+  // 3. Experience Match (Max 20 pts)
+  let expScore = 20;
+  if (userExp.includes("fresher") || userExp.includes("0-2")) {
+    if (titleLower.includes("senior") || titleLower.includes("lead") || titleLower.includes("principal")) {
+      expScore = 5;
+    }
+  }
+
+  const rawScore = domainScore + skillScore + expScore;
+  const finalScore = Math.min(98, Math.max(52, rawScore));
+
+  return {
+    score: finalScore,
+    matchedSkills,
+    isDomainMatch,
+  };
+};
+
 function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [recommendedJobsList, setRecommendedJobsList] = useState([]);
@@ -469,6 +534,10 @@ function CandidateDashboard() {
       }
     }
     return matchesExperience;
+  }).sort((a, b) => {
+    const scoreA = calculateJobMatchScore(a, user).score;
+    const scoreB = calculateJobMatchScore(b, user).score;
+    return scoreB - scoreA;
   });
 
   const rawDisplayed = activeTab === "Recommended"
@@ -744,6 +813,7 @@ function CandidateDashboard() {
                   {visibleJobs.map((job) => {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
+                    const matchInfo = calculateJobMatchScore(job, user);
 
                     return (
                       <div
@@ -786,6 +856,15 @@ function CandidateDashboard() {
                         </div>
                         
                         <div className="card-tags-group">
+                          <span className="ind-card-tag" style={{
+                            background: matchInfo.score >= 80 ? '#dcfce7' : '#eff6ff',
+                            color: matchInfo.score >= 80 ? '#15803d' : '#1d4ed8',
+                            fontWeight: '700',
+                            border: matchInfo.score >= 80 ? '1px solid #bbf7d0' : '1px solid #bfdbfe'
+                          }}>
+                            ✨ {matchInfo.score}% Match
+                          </span>
+
                           {job.skills && job.skills.length > 0 ? (
                             <span className="ind-card-tag skill-tag">{job.skills[0]}</span>
                           ) : (
@@ -888,6 +967,45 @@ function CandidateDashboard() {
                   </p>
                   
                   <div style={{ marginTop: '4px', marginBottom: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {(() => {
+                      const matchInfo = calculateJobMatchScore(selectedJob, user);
+                      return (
+                        <>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: matchInfo.score >= 80 ? '#dcfce7' : '#eff6ff',
+                            color: matchInfo.score >= 80 ? '#15803d' : '#1d4ed8',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            border: matchInfo.score >= 80 ? '1px solid #bbf7d0' : '1px solid #bfdbfe'
+                          }}>
+                            ✨ {matchInfo.score}% Match ({user?.field || "Software Engineering"})
+                          </span>
+                          {matchInfo.matchedSkills.length > 0 && (
+                            <div style={{ width: '100%', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#4b5563' }}>Matched Skills:</span>
+                              {matchInfo.matchedSkills.map((sk) => (
+                                <span key={sk} style={{
+                                  background: '#2563eb12',
+                                  color: '#2563eb',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '600',
+                                  border: '1px solid #2563eb25'
+                                }}>
+                                  ✓ {sk}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     <span style={{
                       display: 'inline-flex',
                       alignItems: 'center',
