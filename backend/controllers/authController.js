@@ -9,6 +9,27 @@ initializeFirebase();
 const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("express-async-handler");
 
+const formatUserDTO = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  phone: user.phone || "",
+  location: user.location || "",
+  linkedin: user.linkedin || "",
+  github: user.github || "",
+  about: user.about || "",
+  skills: user.skills || [],
+  education: user.education || "",
+  experienceLevel: user.experienceLevel || "Fresher",
+  field: user.field || "Software Engineering",
+  designation: user.designation || "",
+  companyName: user.companyName || "",
+  companyWebsite: user.companyWebsite || "",
+  resume: user.resume || "",
+  profileImage: user.profileImage || "",
+});
+
 /* ==========================
    REGISTER USER
 ========================== */
@@ -46,12 +67,7 @@ const registerUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     message: "User registered successfully",
     token,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: formatUserDTO(user),
   });
 });
 
@@ -100,12 +116,7 @@ const loginUser = asyncHandler(async (req, res) => {
   res.status(200).json({
     message: "Login successful",
     token,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: formatUserDTO(user),
   });
 });
 
@@ -180,12 +191,7 @@ const googleLogin = asyncHandler(async (req, res) => {
   res.status(200).json({
     message: "Google login successful",
     token,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: formatUserDTO(user),
   });
 });
 

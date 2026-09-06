@@ -53,6 +53,7 @@ export const getRecruiterJobs = async () => (await api.get("/api/jobs/my-jobs"))
 export const getRecommendedJobs = async () => (await api.get("/api/jobs/recommended")).data;
 
 // USER MODULE
+export const getUserProfile = async () => (await api.get("/api/users/profile")).data;
 export const updateProfile = async (formData) => (await api.put("/api/users/update-profile", formData)).data;
 export const changePassword = async (passwordData) => (await api.put("/api/users/change-password", passwordData)).data;
 export const extractSkillsAPI = async () => (await api.post("/api/users/extract-skills")).data;

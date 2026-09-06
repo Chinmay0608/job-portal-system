@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const validateRequest = require("../middleware/validationMiddleware");
 const {
+  getProfile,
   updateProfile,
   changePassword,
   toggleSaveJob,
@@ -13,6 +14,8 @@ const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
 
 const router = express.Router();
+
+router.get("/profile", protect, getProfile);
 
 /* ==========================
    UPDATE PROFILE

@@ -41,7 +41,7 @@ const generateJobDescription = asyncHandler(async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
     
@@ -144,8 +144,18 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (location) {
-    if (location.trim().toLowerCase() === "remote") {
+    const locLower = location.trim().toLowerCase();
+    if (locLower === "remote") {
       query.isRemote = true;
+    } else if (locLower === "india" || locLower === "in") {
+      const indianLocs = [
+        "india", "bengaluru", "bangalore", "mumbai", "delhi", "noida", "gurgaon", "gurugram", 
+        "hyderabad", "chennai", "pune", "jaipur", "kolkata", "ahmedabad", "surat", "chandigarh", "kochi", "in-"
+      ];
+      query.location = { $regex: indianLocs.map(escapeRegex).join("|"), $options: "i" };
+    } else if (locLower === "us" || locLower === "usa" || locLower === "united states") {
+      const usLocs = ["us", "usa", "united states", "san francisco", "sf", "nyc", "new york", "seattle", "austin", "chicago", "boston", "la", "los angeles"];
+      query.location = { $regex: usLocs.map(escapeRegex).join("|"), $options: "i" };
     } else {
       query.location = { $regex: escapeRegex(location), $options: "i" };
     }
@@ -261,38 +271,212 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const lastMsg = (messages?.[messages.length - 1]?.content || "").trim();
+  const lastMsgLower = lastMsg.toLowerCase();
+  const userSkills = user.skills || [];
+  const userField = user.field || "Software Engineering";
 
-  if (!apiKey) {
-    const lastMsg = (messages?.[messages.length - 1]?.content || "").toLowerCase();
-    let reply = `Hello ${user.name}! As your AI Career Assistant, I analyzed your profile (**${user.field || "Software Engineering"}**, Skills: ${user.skills?.slice(0, 4).join(", ") || "React"}). Focus on roles matching your target domain for top recommendations!`;
+  // 1. Detect candidate intent and tech/domain keywords
+  let searchKeyword = "";
+  const commonKeywords = ["java", "python", "react", "node", "express", "javascript", "c++", "aws", "docker", "frontend", "backend", "fullstack", "data", "marketing", "sales", "design", "remote", "devops", "sql", "mongodb"];
+  for (const kw of commonKeywords) {
+    if (lastMsgLower.includes(kw)) {
+      searchKeyword = kw;
+      break;
+    }
+  }
 
-    if (lastMsg.includes("recommend") || lastMsg.includes("job") || lastMsg.includes("top")) {
-      reply = `Based on your target domain (**${user.field || "Software Engineering"}**) and skills (${user.skills?.join(", ") || "React"}), check out the top matched jobs under your Recommended tab!`;
+  // 2. Query matching active jobs from Database
+  let matchedJobs = [];
+  const jobQuery = { isActive: { $ne: false } };
+
+  if (searchKeyword) {
+    const safeKw = escapeRegex(searchKeyword);
+    jobQuery.$or = [
+      { title: { $regex: safeKw, $options: "i" } },
+      { description: { $regex: safeKw, $options: "i" } },
+      { keywords: { $regex: safeKw, $options: "i" } },
+      { skillsRequired: { $regex: safeKw, $options: "i" } },
+    ];
+  } else if (userField) {
+    const safeField = escapeRegex(userField);
+    jobQuery.$or = [
+      { role: { $regex: safeField, $options: "i" } },
+      { title: { $regex: safeField, $options: "i" } },
+      { description: { $regex: safeField, $options: "i" } },
+      { keywords: { $regex: safeField, $options: "i" } },
+    ];
+  }
+
+  try {
+    matchedJobs = await Job.find(jobQuery).limit(5).lean();
+  } catch (e) {
+    console.error("Error fetching jobs for AI coach:", e);
+  }
+
+  if (matchedJobs.length === 0) {
+    try {
+      matchedJobs = await Job.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).limit(5).lean();
+    } catch (e) {}
+  }
+
+  // 3. Build dynamic smart reply
+  const buildSmartFallbackReply = () => {
+    if (lastMsgLower.includes("skill gap") || lastMsgLower.includes("gap") || lastMsgLower.includes("analyze")) {
+      const allRequiredSkills = new Set();
+      matchedJobs.forEach((j) => {
+        if (Array.isArray(j.skillsRequired)) {
+          j.skillsRequired.forEach((s) => allRequiredSkills.add(s.trim()));
+        } else if (typeof j.skillsRequired === "string" && j.skillsRequired.trim()) {
+          j.skillsRequired.split(",").forEach((s) => allRequiredSkills.add(s.trim()));
+        }
+      });
+
+      const userSkillSet = new Set(userSkills.map((s) => s.toLowerCase()));
+      const missingSkills = Array.from(allRequiredSkills).filter(
+        (s) => s && !userSkillSet.has(s.toLowerCase())
+      );
+
+      return `**Skill Gap Analysis for ${user.name} (${userField})**:
+
+• **Your Active Skills**: ${userSkills.length > 0 ? userSkills.join(", ") : "None specified"}
+• **In-Demand Skills in ${userField}**: ${missingSkills.slice(0, 5).join(", ") || "Docker, Microservices, System Design, AWS"}
+
+💡 **Action Plan**: Adding 2-3 of these in-demand skills to your profile can boost your match score by up to **35%**!`;
     }
 
-    return res.status(200).json({ role: "assistant", content: reply });
+    if (searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("top") || lastMsgLower.includes("provide") || lastMsgLower.includes("show")) {
+      if (matchedJobs.length > 0) {
+        const jobListStr = matchedJobs
+          .slice(0, 3)
+          .map((j, i) => {
+            const salaryStr = j.salary && Number(j.salary) > 0 
+              ? `💼 $${Number(j.salary).toLocaleString()}` 
+              : "💼 Competitive Salary";
+            
+            let skillsStr = "";
+            if (Array.isArray(j.skillsRequired) && j.skillsRequired.length > 0) {
+              skillsStr = j.skillsRequired.join(", ");
+            } else if (typeof j.skillsRequired === "string" && j.skillsRequired.trim()) {
+              skillsStr = j.skillsRequired;
+            } else {
+              skillsStr = "Domain & Full-stack Skills";
+            }
+
+            return `${i + 1}. **${j.title}** at **${j.company}**\n   📍 ${j.location || "Remote"} | ${salaryStr}\n   ⚡ Skills: ${skillsStr}`;
+          })
+          .join("\n\n");
+
+        return `Here are top active **${searchKeyword ? searchKeyword.toUpperCase() : userField.toUpperCase()}** openings matching your profile:
+
+${jobListStr}
+
+💡 **Career Tip**: Ensure these skills are listed on your profile to maximize your match score!`;
+      }
+    }
+
+    if (lastMsgLower.includes("interview") || lastMsgLower.includes("prep") || lastMsgLower.includes("tip")) {
+      return `**Interview Preparation Tips for ${userField} Roles**:
+
+1. **Highlight Technical Projects**: Be ready to explain 2 key projects featuring your skills (${userSkills.slice(0, 3).join(", ") || "your primary stack"}).
+2. **System & Problem Solving**: Practice common ${userField} interview questions and technical architecture trade-offs.
+3. **STAR Method**: Structure behavioral responses around Situation, Task, Action, and Result.`;
+    }
+
+    return `Hello **${user.name}**! I analyzed your profile in **${userField}** (Skills: ${userSkills.join(", ") || "None listed"}).
+
+I can help you:
+• **Search roles** (e.g. "show me Software Engineering jobs")
+• **Analyze your skill gaps** (e.g. "Analyze my skill gaps")
+• **Get interview tips** for ${userField}`;
+  };
+
+  const groqApiKey = process.env.GROQ_API_KEY;
+
+  if (groqApiKey && groqApiKey.startsWith("gsk_")) {
+    try {
+      const axios = require("axios");
+      const jobSummaries = matchedJobs
+        .map(
+          (j) =>
+            `${j.title} at ${j.company} (${j.location}, Salary: ${j.salary && Number(j.salary) > 0 ? '$' + Number(j.salary).toLocaleString() : 'Competitive Salary'}, Skills: ${
+              Array.isArray(j.skillsRequired) && j.skillsRequired.length > 0
+                ? j.skillsRequired.join(", ")
+                : (typeof j.skillsRequired === 'string' && j.skillsRequired.trim() ? j.skillsRequired : 'Domain Relevant Skills')
+            })`
+        )
+        .join("\n");
+
+      const systemPrompt = `You are SkillBridge's AI Career Coach & Skill Analyst.
+Candidate Context:
+- Name: ${user.name}
+- Target Domain: ${userField}
+- Experience Level: ${user.experienceLevel || "Fresher"}
+- Skills: ${userSkills.join(", ") || "React, JavaScript"}
+
+Available Matching Jobs in Database:
+${jobSummaries || "No direct matches found"}
+
+Formatting Instructions:
+- Format job listings cleanly with numbered titles (**Job Title** at **Company**).
+- Use clear icons: 📍 for location, 💼 for salary (never output $0, use Competitive Salary if zero), ⚡ for skills.
+- Format key recommendations with bullet points and bolding (**bold**). Keep responses crisp, professional, and encouraging.`;
+
+      const groqRes = await axios.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: lastMsg },
+          ],
+          temperature: 0.7,
+          max_tokens: 1024,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${groqApiKey}`,
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+        }
+      );
+
+      const reply = groqRes.data?.choices?.[0]?.message?.content?.trim();
+      if (reply) {
+        return res.status(200).json({ role: "assistant", content: reply });
+      }
+    } catch (error) {
+      console.error("Groq AI Coach Error:", error?.response?.data || error.message);
+    }
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.startsWith("AQ.")) {
+    return res.status(200).json({ role: "assistant", content: buildSmartFallbackReply() });
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const userContext = `Candidate Context:
-- Name: ${user.name}
-- Domain/Field: ${user.field || "Software Engineering"}
-- Experience Level: ${user.experienceLevel || "Fresher"}
-- Skills: ${user.skills?.join(", ") || "React, JavaScript"}
-- Location: ${user.location || "Remote"}`;
+    const jobSummaries = matchedJobs.map(j => `${j.title} at ${j.company} (${j.location}, Skills: ${Array.isArray(j.skillsRequired) ? j.skillsRequired.join(', ') : j.skillsRequired})`).join("\n");
 
     const prompt = `You are SkillBridge's AI Career Coach & Skill Analyst.
-${userContext}
+Candidate Context:
+- Name: ${user.name}
+- Domain/Field: ${userField}
+- Experience Level: ${user.experienceLevel || "Fresher"}
+- Skills: ${userSkills.join(", ") || "React, JavaScript"}
+
+Available Matching Jobs in Database:
+${jobSummaries || "No direct matches found"}
 
 User Question:
-${messages?.[messages.length - 1]?.content || "Help me analyze my top job matches"}
+${lastMsg}
 
-Provide concise, highly actionable, encouraging advice for the candidate.`;
+Provide a concise, highly actionable, encouraging response. Format key points with markdown bolding (**bold**).`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
@@ -300,10 +484,7 @@ Provide concise, highly actionable, encouraging advice for the candidate.`;
     res.status(200).json({ role: "assistant", content: reply });
   } catch (error) {
     console.error("AI Coach Error:", error);
-    res.status(200).json({ 
-      role: "assistant", 
-      content: `Hello ${user.name}! I am analyzing your profile in ${user.field || "Software Engineering"}. Focus on roles matching your core skills (${user.skills?.slice(0, 3).join(", ")}) for the best response rate!` 
-    });
+    res.status(200).json({ role: "assistant", content: buildSmartFallbackReply() });
   }
 });
 

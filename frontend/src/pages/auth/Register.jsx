@@ -308,7 +308,7 @@ function Register() {
             </div>
 
             <button type="submit" className="register-submit-btn" disabled={loading} aria-label="Create account">
-              {loading ? "Creating Account..." : "Build your access →"}
+              {loading ? "Creating Account..." : "Build your access \u2192"}
             </button>
 
             <p className="register-bottom-text">

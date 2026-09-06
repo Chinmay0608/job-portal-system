@@ -72,7 +72,8 @@
 /* LINKS GRID */
 .footer-links-grid {
   display: flex;
-  gap: 72px;
+  justify-content: space-between;
+  width: 75%;
   margin-left: auto;
 }
 

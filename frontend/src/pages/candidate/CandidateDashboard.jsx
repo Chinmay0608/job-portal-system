@@ -111,27 +111,31 @@ const calculateJobMatchScore = (job, user) => {
 
   // 1. Domain / Field Matching (Max 40 pts)
   const fieldKeywordsMap = {
-    "software engineering": ["software", "developer", "engineer", "frontend", "backend", "fullstack", "react", "node", "java", "python", "javascript", "web", "sde", "code", "tech"],
-    "data science & analytics": ["data", "analyst", "analytics", "scientist", "sql", "machine learning", "python", "bi", "tableau", "insights"],
-    "product management": ["product", "manager", "pm", "scrum", "agile", "roadmap", "feature", "strategy"],
-    "ui/ux & design": ["design", "designer", "ui", "ux", "figma", "sketch", "visual", "creative"],
-    "devops & cloud": ["devops", "cloud", "aws", "sre", "docker", "kubernetes", "infrastructure", "linux", "sysadmin"],
-    "marketing & growth": ["marketing", "seo", "growth", "content", "campaign", "social media", "brand"],
-    "sales & bd": ["sales", "business development", "bd", "account", "revenue", "client", "deals"],
-    "finance & accounting": ["finance", "accountant", "accounting", "audit", "tax", "banking", "financial"],
-    "hr & operations": ["hr", "human resources", "recruiter", "talent", "people", "operations", "admin"],
-    "core engineering": ["mechanical", "civil", "electrical", "hardware", "engineering", "cad", "site"]
+    "software engineering": ["software", "developer", "engineer", "frontend", "backend", "fullstack", "react", "node", "java", "python", "javascript", "sde", "programmer", "coder", "software engineer", "web developer"],
+    "data science & analytics": ["data scientist", "data analyst", "analytics", "data science", "machine learning", "tableau", "power bi", "deep learning", "sql analyst"],
+    "product management": ["product manager", "product management", "scrum master", "product owner", "agile coach"],
+    "ui/ux & design": ["ui/ux", "ux designer", "ui designer", "graphic designer", "figma", "visual designer", "product designer"],
+    "devops & cloud": ["devops", "cloud engineer", "sre", "kubernetes", "docker", "aws", "sysadmin", "infrastructure engineer"],
+    "marketing & growth": ["marketing", "growth hacker", "seo", "content writer", "social media", "digital marketing", "brand manager", "mba"],
+    "sales & bd": ["sales", "business development", "account executive", "sales manager", "bde", "sales representative"],
+    "finance & accounting": ["finance", "accountant", "accounting", "auditor", "financial analyst", "tax consultant"],
+    "hr & operations": ["hr", "human resources", "recruiter", "talent acquisition", "people operations", "operations manager"],
+    "core engineering": ["mechanical engineer", "civil engineer", "electrical engineer", "hardware engineer", "cad designer"]
   };
 
   const keywords = fieldKeywordsMap[userField] || [userField];
-  const isDomainMatch = keywords.some((kw) => fullText.includes(kw));
-  const domainScore = isDomainMatch ? 40 : 15;
+  const isDomainMatch = keywords.some((kw) => {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\b${escaped}\\b`, "i").test(fullText);
+  });
+  const domainScore = isDomainMatch ? 40 : 0;
 
   // 2. Skill Matching from Job Description (Max 40 pts)
   const matchedSkills = [];
   userSkills.forEach((skill) => {
     const sLower = skill.toLowerCase();
-    if (fullText.includes(sLower)) {
+    const escaped = sLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(fullText)) {
       matchedSkills.push(skill);
     }
   });
@@ -149,7 +153,7 @@ const calculateJobMatchScore = (job, user) => {
   }
 
   const rawScore = domainScore + skillScore + expScore;
-  const finalScore = Math.min(98, Math.max(52, rawScore));
+  const finalScore = isDomainMatch ? Math.min(98, Math.max(50, rawScore)) : Math.max(20, rawScore);
 
   return {
     score: finalScore,
@@ -511,14 +515,72 @@ function CandidateDashboard() {
     setExternalApplyActive(false);
   };
 
+  const INDIAN_CITIES = [
+    "india", "bangalore", "bengaluru", "mumbai", "delhi", "noida", "gurgaon", "gurugram", 
+    "hyderabad", "chennai", "pune", "jaipur", "kolkata", "ahmedabad", "surat", "chandigarh", "kochi"
+  ];
+
+  const matchesLocationFilter = (jobLocation, filterTerm) => {
+    if (!filterTerm || !filterTerm.trim()) return true;
+    const term = filterTerm.trim().toLowerCase();
+    const loc = (jobLocation || "").toLowerCase();
+
+    if (term === "india") {
+      return INDIAN_CITIES.some((city) => loc.includes(city));
+    }
+    return loc.includes(term);
+  };
+
+  const isSearchActive = Boolean(
+    (search && search.trim().length > 0) || 
+    (locationFilter && locationFilter.trim().length > 0)
+  );
+
   const availableJobs = jobs
     .filter((job) => !appliedJobs.includes(job._id))
-    .filter((job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx); // dedupe
-  const availableRecommended = recommendedJobsList.filter((job) => !appliedJobs.includes(job._id));
+    .filter((job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx)
+    .filter((job) => {
+      // Location filter check for All Jobs
+      if (locationFilter && !matchesLocationFilter(job.location, locationFilter)) {
+        return false;
+      }
+      // If candidate typed an explicit search query, show all search results
+      if (isSearchActive) return true;
+      // Otherwise, hide unrelated domain jobs (e.g. MBA/Marketing for Software Engineering)
+      const matchInfo = calculateJobMatchScore(job, user);
+      return matchInfo.isDomainMatch;
+    });
 
-  // If user is a junior/fresher, hide explicit senior/lead roles from recommended
+  // Combine initial recommended jobs + live search result jobs for the Recommended tab
+  const availableRecommended = [...recommendedJobsList, ...jobs]
+    .filter((job) => !appliedJobs.includes(job._id))
+    .filter((job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx);
+
+  // Apply location, search, and experience filters to Recommended tab as well
   const filteredRecommended = availableRecommended.filter((job) => {
-    let matchesExperience = true;
+    // 1. Location Filter
+    if (locationFilter && !matchesLocationFilter(job.location, locationFilter)) {
+      return false;
+    }
+
+    // 2. Keyword Search
+    if (search && search.trim()) {
+      const sTerm = search.trim().toLowerCase();
+      const titleLower = (job.title || "").toLowerCase();
+      const companyLower = (job.company || "").toLowerCase();
+      const descLower = (job.description || "").toLowerCase();
+      const matchesSearch = titleLower.includes(sTerm) || companyLower.includes(sTerm) || descLower.includes(sTerm);
+      if (!matchesSearch) return false;
+    }
+
+    // 3. Experience Level Filter
+    if (experienceFilter && experienceFilter !== "All Experience") {
+      if (job.experienceRequired && job.experienceRequired.toLowerCase() !== experienceFilter.toLowerCase()) {
+        return false;
+      }
+    }
+
+    // 4. Fresher/Junior Experience Guard
     const titleLower = job.title?.toLowerCase() || "";
     const userExp = user?.experienceLevel?.toLowerCase() || "fresher";
 
@@ -531,10 +593,10 @@ function CandidateDashboard() {
         titleLower.includes("director") ||
         titleLower.includes("head")
       ) {
-        matchesExperience = false;
+        return false;
       }
     }
-    return matchesExperience;
+    return true;
   }).sort((a, b) => {
     const scoreA = calculateJobMatchScore(a, user).score;
     const scoreB = calculateJobMatchScore(b, user).score;

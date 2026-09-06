@@ -4,7 +4,7 @@ import debounce from "lodash.debounce";
 import BackButton from "../../Components/BackButton";
 import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/candidate/candidateProfile.css";
-import { changePassword, updateProfile, extractSkillsAPI } from "../../Services/jobService";
+import { changePassword, updateProfile, extractSkillsAPI, getUserProfile } from "../../Services/jobService";
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -71,6 +71,22 @@ function CandidateProfile() {
     const completed = fields.filter(Boolean).length;
     return Math.round((completed / fields.length) * 100);
   };
+
+  // Mount effect: Fetch fresh user profile from backend
+  useEffect(() => {
+    const fetchFreshProfile = async () => {
+      try {
+        const res = await getUserProfile();
+        if (res?.user) {
+          setUser(res.user);
+          localStorage.setItem("user", JSON.stringify(res.user));
+        }
+      } catch (err) {
+        console.error("Failed to fetch fresh profile:", err);
+      }
+    };
+    fetchFreshProfile();
+  }, []);
 
   // State Synchronization Block
   useEffect(() => {
