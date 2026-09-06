@@ -367,38 +367,38 @@
 }
 
 .ind-detail-header-card {
-  padding: 36px 42px;
+  padding: 18px 24px;
   border-bottom: 1px solid #f0f0ee;
   background: #ffffff;
 }
 
 .ind-detail-main-title {
-  font-size: 1.65rem;
+  font-size: 1.35rem;
   font-weight: 900;
   color: #0d1117;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   line-height: 1.25;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
 }
 
 .ind-detail-company-link {
-  font-size: 1.08rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #374151;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 
 .ind-detail-location-text {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #6b7280;
-  margin: 0 0 12px 0;
+  margin: 0 0 4px 0;
 }
 
 .ind-detail-salary-text {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
   color: #0d1117;
-  margin: 0 0 18px 0;
+  margin: 0 0 10px 0;
 }
 
 /* ACTIONS & FILTERS ROW */
@@ -482,7 +482,7 @@
 
 /* DETAIL SCROLL BODY */
 .ind-detail-scroll-body {
-  padding: 32px 36px 80px;
+  padding: 20px 24px 40px;
   overflow-y: auto;
   flex: 1;
 }
