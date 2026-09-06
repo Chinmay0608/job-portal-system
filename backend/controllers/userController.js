@@ -52,18 +52,16 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   user.name = name || user.name;
   user.phone = phone || "";
-  user.location = location || "";
-  user.linkedin = linkedin || "";
-  user.github = github || "";
-  user.about = about || "";
-  user.education = education || "";
-  user.experienceLevel = experienceLevel || "Fresher";
+  user.location = location !== undefined ? location : (user.location || "");
+  user.linkedin = linkedin !== undefined ? linkedin : (user.linkedin || "");
+  user.github = github !== undefined ? github : (user.github || "");
+  user.about = about !== undefined ? about : (user.about || "");
+  user.education = education !== undefined ? education : (user.education || "");
+  user.experienceLevel = experienceLevel || user.experienceLevel || "Fresher";
   user.field = field || user.field || "Software Engineering";
-  if (skills) {
+  if (skills !== undefined && skills !== null && skills !== "") {
     try {
-      const parsedSkills = JSON.parse(skills);
-      // FIX I-11: JSON.parse succeeds on non-array values like "{}" or "null".
-      // Validate the result is actually an array to prevent silent data corruption.
+      const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
       if (!Array.isArray(parsedSkills)) {
         return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
       }
@@ -72,11 +70,12 @@ const updateProfile = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Invalid skills format — expected a JSON array" });
     }
   } else {
-    user.skills = [];
+    // Preserve existing skills if not specified in request
+    user.skills = user.skills || [];
   }
-  user.designation = designation || "";
-  user.companyName = companyName || "";
-  user.companyWebsite = companyWebsite || "";
+  user.designation = designation !== undefined ? designation : (user.designation || "");
+  user.companyName = companyName !== undefined ? companyName : (user.companyName || "");
+  user.companyWebsite = companyWebsite !== undefined ? companyWebsite : (user.companyWebsite || "");
 
   /* Resume */
   if (req.files?.resume?.[0]) {
@@ -295,7 +294,41 @@ const getSignedResumeUrl = asyncHandler(async (req, res) => {
   res.redirect(signedUrl);
 });
 
+/* ==========================
+   GET USER PROFILE
+========================== */
+const getProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  res.status(200).json({
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone || "",
+      location: user.location || "",
+      linkedin: user.linkedin || "",
+      github: user.github || "",
+      about: user.about || "",
+      skills: user.skills || [],
+      education: user.education || "",
+      experienceLevel: user.experienceLevel || "Fresher",
+      field: user.field || "Software Engineering",
+      designation: user.designation || "",
+      companyName: user.companyName || "",
+      companyWebsite: user.companyWebsite || "",
+      resume: user.resume || "",
+      profileImage: user.profileImage || "",
+    },
+  });
+});
+
 module.exports = {
+  getProfile,
   updateProfile,
   changePassword,
   toggleSaveJob,

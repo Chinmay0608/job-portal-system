@@ -9,6 +9,27 @@ const SUGGESTION_CHIPS = [
   "Interview tips for my top match",
 ];
 
+const renderFormattedContent = (content) => {
+  if (!content) return null;
+  const lines = content.split("\n");
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    const formattedParts = parts.map((part, partIndex) => {
+      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+        return <strong key={partIndex} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+
+    return (
+      <React.Fragment key={lineIndex}>
+        {formattedParts}
+        {lineIndex < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
+  });
+};
+
 export default function AIChatWidget({ user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -17,7 +38,8 @@ export default function AIChatWidget({ user }) {
     {
       id: "welcome",
       role: "assistant",
-      content: `Hi ${user?.name || "there"}! I'm your **SkillBridge AI Career Coach**. Ask me about your job matches, skill gaps in ${user?.field || "your domain"}, or interview tips!`,
+      content: `Hi ${user?.name || "there"}! I'm your **SkillBridge AI Career Coach**.\n\nHere are some options to get started:`,
+      isWelcome: true,
     },
   ]);
 
@@ -76,6 +98,7 @@ export default function AIChatWidget({ user }) {
         id: "welcome",
         role: "assistant",
         content: `Conversation reset! How can I help with your ${user?.field || "Software Engineering"} career goals today?`,
+        isWelcome: true,
       },
     ]);
   };
@@ -89,7 +112,7 @@ export default function AIChatWidget({ user }) {
           onClick={() => setIsOpen(true)}
           style={{
             position: "fixed",
-            bottom: "24px",
+            bottom: "85px",
             right: "24px",
             zIndex: 1100,
             display: "flex",
@@ -121,7 +144,7 @@ export default function AIChatWidget({ user }) {
         <div
           style={{
             position: "fixed",
-            bottom: "24px",
+            bottom: "85px",
             right: "24px",
             zIndex: 1200,
             width: "380px",
@@ -248,7 +271,33 @@ export default function AIChatWidget({ user }) {
                     borderTopLeftRadius: m.role === "user" ? "16px" : "4px",
                   }}
                 >
-                  {m.content}
+                  {renderFormattedContent(m.content)}
+                  {m.isWelcome && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+                      {SUGGESTION_CHIPS.map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => sendMessage(chip)}
+                          disabled={isLoading}
+                          style={{
+                            textAlign: "left",
+                            fontSize: "0.8rem",
+                            padding: "8px 12px",
+                            borderRadius: "10px",
+                            border: "1px solid #cbd5e1",
+                            backgroundColor: "#ffffff",
+                            color: "#2563eb",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          • {chip}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -264,31 +313,6 @@ export default function AIChatWidget({ user }) {
               </div>
             )}
             <div ref={chatEndRef} />
-          </div>
-
-          {/* Quick Suggestion Chips */}
-          <div style={{ display: "flex", gap: "6px", overflowX: "auto", padding: "8px 12px", backgroundColor: "#f8fafc", borderTop: "1px solid #f1f5f9" }}>
-            {SUGGESTION_CHIPS.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => sendMessage(chip)}
-                disabled={isLoading}
-                style={{
-                  whiteSpace: "nowrap",
-                  fontSize: "0.72rem",
-                  padding: "4px 10px",
-                  borderRadius: "9999px",
-                  border: "1px solid #cbd5e1",
-                  backgroundColor: "#ffffff",
-                  color: "#475569",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
-              >
-                {chip}
-              </button>
-            ))}
           </div>
 
           {/* Input Bar */}
