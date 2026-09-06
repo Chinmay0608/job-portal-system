@@ -303,6 +303,9 @@ const getProfile = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
+
+  const applicationsCount = await Application.countDocuments({ candidate: user._id });
+
   res.status(200).json({
     user: {
       _id: user._id,
@@ -323,6 +326,9 @@ const getProfile = asyncHandler(async (req, res) => {
       companyWebsite: user.companyWebsite || "",
       resume: user.resume || "",
       profileImage: user.profileImage || "",
+      savedJobs: user.savedJobs || [],
+      applicationsCount,
+      savedJobsCount: user.savedJobs?.length || 0,
     },
   });
 });
