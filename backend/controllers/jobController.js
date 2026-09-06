@@ -407,7 +407,7 @@ I can help you:
         )
         .join("\n");
 
-      const systemPrompt = `You are SkillBridge's AI Career Coach & Skill Analyst.
+      const systemPrompt = `You are DHRUV, SkillBridge's AI Career Coach & Skill Analyst.
 Candidate Context:
 - Name: ${user.name}
 - Target Domain: ${userField}

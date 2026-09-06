@@ -38,7 +38,7 @@ export default function AIChatWidget({ user }) {
     {
       id: "welcome",
       role: "assistant",
-      content: `Hi ${user?.name || "there"}! I'm your **SkillBridge AI Career Coach**.\n\nHere are some options to get started:`,
+      content: `Hi ${user?.name || "there"}! I'm **DHRUV**, your SkillBridge AI Career Coach.\n\nHere are some options to get started:`,
       isWelcome: true,
     },
   ]);
@@ -84,7 +84,7 @@ export default function AIChatWidget({ user }) {
         {
           id: Date.now().toString(),
           role: "assistant",
-          content: `Hi ${user?.name || "Candidate"}! Based on your target domain (**${user?.field || "Software Engineering"}**), focus on applying to openings matching your core skills (${user?.skills?.slice(0, 3).join(", ") || "React"}).`,
+          content: `Hi ${user?.name || "Candidate"}! I'm DHRUV. Based on your target domain (**${user?.field || "Software Engineering"}**), focus on applying to openings matching your core skills (${user?.skills?.slice(0, 3).join(", ") || "React"}).`,
         },
       ]);
     } finally {
@@ -97,7 +97,7 @@ export default function AIChatWidget({ user }) {
       {
         id: "welcome",
         role: "assistant",
-        content: `Conversation reset! How can I help with your ${user?.field || "Software Engineering"} career goals today?`,
+        content: `Conversation reset! I'm **DHRUV**. How can I help with your ${user?.field || "Software Engineering"} career goals today?`,
         isWelcome: true,
       },
     ]);
@@ -135,7 +135,7 @@ export default function AIChatWidget({ user }) {
           <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <HiSparkles size={20} />
           </div>
-          <span>Ask AI Coach</span>
+          <span>Ask DHRUV</span>
         </button>
       )}
 
@@ -189,9 +189,9 @@ export default function AIChatWidget({ user }) {
               </div>
               <div>
                 <div style={{ fontWeight: "700", fontSize: "0.95rem", color: "#0f172a", lineHeight: 1.2 }}>
-                  SkillBridge AI
+                  DHRUV
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Career Coach & Skill Analyst</div>
+                <div style={{ fontSize: "0.75rem", color: "#64748b" }}>AI Career Coach & Skill Analyst</div>
               </div>
             </div>
 
