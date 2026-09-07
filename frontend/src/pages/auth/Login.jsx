@@ -31,8 +31,10 @@ function Login() {
           roleType: location.state?.roleType
         }
       });
+    } else if (user?.role === "admin") {
+      navigate("/admin/dashboard");
     } else {
-      if (user?.email?.toLowerCase() === "admin@gmail.com") { navigate("/admin/dashboard"); } else { navigate("/recruiter-dashboard"); }
+      navigate("/recruiter-dashboard");
     }
   };
 
