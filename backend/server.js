@@ -17,6 +17,7 @@ const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const csrfProtection = require("./middleware/csrfMiddleware");
+const { securityAudit } = require("./middleware/securityAuditMiddleware");
 
 const app = express();
 
@@ -67,8 +68,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply CSRF Protection
+// Apply CSRF Protection & Security Audit Monitoring
 app.use(csrfProtection);
+app.use(securityAudit);
 
 /* ==========================
    STATIC FILES
