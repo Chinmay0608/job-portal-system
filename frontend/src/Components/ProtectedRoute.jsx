@@ -10,8 +10,12 @@ function ProtectedRoute({ children, role, email }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role && user.role !== role) {
-    return <Navigate to="/" replace />;
+  // `role` can be a single string ("candidate") or an array (["admin", "recruiter"])
+  if (role) {
+    const allowedRoles = Array.isArray(role) ? role : [role];
+    if (!allowedRoles.includes(user.role)) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   if (email && user.email?.toLowerCase() !== email.toLowerCase()) {
