@@ -614,14 +614,36 @@ const searchMasterSkills = asyncHandler(async (req, res) => {
     return res.status(200).json([]);
   }
 
-  // Case-insensitive anchored regex search for fast performance
-  const safeQuery = escapeRegex(query.trim());
-  const skills = await MasterSkill.find({
-    name: { $regex: `^${safeQuery}`, $options: "i" },
-  }).limit(10);
+  const rawQuery = query.trim();
+  const safeQuery = escapeRegex(rawQuery);
+  const queryLower = rawQuery.toLowerCase();
 
-  // Map to clean string array of skill names
-  const skillNames = skills.map((skill) => skill.name);
+  // Find matching skills (prefix or substring/word-boundary)
+  const skills = await MasterSkill.find({
+    name: { $regex: safeQuery, $options: "i" },
+  })
+    .limit(30)
+    .lean();
+
+  // Rank prefix matches first, then word-boundary matches, then shorter length
+  skills.sort((a, b) => {
+    const aLower = a.name.toLowerCase();
+    const bLower = b.name.toLowerCase();
+    const aStarts = aLower.startsWith(queryLower);
+    const bStarts = bLower.startsWith(queryLower);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+
+    const aWord = aLower.includes(" " + queryLower) || aLower.includes("(" + queryLower);
+    const bWord = bLower.includes(" " + queryLower) || bLower.includes("(" + queryLower);
+    if (aWord && !bWord) return -1;
+    if (!aWord && bWord) return 1;
+
+    return a.name.length - b.name.length;
+  });
+
+  // Map to clean string array of top 10 unique skill names
+  const skillNames = Array.from(new Set(skills.map((skill) => skill.name))).slice(0, 10);
 
   res.status(200).json(skillNames);
 });

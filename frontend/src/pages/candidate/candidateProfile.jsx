@@ -4,7 +4,7 @@ import debounce from "lodash.debounce";
 import BackButton from "../../Components/BackButton";
 import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/candidate/candidateProfile.css";
-import { changePassword, updateProfile, extractSkillsAPI, getUserProfile, getMyApplications } from "../../Services/jobService";
+import { changePassword, updateProfile, extractSkillsAPI, getUserProfile, getMyApplications, getResumeSignedUrlAPI } from "../../Services/jobService";
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -33,22 +33,39 @@ function CandidateProfile() {
   const [education, setEducation] = useState(user?.education || "");
   const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
   const [field, setField] = useState(user?.field || "Software Engineering");
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(
+    user?.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true
+  );
 
   // Password update state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
+  // Helper to sanitize skills and discard any accidentally saved emails
+  const sanitizeSkills = (list) =>
+    (Array.isArray(list) ? list : []).filter(
+      (s) => typeof s === "string" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
+    );
+
   // Dynamic User Saved Skills
-  const [skills, setSkills] = useState(user?.skills || []);
+  const [skills, setSkills] = useState(() => sanitizeSkills(user?.skills));
   const [skillInput, setSkillInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [skillError, setSkillError] = useState("");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
+  // Auto-clear skillInput if browser aggressively autofills an email address into it
+  useEffect(() => {
+    if (skillInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(skillInput.trim())) {
+      setSkillInput("");
+    }
+  }, [skillInput]);
+
   // 3. File Uploads State
   const [profileImage, setProfileImage] = useState(null);
   const [resume, setResume] = useState(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
 
   const [applicationsCount, setApplicationsCount] = useState(
     storedUser?.applicationsCount !== undefined ? storedUser.applicationsCount : 0
@@ -120,10 +137,11 @@ function CandidateProfile() {
       setLinkedin(user.linkedin || "");
       setGithub(user.github || "");
       setAbout(user.about || "");
-      setSkills(user.skills || []);
+      setSkills(sanitizeSkills(user.skills));
       setEducation(user.education || "");
       setExperienceLevel(user.experienceLevel || "Fresher");
       setField(user.field || "Software Engineering");
+      setEmailNotificationsEnabled(user.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true);
     }
   }, [user]);
 
@@ -149,6 +167,7 @@ function CandidateProfile() {
       formData.append("education", education);
       formData.append("experienceLevel", experienceLevel);
       formData.append("field", field);
+      formData.append("emailNotificationsEnabled", emailNotificationsEnabled);
 
       if (resume) formData.append("resume", resume);
       if (profileImage) formData.append("profileImage", profileImage);
@@ -177,23 +196,80 @@ function CandidateProfile() {
     }
   };
 
-  const handleDownloadResume = async (e) => {
+  const handleResumeFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setResumeUploading(true);
+      const formData = new FormData();
+      formData.append("resume", file);
+      const response = await updateProfile(formData);
+
+      if (response.extractedSkills && response.extractedSkills.length > 0) {
+        toast.success(`Magically extracted ${response.extractedSkills.length} skills from your resume!`);
+      } else {
+        toast.success("✓ Resume uploaded and saved to your profile!");
+      }
+
+      if (response.user) {
+        localStorage.setItem("user", JSON.stringify(response.user));
+        setUser(response.user);
+        if (response.user.skills) {
+          setSkills(sanitizeSkills(response.user.skills));
+        }
+      }
+      setResume(null);
+    } catch (err) {
+      console.error("Resume upload error:", err);
+      toast.error(err?.response?.data?.message || "Failed to upload resume");
+    } finally {
+      setResumeUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handlePreviewResume = async (e) => {
     e.preventDefault();
+    if (!user?._id) return;
     try {
       setLoading(true);
-      const url = getResumeUrl(user.resume);
-      const response = await fetch(url);
-      const rawBlob = await response.blob();
-      const blob = new Blob([rawBlob], { type: 'application/pdf' });
-      const blobUrl = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `${user.name ? user.name.replace(/\s+/g, "_") : "Candidate"}_Resume.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      const data = await getResumeSignedUrlAPI(user._id);
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error("Resume file not found.");
+      }
+    } catch (err) {
+      console.error("Preview resume error:", err);
+      toast.error("Failed to open resume preview");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadResume = async (e) => {
+    e.preventDefault();
+    if (!user?._id) return;
+    try {
+      setLoading(true);
+      const data = await getResumeSignedUrlAPI(user._id);
+      if (data?.signedUrl) {
+        const response = await fetch(data.signedUrl);
+        const rawBlob = await response.blob();
+        const blob = new Blob([rawBlob], { type: 'application/pdf' });
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `${user.name ? user.name.replace(/\s+/g, "_") : "Candidate"}_Resume.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        toast.error("Resume file not found.");
+      }
     } catch (error) {
       console.error("Download failed", error);
       toast.error("Failed to download resume");
@@ -229,11 +305,18 @@ function CandidateProfile() {
   };
 
   const handleAddSkill = (skillName) => {
-    const trimmed = skillName.trim();
+    const trimmed = (skillName || "").trim();
     
     // Validate: skill name must not be empty
     if (!trimmed) {
       setSkillError("");
+      return;
+    }
+
+    // Guard against email addresses autofilled by browsers
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setSkillInput("");
+      setSkillError("Email addresses cannot be added as skills.");
       return;
     }
 
@@ -343,6 +426,9 @@ function CandidateProfile() {
 
   return (
     <div className="profile-page">
+      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 16px' }}>
+        <BackButton />
+      </div>
       <div className="profile-container">
 
         {/* LEFT COLUMN: SIDEBAR */}
@@ -404,38 +490,55 @@ function CandidateProfile() {
             <h3>Resume</h3>
             {user?.resume && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                <a
-                  href={`https://docs.google.com/viewer?url=${encodeURIComponent(getResumeUrl(user.resume))}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#f3f4f6', borderRadius: '6px', color: '#111827', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}
+                <button
+                  type="button"
+                  onClick={handlePreviewResume}
+                  disabled={loading || resumeUploading}
+                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#111827', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
                 >
                   👁️ Preview
-                </a>
-                <a
-                  href="#"
+                </button>
+                <button
+                  type="button"
                   onClick={handleDownloadResume}
-                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#0d1117', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
+                  disabled={loading || resumeUploading}
+                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#0d1117', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
                 >
                   ⬇️ Download
-                </a>
+                </button>
               </div>
             )}
-            <label className="resume-upload-label">
-              {user?.resume ? "Upload replacement file" : "Upload new file"}
+            <label
+              className="resume-upload-label"
+              style={{
+                opacity: resumeUploading ? 0.6 : 1,
+                pointerEvents: resumeUploading ? "none" : "auto",
+                cursor: resumeUploading ? "not-allowed" : "pointer"
+              }}
+            >
+              {resumeUploading
+                ? "⏳ Uploading & saving resume..."
+                : user?.resume
+                ? "Upload replacement file"
+                : "Upload new file"}
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
-                onChange={(e) => setResume(e.target.files[0])}
+                disabled={resumeUploading}
+                onChange={handleResumeFileChange}
               />
             </label>
-            {resume ? (
-              <p style={{ fontSize: "0.75rem", color: "#15803d", marginTop: "4px" }}>
-                Selected: {resume.name}. Click "Save Changes" to apply.
+            {resumeUploading ? (
+              <p style={{ fontSize: "0.75rem", color: "#2563eb", marginTop: "4px", fontWeight: 600 }}>
+                ⏳ Uploading and saving to your profile...
+              </p>
+            ) : user?.resume ? (
+              <p style={{ fontSize: "0.75rem", color: "#16a34a", marginTop: "4px", fontWeight: 600 }}>
+                ✓ Resume is saved & active on your profile!
               </p>
             ) : (
-              <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginTop: "4px" }}>
-                Don't forget to click "Save Changes" at the bottom!
+              <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px" }}>
+                Upload your resume (PDF, DOC, DOCX) to save it permanently.
               </p>
             )}
           </div>
@@ -466,7 +569,14 @@ function CandidateProfile() {
               {/* Field 2: Email */}
               <div className="input-group">
                 <label>Email</label>
-                <input type="email" value={email} disabled />
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  disabled
+                  readOnly
+                />
               </div>
 
               {/* Field 3: Phone */}
@@ -560,6 +670,15 @@ function CandidateProfile() {
               <div className="skill-input-box" style={{ position: "relative" }}>
                 <input
                   type="text"
+                  name="candidate_skill_search_query"
+                  id="candidate_skill_search_query"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
                   placeholder="Add skill..."
                   value={skillInput}
                   onChange={(e) => handleSkillInputChange(e.target.value)}
@@ -656,40 +775,84 @@ function CandidateProfile() {
 
           <div className="profile-section-card password-card">
             <h2 className="profile-section-title">Change password</h2>
-            <div className="profile-grid">
-              <div className="input-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  placeholder="Current password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleChangePassword();
+              }}
+              autoComplete="off"
+            >
+              {/* Hidden username input binds password manager credentials to this form, preventing browser from autofilling email into skills */}
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                value={email || ""}
+                readOnly
+                style={{ display: "none" }}
+                tabIndex="-1"
+                aria-hidden="true"
+              />
+              <div className="profile-grid">
+                <div className="input-group">
+                  <label>Current Password</label>
+                  <input
+                    type="password"
+                    name="current-password"
+                    autoComplete="current-password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    name="new-password"
+                    autoComplete="new-password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirm-password"
+                    autoComplete="new-password"
+                    placeholder="Confirm new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="input-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  placeholder="New password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+              <div className="profile-save-bar">
+                <button type="submit" className="update-password-btn" disabled={loading}>
+                  {loading ? "Updating..." : "Update Password"}
+                </button>
               </div>
-              <div className="input-group">
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                />
-              </div>
+            </form>
+          </div>
+
+          <div className="profile-section-card">
+            <h2 className="profile-section-title">Job Recommendations & Alerts</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "16px" }}>
+              <input
+                type="checkbox"
+                id="emailNotificationsToggle"
+                checked={emailNotificationsEnabled}
+                onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
+                style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "#2563eb" }}
+              />
+              <label htmlFor="emailNotificationsToggle" style={{ cursor: "pointer", fontSize: "15px", fontWeight: "500", color: "#1f2937" }}>
+                Email me about new matching jobs
+              </label>
             </div>
-            <div className="profile-save-bar">
-              <button type="button" className="update-password-btn" onClick={handleChangePassword} disabled={loading}>
-                {loading ? "Updating..." : "Update Password"}
-              </button>
-            </div>
+            <p style={{ margin: "6px 0 0 32px", fontSize: "13px", color: "#6b7280" }}>
+              Receive a weekly digest of newly posted opportunities tailored to your skills and field.
+            </p>
           </div>
 
           {/* Action Trigger Base */}

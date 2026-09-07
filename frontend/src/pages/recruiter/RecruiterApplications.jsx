@@ -65,6 +65,9 @@ function RecruiterApplications() {
 
   return (
     <div className="applications-page">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+        <BackButton />
+      </div>
       {/* Header */}
       <div className="applications-header">
         <h1>Applicants</h1>
@@ -107,7 +110,7 @@ function RecruiterApplications() {
               <div className="application-actions">
                 {application.resume && (
                   <a
-                    href={getResumeUrl(application.resume)}
+                    href={`${API_URL}/api/applications/${application._id}/resume?token=${localStorage.getItem("token") || ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="resume-btn"
@@ -228,7 +231,7 @@ function RecruiterApplications() {
             <div className="modal-footer">
               {selectedApplication.resume && (
                 <a
-                  href={getResumeUrl(selectedApplication.resume)}
+                  href={`${API_URL}/api/applications/${selectedApplication._id}/resume?token=${localStorage.getItem("token") || ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="resume-btn"

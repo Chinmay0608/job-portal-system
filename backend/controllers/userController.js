@@ -61,6 +61,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     education,
     experienceLevel,
     field,
+    emailNotificationsEnabled,
     designation,
     companyName,
     companyWebsite,
@@ -82,6 +83,9 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.education = education !== undefined ? education : (user.education || "");
   user.experienceLevel = experienceLevel || user.experienceLevel || "Fresher";
   user.field = field || user.field || "Software Engineering";
+  if (emailNotificationsEnabled !== undefined) {
+    user.emailNotificationsEnabled = emailNotificationsEnabled === true || emailNotificationsEnabled === "true";
+  }
   if (skills !== undefined && skills !== null && skills !== "") {
     try {
       const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
@@ -189,7 +193,11 @@ const updateProfile = asyncHandler(async (req, res) => {
       about: user.about,
       skills: user.skills,
       education: user.education,
+      highestQualification: user.highestQualification || user.education || "",
+      hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
       experienceLevel: user.experienceLevel,
+      field: user.field || "Software Engineering",
+      emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
       designation: user.designation,
       companyName: user.companyName,
       companyWebsite: user.companyWebsite,
@@ -410,6 +418,9 @@ const getSignedResumeUrl = asyncHandler(async (req, res) => {
   }
 
   const signedUrl = generateSignedResumeUrl(targetUser.resume);
+  if (req.query.format === "json" || req.headers.accept?.includes("application/json")) {
+    return res.status(200).json({ signedUrl });
+  }
   res.redirect(signedUrl);
 });
 
@@ -438,8 +449,11 @@ const getProfile = asyncHandler(async (req, res) => {
       about: user.about || "",
       skills: user.skills || [],
       education: user.education || "",
+      highestQualification: user.highestQualification || user.education || "",
+      hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
       experienceLevel: user.experienceLevel || "Fresher",
       field: user.field || "Software Engineering",
+      emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
       designation: user.designation || "",
       companyName: user.companyName || "",
       companyWebsite: user.companyWebsite || "",
@@ -452,6 +466,66 @@ const getProfile = asyncHandler(async (req, res) => {
   });
 });
 
+/* ==========================
+   COMPLETE ONBOARDING
+========================== */
+const completeOnboarding = asyncHandler(async (req, res) => {
+  const { location, highestQualification, experienceLevel, skills } = req.body;
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  if (location !== undefined) user.location = String(location).trim();
+  if (highestQualification !== undefined) {
+    const trimmedHQ = String(highestQualification).trim();
+    user.highestQualification = trimmedHQ;
+    user.education = trimmedHQ;
+  }
+  if (experienceLevel !== undefined) user.experienceLevel = experienceLevel;
+  if (Array.isArray(skills)) {
+    const cleanSkills = skills.map((s) => String(s).trim()).filter(Boolean);
+    user.skills = cleanSkills;
+    await saveSkillsToMaster(cleanSkills);
+  }
+
+  user.hasCompletedOnboarding = true;
+  await user.save();
+
+  const applicationsCount = await Application.countDocuments({ candidate: user._id });
+
+  res.status(200).json({
+    message: "Onboarding complete",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone || "",
+      location: user.location || "",
+      linkedin: user.linkedin || "",
+      github: user.github || "",
+      about: user.about || "",
+      skills: user.skills || [],
+      education: user.education || "",
+      highestQualification: user.highestQualification || user.education || "",
+      experienceLevel: user.experienceLevel || "Fresher",
+      field: user.field || "Software Engineering",
+      designation: user.designation || "",
+      companyName: user.companyName || "",
+      companyWebsite: user.companyWebsite || "",
+      resume: user.resume || "",
+      profileImage: user.profileImage || "",
+      savedJobs: user.savedJobs || [],
+      applicationsCount,
+      savedJobsCount: user.savedJobs?.length || 0,
+      hasCompletedOnboarding: user.hasCompletedOnboarding,
+    },
+  });
+});
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -460,4 +534,5 @@ module.exports = {
   getSavedJobs,
   extractSkills,
   getSignedResumeUrl,
+  completeOnboarding,
 };

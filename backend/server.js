@@ -9,12 +9,14 @@ const cron = require("node-cron");
 const connectDB = require("./config/db");
 const { importAllExternalJobs } = require("./services/jobFetcher");
 require("./cron/jobCleanup");
+require("./cron/jobDigest")();
 
 const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const supportRoutes = require("./routes/supportRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const csrfProtection = require("./middleware/csrfMiddleware");
 const { securityAudit } = require("./middleware/securityAuditMiddleware");
@@ -85,6 +87,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/support", supportRoutes);
 
 /* ==========================
    HEALTH CHECK

@@ -133,6 +133,9 @@ function RecruiterProfile() {
 
   return (
     <div className="profile-page">
+      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 16px' }}>
+        <BackButton />
+      </div>
       <div className="profile-container">
 
         {/* LEFT COLUMN: SIDEBAR */}
@@ -214,7 +217,14 @@ function RecruiterProfile() {
 
               <div className="input-group">
                 <label>Email</label>
-                <input type="email" value={email} disabled />
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  disabled
+                  readOnly
+                />
               </div>
 
               <div className="input-group">
@@ -272,40 +282,65 @@ function RecruiterProfile() {
 
           <div className="profile-section-card password-card">
             <h2 className="profile-section-title">Change password</h2>
-            <div className="profile-grid">
-              <div className="input-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  placeholder="Current password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleChangePassword();
+              }}
+              autoComplete="off"
+            >
+              {/* Hidden username input binds password manager credentials to this form */}
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                value={email || ""}
+                readOnly
+                style={{ display: "none" }}
+                tabIndex="-1"
+                aria-hidden="true"
+              />
+              <div className="profile-grid">
+                <div className="input-group">
+                  <label>Current Password</label>
+                  <input
+                    type="password"
+                    name="current-password"
+                    autoComplete="current-password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    name="new-password"
+                    autoComplete="new-password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirm-password"
+                    autoComplete="new-password"
+                    placeholder="Confirm new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="input-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  placeholder="New password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+              <div className="profile-save-bar">
+                <button type="submit" className="update-password-btn" disabled={loading}>
+                  {loading ? "Updating..." : "Update Password"}
+                </button>
               </div>
-              <div className="input-group">
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="profile-save-bar">
-              <button type="button" className="update-password-btn" onClick={handleChangePassword} disabled={loading}>
-                {loading ? "Updating..." : "Update Password"}
-              </button>
-            </div>
+            </form>
           </div>
 
           {/* Action Trigger Base */}

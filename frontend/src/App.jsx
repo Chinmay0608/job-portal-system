@@ -5,6 +5,7 @@ import Navbar from "./Components/Navbar";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import ScrollToTop from "./Components/ScrollToTop";
 import SplashScreen from "./Components/SplashScreen";
+import HelpWidget from "./Components/HelpWidget";
 
 // ==========================================================================
 // 1. AUTHENTICATION INFRASTRUCTURE DOMAIN IMPORT SEGMENT
@@ -110,6 +111,7 @@ function AppContent() {
         </Suspense>
       </main>
       {!hideLayout && <Footer />}
+      <HelpWidget />
     </>
   );
 }
