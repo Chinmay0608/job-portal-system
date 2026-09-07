@@ -3,7 +3,6 @@ const Company = require('../../models/Company');
 const CompanyRegistryMetadata = require('../../models/CompanyRegistryMetadata');
 const queueManager = require('./queues');
 const crawlerWorker = require('./workers/crawlerWorker');
-const crawlerWorker = require('./workers/crawlerWorker');
 
 // Configurable Priority Table mapping Priority Weight to Hours between crawls
 // In a real production system, this could be loaded from an Admin DB table or env vars.
