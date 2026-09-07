@@ -275,7 +275,8 @@ const getApplicationsAdmin = asyncHandler(async (req, res) => {
     .limit(limit)
     .lean();
 
-  // Basic in-memory search for the current page (fallback for full-text search)
+  // Filter out any orphaned application records (where candidate user account was deleted)
+  applications = applications.filter(app => app.candidate != null);
   if (search) {
     const s = search.toLowerCase();
     applications = applications.filter(app => {
