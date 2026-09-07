@@ -63,3 +63,10 @@ export const getRecruiterApplications = async () => (await api.get("/api/applica
 export const updateStatus = async (applicationId, status) => (await api.patch(`/api/applications/update/${applicationId}`, { status })).data;
 export const getRecruiterStats = async () => (await api.get("/api/applications/recruiter-stats")).data;
 export const toggleSaveJob = async (body) => (await api.post("/api/users/saved-jobs/toggle", body)).data;
+export const completeOnboardingAPI = async (data) =>
+  (await api.post("/api/users/complete-onboarding", data, {
+    headers: { "x-requested-with": "XMLHttpRequest" },
+  })).data;
+
+export const getResumeSignedUrlAPI = async (userId) =>
+  (await api.get(`/api/users/resume/${userId}?format=json`)).data;

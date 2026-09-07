@@ -89,6 +89,9 @@ function MyApplications() {
 
   return (
     <div className="applications-page">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+        <BackButton />
+      </div>
       <div className="applications-header">
         <h1>My Applications</h1>
         <p>Track your applied jobs and status</p>
@@ -178,7 +181,7 @@ function MyApplications() {
                     <div className="action-buttons">
                       {application.resume && (
                         <a
-                          href={getResumeUrl(application.resume)}
+                          href={`${API_URL}/api/applications/${application._id}/resume?token=${localStorage.getItem("token") || ""}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="resume-btn"

@@ -482,7 +482,7 @@ router.get('/candidate-activity', protect, authorizeRoles('recruiter', 'admin'),
   }
 });
 
-const { getConfig, setConfig, getCompaniesAdmin, updateCompanyAdmin } = require('../controllers/adminConfigController');
+const { getConfig, setConfig, getCompaniesAdmin, updateCompanyAdmin, triggerJobDigestManually } = require('../controllers/adminConfigController');
 
 // Config Routes
 router.get('/config', protect, authorizeRoles('recruiter', 'admin'), getConfig);
@@ -491,5 +491,14 @@ router.put('/config/:key', protect, authorizeRoles('recruiter', 'admin'), setCon
 // Company Registry Admin Routes
 router.get('/companies', protect, authorizeRoles('recruiter', 'admin'), getCompaniesAdmin);
 router.put('/companies/:id', protect, authorizeRoles('recruiter', 'admin'), updateCompanyAdmin);
+
+// Job Digest Manual Trigger
+router.post('/trigger-job-digest', protect, authorizeRoles('recruiter', 'admin'), async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  if (!isAdminUser(user)) {
+    return res.status(403).json({ error: 'Access denied: Admins only' });
+  }
+  return triggerJobDigestManually(req, res, next);
+});
 
 module.exports = router;

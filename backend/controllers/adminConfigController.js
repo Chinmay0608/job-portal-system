@@ -45,9 +45,16 @@ const updateCompanyAdmin = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Company updated (mock)" });
 });
 
+const triggerJobDigestManually = asyncHandler(async (req, res) => {
+  const { runJobDigest } = require("../services/jobDigestService");
+  runJobDigest().catch((err) => console.error("[Job Digest] Manual trigger failed:", err.message));
+  res.status(202).json({ message: "Job digest run started in the background." });
+});
+
 module.exports = {
   getConfig,
   setConfig,
   getCompaniesAdmin,
-  updateCompanyAdmin
+  updateCompanyAdmin,
+  triggerJobDigestManually,
 };

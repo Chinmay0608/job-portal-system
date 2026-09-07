@@ -1,19 +1,41 @@
 const Application = require("../models/Application");
 const Job = require("../models/job");
+const User = require("../models/user");
 const cloudinary = require("../config/cloudinary");
 const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("express-async-handler");
 
 const applyJob = asyncHandler(async (req, res) => {
-  const { jobId } = req.body;
+  const { jobId, useProfileResume } = req.body;
 
   const job = await Job.findById(jobId);
   if (!job) return res.status(404).json({ message: "Job not found" });
+
+  const currentUser = await User.findById(req.user.id);
+  if (!currentUser) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
   let resumeUrl = "";
 
   if (req.file && req.file.path) {
     resumeUrl = req.file.path;
+    // Always persist latest uploaded resume to the candidate's profile so it survives logouts
+    currentUser.resume = resumeUrl;
+    await currentUser.save();
+  } else if (useProfileResume === "true" || useProfileResume === true) {
+    if (!currentUser.resume) {
+      res.status(400);
+      throw new Error("No saved resume found on your profile. Please upload one.");
+    }
+    resumeUrl = currentUser.resume;
+  } else if (currentUser.resume) {
+    // If no new file provided, default to candidate's existing profile resume
+    resumeUrl = currentUser.resume;
+  } else {
+    res.status(400);
+    throw new Error("Please upload your resume to apply.");
   }
 
   try {
@@ -23,7 +45,30 @@ const applyJob = asyncHandler(async (req, res) => {
       resume: resumeUrl,
     });
 
-    res.status(201).json({ message: "Applied successfully", application });
+    // Return sanitized updated user so frontend local state and storage can sync
+    const updatedUser = {
+      _id: currentUser._id,
+      name: currentUser.name,
+      email: currentUser.email,
+      role: currentUser.role,
+      resume: currentUser.resume,
+      skills: currentUser.skills || [],
+      phone: currentUser.phone || "",
+      location: currentUser.location || "",
+      education: currentUser.education || "",
+      highestQualification: currentUser.highestQualification || currentUser.education || "",
+      experienceLevel: currentUser.experienceLevel || "Fresher",
+      field: currentUser.field || "Software Engineering",
+      hasCompletedOnboarding: currentUser.hasCompletedOnboarding ?? false,
+      emailNotificationsEnabled: currentUser.emailNotificationsEnabled ?? true,
+      savedJobs: currentUser.savedJobs || [],
+    };
+
+    res.status(201).json({
+      message: "Applied successfully",
+      application,
+      user: updatedUser,
+    });
   } catch (error) {
     if (error.code === 11000) {
       res.status(400);
@@ -300,6 +345,45 @@ const getApplicationsAdmin = asyncHandler(async (req, res) => {
   });
 });
 
+const generateSignedResumeUrl = (resumeUrl) => {
+  if (!resumeUrl) return "";
+  const urlParts = resumeUrl.split("/upload/");
+  if (urlParts.length === 2) {
+    const publicIdWithFormat = urlParts[1].replace(/^v\d+\//, "");
+    return cloudinary.url(publicIdWithFormat, {
+      resource_type: "raw",
+      type: "authenticated",
+      sign_url: true,
+      expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    });
+  }
+  return resumeUrl;
+};
+
+const getApplicationResume = asyncHandler(async (req, res) => {
+  const { applicationId } = req.params;
+  const application = await Application.findById(applicationId).populate("job");
+  if (!application || !application.resume) {
+    res.status(404);
+    throw new Error("Resume not found");
+  }
+
+  const isCandidate = application.candidate.toString() === req.user.id;
+  const isRecruiter = req.user.role === "recruiter" && application.job?.recruiter?.toString() === req.user.id;
+  const isAdmin = req.user.role === "admin";
+
+  if (!isCandidate && !isRecruiter && !isAdmin) {
+    res.status(403);
+    throw new Error("Access denied");
+  }
+
+  const signedUrl = generateSignedResumeUrl(application.resume);
+  if (req.query.format === "json" || req.headers.accept?.includes("application/json")) {
+    return res.status(200).json({ signedUrl });
+  }
+  res.redirect(signedUrl);
+});
+
 module.exports = {
   getApplicationsAdmin,
   applyJob,
@@ -309,4 +393,5 @@ module.exports = {
   getRecruiterStats,
   updateApplicationStatus,
   withdrawApplication,
+  getApplicationResume,
 };

@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
 import AIChatWidget from "../../Components/AIChatWidget";
-import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob } from "../../Services/jobService";
+import OnboardingWizard from "../../Components/OnboardingWizard";
+import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile } from "../../Services/jobService";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
@@ -287,8 +288,41 @@ function CandidateDashboard() {
     []
   );
 
+  const handleOnboardingComplete = async (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    try {
+      const recRes = await getRecommendedJobs();
+      setRecommendedJobsList(recRes?.jobs || []);
+    } catch (err) {
+      console.error("Failed to refresh recommended jobs after onboarding:", err);
+    }
+    fetchJobs({
+      searchTerm: search,
+      locationTerm: locationFilter,
+      experienceTerm: experienceFilter,
+      salaryTerm: salaryFilter,
+      companyTerm: companyFilter,
+      sourceTerm: sourceFilter,
+      employmentTerm: employmentTypeFilter,
+      remoteTerm: isRemoteFilter,
+      page: 1,
+    });
+  };
+
   useEffect(() => {
     const fetchAllInitialData = async () => {
+      // Sync fresh user profile to ensure hasCompletedOnboarding is accurate
+      try {
+        const profileRes = await getUserProfile();
+        if (profileRes?.user) {
+          setUser(profileRes.user);
+          localStorage.setItem("user", JSON.stringify(profileRes.user));
+        }
+      } catch (err) {
+        console.error("Failed to sync user profile on mount:", err);
+      }
+
       await fetchAppliedJobs();
       
       // Fetch normal jobs
@@ -318,8 +352,9 @@ function CandidateDashboard() {
 
   // Profile completion nudge — runs once per account, ever, unless they
   // complete enough of their profile that it would no longer trigger.
+  // We only show this after onboarding has been completed.
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email || !user?.hasCompletedOnboarding) return;
 
     const nudgeKey = `sb_seen_profile_nudge_${user.email}`;
     const alreadySeen = localStorage.getItem(nudgeKey) === "true";
@@ -330,7 +365,7 @@ function CandidateDashboard() {
       localStorage.setItem(nudgeKey, "true");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.hasCompletedOnboarding]);
 
   useEffect(() => {
     if (location.state?.roleType === "remote") {
@@ -379,20 +414,6 @@ function CandidateDashboard() {
     return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
   };
 
-  // Fetches the candidate's saved profile resume and converts it into a
-  // File object, so it can be submitted through the exact same apply
-  // endpoint/contract as a freshly uploaded file (no backend changes needed).
-  const fetchSavedResumeAsFile = async () => {
-    const url = getSavedResumeUrl();
-    if (!url) return null;
-
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Could not load saved resume");
-
-    const blob = await response.blob();
-    const fileName = url.split("/").pop() || "resume.pdf";
-    return new File([blob], fileName, { type: blob.type || "application/pdf" });
-  };
 
   const submitApplication = async (fileToSubmit) => {
     const resumeToSend = fileToSubmit || resumeFile;
@@ -409,6 +430,11 @@ function CandidateDashboard() {
 
       const response = await applyJob(formData);
       toast.success(response?.message || "Application submitted successfully");
+
+      if (response?.user) {
+        setUser(response.user);
+        localStorage.setItem("user", JSON.stringify(response.user));
+      }
 
       setAppliedJobs((prev) => [...prev, selectedJob?._id]);
 
@@ -488,23 +514,28 @@ function CandidateDashboard() {
   // Candidate confirmed: reuse the saved profile resume for this application.
   const handleUseSavedResume = async () => {
     try {
-      setFetchingSavedResume(true);
-      const file = await fetchSavedResumeAsFile();
-      if (!file) {
-        toast.error("Couldn't load your saved resume. Please upload one.");
-        setResumeChoiceMode(false);
-        setShowApplyPanel(true);
-        return;
+      setApplying(true);
+      const formData = new FormData();
+      formData.append("jobId", selectedJob?._id);
+      formData.append("useProfileResume", "true");
+
+      const response = await applyJob(formData);
+      toast.success(response?.message || "Application submitted successfully");
+
+      if (response?.user) {
+        setUser(response.user);
+        localStorage.setItem("user", JSON.stringify(response.user));
       }
-      setUseSavedResume(true);
-      await submitApplication(file);
+
+      setAppliedJobs((prev) => [...prev, selectedJob?._id]);
+      resetApplyState();
     } catch (error) {
-      console.error("Saved resume fetch error:", error);
-      toast.error("Couldn't load your saved resume. Please upload one.");
+      console.error("Application Error:", error);
+      toast.error(error?.response?.data?.message || "Application Failed");
       setResumeChoiceMode(false);
       setShowApplyPanel(true);
     } finally {
-      setFetchingSavedResume(false);
+      setApplying(false);
     }
   };
 
@@ -767,7 +798,7 @@ function CandidateDashboard() {
                   />
                 </div>
                 <div className="sheet-input-group">
-                  <HiOutlineLocationMarker className="sheet-icon" />
+                  <FiMapPin className="sheet-icon" />
                   <input
                     type="text"
                     placeholder="City, state, zip code, or 'remote'"
@@ -1368,6 +1399,14 @@ function CandidateDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ONBOARDING WIZARD MODAL FOR NEW CANDIDATES */}
+      {user && user.role === "candidate" && !user.hasCompletedOnboarding && (
+        <OnboardingWizard
+          user={user}
+          onComplete={handleOnboardingComplete}
+        />
       )}
 
       {/* FLOATING GEMINI AI CAREER COACH ASSISTANT */}

@@ -85,6 +85,16 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    highestQualification: {
+      type: String,
+      default: "",
+    },
+
+    hasCompletedOnboarding: {
+      type: Boolean,
+      default: false,
+    },
+
     experienceLevel: {
       type: String,
       enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years"],
@@ -94,6 +104,16 @@ const userSchema = new mongoose.Schema(
     field: {
       type: String,
       default: "Software Engineering",
+    },
+
+    emailNotificationsEnabled: {
+      type: Boolean,
+      default: true,
+    },
+
+    lastJobDigestSentAt: {
+      type: Date,
+      default: null,
     },
 
     /* ==========================

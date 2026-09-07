@@ -6,7 +6,7 @@
   display: flex;
   width: 100%;
   height: 100vh; 
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #ffffff;
   overflow: hidden; 
 }
@@ -143,8 +143,16 @@
   background: #e5e7eb;
 }
 
-.register-input,
-.register-select {
+.register-field-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.register-input {
   width: 100%;
   height: 44px; 
   padding: 0 16px;
@@ -158,10 +166,32 @@
   transition: all 0.2s ease;
 }
 
-.register-input:focus,
-.register-select:focus {
+.register-input:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+.register-select {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.register-select [class*="-control"] {
+  min-height: 44px;
+  border: 1.5px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  font-size: 14px;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.register-select [class*="-control"]:hover {
+  border-color: #2563eb !important;
+}
+
+.register-select [class*="-control"]:focus-within {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 .register-input::placeholder {

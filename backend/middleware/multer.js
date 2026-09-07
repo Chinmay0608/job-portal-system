@@ -9,12 +9,12 @@ const storage = new CloudinaryStorage({
   cloudinary,
 
   params: async (req, file) => {
-    if (file.fieldname === "profileImage") {
+    if (file.fieldname === "profileImage" || file.fieldname === "screenshot") {
       return {
-        folder: "skillbridge/profile-images",
+        folder: file.fieldname === "screenshot" ? "skillbridge/support-screenshots" : "skillbridge/profile-images",
         allowed_formats: ["jpg", "jpeg", "png", "webp"],
         resource_type: "image",
-        type: "authenticated",
+        type: file.fieldname === "screenshot" ? "upload" : "authenticated",
       };
     }
 
@@ -29,11 +29,11 @@ const storage = new CloudinaryStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === "profileImage") {
+  if (file.fieldname === "profileImage" || file.fieldname === "screenshot") {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error("Only images are allowed for profile picture"));
+      cb(new Error("Only images are allowed for " + file.fieldname));
     }
   } else if (file.fieldname === "resume") {
     const allowedResumes = [

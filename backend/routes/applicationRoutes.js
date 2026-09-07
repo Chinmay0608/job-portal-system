@@ -7,6 +7,7 @@ const { getApplicationsAdmin,
   getRecruiterStats,
   updateApplicationStatus,
   withdrawApplication,
+  getApplicationResume,
  } = require("../controllers/applicationController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
@@ -40,6 +41,11 @@ router.delete(
   protect,
   authorizeRoles("candidate"),
   withdrawApplication,
+);
+router.get(
+  "/:applicationId/resume",
+  protect,
+  getApplicationResume,
 );
 
 /* ==========================
