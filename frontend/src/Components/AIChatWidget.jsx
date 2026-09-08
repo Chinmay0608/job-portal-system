@@ -30,8 +30,15 @@ const renderFormattedContent = (content) => {
   });
 };
 
-export default function AIChatWidget({ user }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AIChatWidget({ 
+  user, 
+  isOpen: externalIsOpen, 
+  setIsOpen: externalSetIsOpen, 
+  hideFloatingTrigger = false 
+}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalSetIsOpen || setInternalIsOpen;
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([
@@ -106,14 +113,14 @@ export default function AIChatWidget({ user }) {
   return (
     <>
       {/* Floating Trigger Button */}
-      {!isOpen && (
+      {!hideFloatingTrigger && !isOpen && (
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           style={{
-            position: "absolute",
+            position: "fixed",
             bottom: "16px",
-            right: "32px",
+            right: "24px",
             zIndex: 900,
             display: "flex",
             alignItems: "center",
@@ -143,18 +150,18 @@ export default function AIChatWidget({ user }) {
       {isOpen && (
         <div
           style={{
-            position: "absolute",
+            position: "fixed",
             bottom: "16px",
-            right: "32px",
-            zIndex: 950,
+            right: "16px",
+            zIndex: 9999,
             width: "380px",
-            maxWidth: "92vw",
+            maxWidth: "calc(100vw - 32px)",
             height: "560px",
-            maxHeight: "80vh",
+            maxHeight: "82vh",
             backgroundColor: "#ffffff",
             borderRadius: "24px",
             border: "1px solid #cbd5e1",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.18)",
+            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.22)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",

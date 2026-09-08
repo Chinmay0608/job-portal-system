@@ -122,12 +122,26 @@
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 auto 12px auto !important;
     text-align: center;
-    margin-bottom: 12px !important; /* reduced */
     align-self: center !important;
     font-size: 1.5rem !important; /* slightly smaller */
     color: #ffffff !important;
     letter-spacing: -0.5px !important;
+  }
+
+  .login-brand svg, .register-brand svg {
+    margin: 0 auto !important;
+    display: block !important;
+  }
+
+  .login-brand .logo-skill-text,
+  .register-brand .logo-skill-text {
+    fill: #ffffff !important;
   }
   
   /* Mobile Role Selector */

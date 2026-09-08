@@ -71,7 +71,7 @@
   color: rgba(255,255,255,0.5);
   line-height: 1.65;
   max-width: 520px;
-  margin: 0 auto 36px;
+  margin: 0 auto 20px;
 }
 
 /* HERO PILL SEARCH BAR */
@@ -178,7 +178,7 @@
 
 .home-cta-card {
   flex: 1;
-  padding: 32px 30px;
+  padding: 26px 28px;
   text-align: left;
   cursor: pointer;
   transition: background 0.2s;
@@ -226,7 +226,7 @@
 .home-cta-desc {
   font-size: 0.9rem;
   color: rgba(255,255,255,0.72);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   line-height: 1.45;
 }
 
@@ -763,6 +763,10 @@
     display: none;
   }
 
+  .home-hero-subtitle {
+    margin: 0 auto 16px;
+  }
+
   .home-cta-row {
     flex-direction: column;
     max-width: 100%;
@@ -770,11 +774,12 @@
 
   .home-cta-card {
     text-align: center;
+    padding: 22px 20px;
   }
 
   .home-cta-divider {
     flex-direction: row;
-    padding: 16px 0;
+    padding: 8px 0;
     height: auto;
   }
 

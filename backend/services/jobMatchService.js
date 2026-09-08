@@ -89,4 +89,5 @@ const calculateJobMatches = (jobs, userOrSkills, isExplicitSearch = false) => {
 
 module.exports = {
   calculateJobMatches,
+  FIELD_KEYWORDS,
 };

@@ -28,7 +28,11 @@ jest.mock("../../controllers/jobController", () => ({
   deleteJob: jest.fn(),
   updateJob: jest.fn(),
   hideJob: jest.fn(),
-  searchMasterSkills: jest.fn()
+  searchMasterSkills: jest.fn(),
+  aiCareerCoach: jest.fn(),
+  generateJobDescription: jest.fn(),
+  getJobsAdmin: jest.fn(),
+  triggerScheduledSync: jest.fn(),
 }));
 
 const app = express();

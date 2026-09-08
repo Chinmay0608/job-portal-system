@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import BackButton from "../../Components/BackButton";
 import "../../Styles/pages/recruiter/recruiterProfile.css";
 import { changePassword, updateProfile } from "../../Services/jobService";
 
@@ -133,9 +132,6 @@ function RecruiterProfile() {
 
   return (
     <div className="profile-page">
-      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 16px' }}>
-        <BackButton />
-      </div>
       <div className="profile-container">
 
         {/* LEFT COLUMN: SIDEBAR */}

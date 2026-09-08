@@ -2,7 +2,7 @@ const Job = require("../models/job");
 const User = require("../models/user");
 const Application = require("../models/Application"); // FIX I-03: Correct casing (Linux FS is case-sensitive)
 const MasterSkill = require("../models/MasterSkill");
-const { calculateJobMatches } = require("../services/jobMatchService");
+const { calculateJobMatches, FIELD_KEYWORDS } = require("../services/jobMatchService");
 const { clearCache } = require("../middleware/cacheMiddleware");
 const asyncHandler = require("express-async-handler");
 
@@ -111,16 +111,43 @@ const getAllJobs = asyncHandler(async (req, res) => {
     source,
     isRemote,
     employmentType,
+    field,
+    domain,
     page = 1,
     limit = 20,
   } = req.query;
 
   const query = getBaseActiveJobQuery();
 
+  let candidateUser = null;
   if (req.user) {
-    const user = await User.findById(req.user.id);
-    if (user && user.hiddenJobs && user.hiddenJobs.length > 0) {
-      query._id = { $nin: user.hiddenJobs };
+    candidateUser = await User.findById(req.user.id);
+    if (candidateUser && candidateUser.hiddenJobs && candidateUser.hiddenJobs.length > 0) {
+      query._id = { $nin: candidateUser.hiddenJobs };
+    }
+  }
+
+  // Domain / Field filter: prioritize candidate's field if browsing without explicit search
+  const candidateField = field || domain || (candidateUser?.role === "candidate" ? candidateUser?.field : null);
+  if (candidateField && !search && candidateField !== "All") {
+    const fieldLower = candidateField.toLowerCase();
+    const keywords = FIELD_KEYWORDS[fieldLower] || [fieldLower];
+    const fieldRegex = new RegExp(keywords.map((k) => `\\b${escapeRegex(k)}\\b`).join("|"), "i");
+    const domainCondition = {
+      $or: [
+        { title: { $regex: fieldRegex } },
+        { keywords: { $regex: fieldRegex } },
+        { role: { $regex: fieldRegex } },
+      ],
+    };
+
+    if (query.$and) {
+      query.$and.push(domainCondition);
+    } else if (query.$or) {
+      query.$and = [domainCondition, { $or: query.$or }];
+      delete query.$or;
+    } else {
+      query.$or = domainCondition.$or;
     }
   }
 

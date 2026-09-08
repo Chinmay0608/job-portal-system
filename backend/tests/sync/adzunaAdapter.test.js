@@ -27,15 +27,15 @@ describe("AdzunaProvider Normalization", () => {
     expect(normalized.title).toBe("Senior Node.js Developer");
     expect(normalized.company).toBe("Tech Corp");
     expect(normalized.location).toBe("New York, US");
-    expect(normalized.salary).toBe("$100000 - $150000");
+    expect(normalized.salary).toBe("₹1,00,000 - ₹1,50,000");
     expect(normalized.salaryMin).toBe(100000);
     expect(normalized.salaryMax).toBe(150000);
-    expect(normalized.salaryCurrency).toBe("USD");
+    expect(normalized.salaryCurrency).toBe("INR");
     expect(normalized.applyUrl).toBe("https://adzuna.com/apply/123");
     expect(normalized.employmentType).toBe("Full-time");
     expect(normalized.isExternal).toBe(true);
     expect(normalized.isRemote).toBe(false);
-    expect(normalized.source).toBe("ADZUNA");
+    expect(normalized.source).toBe("Adzuna");
     expect(normalized.externalId).toBe("123456789");
     
     // Skills should extract keywords from description

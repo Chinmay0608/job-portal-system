@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../Services/authService";
 import { auth, provider } from "../../firebase";
@@ -177,7 +177,7 @@ function Register() {
           <div className="deck-header">SKILLBRIDGE DECK</div>
           
           <div className="register-brand" onClick={() => navigate("/")}>
-            <SkillBridgeLogo width={265} />
+            <SkillBridgeLogo width={345} center />
           </div>
 
           <h1 className="register-title">Sign Up</h1>
