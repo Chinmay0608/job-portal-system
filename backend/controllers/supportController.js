@@ -2,7 +2,7 @@
 
 const asyncHandler = require("express-async-handler");
 const SupportTicket = require("../models/SupportTicket");
-const User = require("../models/User");
+const User = require("../models/user");
 const ticketAgent = require("../services/ticketAgent");
 
 // ─── POST /api/support/report — any logged-in user ───────────────────────────
