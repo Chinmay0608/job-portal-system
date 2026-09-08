@@ -115,7 +115,7 @@ function Login() {
           <div className="deck-header">SKILLBRIDGE DECK</div>
           
           <div className="login-brand" onClick={() => navigate("/")}>
-            <SkillBridgeLogo width={265} />
+            <SkillBridgeLogo width={345} center />
           </div>
 
           <h1 className="login-title">Login</h1>

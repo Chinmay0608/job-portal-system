@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import debounce from "lodash.debounce";
-import BackButton from "../../Components/BackButton";
 import CustomSelect from "../../Components/CustomSelect";
 import "../../Styles/pages/candidate/candidateProfile.css";
 import { changePassword, updateProfile, extractSkillsAPI, getUserProfile, getMyApplications, getResumeSignedUrlAPI } from "../../Services/jobService";
@@ -426,9 +425,6 @@ function CandidateProfile() {
 
   return (
     <div className="profile-page">
-      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 16px' }}>
-        <BackButton />
-      </div>
       <div className="profile-container">
 
         {/* LEFT COLUMN: SIDEBAR */}

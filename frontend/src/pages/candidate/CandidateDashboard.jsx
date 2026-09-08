@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
-import AIChatWidget from "../../Components/AIChatWidget";
 import OnboardingWizard from "../../Components/OnboardingWizard";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile } from "../../Services/jobService";
 import debounce from "lodash.debounce";
@@ -231,10 +230,11 @@ function CandidateDashboard() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Define all functions before useEffect hooks
-  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, page }) => {
+  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, field, page }) => {
     try {
       setJobLoadError("");
       setLoading(true);
+      const effectiveField = field !== undefined ? field : user?.field;
       const response = await getJobs({
         search: searchTerm,
         location: locationTerm,
@@ -243,6 +243,7 @@ function CandidateDashboard() {
         source: sourceTerm,
         employmentType: employmentTerm,
         isRemote: remoteTerm === "true" ? "true" : undefined,
+        field: effectiveField,
         page,
         limit: JOBS_PER_PAGE,
       });
@@ -285,7 +286,7 @@ function CandidateDashboard() {
     debounce((params) => {
       fetchJobs(params);
     }, 400),
-    []
+    [user?.field]
   );
 
   const handleOnboardingComplete = async (updatedUser) => {
@@ -306,16 +307,19 @@ function CandidateDashboard() {
       sourceTerm: sourceFilter,
       employmentTerm: employmentTypeFilter,
       remoteTerm: isRemoteFilter,
+      field: updatedUser?.field,
       page: 1,
     });
   };
 
   useEffect(() => {
     const fetchAllInitialData = async () => {
+      let currentUser = user;
       // Sync fresh user profile to ensure hasCompletedOnboarding is accurate
       try {
         const profileRes = await getUserProfile();
         if (profileRes?.user) {
+          currentUser = profileRes.user;
           setUser(profileRes.user);
           localStorage.setItem("user", JSON.stringify(profileRes.user));
         }
@@ -335,6 +339,7 @@ function CandidateDashboard() {
         sourceTerm: sourceFilter,
         employmentTerm: employmentTypeFilter,
         remoteTerm: isRemoteFilter,
+        field: currentUser?.field,
         page: currentPage,
       });
 
@@ -401,18 +406,12 @@ function CandidateDashboard() {
       sourceTerm: sourceFilter,
       employmentTerm: employmentTypeFilter,
       remoteTerm: isRemoteFilter,
+      field: user?.field,
       page: 1,
     });
-  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, debouncedFetchJobs]);
+  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, user?.field, debouncedFetchJobs]);
 
-  // Builds a full URL for the resume stored on the user's profile,
-  // matching the same logic used in Profile.jsx's getResumeUrl.
-  const getSavedResumeUrl = () => {
-    const resumePath = user?.resume;
-    if (!resumePath) return null;
-    if (resumePath.startsWith("http")) return resumePath;
-    return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
-  };
+
 
 
   const submitApplication = async (fileToSubmit) => {
@@ -546,12 +545,44 @@ function CandidateDashboard() {
     setShowApplyPanel(true);
   };
 
-  const handleJobClick = (job) => {
-    setSelectedJob(job);
-    setIsMobileDetailView(true);
-    setResumeChoiceMode(false);
-    setShowApplyPanel(false);
-    setExternalApplyActive(false);
+  const closeFeedbackModal = () => {
+    setShowFeedbackModal(false);
+    setPendingFeedbackJob(null);
+  };
+
+  const handleFeedbackYes = async () => {
+    if (!pendingFeedbackJob) return;
+    try {
+      await applyExternal(pendingFeedbackJob._id);
+      setAppliedJobs((prev) => [...prev, pendingFeedbackJob._id]);
+      toast.success("Great! Application tracked.");
+    } catch (error) {
+      console.error(error);
+    }
+    closeFeedbackModal();
+  };
+
+  const handleFeedbackNo = () => {
+    closeFeedbackModal();
+  };
+
+  const handleFeedbackHide = async () => {
+    if (!pendingFeedbackJob) return;
+    try {
+      await hideJob(pendingFeedbackJob._id);
+      toast.success("Job hidden. You won't see this again.");
+      
+      setJobs((prev) => prev.filter((j) => j._id !== pendingFeedbackJob._id));
+      setRecommendedJobsList((prev) => prev.filter((j) => j._id !== pendingFeedbackJob._id));
+      
+      if (selectedJob?._id === pendingFeedbackJob._id) {
+        setSelectedJob(null);
+        setIsMobileDetailView(false);
+      }
+    } catch {
+      toast.error("Failed to hide job");
+    }
+    closeFeedbackModal();
   };
 
   const INDIAN_CITIES = [
@@ -570,11 +601,6 @@ function CandidateDashboard() {
     return loc.includes(term);
   };
 
-  const isSearchActive = Boolean(
-    (search && search.trim().length > 0) || 
-    (locationFilter && locationFilter.trim().length > 0)
-  );
-
   const availableJobs = jobs
     .filter((job) => !appliedJobs.includes(job._id))
     .filter((job, idx, arr) => arr.findIndex((j) => j._id === job._id) === idx)
@@ -583,11 +609,7 @@ function CandidateDashboard() {
       if (locationFilter && !matchesLocationFilter(job.location, locationFilter)) {
         return false;
       }
-      // If candidate typed an explicit search query, show all search results
-      if (isSearchActive) return true;
-      // Otherwise, hide unrelated domain jobs (e.g. MBA/Marketing for Software Engineering)
-      const matchInfo = calculateJobMatchScore(job, user);
-      return matchInfo.isDomainMatch;
+      return true;
     });
 
   // Combine initial recommended jobs + live search result jobs for the Recommended tab
@@ -901,16 +923,16 @@ function CandidateDashboard() {
                         <div className="card-top-row">
                           <div className="card-top-info">
                             <h4 className="ind-card-title">{job.title}</h4>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div className="ind-card-company-row">
                               {job.companyLogo && (
                                 <img 
                                   src={job.companyLogo} 
                                   alt={job.company} 
-                                  style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '4px' }} 
+                                  className="ind-company-logo-sm"
                                   onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                               )}
-                              <p className="ind-card-company" style={{ margin: 0, color: '#6b7280', fontWeight: '500' }}>
+                              <p className="ind-card-company">
                                 {job.company} &bull; {job.location}
                               </p>
                             </div>
@@ -925,20 +947,15 @@ function CandidateDashboard() {
                             }}
                           >
                             {user?.savedJobs?.some((savedJobId) => savedJobId?.toString() === job?._id) ? (
-                              <FaBookmark size={18} color="#2563eb" />
+                              <FaBookmark size={18} color="var(--job-primary-brand)" />
                             ) : (
-                              <FiBookmark size={18} color="#2563eb" />
+                              <FiBookmark size={18} color="var(--job-primary-brand)" />
                             )}
                           </button>
                         </div>
                         
                         <div className="card-tags-group">
-                          <span className="ind-card-tag" style={{
-                            background: matchInfo.score >= 80 ? '#dcfce7' : '#eff6ff',
-                            color: matchInfo.score >= 80 ? '#15803d' : '#1d4ed8',
-                            fontWeight: '700',
-                            border: matchInfo.score >= 80 ? '1px solid #bbf7d0' : '1px solid #bfdbfe'
-                          }}>
+                          <span className={`ind-card-tag ${matchInfo.score >= 80 ? "match-tag-high" : "match-tag-normal"}`}>
                             ✨ {matchInfo.score}% Match
                           </span>
 
@@ -949,7 +966,7 @@ function CandidateDashboard() {
                           )}
                           
                           {job.isExternal && job.source && (
-                            <span className="ind-card-tag skill-tag" style={{ background: '#fef3c7', color: '#b45309' }}>
+                            <span className="ind-card-tag source-tag">
                               via {capitalizeSource(job.source)}
                             </span>
                           )}
@@ -963,7 +980,7 @@ function CandidateDashboard() {
                           {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
                         </div>
                         
-                        <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#4b5563', fontWeight: '500' }}>
+                        <div className="ind-card-time">
                           {getRelativeTime(job.createdAt)}
                         </div>
                       </div>
@@ -991,7 +1008,7 @@ function CandidateDashboard() {
                     Previous
                   </button>
                   <span className="ind-pagination-info">
-                    Page {currentPage} of {totalPages} • {totalJobs} jobs
+                    Page {currentPage} of {totalPages}
                   </span>
                   <button
                     className="ind-pagination-btn"
@@ -1027,54 +1044,35 @@ function CandidateDashboard() {
                     ← Back to Jobs
                   </button>
                   <h3 className="ind-detail-main-title">{selectedJob.title}</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="ind-detail-company-row">
                     {selectedJob.companyLogo && (
                       <img 
                         src={selectedJob.companyLogo} 
                         alt={selectedJob.company} 
-                        style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '4px' }} 
+                        className="ind-company-logo-md"
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     )}
-                    <p className="ind-detail-company-link" style={{ margin: 0 }}>{selectedJob.company}</p>
+                    <p className="ind-detail-company-link">{selectedJob.company}</p>
                   </div>
                   <p className="ind-detail-location-text">{selectedJob.location}</p>
                   <p className="ind-detail-salary-text">
                     {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}
                   </p>
                   
-                  <div style={{ marginTop: '4px', marginBottom: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="ind-detail-tags-row">
                     {(() => {
                       const matchInfo = calculateJobMatchScore(selectedJob, user);
                       return (
                         <>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: matchInfo.score >= 80 ? '#dcfce7' : '#eff6ff',
-                            color: matchInfo.score >= 80 ? '#15803d' : '#1d4ed8',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: '0.8rem',
-                            fontWeight: '700',
-                            border: matchInfo.score >= 80 ? '1px solid #bbf7d0' : '1px solid #bfdbfe'
-                          }}>
+                          <span className={`ind-card-tag ${matchInfo.score >= 80 ? "match-tag-high" : "match-tag-normal"}`}>
                             ✨ {matchInfo.score}% Match ({user?.field || "Software Engineering"})
                           </span>
                           {matchInfo.matchedSkills.length > 0 && (
-                            <div style={{ width: '100%', marginTop: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#4b5563' }}>Matched Skills:</span>
+                            <div className="ind-matched-skills-container">
+                              <span className="ind-matched-skills-label">Matched Skills:</span>
                               {matchInfo.matchedSkills.map((sk) => (
-                                <span key={sk} style={{
-                                  background: '#2563eb12',
-                                  color: '#2563eb',
-                                  padding: '2px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '600',
-                                  border: '1px solid #2563eb25'
-                                }}>
+                                <span key={sk} className="ind-matched-skill-pill">
                                   ✓ {sk}
                                 </span>
                               ))}
@@ -1083,57 +1081,27 @@ function CandidateDashboard() {
                         </>
                       );
                     })()}
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: '#f3f4f6',
-                      color: '#374151',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      fontWeight: '600',
-                      letterSpacing: '0.02em',
-                      border: '1px solid #e5e7eb'
-                    }}>
+                    <span className="ind-detail-pill">
                       💼 <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
                     </span>
                     {selectedJob.isExternal && (
-                      <span style={{
-                        display: 'inline-flex',
-                        background: '#e0f2fe',
-                        color: '#0369a1',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        border: '1px solid #bae6fd'
-                      }}>
+                      <span className="ind-card-tag exp-tag">
                         External
                       </span>
                     )}
                     {selectedJob.isExternal && selectedJob.source && (
-                      <span style={{
-                        display: 'inline-flex',
-                        background: '#fef3c7',
-                        color: '#b45309',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        border: '1px solid #fde68a'
-                      }}>
+                      <span className="ind-card-tag source-tag">
                         via {capitalizeSource(selectedJob.source)}
                       </span>
                     )}
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
+                    <span className="ind-detail-time">
                       {getRelativeTime(selectedJob.createdAt)}
                     </span>
                   </div>
 
                   <div className="ind-actions-row">
                     {selectedJob.expiresAt && new Date(selectedJob.expiresAt) < new Date() ? (
-                      <button className="ind-applied-status-btn" style={{background: '#fee2e2', color: '#991b1b', border: 'none'}} disabled>
+                      <button className="ind-applied-status-btn expired" disabled>
                         This job is no longer available
                       </button>
                     ) : appliedJobs?.includes(selectedJob._id) ? (
@@ -1196,15 +1164,13 @@ function CandidateDashboard() {
                         ) : (
                           <>
                             <button 
-                              className="ind-primary-apply-btn"
-                              style={{ background: '#10b981' }}
+                              className="ind-primary-apply-btn btn-success"
                               onClick={handleManualTrack}
                             >
                               Mark as Applied
                             </button>
                             <button 
-                              className="ind-primary-apply-btn"
-                              style={{ background: '#6b7280' }}
+                              className="ind-secondary-action-btn"
                               onClick={handleApplyNowClick}
                             >
                               Open Again
@@ -1213,23 +1179,14 @@ function CandidateDashboard() {
                         )}
                         <button
                           type="button"
-                          onClick={() => handleToggleSave(selectedJob._id)}
-                          style={{
-                            display: "grid",
-                            placeItems: "center",
-                            width: 42,
-                            height: 42,
-                            border: "1px solid rgba(0,0,0,0.12)",
-                            borderRadius: 12,
-                            background: "transparent",
-                            color: user?.savedJobs?.some(
+                          className={`ind-detail-save-btn ${
+                            user?.savedJobs?.some(
                               (savedJobId) => savedJobId?.toString() === selectedJob?._id
                             )
-                              ? "#e0245e"
-                              : "#333",
-                            cursor: "pointer",
-                            padding: 0,
-                          }}
+                              ? "saved"
+                              : ""
+                          }`}
+                          onClick={() => handleToggleSave(selectedJob._id)}
                           aria-label={
                             user?.savedJobs?.some(
                               (savedJobId) => savedJobId?.toString() === selectedJob?._id
@@ -1391,8 +1348,8 @@ function CandidateDashboard() {
                 No, I didn't apply
               </button>
               <button 
+                className="ind-nudge-danger-btn"
                 onClick={handleFeedbackHide}
-                style={{ width: "100%", background: "transparent", color: "#dc2626", border: "1px solid #fca5a5", padding: "12px", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
               >
                 Not a fit / Hide this job
               </button>
@@ -1408,9 +1365,6 @@ function CandidateDashboard() {
           onComplete={handleOnboardingComplete}
         />
       )}
-
-      {/* FLOATING GEMINI AI CAREER COACH ASSISTANT */}
-      <AIChatWidget user={user} />
     </div>
   );
 }

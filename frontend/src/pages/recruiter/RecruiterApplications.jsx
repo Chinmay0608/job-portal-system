@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { getRecruiterApplications, updateStatus } from "../../Services/jobService";
 import RetryBanner from "../../Components/RetryBanner";
 import toast from "react-hot-toast";
-import BackButton from "../../Components/BackButton";
 import "../../Styles/pages/recruiter/RecruiterApplications.css";
 
 function RecruiterApplications() {
@@ -65,9 +64,6 @@ function RecruiterApplications() {
 
   return (
     <div className="applications-page">
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
-        <BackButton />
-      </div>
       {/* Header */}
       <div className="applications-header">
         <h1>Applicants</h1>

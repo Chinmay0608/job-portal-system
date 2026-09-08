@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { 
@@ -9,13 +9,22 @@ import {
   BsBoxArrowRight 
 } from "react-icons/bs";
 import { FiMenu, FiX, FiArrowLeft, FiHome } from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi2";
 import { logoutUser } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
+import AIChatWidget from "./AIChatWidget";
+import MessagesDrawer from "./MessagesDrawer";
+import { getUnreadMessagesCount } from "../Services/messageService";
+import NotificationsDrawer from "./NotificationsDrawer";
+import { getUnreadNotificationsCount } from "../Services/notificationService";
 import "../Styles/components/navbar.css";
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDhruvOpen, setIsDhruvOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +38,8 @@ function Navbar() {
   };
 
   const [user, setUser] = useState(getUser());
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(() => getUnreadNotificationsCount(user));
 
   useEffect(() => {
     const checkAuth = () => {
@@ -46,8 +57,34 @@ function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false);
+    setIsDhruvOpen(false);
+    setIsMessagesOpen(false);
+    setIsNotificationsOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const updateUnread = () => {
+      setUnreadMessagesCount(getUnreadMessagesCount(user));
+    };
+    updateUnread();
+    window.addEventListener("skillbridge_messages_updated", updateUnread);
+    return () => {
+      window.removeEventListener("skillbridge_messages_updated", updateUnread);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const updateUnreadNotifs = () => {
+      setUnreadNotificationsCount(getUnreadNotificationsCount(user));
+    };
+    updateUnreadNotifs();
+    window.addEventListener("skillbridge_notifications_updated", updateUnreadNotifs);
+    return () => {
+      window.removeEventListener("skillbridge_notifications_updated", updateUnreadNotifs);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -65,9 +102,7 @@ function Navbar() {
   const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
   const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
   const isMyApplications = location.pathname === "/my-applications";
-  const isProfile = ["/candidate-profile", "/recruiter-profile"].includes(location.pathname);
   const isSalaryGuide = location.pathname === "/salary-data";
-  const isCompanyReviews = location.pathname === "/about";
 
   const getDashboardUrl = () => {
     if (!isLoggedIn) return "/";
@@ -112,11 +147,13 @@ function Navbar() {
   };
 
   const handleNotificationClick = () => {
-    toast("No new notifications", { icon: "🔔" });
+    setIsNotificationsOpen(true);
+    setIsMobileMenuOpen(false);
   };
 
   const handleMessageClick = () => {
-    toast("No new messages", { icon: "💬" });
+    setIsMessagesOpen(true);
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -198,17 +235,35 @@ function Navbar() {
           )}
         </div>
 
+        {/* Middle Section: DHRUV AI Assistant */}
+        {(!isHome && (!user || user?.role === "candidate")) && (
+          <div className="nav-center">
+            <button
+              type="button"
+              className="header-dhruv-btn"
+              onClick={() => setIsDhruvOpen((prev) => !prev)}
+              aria-label="Ask DHRUV AI Career Coach"
+              title="Ask DHRUV - AI Career Coach"
+            >
+              <HiSparkles className="dhruv-sparkles-icon" />
+              <span className="dhruv-btn-text">Ask DHRUV</span>
+            </button>
+          </div>
+        )}
+
         {/* Mobile Header Controls: Home Button + Hamburger Toggle */}
         <div className="mobile-header-controls">
-          <Link
-            to={dashboardUrl}
-            className={`header-home-btn ${(isHome || isCandidateDashboard || isRecruiterDashboard) ? "active" : ""}`}
-            aria-label="Home"
-            title="Go to Home"
-          >
-            <FiHome size={18} />
-            <span className="home-btn-label">Home</span>
-          </Link>
+          {!isHome && (
+            <Link
+              to={dashboardUrl}
+              className={`header-home-btn ${(isCandidateDashboard || isRecruiterDashboard) ? "active" : ""}`}
+              aria-label="Home"
+              title="Go to Home"
+            >
+              <FiHome size={18} />
+              <span className="home-btn-label">Home</span>
+            </Link>
+          )}
 
           <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
             {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
@@ -219,9 +274,11 @@ function Navbar() {
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           {(!isLoggedIn || isHome) ? (
             <div className="auth-buttons">
-              <Link className="nav-tab-link mobile-only-tab" to="/" style={{ padding: "8px 0", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
-                <FiHome size={18} /> Home
-              </Link>
+              {!isHome && (
+                <Link className="nav-tab-link mobile-only-tab" to="/" style={{ padding: "8px 0", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FiHome size={18} /> Home
+                </Link>
+              )}
               <Link className="login-btn nav-hover" to="/login">Login</Link>
               <Link className="signup-btn nav-hover" to="/register">Sign Up</Link>
             </div>
@@ -250,8 +307,18 @@ function Navbar() {
                   {/* Message Icon */}
                   <div className="icon-tab-wrapper">
                     <button type="button" className="icon-btn-link" onClick={handleMessageClick} aria-label="Messages">
-                      <BsChatSquareTextFill className="header-icon" />
-                      <span className="mobile-only-label">Messages</span>
+                      <span className="icon-with-badge">
+                        <BsChatSquareTextFill className="header-icon" />
+                        {unreadMessagesCount > 0 && (
+                          <span className="nav-unread-dot" title={`${unreadMessagesCount} unread`} />
+                        )}
+                      </span>
+                      <span className="mobile-only-label">
+                        Messages
+                        {unreadMessagesCount > 0 && (
+                          <span className="nav-unread-badge">{unreadMessagesCount}</span>
+                        )}
+                      </span>
                     </button>
                     <div className="tooltip-bubble">Messages</div>
                   </div>
@@ -259,8 +326,18 @@ function Navbar() {
                   {/* Bell Icon */}
                   <div className="icon-tab-wrapper">
                     <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Notifications">
-                      <BsBellFill className="header-icon" />
-                      <span className="mobile-only-label">Notifications</span>
+                      <span className="icon-with-badge">
+                        <BsBellFill className="header-icon" />
+                        {unreadNotificationsCount > 0 && (
+                          <span className="nav-unread-dot" title={`${unreadNotificationsCount} unread`} />
+                        )}
+                      </span>
+                      <span className="mobile-only-label">
+                        Notifications
+                        {unreadNotificationsCount > 0 && (
+                          <span className="nav-unread-badge">{unreadNotificationsCount}</span>
+                        )}
+                      </span>
                     </button>
                     <div className="tooltip-bubble">Notifications</div>
                   </div>
@@ -285,6 +362,44 @@ function Navbar() {
                       <FiHome className="header-icon" />
                       <span className="mobile-only-label">Home</span>
                     </Link>
+                  </div>
+
+                  {/* Recruiter Message Icon */}
+                  <div className="icon-tab-wrapper">
+                    <button type="button" className="icon-btn-link" onClick={handleMessageClick} aria-label="Messages">
+                      <span className="icon-with-badge">
+                        <BsChatSquareTextFill className="header-icon" />
+                        {unreadMessagesCount > 0 && (
+                          <span className="nav-unread-dot" title={`${unreadMessagesCount} unread`} />
+                        )}
+                      </span>
+                      <span className="mobile-only-label">
+                        Messages
+                        {unreadMessagesCount > 0 && (
+                          <span className="nav-unread-badge">{unreadMessagesCount}</span>
+                        )}
+                      </span>
+                    </button>
+                    <div className="tooltip-bubble">Messages</div>
+                  </div>
+
+                  {/* Recruiter Bell Icon */}
+                  <div className="icon-tab-wrapper">
+                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Notifications">
+                      <span className="icon-with-badge">
+                        <BsBellFill className="header-icon" />
+                        {unreadNotificationsCount > 0 && (
+                          <span className="nav-unread-dot" title={`${unreadNotificationsCount} unread`} />
+                        )}
+                      </span>
+                      <span className="mobile-only-label">
+                        Notifications
+                        {unreadNotificationsCount > 0 && (
+                          <span className="nav-unread-badge">{unreadNotificationsCount}</span>
+                        )}
+                      </span>
+                    </button>
+                    <div className="tooltip-bubble">Notifications</div>
                   </div>
 
                   <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
@@ -324,6 +439,34 @@ function Navbar() {
           )}
         </div>
       </div>
+
+      {/* DHRUV AI Career Coach Drawer */}
+      {(!isHome && (!user || user?.role === "candidate")) && (
+        <AIChatWidget
+          user={user}
+          isOpen={isDhruvOpen}
+          setIsOpen={setIsDhruvOpen}
+          hideFloatingTrigger={true}
+        />
+      )}
+
+      {/* Messages Drawer */}
+      <MessagesDrawer
+        isOpen={isMessagesOpen}
+        onClose={() => setIsMessagesOpen(false)}
+        user={user}
+      />
+
+      {/* Notifications Drawer */}
+      <NotificationsDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        user={user}
+        onOpenMessages={() => {
+          setIsNotificationsOpen(false);
+          setIsMessagesOpen(true);
+        }}
+      />
     </nav>
   );
 }

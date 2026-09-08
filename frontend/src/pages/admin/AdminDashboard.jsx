@@ -5,10 +5,11 @@ import {
   RefreshCcw, ChevronLeft, ChevronRight, CheckCircle2, Clock, Database, 
   TrendingUp, CircleDot, Briefcase, ServerCrash, Home, Trash2,
   UserCheck, UserX, ExternalLink, Shield, ShieldAlert, Cpu, AlertTriangle, Sparkles,
-  BookMarked, MousePointerClick
+  BookMarked, MousePointerClick, LifeBuoy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import SupportTicketsView from './SupportTicketsView';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -1180,6 +1181,7 @@ const AdminDashboard = () => {
   const [loadingActivity, setLoadingActivity] = useState(false);
 
   const [activeTab, setActiveTab] = useState('metrics');
+  const [supportRefreshKey, setSupportRefreshKey] = useState(0);
   const [triggeringCrawl, setTriggeringCrawl] = useState(false);
 
   const navigate = useNavigate();
@@ -1386,6 +1388,7 @@ const AdminDashboard = () => {
             <SidebarItem icon={<Database size={18} />} label="Jobs Registry" active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} />
             <SidebarItem icon={<Briefcase size={18} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
             <SidebarItem icon={<BookMarked size={18} />} label="Candidate Activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
+            <SidebarItem icon={<LifeBuoy size={18} />} label="Reported Issues" active={activeTab === 'support'} onClick={() => setActiveTab('support')} />
           </nav>
           
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 mt-8 px-3">Security & AI</div>
@@ -1432,6 +1435,7 @@ const AdminDashboard = () => {
                activeTab === 'jobs' ? 'Jobs Registry' : 
                activeTab === 'applications' ? 'Applications' : 
                activeTab === 'activity' ? 'Candidate Activity' : 
+               activeTab === 'support' ? 'Reported Issues' : 
                activeTab === 'security' ? 'Security Audit' : 
                activeTab === 'ai' ? 'AI Analytics' : 'Configuration'}
             </span>
@@ -1460,6 +1464,7 @@ const AdminDashboard = () => {
                 if (activeTab === 'jobs') fetchJobs(jobsSearch, jobsPage, jobsLimit);
                 if (activeTab === 'applications') fetchApplications();
                 if (activeTab === 'activity') fetchActivity();
+                if (activeTab === 'support') setSupportRefreshKey(k => k + 1);
                 if (activeTab === 'security') fetchSecurity();
                 if (activeTab === 'ai') fetchAiUsage();
               }} 
@@ -1502,6 +1507,8 @@ const AdminDashboard = () => {
             <ApplicationsView applications={applications} loading={loadingApps} onRefresh={fetchApplications} />
           ) : activeTab === 'activity' ? (
             <CandidateActivityView activityData={activityData} loading={loadingActivity} onRefresh={fetchActivity} />
+          ) : activeTab === 'support' ? (
+            <SupportTicketsView key={supportRefreshKey} />
           ) : activeTab === 'security' ? (
             <SecurityAuditView securityData={securityData} loading={loadingSecurity} onRefresh={fetchSecurity} />
           ) : activeTab === 'ai' ? (

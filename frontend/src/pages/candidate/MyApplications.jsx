@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import RetryBanner from "../../Components/RetryBanner";
 import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
-import BackButton from "../../Components/BackButton";
 import { Link } from "react-router-dom";
 import "../../Styles/pages/candidate/MyApplications.css";
 
@@ -89,9 +88,6 @@ function MyApplications() {
 
   return (
     <div className="applications-page">
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
-        <BackButton />
-      </div>
       <div className="applications-header">
         <h1>My Applications</h1>
         <p>Track your applied jobs and status</p>

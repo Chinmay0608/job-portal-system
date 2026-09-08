@@ -1,4 +1,4 @@
-﻿const asyncHandler = require("express-async-handler");
+const asyncHandler = require("express-async-handler");
 const SupportTicket = require("../models/SupportTicket");
 
 // POST /api/support/report — any logged-in user
@@ -33,7 +33,7 @@ const getTicketsAdmin = asyncHandler(async (req, res) => {
   if (status && status !== "all") filter.status = status;
 
   const tickets = await SupportTicket.find(filter)
-    .populate("user", "name email")
+    .populate("user", "name email role")
     .sort({ createdAt: -1 });
 
   res.json({ tickets });
@@ -48,7 +48,8 @@ const updateTicketStatus = asyncHandler(async (req, res) => {
     throw new Error("Invalid status");
   }
 
-  const ticket = await SupportTicket.findByIdAndUpdate(req.params.id, { status }, { new: true });
+  const ticket = await SupportTicket.findByIdAndUpdate(req.params.id, { status }, { new: true })
+    .populate("user", "name email role");
   if (!ticket) {
     res.status(404);
     throw new Error("Ticket not found");
@@ -57,4 +58,14 @@ const updateTicketStatus = asyncHandler(async (req, res) => {
   res.json({ message: "Ticket updated", ticket });
 });
 
-module.exports = { createTicket, getTicketsAdmin, updateTicketStatus };
+// DELETE /api/support/tickets/:id — admin only, delete ticket
+const deleteTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findByIdAndDelete(req.params.id);
+  if (!ticket) {
+    res.status(404);
+    throw new Error("Ticket not found");
+  }
+  res.json({ message: "Ticket deleted successfully" });
+});
+
+module.exports = { createTicket, getTicketsAdmin, updateTicketStatus, deleteTicket };
