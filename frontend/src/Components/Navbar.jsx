@@ -17,6 +17,7 @@ import MessagesDrawer from "./MessagesDrawer";
 import { getUnreadMessagesCount } from "../Services/messageService";
 import NotificationsDrawer from "./NotificationsDrawer";
 import { getUnreadNotificationsCount } from "../Services/notificationService";
+import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import "../Styles/components/navbar.css";
 
 function Navbar() {
@@ -40,6 +41,15 @@ function Navbar() {
   const [user, setUser] = useState(getUser());
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(() => getUnreadNotificationsCount(user));
+
+  const voiceRec = useVoiceRecognition();
+  const [isWakeWordActive, setIsWakeWordActive] = useState(() => {
+    try {
+      return localStorage.getItem("dhruv_wake_word_enabled") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     const checkAuth = () => {
@@ -96,6 +106,38 @@ function Navbar() {
       document.body.style.overflow = "";
     };
   }, [isMobileMenuOpen]);
+
+  // Sync wake word preference with events from AIChatWidget
+  useEffect(() => {
+    const handleWakeSync = () => {
+      try {
+        setIsWakeWordActive(localStorage.getItem("dhruv_wake_word_enabled") === "true");
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    window.addEventListener("dhruv_wake_word_toggled", handleWakeSync);
+    return () => {
+      window.removeEventListener("dhruv_wake_word_toggled", handleWakeSync);
+    };
+  }, []);
+
+  // Background wake word detection when hands-free is enabled
+  useEffect(() => {
+    if (!isWakeWordActive || isDhruvOpen || !voiceRec.isSupported) {
+      voiceRec.stopWakeWord();
+      return;
+    }
+
+    voiceRec.listenForWakeWord(() => {
+      toast.success("Hey Dhruv detected! Opening Career Coach...", { icon: "🎙️" });
+      setIsDhruvOpen(true);
+    });
+
+    return () => {
+      voiceRec.stopWakeWord();
+    };
+  }, [isWakeWordActive, isDhruvOpen, voiceRec]);
 
   const isHome = location.pathname === "/";
   const isCandidateDashboard = location.pathname === "/candidate-dashboard";
@@ -243,7 +285,7 @@ function Navbar() {
               className="header-dhruv-btn"
               onClick={() => setIsDhruvOpen((prev) => !prev)}
               aria-label="Ask DHRUV AI Career Coach"
-              title="Ask DHRUV - AI Career Coach"
+              title="Ask DHRUV - AI Career Coach (Voice & 'Hey Dhruv' Enabled)"
             >
               <HiSparkles className="dhruv-sparkles-icon" />
               <span className="dhruv-btn-text">Ask DHRUV</span>

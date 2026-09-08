@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -8,8 +9,9 @@ import { getStoredUser } from "../Services/authUtils";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function HelpWidget() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getStoredUser);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
   const [description, setDescription] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const [screenshotBlob, setScreenshotBlob] = useState(null);
@@ -21,9 +23,14 @@ export default function HelpWidget() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const stored = getStoredUser();
-    setUser(stored);
-  }, [isOpen]);
+    const syncUser = () => {
+      const stored = getStoredUser();
+      setUser(stored);
+    };
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    return () => window.removeEventListener("storage", syncUser);
+  }, [location.pathname, isOpen]);
 
   const captureScreen = async () => {
     setIsCapturing(true);
@@ -156,7 +163,7 @@ export default function HelpWidget() {
           id="help-widget-button"
           type="button"
           onClick={handleOpen}
-          className="fixed bottom-20 right-8 z-[850] flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-full font-semibold text-sm shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-slate-700/50"
+          className="fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001] flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 border border-slate-700/50"
           title="Report an Issue"
         >
           <LifeBuoy size={18} className="text-emerald-400 animate-pulse" />
@@ -168,7 +175,7 @@ export default function HelpWidget() {
       {isOpen && (
         <div
           id="help-widget-modal"
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
