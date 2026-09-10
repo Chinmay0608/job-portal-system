@@ -95,26 +95,23 @@ function Login() {
         { label: "Partner Rating", value: "4.9/5" },
       ]}
     >
-      <div className="relative w-full max-w-sm sm:max-w-md bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 shadow-[0_25px_60px_-15px_rgba(37,99,235,0.12)] rounded-3xl p-5 sm:py-6 sm:px-7 space-y-3 sm:space-y-3.5 animate-scale-up overflow-hidden">
-        {/* Top Brand Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent pointer-events-none" />
-
+      <div className="w-full max-w-sm sm:max-w-md bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] p-5 sm:py-6 sm:px-7 space-y-3 sm:space-y-3.5 animate-scale-up">
         {/* Brand Logo visible on mobile/tablet viewports (< lg) */}
-        <div className="flex lg:hidden justify-center cursor-pointer pt-1" onClick={() => navigate("/")}>
+        <div className="flex lg:hidden justify-center cursor-pointer" onClick={() => navigate("/")}>
           <SkillBridgeLogo width={190} center />
         </div>
 
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight m-0">Welcome Back</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">Find the job made for you!</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">Welcome Back</h1>
+          <p className="text-xs text-slate-500 mt-1 m-0">Find the job made for you!</p>
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+        <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "candidate" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700" : "bg-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              loginRole === "candidate" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("candidate")}
           >
@@ -123,7 +120,7 @@ function Login() {
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "recruiter" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700" : "bg-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              loginRole === "recruiter" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("recruiter")}
           >
@@ -133,7 +130,7 @@ function Login() {
 
         <button
           type="button"
-          className="w-full py-2.5 px-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
@@ -142,26 +139,26 @@ function Login() {
         </button>
 
         <div className="relative flex py-0.5 items-center">
-          <div className="flex-grow border-t border-slate-200 dark:border-slate-700/60"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-slate-200 dark:border-slate-700/60"></div>
+          <div className="flex-grow border-t border-slate-200"></div>
+          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-slate-200"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Email Address</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
             <input
               type="email"
               placeholder="mail@website.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Password</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -169,11 +166,11 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 border-0 bg-transparent cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -184,7 +181,7 @@ function Login() {
 
           <div className="text-right">
             <span 
-              className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 cursor-pointer"
+              className="text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot password?
@@ -193,17 +190,17 @@ function Login() {
 
           <button 
             type="submit" 
-            className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-lg shadow-blue-600/25 active:scale-[0.99] border-0 disabled:opacity-50 mt-1.5" 
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/25 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-md shadow-blue-600/20 border-0 disabled:opacity-50 mt-1.5" 
             disabled={loading} 
             aria-label="Log in"
           >
             {loading ? "Logging in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 m-0 pt-1.5 sm:pt-2">
+          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1.5 sm:pt-2">
             Not registered?{" "}
             <span 
-              className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer" 
+              className="font-bold text-brand-600 hover:underline cursor-pointer" 
               onClick={() => navigate("/register", { state: { role: loginRole } })}
             >
               Sign up
