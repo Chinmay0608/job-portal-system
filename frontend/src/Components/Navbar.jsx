@@ -160,10 +160,18 @@ function Navbar() {
     };
   }, []);
 
+  const isHome = location.pathname === "/";
+  const isCandidateDashboard = location.pathname === "/candidate-dashboard";
+  const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
+  const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
+  const isMyApplications = location.pathname === "/my-applications";
+  const isSalaryGuide = location.pathname === "/salary-data";
+
   // Background wake word detection when hands-free is enabled
   // Global background wake word detection ("Hey Dhruv" - like Siri / Alexa)
+  // Strict rule: NEVER start microphone if user is on the landing page ("/")
   useEffect(() => {
-    if (!isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
+    if (isHome || !isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
       stopWakeWord();
       return;
     }
@@ -183,14 +191,7 @@ function Navbar() {
     return () => {
       stopWakeWord();
     };
-  }, [isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
-
-  const isHome = location.pathname === "/";
-  const isCandidateDashboard = location.pathname === "/candidate-dashboard";
-  const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
-  const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
-  const isMyApplications = location.pathname === "/my-applications";
-  const isSalaryGuide = location.pathname === "/salary-data";
+  }, [isHome, isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
 
   const getDashboardUrl = () => {
     if (!isLoggedIn) return "/";
