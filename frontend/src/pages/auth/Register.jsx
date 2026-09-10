@@ -8,9 +8,6 @@ import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
-import CustomSelect from "../../Components/CustomSelect";
-import "../../Styles/pages/auth/Register.css";
-import "../../Styles/pages/auth/mobile-bridge.css";
 
 function Register() {
   const navigate = useNavigate();
@@ -99,225 +96,136 @@ function Register() {
   };
 
   return (
-    <div className="register-page">
-      {/* LEFT PANEL — Modern Geometric Art Context */}
-      <div className="register-art-panel">
-        <div className="bg-circle bg-circle-1"></div>
-        <div className="bg-circle bg-circle-2"></div>
-
-        <div className="bg-square bg-square-1"></div>
-        <div className="bg-square bg-square-2"></div>
-
-        <div className="bg-dots bg-dots-1">
-          {[...Array(12)].map((_, i) => <span key={i}></span>)}
+    <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-5 animate-scale-up">
+        <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
+          <SkillBridgeLogo width={280} center />
         </div>
 
-        <div className="bg-dots bg-dots-2">
-          {[...Array(12)].map((_, i) => <span key={i}></span>)}
+        <div className="text-center">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight m-0">Create an Account</h1>
+          <p className="text-xs text-slate-500 mt-1 m-0">Start your journey with SkillBridge</p>
         </div>
 
-        <div className="register-art-content">
-          <h2>
-            Start your
-            <br />
-            career journey.
-          </h2>
-          <p>
-            Create your SkillBridge account, discover opportunities,
-            <br />
-            and connect with recruiters built for your future.
+        {/* Role Selector Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <button 
+            type="button"
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+              formData.role === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+            }`}
+            onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
+          >
+            <FaChessRook /> <span>Candidate</span>
+          </button>
+          <button 
+            type="button"
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+              formData.role === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+            }`}
+            onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
+          >
+            <FaBuilding /> <span>Recruiter</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-xs active:scale-95"
+          onClick={handleGoogleSignup}
+          disabled={googleLoading}
+        >
+          <FcGoogle size={20} />
+          <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
+        </button>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-200"></div>
+          <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="e.g. Jane Doe"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="mail@website.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="10-digit mobile number"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Min 6 characters"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              />
+              <button
+                type="button"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-2" 
+            disabled={loading} 
+            aria-label="Create account"
+          >
+            {loading ? "Creating Account..." : "Create Account \u2192"}
+          </button>
+
+          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-2">
+            Already have an account?{" "}
+            <span 
+              className="font-bold text-brand-600 hover:underline cursor-pointer" 
+              onClick={() => navigate("/login")}
+            >
+              Sign in
+            </span>
           </p>
-
-          <div className="stats-container">
-            <div className="stats-card">
-              <div className="stats-icon pink">💼</div>
-              <h3>50K+</h3>
-              <span>Jobs</span>
-            </div>
-
-            <div className="stats-card">
-              <div className="stats-icon green">👥</div>
-              <h3>1K+</h3>
-              <span>Recruiters</span>
-            </div>
-
-            <div className="stats-card">
-              <div className="stats-icon blue">👤</div>
-              <h3>20K+</h3>
-              <span>Candidates</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT PANEL — Sign Up Entry Credentials Section */}
-      <div className="register-form-panel">
-        
-        {/* MOBILE SUSPENSION BRIDGE SVG (Hidden on Desktop) */}
-        <div className="mobile-bridge-svg-container">
-          <svg className="suspension-bridge-svg" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
-            {/* Left Tower */}
-            <line x1="40" y1="10" x2="40" y2="80" className="bridge-tower" />
-            <circle cx="40" cy="5" r="4" className="bridge-dot left-dot" />
-            {/* Right Tower */}
-            <line x1="260" y1="10" x2="260" y2="80" className="bridge-tower" />
-            <circle cx="260" cy="5" r="4" className="bridge-dot right-dot" />
-            {/* Left Cables */}
-            <line x1="40" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
-            <line x1="40" y1="35" x2="110" y2="75" className="bridge-cable cable-draw-2" />
-            <line x1="40" y1="55" x2="70" y2="75" className="bridge-cable cable-draw-3" />
-            {/* Right Cables */}
-            <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
-            <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
-            <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
-          </svg>
-        </div>
-
-        <div className="register-form-inner deck-card">
-          <div className="deck-header">SKILLBRIDGE DECK</div>
-          
-          <div className="register-brand" onClick={() => navigate("/")}>
-            <SkillBridgeLogo width={345} center />
-          </div>
-
-          <h1 className="register-title">Sign Up</h1>
-          <p className="register-subtitle">Start your journey with SkillBridge</p>
-          <div className="mobile-role-selector">
-            <button 
-              type="button"
-              className={`role-segment ${formData.role === "candidate" ? "active" : ""}`}
-              onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
-            >
-              <span className="role-icon"><FaChessRook /></span> Candidate side
-            </button>
-            <button 
-              type="button"
-              className={`role-segment ${formData.role === "recruiter" ? "active" : ""}`}
-              onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
-            >
-              <span className="role-icon"><FaBuilding /></span> Recruiter side
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="register-form">
-            <button
-              type="button"
-              className="register-google-btn"
-              onClick={handleGoogleSignup}
-              disabled={googleLoading}
-            >
-              <FcGoogle size={20} />
-              {googleLoading ? "Please wait..." : "Continue with Google"}
-            </button>
-
-            <div className="register-divider">
-              <span>or</span>
-            </div>
-
-            {/* FULL NAME BLOCK */}
-            <div className="register-input-group">
-              <label className="register-field-label">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Enter text"
-                className="register-input"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* EMAIL BLOCK */}
-            <div className="register-input-group">
-              <label className="register-field-label">Email</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="mail@website.com"
-                className="register-input"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* PHONE NUMBER BLOCK */}
-            <div className="register-input-group">
-              <label className="register-field-label">Phone Number (Optional)</label>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Enter phone number"
-                className="register-input"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
-
-            {/* PASSWORD BLOCK */}
-            <div className="register-input-group full-width">
-              <label className="register-field-label">Password</label>
-              <div className="password-input-wrapper" style={{ position: "relative", width: "100%" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Min 6 characters"
-                  className="register-input"
-                  style={{ paddingRight: "40px" }}
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  style={{
-                    position: "absolute",
-                    right: "4px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    color: "#4b5563",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "12px",
-                    minWidth: "44px",
-                    minHeight: "44px",
-                  }}
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {/* ROLE SELECTION BLOCK (Desktop Only) */}
-            <div className="register-input-group desktop-role-select">
-              <label className="register-field-label">Join As</label>
-              <CustomSelect
-                  name="role"
-                  className="register-select"
-                  value={formData.role}
-                  onChange={handleChange}
-                  options={[{ value: "candidate", label: "Candidate" }, { value: "recruiter", label: "Recruiter" }]}
-                />
-            </div>
-
-            <button type="submit" className="register-submit-btn" disabled={loading} aria-label="Create account">
-              {loading ? "Creating Account..." : "Build your access \u2192"}
-            </button>
-
-            <p className="register-bottom-text">
-              <span className="desktop-link-text">Already have an account? </span>
-              <span className="mobile-link-text">Already have access? </span>
-              <span className="link-action" onClick={() => navigate("/login")}>Cross the bridge</span>
-            </p>
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   );

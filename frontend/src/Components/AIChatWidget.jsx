@@ -47,7 +47,9 @@ export default function AIChatWidget({
   user, 
   isOpen: externalIsOpen, 
   setIsOpen: externalSetIsOpen, 
-  hideFloatingTrigger = false 
+  hideFloatingTrigger = false,
+  autoStartVoice = false,
+  initialQuery = ""
 }) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -56,12 +58,122 @@ export default function AIChatWidget({
   const [isLoading, setIsLoading] = useState(false);
   const [isHandsFree, setIsHandsFree] = useState(() => {
     try {
-      return localStorage.getItem("dhruv_wake_word_enabled") === "true";
+      return localStorage.getItem("dhruv_wake_word_enabled") !== "false";
     } catch {
-      return false;
+      return true;
     }
   });
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
+
+  // Dragging and movable card state
+  const [position, setPosition] = useState({ x: null, y: null });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragInfoRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    origX: 0,
+    origY: 0,
+  });
+  const cardRef = useRef(null);
+
+  const handleDragStart = (e) => {
+    // If target is an interactive element (button, input, select, link), do not drag
+    if (e.target.closest("button, input, textarea, a, select")) {
+      return;
+    }
+
+    const clientX = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.startsWith("touch") ? e.touches[0].clientY : e.clientY;
+
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+
+    dragInfoRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startY: clientY,
+      origX: rect.left,
+      origY: rect.top,
+    };
+
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleDragMove = (e) => {
+      if (!dragInfoRef.current.isDragging || !cardRef.current) return;
+
+      const clientX = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.startsWith("touch") ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - dragInfoRef.current.startX;
+      const deltaY = clientY - dragInfoRef.current.startY;
+
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const cardWidth = cardRect.width;
+      const cardHeight = cardRect.height;
+
+      const minX = 8;
+      const maxX = Math.max(8, window.innerWidth - cardWidth - 8);
+      const minY = 8;
+      const maxY = Math.max(8, window.innerHeight - cardHeight - 8);
+
+      const targetX = Math.min(Math.max(dragInfoRef.current.origX + deltaX, minX), maxX);
+      const targetY = Math.min(Math.max(dragInfoRef.current.origY + deltaY, minY), maxY);
+
+      setPosition({ x: targetX, y: targetY });
+
+      // Prevent scrolling on touch screens while dragging the card
+      if (e.cancelable && e.type.startsWith("touch")) {
+        e.preventDefault();
+      }
+    };
+
+    const handleDragEnd = () => {
+      if (dragInfoRef.current.isDragging) {
+        dragInfoRef.current.isDragging = false;
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener("mousemove", handleDragMove);
+    window.addEventListener("mouseup", handleDragEnd);
+    window.addEventListener("touchmove", handleDragMove, { passive: false });
+    window.addEventListener("touchend", handleDragEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleDragMove);
+      window.removeEventListener("mouseup", handleDragEnd);
+      window.removeEventListener("touchmove", handleDragMove);
+      window.removeEventListener("touchend", handleDragEnd);
+    };
+  }, []);
+
+  // Ensure card stays within viewport when window is resized
+  useEffect(() => {
+    const handleResize = () => {
+      if (!cardRef.current || position.x === null) return;
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const maxX = Math.max(8, window.innerWidth - cardRect.width - 8);
+      const maxY = Math.max(8, window.innerHeight - cardRect.height - 8);
+
+      setPosition((prev) => {
+        if (prev.x === null) return prev;
+        return {
+          x: Math.min(Math.max(prev.x, 8), maxX),
+          y: Math.min(Math.max(prev.y, 8), maxY),
+        };
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [position.x]);
+
+  const handleHeaderDoubleClick = () => {
+    setPosition({ x: null, y: null });
+  };
 
   const [messages, setMessages] = useState([
     {
@@ -128,11 +240,35 @@ export default function AIChatWidget({
       // Automatically speak the response if voice readback is enabled
       if (!tts.isMuted) {
         setSpeakingMessageId(aiMsgId);
-        tts.speak(aiResponseContent);
+        tts.speak(aiResponseContent, () => {
+          setSpeakingMessageId(null);
+          // Continuous Siri/Alexa turn-taking: If hands-free is enabled, auto-listen for follow-up query!
+          if (isHandsFree) {
+            setTimeout(() => {
+              if (!voiceRec.isListening) {
+                handleMicClick();
+              }
+            }, 350);
+          }
+        });
       }
     } catch (err) {
       console.error("AI Assistant Error:", err);
-      const fallbackContent = `Hi ${user?.name || "Candidate"}! I'm DHRUV. Based on your target domain (**${user?.field || "Software Engineering"}**), focus on applying to openings matching your core skills (${user?.skills?.slice(0, 3).join(", ") || "React"}).`;
+      const cleanInput = textToSend.replace(/[^a-z0-9\s]/gi, " ").trim().toLowerCase();
+      const isGreeting =
+        /^(hey|hi|hello|greetings|good\s*(morning|afternoon|evening)|howdy|sup|yo|what\s*s\s*up)\b/i.test(cleanInput) ||
+        cleanInput === "hey dhruv" ||
+        cleanInput === "hi dhruv" ||
+        cleanInput === "hello dhruv" ||
+        cleanInput === "dhruv" ||
+        cleanInput === "hey" ||
+        cleanInput === "hi" ||
+        cleanInput === "hello";
+      const displayName = user?.name && user.name.toLowerCase() !== "user" ? user.name.split(" ")[0] : (user?.name || "there");
+
+      const fallbackContent = isGreeting
+        ? `Hey **${displayName}**! 😊 Great to see you. How are you doing today? How can I help you on your career journey?`
+        : `Hi **${displayName}**! I'm DHRUV, your career coach. I'm right here to help you discover top jobs in **${user?.field || "Software Engineering"}**, analyze your skills, or practice for an interview!`;
       const fallbackId = Date.now().toString();
 
       setMessages((prev) => [
@@ -146,12 +282,21 @@ export default function AIChatWidget({
 
       if (!tts.isMuted) {
         setSpeakingMessageId(fallbackId);
-        tts.speak(fallbackContent);
+        tts.speak(fallbackContent, () => {
+          setSpeakingMessageId(null);
+          if (isHandsFree) {
+            setTimeout(() => {
+              if (!voiceRec.isListening) {
+                handleMicClick();
+              }
+            }, 350);
+          }
+        });
       }
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, tts, user]);
+  }, [input, isLoading, messages, tts, user, isHandsFree, voiceRec.isListening]);
 
   // Handle Speech-to-Text Microphone toggle
   const handleMicClick = () => {
@@ -167,16 +312,47 @@ export default function AIChatWidget({
       voiceRec.startListening({
         onResult: (finalText) => {
           if (finalText && finalText.trim()) {
-            setInput(finalText.trim());
-            // Auto-send voice question if it contains 2 or more words
-            if (finalText.trim().split(/\s+/).length >= 2) {
-              sendMessage(finalText.trim());
-            }
+            const cleanFinal = finalText.trim();
+            setInput(cleanFinal);
+            sendMessage(cleanFinal);
           }
         },
       });
     }
   };
+
+  // Handle auto-start voice or initial query when opened via wake word
+  useEffect(() => {
+    if (isOpen && initialQuery && initialQuery.trim()) {
+      sendMessage(initialQuery.trim());
+    } else if (isOpen && autoStartVoice && !voiceRec.isListening) {
+      const timer = setTimeout(() => {
+        handleMicClick();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, initialQuery, autoStartVoice]);
+
+  // Continuous wake word listening when DHRUV drawer is open and hands-free is enabled
+  useEffect(() => {
+    if (!isOpen || !isHandsFree || !voiceRec.isSupported || voiceRec.isListening) {
+      voiceRec.stopWakeWord();
+      return;
+    }
+
+    voiceRec.listenForWakeWord((promptAfterWake) => {
+      toast("DHRUV detected wake word! Listening...", { icon: "⚡" });
+      if (promptAfterWake && promptAfterWake.length > 2) {
+        sendMessage(promptAfterWake);
+      } else {
+        handleMicClick();
+      }
+    });
+
+    return () => {
+      voiceRec.stopWakeWord();
+    };
+  }, [isOpen, isHandsFree, voiceRec.isSupported, voiceRec.isListening]);
 
   // Toggle Hands-Free Wake Word Mode ("Hey Dhruv")
   const toggleHandsFree = () => {
@@ -203,16 +379,7 @@ export default function AIChatWidget({
       } catch (e) {
         console.warn(e);
       }
-      toast.success("Hands-free active! Say 'Hey Dhruv' to ask a question.");
-      voiceRec.listenForWakeWord((promptAfterWake) => {
-        toast("DHRUV detected wake word! Listening...", { icon: "⚡" });
-        if (promptAfterWake && promptAfterWake.length > 2) {
-          sendMessage(promptAfterWake);
-        } else {
-          // Trigger active mic listening for the follow-up prompt
-          handleMicClick();
-        }
-      });
+      toast.success("Hands-free active! Say 'Hey Dhruv' anytime to ask a question.");
     }
   };
 
@@ -262,6 +429,14 @@ export default function AIChatWidget({
           0%, 100% { opacity: 0.8; }
           50% { opacity: 1; }
         }
+        @keyframes dhruvWaveBar {
+          0%, 100% { transform: scaleY(0.35); opacity: 0.55; }
+          50% { transform: scaleY(1.35); opacity: 1; }
+        }
+        @keyframes dhruvSiriPulse {
+          0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.35), inset 0 0 15px rgba(129, 140, 248, 0.25); }
+          50% { box-shadow: 0 0 25px rgba(192, 132, 252, 0.55), inset 0 0 20px rgba(56, 189, 248, 0.45); }
+        }
       `}</style>
 
       {/* Floating Trigger Button */}
@@ -298,13 +473,16 @@ export default function AIChatWidget({
         </button>
       )}
 
-      {/* Expandable Chat Drawer */}
+      {/* Expandable Chat Drawer (Draggable & Movable) */}
       {isOpen && (
         <div
+          ref={cardRef}
           style={{
             position: "fixed",
-            bottom: "16px",
-            right: "16px",
+            left: position.x !== null ? `${position.x}px` : "auto",
+            top: position.y !== null ? `${position.y}px` : "auto",
+            bottom: position.y !== null ? "auto" : "16px",
+            right: position.x !== null ? "auto" : "16px",
             zIndex: 9999,
             width: "390px",
             maxWidth: "calc(100vw - 32px)",
@@ -313,25 +491,51 @@ export default function AIChatWidget({
             backgroundColor: "#ffffff",
             borderRadius: "24px",
             border: "1px solid #cbd5e1",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.22)",
+            boxShadow: isDragging
+              ? "0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(37, 99, 235, 0.35)"
+              : "0 20px 40px rgba(0, 0, 0, 0.22)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
             fontFamily: "Inter, system-ui, sans-serif",
+            userSelect: isDragging ? "none" : "auto",
+            transition: isDragging ? "none" : "box-shadow 0.2s ease",
           }}
         >
-          {/* Header */}
+          {/* Header (Drag Handle) */}
           <div
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+            onDoubleClick={handleHeaderDoubleClick}
+            title="Click & drag to move card • Double-click to reset position"
             style={{
+              position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "12px 16px",
-              backgroundColor: "#f8fafc",
+              padding: "14px 16px 10px",
+              backgroundColor: isDragging ? "#f1f5f9" : "#f8fafc",
               borderBottom: "1px solid #e2e8f0",
+              cursor: isDragging ? "grabbing" : "grab",
+              userSelect: "none",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* Drag Handle Bar Indicator */}
+            <div
+              style={{
+                position: "absolute",
+                top: "4px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "36px",
+                height: "4px",
+                borderRadius: "9999px",
+                backgroundColor: isDragging ? "#3b82f6" : "#cbd5e1",
+                transition: "background-color 0.15s ease",
+              }}
+            />
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", pointerEvents: "none" }}>
               <div
                 style={{
                   width: "36px",
@@ -356,12 +560,17 @@ export default function AIChatWidget({
             </div>
 
             {/* Header Audio & Voice Controls */}
-            <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+            <div
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              style={{ display: "flex", alignItems: "center", gap: "2px" }}
+            >
               {/* Hands-Free Wake Word Toggle */}
               {voiceRec.isSupported && (
                 <button
                   type="button"
                   onClick={toggleHandsFree}
+                  aria-label={isHandsFree ? "Disable hands-free wake word" : "Enable hands-free wake word"}
                   title={isHandsFree ? "Hands-Free Mode: ON (Say 'Hey Dhruv')" : "Enable Hands-Free Wake Word ('Hey Dhruv')"}
                   style={{
                     background: isHandsFree ? "#ecfdf5" : "transparent",
@@ -388,6 +597,7 @@ export default function AIChatWidget({
                 <button
                   type="button"
                   onClick={tts.toggleMute}
+                  aria-label={tts.isMuted ? "Unmute audio readback" : "Mute audio readback"}
                   title={tts.isMuted ? "Audio Readback: MUTED (click to unmute)" : "Audio Readback: ENABLED (click to mute)"}
                   style={{
                     background: "transparent",
@@ -407,6 +617,7 @@ export default function AIChatWidget({
               <button
                 type="button"
                 onClick={handleReset}
+                aria-label="Reset conversation"
                 title="Reset Conversation"
                 style={{
                   background: "transparent",
@@ -424,6 +635,7 @@ export default function AIChatWidget({
               <button
                 type="button"
                 onClick={handleClose}
+                aria-label="Close DHRUV assistant"
                 title="Close"
                 style={{
                   background: "transparent",
@@ -565,49 +777,50 @@ export default function AIChatWidget({
             <div ref={chatEndRef} />
           </div>
 
-          {/* Active Voice Listening Banner */}
+          {/* Active Voice Listening Banner (Siri / Alexa Voice Wave) */}
           {voiceRec.isListening && (
             <div
               style={{
-                backgroundColor: "#fef2f2",
-                borderTop: "1px solid #fecaca",
-                padding: "8px 14px",
+                background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
+                borderTop: "1px solid rgba(59, 130, 246, 0.4)",
+                padding: "9px 14px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                fontSize: "0.78rem",
-                color: "#991b1b",
+                fontSize: "0.8rem",
+                color: "#ffffff",
+                boxShadow: "0 -4px 14px rgba(37, 99, 235, 0.25)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: "#ef4444",
-                    display: "inline-block",
-                    animation: "dhruvGlow 1s infinite",
-                  }}
-                />
-                <span style={{ fontWeight: "600" }}>Listening...</span>
-                <span style={{ color: "#7f1d1d", fontStyle: "italic" }}>
-                  {voiceRec.interimTranscript ? `"${voiceRec.interimTranscript}"` : "Speak your question now"}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", overflow: "hidden" }}>
+                {/* Siri / Alexa animated frequency bars */}
+                <div style={{ display: "flex", alignItems: "center", gap: "3px", height: "18px" }}>
+                  <span style={{ width: "3px", height: "14px", backgroundColor: "#38bdf8", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out" }} />
+                  <span style={{ width: "3px", height: "20px", backgroundColor: "#818cf8", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.15s" }} />
+                  <span style={{ width: "3px", height: "12px", backgroundColor: "#c084fc", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.3s" }} />
+                  <span style={{ width: "3px", height: "16px", backgroundColor: "#34d399", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.2s" }} />
+                </div>
+                <span style={{ fontWeight: "700", color: "#38bdf8", fontSize: "0.78rem", letterSpacing: "0.2px" }}>Listening...</span>
+                <span style={{ color: "#e2e8f0", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "180px", fontSize: "0.78rem" }}>
+                  {voiceRec.interimTranscript ? `"${voiceRec.interimTranscript}"` : "Speak any query naturally"}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={voiceRec.stopListening}
                 style={{
-                  background: "transparent",
+                  background: "rgba(255, 255, 255, 0.15)",
                   border: "none",
-                  color: "#dc2626",
-                  fontWeight: "700",
+                  color: "#ffffff",
+                  fontWeight: "600",
                   cursor: "pointer",
-                  fontSize: "0.75rem",
+                  fontSize: "0.72rem",
+                  padding: "4px 9px",
+                  borderRadius: "6px",
+                  transition: "background 0.15s ease",
                 }}
               >
-                Stop
+                Done
               </button>
             </div>
           )}
@@ -648,6 +861,7 @@ export default function AIChatWidget({
                 type="button"
                 onClick={handleMicClick}
                 disabled={isLoading}
+                aria-label={voiceRec.isListening ? "Stop voice listening" : "Start voice speech recognition"}
                 title={voiceRec.isListening ? "Listening... Click to stop" : "Speak to DHRUV (Voice Command)"}
                 style={{
                   width: "34px",
@@ -673,6 +887,8 @@ export default function AIChatWidget({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
+              aria-label="Send message to DHRUV"
+              title="Send Message"
               style={{
                 width: "34px",
                 height: "34px",

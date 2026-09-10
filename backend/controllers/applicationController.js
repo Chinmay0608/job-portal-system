@@ -3,6 +3,7 @@ const Job = require("../models/job");
 const User = require("../models/user");
 const cloudinary = require("../config/cloudinary");
 const sendEmail = require("../utils/sendEmail");
+const { createNotification } = require("../utils/notify");
 const asyncHandler = require("express-async-handler");
 
 const applyJob = asyncHandler(async (req, res) => {
@@ -44,6 +45,19 @@ const applyJob = asyncHandler(async (req, res) => {
       job: jobId,
       resume: resumeUrl,
     });
+
+    // Notify recruiter if the job was posted by an internal recruiter
+    if (job.recruiter) {
+      createNotification({
+        recipient: job.recruiter,
+        sender: req.user.id || req.user._id,
+        type: "application_status",
+        title: "New Job Application Received",
+        message: `${currentUser.name || "A candidate"} applied for your position "${job.title}".`,
+        priority: "normal",
+        actionUrl: "/recruiter-applications",
+      }).catch((err) => console.warn("[Notification error]:", err.message));
+    }
 
     // Return sanitized updated user so frontend local state and storage can sync
     const updatedUser = {
@@ -239,6 +253,17 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     `;
 
   await sendEmail(application.candidate.email, emailSubject, emailHtml);
+
+  // Trigger in-app notification to candidate
+  createNotification({
+    recipient: application.candidate._id || application.candidate,
+    sender: req.user.id || req.user._id,
+    type: "application_status",
+    title: `Application Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    message: `Your application for "${application.job.title}" at ${application.job.company} has been updated to "${status}".`,
+    priority: status === "shortlisted" ? "high" : "normal",
+    actionUrl: "/my-applications",
+  }).catch((err) => console.warn("[Notification error]:", err.message));
 
   res
     .status(200)

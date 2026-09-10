@@ -28,6 +28,7 @@ const { GoogleGenAI } = require("@google/genai");
 const SupportTicket = require("../models/SupportTicket");
 const { resolve } = require("./ticketResolver");
 const { dispatch } = require("./ticketNotifier");
+const { createNotification } = require("../utils/notify");
 
 const AGENT_TIMEOUT_MS = 30_000;
 
@@ -264,6 +265,24 @@ async function _run(ticket) {
     addLog("email_dispatched", `to=${ticket.email} isHighSeverity=${isHighSeverity}`);
   } catch (emailErr) {
     addLog("email_error", String(emailErr.message).slice(0, 200));
+  }
+
+  // ── Step 4b: Dispatch in-app notification (if user is authenticated) ──
+  if (ticket.user) {
+    try {
+      await createNotification({
+        recipient: ticket.user,
+        sender: null,
+        type: "support_update",
+        title: `Support Ticket ${finalStatus === "resolved" ? "Resolved" : "Update"}: ${summary ? summary.slice(0, 80) : "Triage Complete"}`,
+        message: resolverMessage || `Your support ticket #${String(ticket._id).slice(-6)} has been updated to "${finalStatus}".`,
+        priority: isHighSeverity ? "high" : "normal",
+        actionUrl: "/help",
+      });
+      addLog("notification_created", `recipient=${ticket.user}`);
+    } catch (notifErr) {
+      addLog("notification_error", String(notifErr.message).slice(0, 200));
+    }
   }
 
   // ── Step 5: Flush agent log to DB ──

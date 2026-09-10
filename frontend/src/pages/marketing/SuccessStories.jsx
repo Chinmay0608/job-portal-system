@@ -1,5 +1,3 @@
-import "../../Styles/pages/marketing/SuccessStories.css";
-
 function SuccessStories() {
   const stories = [
     {

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { HiOutlineCog, HiOutlineOfficeBuilding, HiOutlineKey, HiOutlineDocumentText } from "react-icons/hi";
-import "../../Styles/pages/admin/AdminDashboard.css";
 
 function ConfigView() {
   const [companies, setCompanies] = useState([]);
@@ -22,8 +21,8 @@ function ConfigView() {
       const token = localStorage.getItem("token");
       
       const [compRes, confRes] = await Promise.all([
-        axios.get(\`\${import.meta.env.VITE_API_BASE_URL}/api/admin/companies\`, { headers: { Authorization: \`Bearer \${token}\` }}),
-        axios.get(\`\${import.meta.env.VITE_API_BASE_URL}/api/admin/config\`, { headers: { Authorization: \`Bearer \${token}\` }})
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/companies`, { headers: { Authorization: `Bearer ${token}` }}),
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/config`, { headers: { Authorization: `Bearer ${token}` }})
       ]);
       
       setCompanies(compRes.data || []);
@@ -43,9 +42,9 @@ function ConfigView() {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
     try {
       const token = localStorage.getItem("token");
-      await axios.put(\`\${import.meta.env.VITE_API_BASE_URL}/api/admin/companies/\${id}\`, 
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/companies/${id}`, 
         { status: newStatus },
-        { headers: { Authorization: \`Bearer \${token}\` }}
+        { headers: { Authorization: `Bearer ${token}` }}
       );
       toast.success("Company status updated!");
       setCompanies(prev => prev.map(c => c._id === id ? { ...c, status: newStatus } : c));
@@ -57,9 +56,9 @@ function ConfigView() {
   const handleConfigChange = async (key, newValue) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(\`\${import.meta.env.VITE_API_BASE_URL}/api/admin/config/\${key}\`, 
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/config/${key}`, 
         { value: newValue },
-        { headers: { Authorization: \`Bearer \${token}\` }}
+        { headers: { Authorization: `Bearer ${token}` }}
       );
       toast.success("Configuration saved.");
       setConfigs(prev => prev.map(c => c.key === key ? { ...c, value: newValue } : c));
@@ -69,59 +68,57 @@ function ConfigView() {
   };
 
   if (loading) {
-    return <div className="admin-tab-content"><div className="admin-loader">Loading system config...</div></div>;
+    return <div className="p-8 text-center text-sm font-semibold text-slate-400">Loading system config...</div>;
   }
 
   return (
-    <div className="admin-tab-content">
-      <div className="admin-header-area" style={{ marginBottom: '30px' }}>
-        <h2>Configuration & Registry</h2>
-        <p>Manage integrated companies and toggle global platform settings.</p>
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">Configuration & Registry</h2>
+        <p className="text-xs text-slate-500 mt-0.5">Manage integrated companies and toggle global platform settings.</p>
       </div>
 
-      <div className="admin-config-layout" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
-        
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Companies */}
-        <div className="admin-companies-section">
-          <div className="admin-table-container" style={{ marginBottom: 0 }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <HiOutlineOfficeBuilding size={24} color="#3b82f6" />
-              <h3 style={{ margin: 0 }}>Company Registry</h3>
-            </div>
-            <table className="admin-table">
-              <thead>
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center gap-2.5">
+            <HiOutlineOfficeBuilding size={22} className="text-brand-600" />
+            <h3 className="text-base font-black text-slate-900 m-0">Company Registry</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 sticky top-0">
                 <tr>
-                  <th>Company Name</th>
-                  <th>Provider ID</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th className="px-5 py-3">Company Name</th>
+                  <th className="px-5 py-3">Provider ID</th>
+                  <th className="px-5 py-3">Priority</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {companies.map(comp => (
-                  <tr key={comp._id}>
-                    <td className="fw-600">{comp.name}</td>
-                    <td style={{ color: '#6b7280', fontSize: '0.9rem' }}>{comp.providerId}</td>
-                    <td>{comp.priority}</td>
-                    <td>
-                      <span className={\`badge \${comp.status === 'active' ? 'active' : 'inactive'}\`}>
+                  <tr key={comp._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-3.5 font-bold text-slate-900">{comp.name}</td>
+                    <td className="px-5 py-3.5 text-xs text-slate-500">{comp.providerId}</td>
+                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-700">{comp.priority}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        comp.status === 'active' 
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}>
                         {comp.status}
                       </span>
                     </td>
-                    <td>
+                    <td className="px-5 py-3.5 text-right">
                       <button 
                         onClick={() => toggleCompanyStatus(comp._id, comp.status)}
-                        style={{
-                          background: comp.status === 'active' ? '#fee2e2' : '#dcfce7',
-                          color: comp.status === 'active' ? '#991b1b' : '#166534',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: '600',
-                          fontSize: '0.85rem'
-                        }}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg cursor-pointer transition-colors border-0 ${
+                          comp.status === 'active' 
+                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700' 
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                        }`}
                       >
                         {comp.status === 'active' ? 'Disable' : 'Enable'}
                       </button>
@@ -134,46 +131,45 @@ function ConfigView() {
         </div>
 
         {/* Right Column: Global Config */}
-        <div className="admin-settings-section">
-          <div className="admin-table-container">
-            <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <HiOutlineCog size={24} color="#8b5cf6" />
-              <h3 style={{ margin: 0 }}>Feature Flags</h3>
-            </div>
-            
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {configs.map(conf => (
-                <div key={conf.key} style={{ background: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
-                      <HiOutlineKey color="#6b7280" /> {conf.key}
-                    </div>
-                    {conf.value === 'true' || conf.value === 'false' ? (
-                      <select 
-                        value={conf.value} 
-                        onChange={(e) => handleConfigChange(conf.key, e.target.value)}
-                        style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db' }}
-                      >
-                        <option value="true">True</option>
-                        <option value="false">False</option>
-                      </select>
-                    ) : (
-                      <input 
-                        type="text" 
-                        value={conf.value} 
-                        onChange={(e) => setConfigs(prev => prev.map(c => c.key === conf.key ? { ...c, value: e.target.value } : c))}
-                        onBlur={(e) => handleConfigChange(conf.key, e.target.value)}
-                        style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', width: '80px', textAlign: 'center' }}
-                      />
-                    )}
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center gap-2.5">
+            <HiOutlineCog size={22} className="text-purple-600" />
+            <h3 className="text-base font-black text-slate-900 m-0">Feature Flags</h3>
+          </div>
+          
+          <div className="p-5 space-y-3.5">
+            {configs.map(conf => (
+              <div key={conf.key} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 truncate">
+                    <HiOutlineKey className="text-slate-400 shrink-0" /> 
+                    <span className="truncate">{conf.key}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.85rem', color: '#6b7280' }}>
-                    <HiOutlineDocumentText style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <p style={{ margin: 0 }}>{conf.description}</p>
-                  </div>
+                  {conf.value === 'true' || conf.value === 'false' ? (
+                    <select 
+                      value={conf.value} 
+                      onChange={(e) => handleConfigChange(conf.key, e.target.value)}
+                      className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg outline-none cursor-pointer"
+                    >
+                      <option value="true">True</option>
+                      <option value="false">False</option>
+                    </select>
+                  ) : (
+                    <input 
+                      type="text" 
+                      value={conf.value} 
+                      onChange={(e) => setConfigs(prev => prev.map(c => c.key === conf.key ? { ...c, value: e.target.value } : c))}
+                      onBlur={(e) => handleConfigChange(conf.key, e.target.value)}
+                      className="px-2.5 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg w-20 text-center outline-none"
+                    />
+                  )}
                 </div>
-              ))}
-            </div>
+                <div className="flex items-start gap-1.5 text-xs text-slate-500">
+                  <HiOutlineDocumentText className="mt-0.5 shrink-0 text-slate-400" />
+                  <p className="m-0 leading-relaxed">{conf.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

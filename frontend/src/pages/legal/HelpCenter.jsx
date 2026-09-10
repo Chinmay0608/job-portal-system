@@ -1,5 +1,3 @@
-import "../../Styles/pages/legal/HelpCenter.css";
-
 function HelpCenter() {
   const faqs = [
     {

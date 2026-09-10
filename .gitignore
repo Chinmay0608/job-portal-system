@@ -9,3 +9,8 @@ pagespeed_log.js
 
 backend/uploads/*.pdf
 backend/uploads/*.docx
+
+graphify-out/
+preview_job_alert_email.html
+__pycache__/
+*.pyc

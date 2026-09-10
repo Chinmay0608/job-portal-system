@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom";
-import "../Styles/components/Legal.css";
 
 function LegalLayout({ title, children }) {
   return (

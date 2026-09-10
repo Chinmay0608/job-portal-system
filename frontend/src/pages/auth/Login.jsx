@@ -8,8 +8,6 @@ import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
-import "../../Styles/pages/auth/Login.css";
-import "../../Styles/pages/auth/mobile-bridge.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -18,7 +16,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [loginRole, setLoginRole] = useState("candidate"); // Used for mobile UI context
+  const [loginRole, setLoginRole] = useState("candidate");
 
   const location = useLocation();
 
@@ -86,199 +84,118 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-      {/* LEFT — FORM CONTROL VIEWPORT */}
-      <div className="login-form-panel">
-        
-        {/* MOBILE SUSPENSION BRIDGE SVG (Hidden on Desktop) */}
-        <div className="mobile-bridge-svg-container">
-          <svg className="suspension-bridge-svg" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
-            {/* Left Tower */}
-            <line x1="40" y1="10" x2="40" y2="80" className="bridge-tower" />
-            <circle cx="40" cy="5" r="4" className="bridge-dot left-dot" />
-            {/* Right Tower */}
-            <line x1="260" y1="10" x2="260" y2="80" className="bridge-tower" />
-            <circle cx="260" cy="5" r="4" className="bridge-dot right-dot" />
-            {/* Left Cables */}
-            <line x1="40" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
-            <line x1="40" y1="35" x2="110" y2="75" className="bridge-cable cable-draw-2" />
-            <line x1="40" y1="55" x2="70" y2="75" className="bridge-cable cable-draw-3" />
-            {/* Right Cables */}
-            <line x1="260" y1="15" x2="150" y2="75" className="bridge-cable cable-draw-1" />
-            <line x1="260" y1="35" x2="190" y2="75" className="bridge-cable cable-draw-2" />
-            <line x1="260" y1="55" x2="230" y2="75" className="bridge-cable cable-draw-3" />
-            {/* Base Deck Line Removed to let card border act as the deck */}
-          </svg>
+    <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-5 animate-scale-up">
+        <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
+          <SkillBridgeLogo width={280} center />
         </div>
 
-        <div className="login-form-inner deck-card">
-          <div className="deck-header">SKILLBRIDGE DECK</div>
-          
-          <div className="login-brand" onClick={() => navigate("/")}>
-            <SkillBridgeLogo width={345} center />
+        <div className="text-center">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight m-0">Welcome Back</h1>
+          <p className="text-xs text-slate-500 mt-1 m-0">Find the job made for you!</p>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <button 
+            type="button"
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+              loginRole === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+            }`}
+            onClick={() => setLoginRole("candidate")}
+          >
+            <FaChessRook /> <span>Candidate</span>
+          </button>
+          <button 
+            type="button"
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+              loginRole === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+            }`}
+            onClick={() => setLoginRole("recruiter")}
+          >
+            <FaBuilding /> <span>Recruiter</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-xs active:scale-95"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+        >
+          <FcGoogle size={20} />
+          <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
+        </button>
+
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-slate-200"></div>
+          <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
+            <input
+              type="email"
+              placeholder="mail@website.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+            />
           </div>
 
-          <h1 className="login-title">Login</h1>
-          <p className="login-subtitle">Find the job made for you!</p>
-
-          {/* MOBILE ROLE SELECTOR (Hidden on Desktop) */}
-          <div className="mobile-role-selector">
-            <button 
-              type="button"
-              className={`role-segment ${loginRole === "candidate" ? "active" : ""}`}
-              onClick={() => setLoginRole("candidate")}
-            >
-              <span className="role-icon"><FaChessRook /></span> Candidate side
-            </button>
-            <button 
-              type="button"
-              className={`role-segment ${loginRole === "recruiter" ? "active" : ""}`}
-              onClick={() => setLoginRole("recruiter")}
-            >
-              <span className="role-icon"><FaBuilding /></span> Recruiter side
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="login-form">
-            <button
-              type="button"
-              className="login-google-btn"
-              onClick={handleGoogleLogin}
-              disabled={googleLoading}
-            >
-              <FcGoogle size={20} />
-              {googleLoading ? "Please wait..." : "Continue with Google"}
-            </button>
-
-            <div className="login-divider">
-              <span>or</span>
-            </div>
-
-            {/* EMAIL BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
-            <div className="login-input-group">
-              <label className="login-field-label">Email Address</label>
+          <div>
+            <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
+            <div className="relative">
               <input
-                type="email"
-                placeholder="mail@website.com"
-                className="login-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
+                className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
               />
-            </div>
-
-            {/* PASSWORD BLOCK WITH BOLD HIGH-CONTRAST LABEL */}
-            <div className="login-input-group">
-              <label className="login-field-label">Password</label>
-              <div className="password-input-wrapper" style={{ position: "relative", width: "100%" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter password"
-                  className="login-input"
-                  style={{ paddingRight: "40px" }}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  style={{
-                    position: "absolute",
-                    right: "4px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    color: "#4b5563",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "12px",
-                    minWidth: "44px",
-                    minHeight: "44px",
-                  }}
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <p className="login-forgot" style={{ textAlign: "right", margin: "4px 0 16px 0" }}>
-              <span className="forgot-password-link" onClick={() => navigate("/forgot-password")} style={{ fontSize: "13.5px" }}>
-                Forgot password?
-              </span>
-            </p>
-
-            <button type="submit" className="login-submit-btn" disabled={loading} aria-label="Log in">
-              {loading ? "Logging in..." : "Sign In"}
-            </button>
-
-            {/* STYLED TEXT SWITCHER SPAN */}
-            <p className="login-bottom-text">
-              <span className="desktop-link-text">Not registered? </span>
-              <span className="mobile-link-text">Not registered? </span>
-              <span className="link-action" onClick={() => navigate("/register", { state: { role: loginRole } })}>
-                Sign up
-              </span>
-            </p>
-          </form>
-        </div>
-      </div>
-
-      {/* RIGHT PANEL — ART SYSTEM CONTAINER */}
-      <div className="login-art-panel">
-        <div className="bg-circle bg-circle-1"></div>
-        <div className="bg-circle bg-circle-2"></div>
-
-        <div className="bg-square bg-square-1"></div>
-        <div className="bg-square bg-square-2"></div>
-
-        <div className="bg-dots bg-dots-1">
-          {[...Array(12)].map((_, i) => <span key={i}></span>)}
-        </div>
-
-        <div className="bg-dots bg-dots-2">
-          {[...Array(12)].map((_, i) => <span key={i}></span>)}
-        </div>
-
-        <div className="login-art-content">
-          <h2>
-            Find your next
-            <br />
-            opportunity.
-          </h2>
-
-          <p>
-            Discover jobs, connect with recruiters,
-            <br />
-            and build the career you deserve.
-          </p>
-
-          <div className="stats-container">
-            {/* TODO: These stats ("50K+ Jobs", "1K+ Recruiters", "20K+ Candidates") are currently hardcoded placeholders. 
-                They should be wired to a real API endpoint returning live counts, or explicitly relabeled as illustrative/example figures. */}
-            <div className="stats-card">
-              <div className="stats-icon pink">💼</div>
-              <h3>50K+</h3>
-              <span>Jobs</span>
-            </div>
-
-            <div className="stats-card">
-              <div className="stats-icon green">👥</div>
-              <h3>1K+</h3>
-              <span>Recruiters</span>
-            </div>
-
-            <div className="stats-card">
-              <div className="stats-icon blue">👤</div>
-              <h3>20K+</h3>
-              <span>Candidates</span>
+              <button
+                type="button"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+              </button>
             </div>
           </div>
-        </div>
+
+          <div className="text-right">
+            <span 
+              className="text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot password?
+            </span>
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50" 
+            disabled={loading} 
+            aria-label="Log in"
+          >
+            {loading ? "Logging in..." : "Sign In"}
+          </button>
+
+          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-2">
+            Not registered?{" "}
+            <span 
+              className="font-bold text-brand-600 hover:underline cursor-pointer" 
+              onClick={() => navigate("/register", { state: { role: loginRole } })}
+            >
+              Sign up
+            </span>
+          </p>
+        </form>
       </div>
     </div>
   );

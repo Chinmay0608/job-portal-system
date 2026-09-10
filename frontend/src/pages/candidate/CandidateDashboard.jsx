@@ -8,9 +8,29 @@ import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import "../../Styles/pages/candidate/CandidateDashboard.css";
+import StatusBadge from "../../Components/common/StatusBadge";
+import EmptyState from "../../Components/common/EmptyState";
+import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import { FiSearch, FiMapPin, FiBookmark } from "react-icons/fi";
 import { FaBookmark } from "react-icons/fa";
+import workChatSvg from "../../assets/undraw_work-chat_kw8x.svg";
+import {
+  getMyMessages,
+  markMessageAsRead,
+  markAllMessagesAsRead,
+  notifyMessagesUpdated,
+} from "../../Services/messageService";
+import {
+  Shield as ShieldIcon,
+  AlertTriangle as AlertTriangleIcon,
+  Megaphone as MegaphoneIcon,
+  CheckCheck as CheckCheckIcon,
+  Clock as ClockIcon,
+  Info as InfoIcon,
+  X as CloseIcon,
+  ChevronRight as ChevronRightIcon,
+  Inbox as InboxIcon,
+} from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
 const PROFILE_NUDGE_THRESHOLD = 30;
@@ -214,6 +234,14 @@ function CandidateDashboard() {
   // Post-Apply Feedback Loop State
   const [pendingFeedbackJob, setPendingFeedbackJob] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+  // Official Admin Communications & Announcements State
+  const [officialMessages, setOfficialMessages] = useState([]);
+  const [selectedOfficialMessage, setSelectedOfficialMessage] = useState(null);
+  const [unreadOfficialCount, setUnreadOfficialCount] = useState(0);
+  const [officialFilter, setOfficialFilter] = useState("all"); // "all" | "unread"
+  const [loadingOfficialMessages, setLoadingOfficialMessages] = useState(false);
+  const [showUrgentBanner, setShowUrgentBanner] = useState(true);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -705,130 +733,317 @@ function CandidateDashboard() {
     });
   };
 
+  // Fetch official messages from backend
+  const fetchOfficialMessages = useCallback(async () => {
+    setLoadingOfficialMessages(true);
+    try {
+      const res = await getMyMessages({ page: 1, limit: 50 });
+      if (res?.success) {
+        const msgs = res.messages || [];
+        setOfficialMessages(msgs);
+        const unread = typeof res.unreadCount === "number"
+          ? res.unreadCount
+          : msgs.filter((m) => !m.isRead).length;
+        setUnreadOfficialCount(unread);
+        if (msgs.length > 0) {
+          setSelectedOfficialMessage((prev) => {
+            if (prev) {
+              return msgs.find((m) => m._id === prev._id) || msgs[0];
+            }
+            return msgs[0];
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Failed fetching official communications:", err);
+    } finally {
+      setLoadingOfficialMessages(false);
+    }
+  }, []);
+
+  // Listen to URL ?tab=messages or ?tab=alerts
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+    if (tabParam === "messages" || tabParam === "alerts") {
+      setActiveTab("Messages");
+    }
+  }, [location.search]);
+
+  // Initial fetch and global event listeners for official messages
+  useEffect(() => {
+    fetchOfficialMessages();
+
+    const handleSync = (e) => {
+      if (typeof e.detail?.unreadCount === "number") {
+        setUnreadOfficialCount(e.detail.unreadCount);
+      } else {
+        fetchOfficialMessages();
+      }
+    };
+
+    window.addEventListener("skillbridge_official_messages_updated", handleSync);
+    return () => {
+      window.removeEventListener("skillbridge_official_messages_updated", handleSync);
+    };
+  }, [fetchOfficialMessages]);
+
+  const handleSelectOfficialMessage = (msg) => {
+    setSelectedOfficialMessage(msg);
+    setIsMobileDetailView(true);
+    if (!msg.isRead) {
+      // Optimistic update
+      setOfficialMessages((prev) =>
+        prev.map((m) => (m._id === msg._id ? { ...m, isRead: true } : m))
+      );
+      setUnreadOfficialCount((prev) => {
+        const next = Math.max(0, prev - 1);
+        notifyMessagesUpdated(next);
+        return next;
+      });
+      markMessageAsRead(msg._id).catch((err) => {
+        console.error("Failed marking official message as read:", err);
+      });
+    }
+  };
+
+  const handleMarkAllOfficialRead = async () => {
+    setOfficialMessages((prev) => prev.map((m) => ({ ...m, isRead: true })));
+    setUnreadOfficialCount(0);
+    notifyMessagesUpdated(0);
+    try {
+      await markAllMessagesAsRead();
+      toast.success("All messages marked as read");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  const renderPriorityBadge = (priority) => {
+    switch (priority) {
+      case "urgent":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <AlertTriangleIcon size={11} />
+            Urgent Action Required
+          </span>
+        );
+      case "announcement":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+            <MegaphoneIcon size={11} />
+            Platform Update
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-brand-700 border border-blue-200">
+            <InfoIcon size={11} />
+            Notice
+          </span>
+        );
+    }
+  };
+
+  const filteredOfficialMessages = officialMessages.filter((m) => {
+    if (officialFilter === "unread") return !m.isRead;
+    return true;
+  });
+
+  const urgentOfficialMessage = officialMessages.find(
+    (m) => !m.isRead && (m.priority === "urgent" || m.priority === "announcement")
+  );
+
   return (
-    <div className="ind-dashboard">
+    <div className="w-full min-h-screen bg-slate-50 font-sans pb-24">
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
       {jobLoadError && (
-        <div className="page-alert-wrap" style={{ display: "flex", justifyContent: "flex-end", padding: "0 24px", width: "100%" }}>
+        <div className="flex justify-end px-6 w-full mb-4">
           <RetryBanner message={jobLoadError} onRetry={retryFetchJobs} />
         </div>
       )}
       
-      <div className="ind-content-container">
-        {/* MOBILE HEADER BLOCK (DECK theme) */}
-        <div className="mobile-header-block">
-          <div className="mobile-header-row">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
+        {/* MOBILE HEADER BLOCK */}
+        <div className="block md:hidden mb-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="eyebrow-deck">WELCOME BACK</p>
-              <h2 className="ind-welcome-text-mobile">{user?.name?.split(" ")[0] || "Candidate"}</h2>
+              <p className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase m-0">WELCOME BACK</p>
+              <h2 className="text-xl font-black text-slate-900 m-0">{user?.name?.split(" ")[0] || "Candidate"}</h2>
             </div>
             {/* Circular Profile Completion Ring */}
             <div 
-              className="profile-completion-ring" 
+              className="w-11 h-11 rounded-full flex items-center justify-center p-0.5 cursor-pointer shadow-sm transition-transform active:scale-95" 
               onClick={() => navigate("/candidate-profile")}
               style={{ background: `conic-gradient(#2563eb ${profileCompletion}%, #e5e7eb 0)` }}
             >
-              <div className="ring-inner">
+              <div className="w-full h-full bg-white rounded-full flex items-center justify-center font-extrabold text-xs text-brand-600">
                 {profileCompletion}%
               </div>
             </div>
           </div>
-          <hr className="dashed-cable-divider" />
         </div>
+
+        {/* TOP SUMMARY BANNER FOR URGENT / UNREAD OFFICIAL COMMUNICATIONS */}
+        {unreadOfficialCount > 0 && showUrgentBanner && (
+          <div className={`mb-5 p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm ${
+            urgentOfficialMessage?.priority === "announcement"
+              ? "bg-purple-50 border-purple-200 text-purple-900"
+              : urgentOfficialMessage?.priority === "urgent"
+              ? "bg-rose-50 border-rose-200 text-rose-900"
+              : "bg-blue-50 border-blue-200 text-blue-900"
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center shrink-0 shadow-xs">
+                {urgentOfficialMessage?.priority === "urgent" ? (
+                  <AlertTriangleIcon size={18} className="text-rose-600" />
+                ) : urgentOfficialMessage?.priority === "announcement" ? (
+                  <MegaphoneIcon size={18} className="text-purple-600" />
+                ) : (
+                  <ShieldIcon size={18} className="text-blue-600" />
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-bold m-0 leading-tight">
+                  {urgentOfficialMessage?.priority === "urgent"
+                    ? `You have ${unreadOfficialCount} unread urgent notification${unreadOfficialCount > 1 ? "s" : ""} from administration`
+                    : `You have ${unreadOfficialCount} unread official announcement${unreadOfficialCount > 1 ? "s" : ""}`}
+                </h4>
+                <p className="text-xs text-slate-600 m-0 mt-0.5">
+                  {urgentOfficialMessage ? urgentOfficialMessage.title : "Check your official communications hub for critical platform updates."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                onClick={() => {
+                  setActiveTab("Messages");
+                  if (urgentOfficialMessage) {
+                    handleSelectOfficialMessage(urgentOfficialMessage);
+                  }
+                }}
+              >
+                <span>View Messages</span>
+                <ChevronRightIcon size={14} />
+              </button>
+              <button
+                type="button"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-white/60 transition-colors border-0 bg-transparent cursor-pointer"
+                onClick={() => setShowUrgentBanner(false)}
+                title="Dismiss alert banner"
+                aria-label="Dismiss banner"
+              >
+                <CloseIcon size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* SEARCH CONSOLE BAR */}
-        <div className="ind-search-bar">
-          <div className="ind-search-inner mobile-collapsed-trigger" onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}>
-            <div className="ind-input-wrapper">
-              <FiSearch className="ind-icon" />
-              <input
-                type="text"
-                placeholder="Job title, keywords, or company"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                readOnly={window.innerWidth <= 768} /* Prevent keyboard pop if just opening bottom sheet */
-              />
-            </div>
-            <div className="ind-input-divider desktop-only"></div>
-            <div className="ind-input-wrapper desktop-only">
-              <FiMapPin className="ind-icon" />
-              <input
-                type="text"
-                placeholder="India"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              />
-            </div>
-            <div className="ind-input-divider desktop-only"></div>
-            <div className="ind-input-wrapper desktop-only">
-              <CustomSelect
-                borderless
-                options={[
-                  { value: "", label: "All Experience" },
-                  { value: "Fresher", label: "Fresher" },
-                  { value: "0-2 Years", label: "0-2 Years" },
-                  { value: "2-5 Years", label: "2-5 Years" },
-                  { value: "5+ Years", label: "5+ Years" }
-                ]}
-                value={experienceFilter}
-                onChange={(e) => setExperienceFilter(e.target.value)}
-                placeholder="All Experience"
-                className="desktop-experience-select ind-select"
-              />
-            </div>
-
-            
-            <button 
-              className="ind-search-btn desktop-only"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentPage(1);
-                fetchJobs({
-                  searchTerm: search,
-                  locationTerm: locationFilter,
-                  experienceTerm: experienceFilter,
-                  salaryTerm: salaryFilter,
-                  companyTerm: companyFilter,
-                  sourceTerm: sourceFilter,
-                  employmentTerm: employmentTypeFilter,
-                  remoteTerm: isRemoteFilter,
-                  page: 1,
-                });
-              }}
+        {activeTab !== "Messages" && (
+          <div className="mb-6">
+            <div 
+              className="flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default" 
+              onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
             >
-              Find jobs
-            </button>
+              <div className="flex-1 flex items-center px-3 py-2 gap-2.5 min-w-0">
+                <FiSearch className="text-slate-400 text-lg shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Job title, keywords, or company"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  readOnly={window.innerWidth <= 768}
+                  className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
+                />
+              </div>
+              <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
+              <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
+                <FiMapPin className="text-slate-400 text-lg shrink-0" />
+                <input
+                  type="text"
+                  placeholder="India"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
+                />
+              </div>
+              <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
+              <div className="hidden md:flex w-52 items-center px-2">
+                <CustomSelect
+                  borderless
+                  options={[
+                    { value: "", label: "All Experience" },
+                    { value: "Fresher", label: "Fresher" },
+                    { value: "0-2 Years", label: "0-2 Years" },
+                    { value: "2-5 Years", label: "2-5 Years" },
+                    { value: "5+ Years", label: "5+ Years" }
+                  ]}
+                  value={experienceFilter}
+                  onChange={(e) => setExperienceFilter(e.target.value)}
+                  placeholder="All Experience"
+                  className="w-full text-sm"
+                />
+              </div>
+
+              <button 
+                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shrink-0 shadow-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPage(1);
+                  fetchJobs({
+                    searchTerm: search,
+                    locationTerm: locationFilter,
+                    experienceTerm: experienceFilter,
+                    salaryTerm: salaryFilter,
+                    companyTerm: companyFilter,
+                    sourceTerm: sourceFilter,
+                    employmentTerm: employmentTypeFilter,
+                    remoteTerm: isRemoteFilter,
+                    page: 1,
+                  });
+                }}
+              >
+                Find jobs
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
-        {isMobileSearchExpanded && (
-          <div className="mobile-search-overlay" onClick={() => setIsMobileSearchExpanded(false)}>
-            <div className="mobile-search-sheet" onClick={e => e.stopPropagation()}>
-              <div className="sheet-header">
-                <h3>Search Filters</h3>
-                <button className="sheet-close" onClick={() => setIsMobileSearchExpanded(false)}>✕</button>
+        {activeTab !== "Messages" && isMobileSearchExpanded && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-slide-in-right" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-base font-extrabold text-slate-900 m-0">Search Filters</h3>
+                <button className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center border-0 cursor-pointer" onClick={() => setIsMobileSearchExpanded(false)}>✕</button>
               </div>
-              <div className="sheet-body">
-                <div className="sheet-input-group">
-                  <FiSearch className="sheet-icon" />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl">
+                  <FiSearch className="text-slate-400 text-lg shrink-0" />
                   <input
                     type="text"
                     placeholder="Job title, keywords, or company"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-transparent border-0 outline-none text-sm text-slate-900"
                   />
                 </div>
-                <div className="sheet-input-group">
-                  <FiMapPin className="sheet-icon" />
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl">
+                  <FiMapPin className="text-slate-400 text-lg shrink-0" />
                   <input
                     type="text"
                     placeholder="City, state, zip code, or 'remote'"
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
+                    className="w-full bg-transparent border-0 outline-none text-sm text-slate-900"
                   />
                 </div>
-                <div className="sheet-input-group">
+                <div className="w-full">
                   <CustomSelect
                     options={[
                       { value: "", label: "All Experience" },
@@ -839,13 +1054,12 @@ function CandidateDashboard() {
                     ]}
                     value={experienceFilter}
                     onChange={(e) => setExperienceFilter(e.target.value)}
-                    className="ind-select sheet-select"
+                    className="w-full"
                   />
                 </div>
 
-                
                 <button 
-                  className="ind-primary-apply-btn sheet-search-btn"
+                  className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-md mt-2"
                   onClick={() => {
                     setIsMobileSearchExpanded(false);
                     setCurrentPage(1);
@@ -869,46 +1083,190 @@ function CandidateDashboard() {
           </div>
         )}
 
-        <div className={`ind-main-layout ${isMobileDetailView ? "mobile-detail-active" : ""}`}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div className="ind-list-column">
+          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 h-[calc(100vh-210px)] overflow-y-auto pr-0 lg:pr-2 pb-10 space-y-4`}>
             
             {/* SEGMENTED CONTROL ROW */}
-            <div className="segment-control-wrapper">
-              <div className="segment-control">
-                {["All Jobs", "Recommended", "Saved"].map(tab => (
+            <div className="mb-4">
+              <div className="grid grid-cols-4 p-1 bg-slate-100 rounded-full border border-slate-200">
+                {[
+                  { id: "All Jobs", label: "All Jobs" },
+                  { id: "Recommended", label: "Recommended" },
+                  { id: "Saved", label: "Saved" },
+                  { id: "Messages", label: "Messages", badge: unreadOfficialCount },
+                ].map((tab) => (
                   <button
-                    key={tab}
-                    className={`segment-btn ${activeTab === tab ? "active" : ""}`}
-                    onClick={() => setActiveTab(tab)}
+                    key={tab.id}
+                    className={`py-2 px-1 text-xs font-bold rounded-full transition-all cursor-pointer flex items-center justify-center gap-1 border-0 ${
+                      activeTab === tab.id
+                        ? "bg-brand-600 text-white shadow-xs"
+                        : "bg-transparent text-slate-600 hover:text-slate-900"
+                    }`}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsMobileDetailView(false);
+                    }}
                   >
-                    {tab}
+                    <span className="truncate">{tab.label}</span>
+                    {tab.badge > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                        activeTab === tab.id ? "bg-white text-brand-600" : "bg-rose-500 text-white"
+                      }`}>
+                        {tab.badge}
+                      </span>
+                    )}
                   </button>
                 ))}
-                <div 
-                  className="segment-indicator" 
-                  style={{ 
-                    transform: `translateX(${["All Jobs", "Recommended", "Saved"].indexOf(activeTab) * 100}%)` 
-                  }} 
-                />
               </div>
             </div>
             
+            {activeTab === "Messages" ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
+                  <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+                    <button
+                      type="button"
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-0 ${
+                        officialFilter === "all" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+                      }`}
+                      onClick={() => setOfficialFilter("all")}
+                    >
+                      All ({officialMessages.length})
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-0 ${
+                        officialFilter === "unread" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+                      }`}
+                      onClick={() => setOfficialFilter("unread")}
+                    >
+                      Unread ({unreadOfficialCount})
+                    </button>
+                  </div>
 
-            {loading ? (
-              <div className="ind-loader-box">
-                <div className="ind-spinner"></div>
-                <p>Loading your matches...</p>
+                  {unreadOfficialCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleMarkAllOfficialRead}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-transparent border-0 cursor-pointer"
+                    >
+                      <CheckCheckIcon size={14} />
+                      <span>Mark all read</span>
+                    </button>
+                  )}
+                </div>
+
+                {loadingOfficialMessages ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white animate-pulse space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                          <div className="h-3 bg-slate-200 rounded w-16"></div>
+                        </div>
+                        <div className="h-3 bg-slate-200 rounded w-1/4"></div>
+                        <div className="h-3 bg-slate-200 rounded w-3/4"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredOfficialMessages.length === 0 ? (
+                  <div className="text-center py-12 px-4 bg-white rounded-2xl border border-slate-200">
+                    <img
+                      src={workChatSvg}
+                      alt="No official communications"
+                      className="w-40 max-w-full mx-auto mb-4"
+                    />
+                    <h4 className="text-base font-bold text-slate-800 mb-1">
+                      {officialFilter === "unread" ? "No unread messages" : "No official messages"}
+                    </h4>
+                    <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                      {officialFilter === "unread"
+                        ? "You have read all official communications and announcements."
+                        : "Direct administrative messages, interview notifications, and platform alerts will appear here."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredOfficialMessages.map((msg) => {
+                      const isSelected = selectedOfficialMessage?._id === msg._id;
+                      return (
+                        <div
+                          key={msg._id}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                            !msg.isRead
+                              ? "bg-blue-50/40 border-blue-200 border-l-4 border-l-brand-600"
+                              : "bg-white border-slate-200 hover:border-blue-300"
+                          } ${
+                            isSelected ? "ring-2 ring-brand-500 shadow-sm" : "hover:shadow-sm"
+                          }`}
+                          onClick={() => handleSelectOfficialMessage(msg)}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {!msg.isRead && <span className="w-2 h-2 rounded-full bg-brand-600 shrink-0" />}
+                              <h4 className="text-sm font-bold text-slate-900 truncate m-0">{msg.title}</h4>
+                            </div>
+                            <span className="text-[11px] text-slate-400 whitespace-nowrap flex items-center gap-1 shrink-0">
+                              <ClockIcon size={11} />
+                              {getRelativeTime(msg.createdAt)}
+                            </span>
+                          </div>
+
+                          <div className="my-1.5">
+                            {renderPriorityBadge(msg.priority)}
+                          </div>
+
+                          <p className="text-xs text-slate-600 line-clamp-2 my-2 leading-relaxed">
+                            {msg.content}
+                          </p>
+
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                            <span className="flex items-center gap-1">
+                              <ShieldIcon size={13} className="text-brand-600" />
+                              <span className="font-medium">{msg.sender?.name || "SkillBridge Administration"}</span>
+                            </span>
+                            <span className="text-brand-600 font-bold">
+                              Read details &rarr;
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : loading ? (
+              <div className="w-full space-y-3 py-2">
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+                <JobCardSkeleton />
               </div>
             ) : displayedJobs.length === 0 ? (
-              <div className="ind-empty-box">
-                <span>📭</span>
-                <h4>No matching listings found</h4>
-                <p>Try modifying your parameters above.</p>
-              </div>
+              <EmptyState
+                illustration={workChatSvg}
+                title={activeTab === "saved" ? "No saved jobs yet" : "No matching jobs found"}
+                description={
+                  activeTab === "saved"
+                    ? "Bookmark jobs while browsing to review and apply to them later."
+                    : "We couldn't find any opportunities matching your criteria. Try loosening search terms or clearing filters."
+                }
+                actionText={activeTab === "saved" ? "Browse All Jobs" : "Clear Filters"}
+                onAction={
+                  activeTab === "saved"
+                    ? () => handleTabChange("all")
+                    : () => {
+                        setSearch("");
+                        setLocationFilter("");
+                        setRoleTypeFilter("");
+                        setRemoteFilter(false);
+                      }
+                }
+              />
             ) : (
               <>
-                <div className="ind-cards-stack">
+                <div className="space-y-3">
                   {visibleJobs.map((job) => {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
@@ -917,29 +1275,35 @@ function CandidateDashboard() {
                     return (
                       <div
                         key={job._id}
-                        className={`ind-job-card ${isSelected ? "active" : ""}`}
+                        className={`bg-white border rounded-2xl p-5 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-brand-500 ring-2 ring-brand-500/20 bg-blue-50/20 shadow-sm"
+                            : "border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
+                        }`}
                         onClick={() => handleJobSelect(job)}
                       >
-                        <div className="card-top-row">
-                          <div className="card-top-info">
-                            <h4 className="ind-card-title">{job.title}</h4>
-                            <div className="ind-card-company-row">
+                        <div className="flex items-start justify-between gap-3 mb-2.5">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-base font-bold text-slate-900 leading-snug tracking-tight mb-1 truncate">
+                              {job.title}
+                            </h4>
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-medium">
                               {job.companyLogo && (
                                 <img 
                                   src={job.companyLogo} 
                                   alt={job.company} 
-                                  className="ind-company-logo-sm"
+                                  className="w-4 h-4 object-contain rounded shrink-0"
                                   onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                               )}
-                              <p className="ind-card-company">
+                              <p className="truncate m-0">
                                 {job.company} &bull; {job.location}
                               </p>
                             </div>
                           </div>
                           
                           <button
-                            className="card-bookmark-btn"
+                            className="p-2 -mr-1 -mt-1 text-slate-400 hover:text-brand-600 transition-colors border-0 bg-transparent cursor-pointer rounded-lg hover:bg-slate-50 shrink-0"
                             aria-label="Save job"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -947,40 +1311,50 @@ function CandidateDashboard() {
                             }}
                           >
                             {user?.savedJobs?.some((savedJobId) => savedJobId?.toString() === job?._id) ? (
-                              <FaBookmark size={18} color="var(--job-primary-brand)" />
+                              <FaBookmark size={18} className="text-brand-600" />
                             ) : (
-                              <FiBookmark size={18} color="var(--job-primary-brand)" />
+                              <FiBookmark size={18} className="text-slate-400 hover:text-brand-600" />
                             )}
                           </button>
                         </div>
                         
-                        <div className="card-tags-group">
-                          <span className={`ind-card-tag ${matchInfo.score >= 80 ? "match-tag-high" : "match-tag-normal"}`}>
-                            ✨ {matchInfo.score}% Match
-                          </span>
+                        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                          <StatusBadge
+                            type="match"
+                            score={matchInfo.score}
+                            skillsCount={job.skills?.length || (Array.isArray(job.skillsRequired) ? job.skillsRequired.length : (job.skillsRequired ? 1 : 0))}
+                          />
 
                           {job.skills && job.skills.length > 0 ? (
-                            <span className="ind-card-tag skill-tag">{job.skills[0]}</span>
+                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                              {job.skills[0]}
+                            </span>
                           ) : (
-                            <span className="ind-card-tag skill-tag">{job.isExternal ? "External" : "Internal"}</span>
+                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                              {job.isExternal ? "External" : "Internal"}
+                            </span>
                           )}
                           
                           {job.isExternal && job.source && (
-                            <span className="ind-card-tag source-tag">
+                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                               via {capitalizeSource(job.source)}
                             </span>
                           )}
                           
                           {job.experience && job.experience !== "Fresher" ? (
-                            <span className="ind-card-tag exp-tag">{job.experience}</span>
+                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                              {job.experience}
+                            </span>
                           ) : (
-                            <span className="ind-card-tag exp-tag">Entry Level</span>
+                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                              Entry Level
+                            </span>
                           )}
                           
-                          {hasApplied && <span className="ind-card-tag applied-tag">Applied</span>}
+                          {hasApplied && <StatusBadge status="applied" size="sm" />}
                         </div>
                         
-                        <div className="ind-card-time">
+                        <div className="text-xs font-medium text-slate-400">
                           {getRelativeTime(job.createdAt)}
                         </div>
                       </div>
@@ -988,9 +1362,9 @@ function CandidateDashboard() {
                   })}
                 </div>
 
-                <div className="ind-pagination-wrapper">
+                <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl shadow-xs mt-4">
                   <button
-                    className="ind-pagination-btn"
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
                     disabled={currentPage <= 1}
                     onClick={() => {
                       const nextPage = Math.max(1, currentPage - 1);
@@ -1007,11 +1381,11 @@ function CandidateDashboard() {
                   >
                     Previous
                   </button>
-                  <span className="ind-pagination-info">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-600">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    className="ind-pagination-btn"
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
                     disabled={currentPage >= totalPages}
                     onClick={() => {
                       const nextPage = Math.min(totalPages, currentPage + 1);
@@ -1033,46 +1407,110 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div className="ind-detail-column">
-            {selectedJob ? (
-              <div className="ind-detail-sticky-wrapper">
-                <div className="ind-detail-header-card">
+          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:static lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] overflow-hidden flex flex-col`}>
+            {activeTab === "Messages" ? (
+              selectedOfficialMessage ? (
+                <div className="flex flex-col h-full overflow-hidden">
+                  <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                    <button
+                      className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
+                      onClick={() => setIsMobileDetailView(false)}
+                    >
+                      &larr; Back to Messages
+                    </button>
+
+                    <div className="flex items-center gap-2 mb-2">
+                      {renderPriorityBadge(selectedOfficialMessage.priority)}
+                      <span className="text-xs text-slate-400 flex items-center gap-1 ml-auto">
+                        <ClockIcon size={12} />
+                        {new Date(selectedOfficialMessage.createdAt).toLocaleString("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                    </div>
+
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                      {selectedOfficialMessage.title}
+                    </h2>
+
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 pb-3 border-b border-slate-100">
+                      <ShieldIcon size={16} className="text-brand-600" />
+                      <span>
+                        Dispatched by <strong className="text-slate-700">{selectedOfficialMessage.sender?.name || "SkillBridge Administration"}</strong>
+                        {selectedOfficialMessage.sender?.role && ` (${selectedOfficialMessage.sender.role.toUpperCase()})`}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-slate-700 bg-slate-50 p-5 rounded-2xl border border-slate-200 whitespace-pre-wrap leading-relaxed">
+                      {selectedOfficialMessage.content}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
+                      <span>Verified Platform Communication</span>
+                      {!selectedOfficialMessage.isRead && (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectOfficialMessage(selectedOfficialMessage)}
+                          className="text-brand-600 font-bold hover:underline bg-transparent border-0 cursor-pointer"
+                        >
+                          Mark as read
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center text-sm">
+                  <InboxIcon size={36} className="text-slate-300 mx-auto mb-2" />
+                  <p>Select an official communication from the list to view full details.</p>
+                </div>
+              )
+            ) : selectedJob ? (
+              <div className="flex flex-col h-full overflow-hidden">
+                {/* Header section */}
+                <div className="p-6 border-b border-slate-200 bg-white">
                   <button 
-                    className="mobile-back-btn"
+                    className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
                     onClick={() => setIsMobileDetailView(false)}
                   >
-                    ← Back to Jobs
+                    &larr; Back to Jobs
                   </button>
-                  <h3 className="ind-detail-main-title">{selectedJob.title}</h3>
-                  <div className="ind-detail-company-row">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-1">
+                    {selectedJob.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-1">
                     {selectedJob.companyLogo && (
                       <img 
                         src={selectedJob.companyLogo} 
                         alt={selectedJob.company} 
-                        className="ind-company-logo-md"
+                        className="w-7 h-7 object-contain rounded"
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     )}
-                    <p className="ind-detail-company-link">{selectedJob.company}</p>
+                    <p className="text-sm font-semibold text-slate-700 m-0">{selectedJob.company}</p>
                   </div>
-                  <p className="ind-detail-location-text">{selectedJob.location}</p>
-                  <p className="ind-detail-salary-text">
+                  <p className="text-xs text-slate-500 mb-1">{selectedJob.location}</p>
+                  <p className="text-base font-bold text-slate-900 mb-3">
                     {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}
                   </p>
                   
-                  <div className="ind-detail-tags-row">
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
                     {(() => {
                       const matchInfo = calculateJobMatchScore(selectedJob, user);
                       return (
                         <>
-                          <span className={`ind-card-tag ${matchInfo.score >= 80 ? "match-tag-high" : "match-tag-normal"}`}>
-                            ✨ {matchInfo.score}% Match ({user?.field || "Software Engineering"})
-                          </span>
+                          <StatusBadge
+                            type="match"
+                            score={matchInfo.score}
+                            skillsCount={selectedJob.skills?.length || (Array.isArray(selectedJob.skillsRequired) ? selectedJob.skillsRequired.length : (selectedJob.skillsRequired ? 1 : 0))}
+                            size="md"
+                          />
                           {matchInfo.matchedSkills.length > 0 && (
-                            <div className="ind-matched-skills-container">
-                              <span className="ind-matched-skills-label">Matched Skills:</span>
+                            <div className="w-full flex flex-wrap items-center gap-1.5 mt-1">
+                              <span className="text-xs font-bold text-slate-600">Matched Skills:</span>
                               {matchInfo.matchedSkills.map((sk) => (
-                                <span key={sk} className="ind-matched-skill-pill">
+                                <span key={sk} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-brand-700 border border-blue-200">
                                   ✓ {sk}
                                 </span>
                               ))}
@@ -1081,49 +1519,49 @@ function CandidateDashboard() {
                         </>
                       );
                     })()}
-                    <span className="ind-detail-pill">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                       💼 <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
                     </span>
                     {selectedJob.isExternal && (
-                      <span className="ind-card-tag exp-tag">
+                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                         External
                       </span>
                     )}
                     {selectedJob.isExternal && selectedJob.source && (
-                      <span className="ind-card-tag source-tag">
+                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                         via {capitalizeSource(selectedJob.source)}
                       </span>
                     )}
-                    <span className="ind-detail-time">
+                    <span className="text-xs text-slate-400 ml-auto">
                       {getRelativeTime(selectedJob.createdAt)}
                     </span>
                   </div>
 
-                  <div className="ind-actions-row">
+                  {/* Action buttons */}
+                  <div className="pt-2">
                     {selectedJob.expiresAt && new Date(selectedJob.expiresAt) < new Date() ? (
-                      <button className="ind-applied-status-btn expired" disabled>
+                      <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-rose-100 text-rose-800 border border-rose-200 cursor-not-allowed" disabled>
                         This job is no longer available
                       </button>
                     ) : appliedJobs?.includes(selectedJob._id) ? (
-                      <button className="ind-applied-status-btn" disabled>
+                      <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" disabled>
                         Applied Already
                       </button>
                     ) : resumeChoiceMode ? (
-                      // Ask whether to reuse the saved profile resume or upload a different one
-                      <div className="ind-resume-choice-box">
-                        <p className="ind-resume-choice-text">
+                      <div className="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl w-full">
+                        <p className="text-sm font-bold text-slate-800 mb-3">
                           Use your saved resume for this application?
                         </p>
-                        <div className="ind-resume-choice-actions">
+                        <div className="flex flex-wrap gap-2.5">
                           <button
-                            className="ind-resume-choice-yes"
+                            className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all disabled:opacity-50 border-0"
                             onClick={handleUseSavedResume}
                             disabled={fetchingSavedResume}
                           >
                             {fetchingSavedResume ? "Loading..." : "Yes, use saved resume"}
                           </button>
                           <button
-                            className="ind-resume-choice-no"
+                            className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-all disabled:opacity-50"
                             onClick={handleUseDifferentResume}
                             disabled={fetchingSavedResume}
                           >
@@ -1132,31 +1570,34 @@ function CandidateDashboard() {
                         </div>
                       </div>
                     ) : showApplyPanel ? (
-                      <div className="ind-inline-uploader-box">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 p-3 bg-slate-50 border-2 border-dashed border-brand-500 rounded-2xl w-full">
                         <input
                           type="file"
                           accept=".pdf,.doc,.docx"
                           onChange={(e) => setResumeFile(e.target.files[0])}
+                          className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 flex-1"
                         />
-                        <button 
-                          className="ind-inline-submit-btn" 
-                          onClick={() => submitApplication()}
-                          disabled={applying}
-                        >
-                          {applying ? "Sending..." : "Submit Application"}
-                        </button>
-                        <button 
-                          className="ind-inline-cancel-btn"
-                          onClick={resetApplyState}
-                        >
-                          ✕
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all disabled:opacity-50 border-0" 
+                            onClick={() => submitApplication()}
+                            disabled={applying}
+                          >
+                            {applying ? "Sending..." : "Submit Application"}
+                          </button>
+                          <button 
+                            className="p-2 text-slate-400 hover:text-rose-600 bg-transparent border-0 cursor-pointer font-bold"
+                            onClick={resetApplyState}
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="flex items-center gap-3">
                         {!externalApplyActive ? (
                           <button 
-                            className="ind-primary-apply-btn"
+                            className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0"
                             onClick={handleApplyNowClick}
                           >
                             Apply Now
@@ -1164,13 +1605,13 @@ function CandidateDashboard() {
                         ) : (
                           <>
                             <button 
-                              className="ind-primary-apply-btn btn-success"
+                              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0"
                               onClick={handleManualTrack}
                             >
                               Mark as Applied
                             </button>
                             <button 
-                              className="ind-secondary-action-btn"
+                              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-sm rounded-xl cursor-pointer transition-all border border-slate-300"
                               onClick={handleApplyNowClick}
                             >
                               Open Again
@@ -1179,12 +1620,12 @@ function CandidateDashboard() {
                         )}
                         <button
                           type="button"
-                          className={`ind-detail-save-btn ${
+                          className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all cursor-pointer ${
                             user?.savedJobs?.some(
                               (savedJobId) => savedJobId?.toString() === selectedJob?._id
                             )
-                              ? "saved"
-                              : ""
+                              ? "bg-rose-50 border-rose-200 text-rose-600"
+                              : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
                           }`}
                           onClick={() => handleToggleSave(selectedJob._id)}
                           aria-label={
@@ -1208,16 +1649,16 @@ function CandidateDashboard() {
                   </div>
                 </div>
 
-                <div className="ind-detail-scroll-body">
-                  
-                  {/* GLASS-DOOR STYLE QUALIFICATIONS MATCH BOX */}
-                  <div className="ind-qualifications-box">
-                    <h4 className="ind-qualifications-heading">Your qualifications for this job</h4>
+                {/* Scroll body */}
+                <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                  {/* Qualifications match box */}
+                  <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <h4 className="text-sm font-bold text-slate-900 mb-3">Your qualifications for this job</h4>
                     
-                    <div className="ind-qualifications-list">
+                    <div className="space-y-2.5">
                       {selectedJob.educationRequired && (
-                        <div className="ind-qualification-item">
-                          <span className="ind-check-icon match">✓</span>
+                        <div className="flex items-start gap-2.5 text-xs text-slate-700 font-medium leading-normal">
+                          <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</span>
                           <span>{selectedJob.educationRequired}</span>
                         </div>
                       )}
@@ -1226,50 +1667,56 @@ function CandidateDashboard() {
                          selectedJob.skillsRequired.map((skill, idx) => {
                             const isMatch = user?.skills?.map(s => s.toLowerCase()).includes(skill.toLowerCase());
                             return (
-                                <div key={idx} className="ind-qualification-item">
-                                  <span className={`ind-check-icon ${isMatch ? 'match' : 'unmatched'}`}>
-                                    {isMatch ? '✓' : '○'}
+                                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 font-medium leading-normal">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
+                                    isMatch ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
+                                  }`}>
+                                    {isMatch ? "✓" : "○"}
                                   </span>
                                   <span>{skill}</span>
                                 </div>
                             );
                          })
                       ) : (
-                         <div className="ind-qualification-item">
-                           <span className="ind-check-icon match">✓</span>
+                         <div className="flex items-start gap-2.5 text-xs text-slate-700 font-medium leading-normal">
+                           <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">✓</span>
                            <span>{selectedJob.experienceRequired || "Entry Level"}</span>
                          </div>
                       )}
                     </div>
                   </div>
 
-                  <h4 className="ind-body-section-heading" style={{ marginTop: '24px' }}>Full Job Description</h4>
-                  
-                  <div className={`ind-description-container ${isDescriptionExpanded ? 'expanded' : 'collapsed'}`}>
-                    <div className="ind-description-content">
-                      {selectedJob.isExternal ? (
-                        renderExternalDescription(selectedJob.description)
-                      ) : (
-                        <div>
-                          {selectedJob.description.split('\n').map((p, i) => (
-                            <p key={i}>{p}</p>
-                          ))}
-                        </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-3">Full Job Description</h4>
+                    
+                    <div className={`relative overflow-hidden transition-all duration-300 ${isDescriptionExpanded ? "max-h-none" : "max-h-96"}`}>
+                      <div className="text-sm text-slate-700 leading-relaxed space-y-3 prose prose-slate max-w-none">
+                        {selectedJob.isExternal ? (
+                          renderExternalDescription(selectedJob.description)
+                        ) : (
+                          <div>
+                            {selectedJob.description.split('\n').map((p, i) => (
+                              <p key={i} className="mb-2">{p}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {!isDescriptionExpanded && (
+                        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                       )}
                     </div>
-                    {!isDescriptionExpanded && <div className="ind-fade-overlay"></div>}
-                  </div>
 
-                  <button 
-                    className="ind-show-more-btn"
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  >
-                    {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
-                  </button>
+                    <button 
+                      className="mt-3 text-brand-600 hover:text-brand-700 font-bold text-xs flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    >
+                      {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="ind-no-selection-placeholder">
+              <div className="flex items-center justify-center h-full text-slate-400 p-8 text-center text-sm">
                 <p>Select a job listing entry to view comprehensive insights here.</p>
               </div>
             )}
@@ -1279,40 +1726,40 @@ function CandidateDashboard() {
 
       {/* ONE-TIME PROFILE COMPLETION NUDGE MODAL */}
       {showProfileNudge && (
-        <div className="ind-nudge-overlay" onClick={() => setShowProfileNudge(false)}>
-          <div className="ind-nudge-card" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[1000] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowProfileNudge(false)}>
+          <div className="w-full max-w-md bg-white rounded-3xl p-7 text-center relative shadow-2xl border border-slate-100 animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
             <button
-              className="ind-nudge-close"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-400 flex items-center justify-center border-0 cursor-pointer transition-colors"
               onClick={() => setShowProfileNudge(false)}
               aria-label="Close"
             >
               ✕
             </button>
 
-            <span className="ind-nudge-icon">📋</span>
-            <h3 className="ind-nudge-title">Complete your profile to get matched</h3>
-            <p className="ind-nudge-text">
-              Your profile is only <strong>{profileCompletion}% complete</strong>.
-              Add a few more details — like your skills and resume — so we can
+            <span className="text-4xl mb-3 block">📋</span>
+            <h3 className="text-xl font-black text-slate-900 mb-2">Complete your profile to get matched</h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
+              Your profile is only <strong className="text-slate-900">{profileCompletion}% complete</strong>.
+              Add a few more details &mdash; like your skills and resume &mdash; so we can
               recommend jobs that actually fit you.
             </p>
 
-            <div className="ind-nudge-progress-bar">
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
               <div
-                className="ind-nudge-progress-fill"
+                className="h-full bg-brand-600 rounded-full transition-all duration-500"
                 style={{ width: `${profileCompletion}%` }}
               />
             </div>
 
-            <div className="ind-nudge-actions">
+            <div className="flex flex-col gap-2.5">
               <button
-                className="ind-nudge-primary-btn"
+                className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0"
                 onClick={() => navigate("/candidate-profile")}
               >
                 Complete my profile
               </button>
               <button
-                className="ind-nudge-ghost-btn"
+                className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 bg-transparent border-0 cursor-pointer transition-colors"
                 onClick={() => setShowProfileNudge(false)}
               >
                 Maybe later
@@ -1324,31 +1771,29 @@ function CandidateDashboard() {
 
       {/* POST-APPLY FEEDBACK MODAL */}
       {showFeedbackModal && pendingFeedbackJob && (
-        <div className="ind-nudge-overlay" onClick={closeFeedbackModal}>
-          <div className="ind-nudge-card" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
-            <span className="ind-nudge-icon">👋</span>
-            <h3 className="ind-nudge-title">Welcome back!</h3>
-            <p className="ind-nudge-text">
-              Did you apply for the <strong>{pendingFeedbackJob.title}</strong> role at {pendingFeedbackJob.company}?
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[1000] flex items-center justify-center p-4 animate-fade-in" onClick={closeFeedbackModal}>
+          <div className="w-full max-w-md bg-white rounded-3xl p-7 text-center relative shadow-2xl border border-slate-100 animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
+            <span className="text-4xl mb-3 block">👋</span>
+            <h3 className="text-xl font-black text-slate-900 mb-2">Welcome back!</h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+              Did you apply for the <strong className="text-slate-900">{pendingFeedbackJob.title}</strong> role at {pendingFeedbackJob.company}?
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+            <div className="flex flex-col gap-2.5">
               <button 
-                className="ind-primary-apply-btn" 
+                className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0" 
                 onClick={handleFeedbackYes}
-                style={{ width: "100%" }}
               >
                 Yes, I applied
               </button>
               <button 
-                className="ind-nudge-ghost-btn" 
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-colors border-0" 
                 onClick={handleFeedbackNo}
-                style={{ width: "100%" }}
               >
                 No, I didn't apply
               </button>
               <button 
-                className="ind-nudge-danger-btn"
+                className="w-full py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-transparent hover:bg-rose-50 rounded-xl cursor-pointer transition-colors border-0"
                 onClick={handleFeedbackHide}
               >
                 Not a fit / Hide this job

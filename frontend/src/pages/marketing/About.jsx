@@ -1,5 +1,3 @@
-import "../../Styles/pages/marketing/About.css";
-
 function About() {
   return (
     <div className="about-page">

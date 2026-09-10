@@ -6,7 +6,6 @@ import {
   FaLaptopCode,
   FaBuilding,
 } from "react-icons/fa";
-import "../../Styles/pages/marketing/SalaryData.css";
 
 function SalaryData() {
   const navigate = useNavigate();

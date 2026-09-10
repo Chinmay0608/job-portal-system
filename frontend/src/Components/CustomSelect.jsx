@@ -7,57 +7,59 @@ const getCustomStyles = (borderless) => ({
     backgroundColor: borderless ? 'transparent' : '#ffffff',
     borderColor: borderless 
       ? 'transparent' 
-      : state.isFocused ? '#2563eb' : '#e5e7eb',
+      : state.isFocused ? '#3b82f6' : '#e2e8f0',
     boxShadow: borderless 
       ? 'none' 
-      : state.isFocused ? '0 0 0 2px rgba(37, 99, 235, 0.15)' : 'none',
+      : state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none',
     '&:hover': {
       borderColor: borderless 
         ? 'transparent' 
-        : state.isFocused ? '#2563eb' : '#d1d5db',
+        : state.isFocused ? '#3b82f6' : '#cbd5e1',
     },
-    borderRadius: borderless ? '999px' : '0.625rem',
-    minHeight: '42px',
+    borderRadius: borderless ? '9999px' : '0.75rem',
+    minHeight: '44px',
     cursor: 'pointer',
+    transition: 'all 150ms ease-in-out',
   }),
   valueContainer: (provided) => ({
     ...provided,
-    padding: borderless ? '0 4px' : '0 10px',
+    padding: borderless ? '0 4px' : '0 12px',
   }),
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected 
-      ? '#2563eb' 
+      ? '#3b82f6' 
       : state.isFocused 
-        ? '#eff6ff' 
+        ? '#eef2ff' 
         : '#ffffff',
     color: state.isSelected 
       ? '#ffffff' 
       : state.isFocused 
-        ? '#2563eb' 
-        : '#1f2937',
+        ? '#1d4ed8' 
+        : '#0f172a',
     cursor: 'pointer',
-    padding: '9px 14px',
+    padding: '10px 14px',
     margin: '2px 0',
     borderRadius: '8px',
-    fontSize: '0.92rem',
+    fontSize: '0.875rem',
     fontWeight: state.isSelected ? '600' : '500',
-    transition: 'background-color 0.15s ease, color 0.15s ease',
+    transition: 'background-color 150ms ease, color 150ms ease',
     '&:active': {
-      backgroundColor: '#2563eb',
+      backgroundColor: '#1d4ed8',
       color: '#ffffff',
     },
   }),
   menu: (provided) => ({
     ...provided,
     borderRadius: '16px',
-    border: 'none',
-    boxShadow: '0 16px 44px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04)',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
     padding: '6px',
     overflow: 'hidden',
     marginTop: '6px',
+    backgroundColor: '#ffffff',
     zIndex: 99999,
-    animation: 'dropdownRollDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+    animation: 'dropdownRollDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
     transformOrigin: 'top center',
   }),
   menuList: (provided) => ({
@@ -70,14 +72,14 @@ const getCustomStyles = (borderless) => ({
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: '#1f2937',
+    color: '#0f172a',
     fontWeight: 500,
-    fontSize: '0.93rem',
+    fontSize: '0.875rem',
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#6b7280',
-    fontSize: '0.93rem',
+    color: '#64748b',
+    fontSize: '0.875rem',
     fontWeight: 400,
   }),
   indicatorSeparator: () => ({
@@ -85,12 +87,12 @@ const getCustomStyles = (borderless) => ({
   }),
   dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: state.isFocused ? '#2563eb' : '#9ca3af',
-    padding: '4px 6px',
-    transition: 'color 0.4s ease, transform 0.4s ease',
+    color: state.isFocused ? '#3b82f6' : '#94a3b8',
+    padding: '4px 8px',
+    transition: 'color 150ms ease, transform 200ms ease',
     transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     '&:hover': {
-      color: '#2563eb',
+      color: '#3b82f6',
     },
   }),
 });
@@ -104,23 +106,28 @@ const CustomSelect = ({
   isSearchable = false, 
   isDisabled = false, 
   name,
-  borderless = false
+  borderless = false,
+  "aria-label": ariaLabel,
 }) => {
   const selectedOption = options?.find(opt => opt.value === value) || null;
 
   return (
-    <Select
-      className={className}
-      styles={getCustomStyles(borderless)}
-      options={options}
-      value={selectedOption}
-      onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
-      placeholder={placeholder}
-      isSearchable={isSearchable}
-      isDisabled={isDisabled}
-      name={name}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-    />
+    <div className={`relative ${className || ''}`}>
+      <Select
+        aria-label={ariaLabel || placeholder}
+        className="focus:ring-2 focus:ring-brand-500 rounded-xl"
+        classNamePrefix="custom-select"
+        styles={getCustomStyles(borderless)}
+        options={options}
+        value={selectedOption}
+        onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
+        placeholder={placeholder}
+        isSearchable={isSearchable}
+        isDisabled={isDisabled}
+        name={name}
+        menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      />
+    </div>
   );
 };
 

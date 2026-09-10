@@ -6,6 +6,41 @@ const getSpeechRecognitionClass = () => {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 };
 
+// Play crystal-clear Siri/Alexa-style ascending wake chime using native Web Audio API
+export const playWakeChime = () => {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+
+    // Tone 1: 587.33 Hz (D5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+    gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.12);
+
+    // Tone 2: 880 Hz (A5)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+    gain2.gain.setValueAtTime(0.09, ctx.currentTime + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.26);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.08);
+    osc2.stop(ctx.currentTime + 0.26);
+  } catch (e) {
+    // Gracefully handle browser audio restrictions
+  }
+};
+
 export default function useVoiceRecognition() {
   const [isListening, setIsListening] = useState(false);
   const [isWakeListening, setIsWakeListening] = useState(false);
@@ -37,8 +72,16 @@ export default function useVoiceRecognition() {
     setInterimTranscript("");
   }, []);
 
+  const wakeRestartTimerRef = useRef(null);
+  const activeWakeRef = useRef(false);
+
   // Stop wake word listening
   const stopWakeWord = useCallback(() => {
+    activeWakeRef.current = false;
+    if (wakeRestartTimerRef.current) {
+      clearTimeout(wakeRestartTimerRef.current);
+      wakeRestartTimerRef.current = null;
+    }
     if (wakeRecognitionRef.current) {
       try {
         wakeRecognitionRef.current.onend = null;
@@ -117,7 +160,6 @@ export default function useVoiceRecognition() {
             setError("Microphone permission denied");
             toast.error("Microphone access was blocked. Please enable microphone permissions in your browser address bar.");
           } else if (event.error === "no-speech") {
-            // Non-critical, user just didn't speak
             setError("No speech detected");
           } else if (event.error === "network") {
             setError("Network error in speech recognition");
@@ -151,72 +193,99 @@ export default function useVoiceRecognition() {
 
       stopWakeWord();
       stopListening();
+      activeWakeRef.current = true;
       onWakeDetectedCallbackRef.current = onWakeWordDetected;
 
-      try {
-        const wakeRec = new SpeechRecognitionClass();
-        wakeRec.lang = "en-US";
-        wakeRec.continuous = true;
-        wakeRec.interimResults = true;
-        wakeRec.maxAlternatives = 1;
+      const startWakeSession = () => {
+        if (!activeWakeRef.current || !SpeechRecognitionClass) return;
 
-        wakeRec.onstart = () => {
-          setIsWakeListening(true);
-        };
+        if (wakeRestartTimerRef.current) {
+          clearTimeout(wakeRestartTimerRef.current);
+          wakeRestartTimerRef.current = null;
+        }
 
-        wakeRec.onresult = (event) => {
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const text = (event.results[i][0]?.transcript || "").trim().toLowerCase();
+        try {
+          const wakeRec = new SpeechRecognitionClass();
+          wakeRec.lang = "en-US";
+          wakeRec.continuous = true;
+          wakeRec.interimResults = true;
+          wakeRec.maxAlternatives = 1;
 
-            // Match wake words
-            const isWakeMatch =
-              /^(hey\s+dhruv|dhruv|ok\s+dhruv|hello\s+dhruv)/i.test(text) ||
-              text.includes("hey dhruv") ||
-              text.includes("ok dhruv") ||
-              text.includes("ask dhruv");
-
-            if (isWakeMatch) {
-              console.log("[VoiceRecognition] Wake word recognized:", text);
-              // Stop wake recognition to free mic for the real prompt
-              stopWakeWord();
-              if (onWakeDetectedCallbackRef.current) {
-                // Extract any prompt query uttered after the wake word
-                const cleanQuery = text
-                  .replace(/^(hey\s+dhruv|ok\s+dhruv|hello\s+dhruv|dhruv|ask\s+dhruv)[,.]?\s*/i, "")
-                  .trim();
-                onWakeDetectedCallbackRef.current(cleanQuery);
-              }
-              break;
+          wakeRec.onstart = () => {
+            if (activeWakeRef.current) {
+              setIsWakeListening(true);
             }
-          }
-        };
+          };
 
-        wakeRec.onerror = (event) => {
-          if (event.error === "not-allowed") {
-            setIsWakeListening(false);
-            console.warn("[VoiceRecognition] Wake word mic permission denied.");
-          }
-        };
+          wakeRec.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const rawText = (event.results[i][0]?.transcript || "").trim();
+              if (!rawText) continue;
 
-        wakeRec.onend = () => {
-          // Restart wake listener if it ended unexpectedly and still marked as wake listening
-          if (wakeRecognitionRef.current) {
-            try {
-              wakeRec.start();
-            } catch {
+              // Clean text: strip punctuation and collapse whitespace so 'Hey, Dhruv!' becomes 'hey dhruv'
+              const cleanText = rawText.toLowerCase().replace(/[^a-z0-9\s]/gi, " ").replace(/\s+/g, " ").trim();
+
+              // Flexible regex: matches 'hey dhruv', 'hi dhruv', 'hello dhruv', 'ok dhruv', 'dhruv',
+              // as well as common speech engine phonetics for 'Dhruv' ('druv', 'dhruva', 'drew', 'droov', 'dhrub', 'dhru', 'dhroov')
+              const WAKE_PATTERN = /\b(hey|hi|hello|ok|okay|ask)?\s*(dhruv|druv|dhruva|drew|droov|dhrub|dhru|dhroov)\b/i;
+
+              if (WAKE_PATTERN.test(cleanText)) {
+                console.log("[VoiceRecognition] Wake word recognized:", rawText);
+                playWakeChime();
+                stopWakeWord();
+                if (onWakeDetectedCallbackRef.current) {
+                  // Extract any question/query spoken after the wake word
+                  const cleanQuery = cleanText.replace(WAKE_PATTERN, "").trim();
+                  onWakeDetectedCallbackRef.current(cleanQuery);
+                }
+                break;
+              }
+            }
+          };
+
+          wakeRec.onerror = (event) => {
+            console.debug("[VoiceRecognition] Wake event error:", event.error);
+            if (event.error === "not-allowed") {
+              activeWakeRef.current = false;
+              setIsWakeListening(false);
+              toast.error("Microphone access is blocked. Please allow microphone permission in your browser address bar to use 'Hey Dhruv'.", {
+                id: "dhruv-mic-denied",
+                duration: 6000,
+              });
+            }
+          };
+
+          wakeRec.onend = () => {
+            wakeRecognitionRef.current = null;
+            if (activeWakeRef.current) {
+              // Rapidly recreate and restart session after an 80ms tick for zero-lag responsiveness
+              wakeRestartTimerRef.current = setTimeout(() => {
+                if (activeWakeRef.current) {
+                  startWakeSession();
+                }
+              }, 80);
+            } else {
               setIsWakeListening(false);
             }
+          };
+
+          wakeRecognitionRef.current = wakeRec;
+          wakeRec.start();
+        } catch (err) {
+          console.warn("[VoiceRecognition] Could not start wake word session:", err);
+          if (activeWakeRef.current) {
+            wakeRestartTimerRef.current = setTimeout(() => {
+              if (activeWakeRef.current) {
+                startWakeSession();
+              }
+            }, 200);
           } else {
             setIsWakeListening(false);
           }
-        };
+        }
+      };
 
-        wakeRecognitionRef.current = wakeRec;
-        wakeRec.start();
-      } catch (err) {
-        console.warn("[VoiceRecognition] Could not start wake word detection:", err);
-        setIsWakeListening(false);
-      }
+      startWakeSession();
     },
     [isSupported, SpeechRecognitionClass, stopWakeWord, stopListening]
   );

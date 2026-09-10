@@ -5,11 +5,13 @@ import {
   RefreshCcw, ChevronLeft, ChevronRight, CheckCircle2, Clock, Database, 
   TrendingUp, CircleDot, Briefcase, ServerCrash, Home, Trash2,
   UserCheck, UserX, ExternalLink, Shield, ShieldAlert, Cpu, AlertTriangle, Sparkles,
-  BookMarked, MousePointerClick, LifeBuoy
+  BookMarked, MousePointerClick, LifeBuoy, Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import SupportTicketsView from './SupportTicketsView';
+import AdminMessagesView from './AdminMessagesView';
+import { TableRowSkeleton } from '../../Components/common/SkeletonLoader';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -295,12 +297,12 @@ const UsersView = ({ users, loading, onRefresh, onToggleRole, onDeleteUser }) =>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
-                    <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-blue-600" />
-                    Loading users...
-                  </td>
-                </tr>
+                <>
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                </>
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map(u => {
                   const isAdmin = u.role === 'admin' || u.email?.toLowerCase() === 'admin@gmail.com';
@@ -448,12 +450,12 @@ const JobsView = ({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
-                    <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-blue-600" />
-                    Loading jobs registry...
-                  </td>
-                </tr>
+                <>
+                  <TableRowSkeleton columns={6} />
+                  <TableRowSkeleton columns={6} />
+                  <TableRowSkeleton columns={6} />
+                  <TableRowSkeleton columns={6} />
+                </>
               ) : jobs.length > 0 ? (
                 jobs.map(j => (
                   <tr key={j._id} className="hover:bg-slate-50/80 transition-colors">
@@ -606,12 +608,12 @@ const ApplicationsView = ({ applications, loading, onRefresh }) => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
-                    <RefreshCcw size={24} className="animate-spin mx-auto mb-2 text-blue-600" />
-                    Loading applications...
-                  </td>
-                </tr>
+                <>
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                  <TableRowSkeleton columns={4} />
+                </>
               ) : filteredApps.length > 0 ? (
                 filteredApps.map(app => (
                   <tr key={app._id} className="hover:bg-slate-50/80 transition-colors">
@@ -1389,6 +1391,7 @@ const AdminDashboard = () => {
             <SidebarItem icon={<Briefcase size={18} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
             <SidebarItem icon={<BookMarked size={18} />} label="Candidate Activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
             <SidebarItem icon={<LifeBuoy size={18} />} label="Reported Issues" active={activeTab === 'support'} onClick={() => setActiveTab('support')} />
+            <SidebarItem icon={<Send size={18} />} label="Direct Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
           </nav>
           
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 mt-8 px-3">Security & AI</div>
@@ -1436,6 +1439,7 @@ const AdminDashboard = () => {
                activeTab === 'applications' ? 'Applications' : 
                activeTab === 'activity' ? 'Candidate Activity' : 
                activeTab === 'support' ? 'Reported Issues' : 
+               activeTab === 'messages' ? 'Direct Messages' : 
                activeTab === 'security' ? 'Security Audit' : 
                activeTab === 'ai' ? 'AI Analytics' : 'Configuration'}
             </span>
@@ -1509,6 +1513,8 @@ const AdminDashboard = () => {
             <CandidateActivityView activityData={activityData} loading={loadingActivity} onRefresh={fetchActivity} />
           ) : activeTab === 'support' ? (
             <SupportTicketsView key={supportRefreshKey} />
+          ) : activeTab === 'messages' ? (
+            <AdminMessagesView />
           ) : activeTab === 'security' ? (
             <SecurityAuditView securityData={securityData} loading={loadingSecurity} onRefresh={fetchSecurity} />
           ) : activeTab === 'ai' ? (

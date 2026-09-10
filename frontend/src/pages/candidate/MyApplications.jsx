@@ -3,7 +3,10 @@ import RetryBanner from "../../Components/RetryBanner";
 import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-import "../../Styles/pages/candidate/MyApplications.css";
+import StatusBadge from "../../Components/common/StatusBadge";
+import EmptyState from "../../Components/common/EmptyState";
+import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
+import undrawResumeSvg from "../../assets/undraw_resume_jrgi.svg";
 
 function MyApplications() {
   const [applications, setApplications] = useState([]);
@@ -87,19 +90,23 @@ function MyApplications() {
   });
 
   return (
-    <div className="applications-page">
-      <div className="applications-header">
-        <h1>My Applications</h1>
-        <p>Track your applied jobs and status</p>
+    <div className="max-w-[1250px] mx-auto min-h-[60vh] px-4 sm:px-7 pt-7 pb-28">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-1.5">My Applications</h1>
+        <p className="text-sm sm:text-base text-slate-500">Track your applied jobs and status</p>
       </div>
 
-      {/* TABS (Item 7 & 8) */}
+      {/* TABS */}
       {!loading && applications.length > 0 && (
-        <div className="applications-tabs">
+        <div className="flex justify-center gap-3 mb-7 flex-wrap">
           {["All", "Pending", "Shortlisted", "Selected", "Rejected"].map(tab => (
             <button
               key={tab}
-              className={`app-tab-btn ${filter === tab ? "active" : ""}`}
+              className={`px-4 py-2 rounded-full font-semibold text-sm cursor-pointer transition-all duration-200 border ${
+                filter === tab
+                  ? "bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-500/20"
+                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
               onClick={() => setFilter(tab)}
             >
               {tab}
@@ -111,43 +118,52 @@ function MyApplications() {
       {fetchError && <RetryBanner message={fetchError} onRetry={() => fetchApplications()} />}
 
       {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-dark" role="status" />
-          <p className="mt-3 text-muted">Loading applications...</p>
+        <div className="space-y-4 max-w-4xl mx-auto py-6" role="status" aria-label="Loading applications">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
         </div>
       ) : applications.length === 0 ? (
-        <div className="empty-applications">
-          <div className="empty-icon">📁</div>
-          <h2>You haven't applied to any jobs yet</h2>
-          <p>Start applying to jobs and track them here.</p>
-          <Link to="/candidate-dashboard" className="browse-jobs-btn">Browse Jobs</Link>
-        </div>
+        <EmptyState
+          illustration={undrawResumeSvg}
+          title="You haven't applied to any jobs yet"
+          description="Start applying to verified positions across top companies and track your application milestones here."
+          actionText="Browse Jobs"
+          actionHref="/candidate-dashboard"
+        />
       ) : (
-        <div className="applications-list-container">
-          <div className="applications-grid">
+        <div className="flex flex-col items-center w-full">
+          <div className="flex flex-wrap gap-5 justify-center w-full max-w-[900px]">
             {filteredApplications.map((application) => {
               if (!application?.job) return null;
 
               return (
-                <div key={application._id} className="application-card">
-                  <div className="job-info-section">
-                    <div className="job-header-row">
-                      {/* Avatar / Logo (Item 2) */}
+                <div
+                  key={application._id}
+                  className="w-full bg-white rounded-2xl p-6 border border-slate-200 border-l-4 border-l-brand-600 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                >
+                  <div>
+                    <div className="flex items-start gap-4 mb-4">
+                      {/* Avatar / Logo */}
                       {application.job.companyLogo ? (
-                        <img src={application.job.companyLogo} alt="Logo" className="company-avatar" />
+                        <img
+                          src={application.job.companyLogo}
+                          alt="Logo"
+                          className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100"
+                        />
                       ) : (
-                        <div className="company-avatar fallback">
+                        <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xl uppercase shrink-0">
                           {application.job.company?.charAt(0) || "C"}
                         </div>
                       )}
                       
-                      <div className="job-title-group">
-                        <h2 className="job-name">{application.job.title}</h2>
-                        <div className="company-meta-row">
-                          <p className="company-name">{application.job.company}</p>
-                          {/* External Badge (Item 3) */}
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-1 truncate">{application.job.title}</h2>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <p className="text-slate-600 text-sm font-medium m-0">{application.job.company}</p>
+                          {/* External Badge */}
                           {application.job.isExternal && (
-                            <span className="external-badge">
+                            <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded border border-slate-200 uppercase tracking-wide">
                               External 
                               {application.job.source && application.job.source !== 'INTERNAL' 
                                 ? ` • via ${application.job.source}` 
@@ -158,39 +174,36 @@ function MyApplications() {
                       </div>
                     </div>
 
-                    <p className="job-location">📍 {application.job.location}</p>
-                    {/* Fixed currency bug (Item 1) */}
-                    <p className="job-salary">{formatSalary(application.job)}</p>
-                    <p className="applied-date">
+                    <p className="text-slate-700 text-sm mb-2 flex items-center gap-1">📍 {application.job.location}</p>
+                    <p className="text-base sm:text-lg font-bold text-emerald-600 mb-2">{formatSalary(application.job)}</p>
+                    <p className="text-xs text-slate-500 m-0">
                       Applied on {formatDate(application.createdAt)}
                     </p>
                   </div>
 
-                  <div className="status-wrapper">
-                    {/* READ-ONLY status badge — only recruiters can change application status */}
-                    <span className={`status-badge ${application.status?.toLowerCase()}`}>
-                      {application.status
-                        ? application.status.charAt(0).toUpperCase() + application.status.slice(1).replace(/_/g, " ")
-                        : "Pending"}
-                    </span>
+                  <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 flex-wrap">
+                    {/* READ-ONLY status badge */}
+                    <StatusBadge status={application.status || "pending"} size="md" />
 
-                    <div className="action-buttons">
+                    <div className="flex items-center gap-3">
                       {application.resume && (
                         <a
                           href={`${API_URL}/api/applications/${application._id}/resume?token=${localStorage.getItem("token") || ""}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="resume-btn"
+                          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-colors text-center cursor-pointer no-underline"
+                          aria-label={`View resume for ${application.job.title}`}
                         >
                           View Resume
                         </a>
                       )}
                       
-                      {/* Outlined Withdraw button (Item 5) */}
+                      {/* Outlined Withdraw button */}
                       <button
-                        className="withdraw-btn-outline"
+                        className="px-3.5 py-1.5 bg-transparent text-rose-600 border border-rose-500 hover:bg-rose-50 rounded-lg font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center"
                         onClick={() => handleWithdraw(application._id, application.job.title)}
                         disabled={deletingId === application._id}
+                        aria-label={`Withdraw application for ${application.job.title}`}
                       >
                         {deletingId === application._id ? "..." : "Withdraw"}
                       </button>
@@ -201,16 +214,25 @@ function MyApplications() {
             })}
             
             {filteredApplications.length === 0 && filter !== "All" && (
-              <div className="empty-applications" style={{gridColumn: '1 / -1', minHeight: '30vh'}}>
-                <h2>No {filter.toLowerCase()} applications</h2>
-                <p>You don't have any applications with this status.</p>
+              <div className="w-full col-span-full py-8">
+                <EmptyState
+                  title={`No ${filter} applications`}
+                  description={`You do not have any applications currently marked as "${filter}".`}
+                  actionText="View All Applications"
+                  onAction={() => setFilter("All")}
+                />
               </div>
             )}
           </div>
           
-          {/* Global Browse Jobs CTA (Item 6) */}
-          <div className="browse-more-container">
-            <Link to="/candidate-dashboard" className="browse-jobs-btn-secondary">Explore More Jobs</Link>
+          {/* Global Browse Jobs CTA */}
+          <div className="mt-10 text-center pb-10">
+            <Link
+              to="/candidate-dashboard"
+              className="inline-block bg-white text-brand-600 border-2 border-brand-600 hover:bg-brand-600 hover:text-white px-6 py-2.5 rounded-xl font-bold transition-colors no-underline"
+            >
+              Explore More Jobs
+            </Link>
           </div>
         </div>
       )}

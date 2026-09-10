@@ -1,4 +1,3 @@
-import "../../Styles/pages/marketing/Blog.css";
 import { useNavigate } from "react-router-dom";
 
 function Blog() {
@@ -74,7 +73,7 @@ function Blog() {
 
           <h2>
             Hiring trends, startup stories,
-            career tips & tech updates —
+            career tips &amp; tech updates —
             delivered weekly.
           </h2>
 
