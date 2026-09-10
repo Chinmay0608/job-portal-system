@@ -121,32 +121,63 @@ async function notifySpamClosed(ticket) {
   await sendEmail(ticket.email, subject, htmlShell("Submission Received", body));
 }
 
-// ─── Admin escalation email ───────────────────────────────────────────────────
+// ─── Admin escalation & new ticket notification email ─────────────────────────
 
 /**
- * escalateToAdmin
- * CC'd to ADMIN_ALERT_EMAIL for any high-severity ticket, regardless of resolution outcome.
+ * notifyAdminNewTicket
+ * Dispatched to ADMIN_ALERT_EMAIL for all non-spam tickets so admins are immediately informed.
  */
-async function escalateToAdmin(ticket) {
-  if (!ADMIN_ALERT_EMAIL) return;
+async function notifyAdminNewTicket(ticket, outcome) {
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.EMAIL_USER || "admin@gmail.com";
+  if (!adminEmail) return;
 
   const ticketRef = `#${String(ticket._id).slice(-8).toUpperCase()}`;
-  const subject = `🔴 High-Severity Ticket — Immediate Review Required [${ticketRef}]`;
+  const isHigh = outcome.isHighSeverity || ticket.severity === "high";
+  const subject = `${isHigh ? "🔴 [HIGH PRIORITY]" : "🎫 [NEW TICKET]"} Issue Raised [${ticketRef}] — ${ticket.category || "Support"}`;
 
   const body = `
-    <p><strong>A high-severity support ticket has been submitted and requires immediate admin review.</strong></p>
+    <p><strong>A new issue ticket has been raised on SkillBridge and requires attention.</strong></p>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;">
-      <tr style="background:#fef2f2;"><td style="padding:8px 12px;border:1px solid #fecaca;font-weight:600;width:130px;">Ticket ID</td><td style="padding:8px 12px;border:1px solid #fecaca;font-family:monospace;">${ticketRef}</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Reporter Email</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.email}</td></tr>
-      <tr style="background:#fafafa;"><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Category</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.category}</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Page URL</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-family:monospace;">${ticket.pageUrl || "—"}</td></tr>
-      <tr style="background:#fafafa;"><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">AI Summary</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.aiSummary || "Not available"}</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;vertical-align:top;">Description</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.description}</td></tr>
+      <tr style="background:${isHigh ? "#fef2f2" : "#f8fafc"};">
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;width:130px;">Ticket Ref</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-family:monospace;font-weight:bold;">${ticketRef}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Reporter Email</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.email}</td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Status</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:bold;color:${outcome.finalStatus === 'resolved' ? '#16a34a' : '#2563eb'};">
+          ${outcome.finalStatus.toUpperCase()}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Severity / Category</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.severity?.toUpperCase() || "NORMAL"} &nbsp;|&nbsp; ${ticket.category || "General"}</td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">Page URL</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-family:monospace;">${ticket.pageUrl || "—"}</td>
+      </tr>
+      ${ticket.aiSummary ? `
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;">AI Summary</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.aiSummary}</td>
+      </tr>` : ""}
+      <tr style="background:#fafafa;">
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;vertical-align:top;">Description</td>
+        <td style="padding:8px 12px;border:1px solid #e2e8f0;">${ticket.description}</td>
+      </tr>
     </table>
-    <p>Please log in to the Admin Dashboard → Support Tickets to review and act on this ticket.</p>
+    <p style="margin-top:18px;">
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/dashboard" style="display:inline-block;padding:10px 20px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:13px;">
+        Open Admin Support Desk &rarr;
+      </a>
+    </p>
   `;
 
-  await sendEmail(ADMIN_ALERT_EMAIL, subject, htmlShell("🔴 High-Severity Alert", body));
+  await sendEmail(adminEmail, subject, htmlShell(isHigh ? "🔴 High-Severity Alert" : "🎫 New Ticket Raised", body));
 }
 
 // ─── Public interface ─────────────────────────────────────────────────────────
@@ -175,9 +206,9 @@ async function dispatch(ticket, outcome) {
     emailPromises.push(notifyInProgress(ticket));
   }
 
-  // Admin escalation for high severity (always, regardless of resolution)
-  if (isHighSeverity) {
-    emailPromises.push(escalateToAdmin(ticket));
+  // Admin notification email: for all non-spam tickets so admins are alerted
+  if (!isSpam) {
+    emailPromises.push(notifyAdminNewTicket(ticket, outcome));
   }
 
   // Fire both in parallel — failures are caught by the caller
