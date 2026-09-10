@@ -362,16 +362,6 @@ function Navbar() {
             </Link>
           )}
 
-          {(!isLoggedIn || isHome) && (
-            <Link
-              to="/login"
-              className="mobile-header-login-btn"
-              aria-label="Login"
-            >
-              Login
-            </Link>
-          )}
-
           <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle navigation">
             {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
@@ -381,9 +371,13 @@ function Navbar() {
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           {(!isLoggedIn || isHome) ? (
             <div className="auth-buttons">
-              {!isHome && (
+              {!isHome ? (
                 <Link className="nav-tab-link mobile-only-tab" to="/" style={{ padding: "8px 0", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
                   <FiHome size={18} /> Home
+                </Link>
+              ) : (
+                <Link className="nav-tab-link mobile-only-tab" to="/salary-data">
+                  Salary guide
                 </Link>
               )}
               <Link className="login-btn nav-hover" to="/login">Login</Link>
