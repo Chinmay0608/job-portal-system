@@ -49,6 +49,13 @@ export const postAIChatMessage = async (messages) => {
   return response.data;
 };
 
+export const postAIFeedback = async ({ prompt, response, rating }) => {
+  const res = await api.post("/api/jobs/ai-chat/feedback", { prompt, response, rating });
+  return res.data;
+};
+
+
+
 export const getRecruiterJobs = async () => (await api.get("/api/jobs/my-jobs")).data;
 export const getRecommendedJobs = async () => (await api.get("/api/jobs/recommended")).data;
 

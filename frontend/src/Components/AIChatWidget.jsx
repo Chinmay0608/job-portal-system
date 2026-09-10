@@ -9,13 +9,16 @@ import {
   Radio, 
   Sparkles,
   Play,
-  Square
+  Square,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { postAIChatMessage } from "../Services/jobService";
+import { postAIChatMessage, postAIFeedback } from "../Services/jobService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
 import dhruvAvatar from "../assets/dhruv_avatar.png";
+
 
 const SUGGESTION_CHIPS = [
   "Analyze my skill gaps",
@@ -66,6 +69,9 @@ export default function AIChatWidget({
   });
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [showVoicePicker, setShowVoicePicker] = useState(false);
+  // Keyed by message id → "positive" | "negative" | null
+  const [messageFeedback, setMessageFeedback] = useState({});
+
 
 
   // Dragging and movable card state
@@ -411,6 +417,27 @@ export default function AIChatWidget({
       },
     ]);
   };
+
+  // Submit thumbs-up / thumbs-down feedback for an assistant message
+  const handleFeedback = useCallback(async (msg, rating) => {
+    // Find the user prompt that immediately preceded this assistant message
+    const msgIndex = messages.findIndex((m) => m.id === msg.id);
+    const precedingUser = msgIndex > 0 ? messages.slice(0, msgIndex).reverse().find((m) => m.role === "user") : null;
+    const prompt = precedingUser?.content || "Candidate query";
+
+    // Optimistic UI update
+    setMessageFeedback((prev) => ({ ...prev, [msg.id]: rating }));
+
+
+    try {
+      await postAIFeedback({ prompt, response: msg.content, rating });
+    } catch {
+      // Silently revert on failure so the UX isn't broken
+      setMessageFeedback((prev) => ({ ...prev, [msg.id]: null }));
+    }
+  }, [messages]);
+
+
 
   // Close widget & clean up voice
   const handleClose = () => {
@@ -793,9 +820,10 @@ export default function AIChatWidget({
                 >
                   {renderFormattedContent(m.content)}
 
-                  {/* Audio Listen / Pause Button for Assistant Messages */}
+                  {/* Audio + Feedback actions for Assistant Messages */}
                   {m.role === "assistant" && !m.isWelcome && tts.isSupported && (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", gap: "6px" }}>
+                      {/* Listen / Stop */}
                       <button
                         type="button"
                         onClick={() => handleToggleSpeakMessage(m.id, m.content)}
@@ -827,8 +855,86 @@ export default function AIChatWidget({
                           </>
                         )}
                       </button>
+
+                      {/* Thumbs Feedback */}
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        {[
+                          { rating: "positive", Icon: ThumbsUp,   activeColor: "#16a34a", label: "Helpful"     },
+                          { rating: "negative", Icon: ThumbsDown, activeColor: "#dc2626", label: "Not helpful" },
+                        ].map(({ rating, Icon, activeColor, label }) => {
+                          const current = messageFeedback[m.id];
+                          const isSelected = current === rating;
+                          const isDisabled = !!current;
+                          return (
+                            <button
+                              key={rating}
+                              type="button"
+                              title={label}
+                              disabled={isDisabled}
+                              onClick={() => !isDisabled && handleFeedback(m, rating)}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "26px",
+                                height: "26px",
+                                borderRadius: "50%",
+                                border: `1px solid ${isSelected ? activeColor : "#e2e8f0"}`,
+                                background: isSelected ? `${activeColor}18` : "#ffffff",
+                                color: isSelected ? activeColor : "#94a3b8",
+                                cursor: isDisabled ? "default" : "pointer",
+                                transition: "all 0.15s ease",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Icon size={11} />
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
+
+                  {/* Non-TTS fallback: still show feedback buttons */}
+                  {m.role === "assistant" && !m.isWelcome && !tts.isSupported && (
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px", gap: "4px" }}>
+                      {[
+                        { rating: "positive", Icon: ThumbsUp,   activeColor: "#16a34a", label: "Helpful"     },
+                        { rating: "negative", Icon: ThumbsDown, activeColor: "#dc2626", label: "Not helpful" },
+                      ].map(({ rating, Icon, activeColor, label }) => {
+                        const current = messageFeedback[m.id];
+                        const isSelected = current === rating;
+                        const isDisabled = !!current;
+                        return (
+                          <button
+                            key={rating}
+                            type="button"
+                            title={label}
+                            disabled={isDisabled}
+                            onClick={() => !isDisabled && handleFeedback(m, rating)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "26px",
+                              height: "26px",
+                              borderRadius: "50%",
+                              border: `1px solid ${isSelected ? activeColor : "#e2e8f0"}`,
+                              background: isSelected ? `${activeColor}18` : "#ffffff",
+                              color: isSelected ? activeColor : "#94a3b8",
+                              cursor: isDisabled ? "default" : "pointer",
+                              transition: "all 0.15s ease",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Icon size={11} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+
 
                   {/* Suggestion Chips on Welcome message */}
                   {m.isWelcome && (

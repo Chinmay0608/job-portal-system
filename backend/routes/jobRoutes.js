@@ -22,6 +22,9 @@ const {
   getSyncStatus,
 } = require("../controllers/jobController");
 
+const { submitAiFeedback } = require("../controllers/feedbackController");
+
+
 const router = express.Router();
 
 /* ==========================
@@ -48,6 +51,20 @@ router.post(
   authorizeRoles("candidate"),
   aiCareerCoach,
 );
+router.post(
+  "/ai/feedback",
+  protect,
+  authorizeRoles("candidate"),
+  submitAiFeedback,
+);
+router.post(
+  "/ai-chat/feedback",
+  protect,
+  authorizeRoles("candidate"),
+  submitAiFeedback,
+);
+
+
 router.post(
   "/hide/:jobId",
   protect,

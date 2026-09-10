@@ -501,4 +501,47 @@ router.post('/trigger-job-digest', protect, authorizeRoles('recruiter', 'admin')
   return triggerJobDigestManually(req, res, next);
 });
 
+/* ----------------------------------------------------------------
+   GET /api/admin/export-dhruv-training
+   Export all thumb-up rated DHRUV turns as a JSONL fine-tune file.
+   ---------------------------------------------------------------- */
+const { exportDhruvTraining } = require('../controllers/feedbackController');
+
+router.get(
+  '/export-dhruv-training',
+  protect,
+  authorizeRoles('recruiter', 'admin'),
+  async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+    if (!isAdminUser(user)) {
+      return res.status(403).json({ error: 'Access denied: Admins only' });
+    }
+    return exportDhruvTraining(req, res, next);
+  }
+);
+
+/* ----------------------------------------------------------------
+   GET /api/admin/ai/feedback/stats
+   Quick stats on feedback collection for the admin dashboard.
+   ---------------------------------------------------------------- */
+const AiFeedback = require('../models/AiFeedback');
+
+router.get('/ai/feedback/stats', protect, authorizeRoles('recruiter', 'admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!isAdminUser(user)) return res.status(403).json({ error: 'Access denied: Admins only' });
+
+    const [total, positive, negative] = await Promise.all([
+      AiFeedback.countDocuments(),
+      AiFeedback.countDocuments({ rating: 'positive' }),
+      AiFeedback.countDocuments({ rating: 'negative' }),
+    ]);
+
+    res.json({ total, positive, negative, positiveRate: total > 0 ? Math.round((positive / total) * 100) : 0 });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch feedback stats' });
+  }
+});
+
 module.exports = router;
+
