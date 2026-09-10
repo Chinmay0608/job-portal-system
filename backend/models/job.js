@@ -104,5 +104,5 @@ jobSchema.index({ location: 1 });
 jobSchema.index({ employmentType: 1 });
 jobSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model("Job", jobSchema);
+module.exports = mongoose.models.Job || mongoose.model("Job", jobSchema);
 

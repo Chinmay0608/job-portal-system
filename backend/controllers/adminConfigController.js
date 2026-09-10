@@ -29,20 +29,39 @@ const setConfig = asyncHandler(async (req, res) => {
   res.status(200).json(config);
 });
 
-// Mock Company Endpoints for Registry UI demo
+const Company = require("../models/Company");
+
+// Real Company Endpoints for Registry UI
 const getCompaniesAdmin = asyncHandler(async (req, res) => {
-  // In a real app, this would query a Company collection.
-  // We'll return mock data for the UI to demonstrate the feature.
-  const mockCompanies = [
-    { _id: "c1", name: "Google", providerId: "google", status: "active", priority: 1, jobsCount: 42 },
-    { _id: "c2", name: "Stripe", providerId: "stripe", status: "active", priority: 2, jobsCount: 15 },
-    { _id: "c3", name: "Atolls", providerId: "atolls", status: "inactive", priority: 3, jobsCount: 0 }
-  ];
-  res.status(200).json(mockCompanies);
+  const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+  const companies = await Company.find()
+    .select("name providerIdentifier platformRef status priority")
+    .sort({ priority: -1, name: 1 })
+    .limit(limit)
+    .lean();
+
+  const mapped = companies.map(c => ({
+    _id: c._id,
+    name: c.name,
+    providerId: c.providerIdentifier || c.platformRef || "direct",
+    priority: c.priority || 5,
+    status: c.status?.toLowerCase() === 'active' || c.status?.toLowerCase() === 'verified' ? 'active' : 'inactive'
+  }));
+  res.status(200).json(mapped);
 });
 
 const updateCompanyAdmin = asyncHandler(async (req, res) => {
-  res.status(200).json({ message: "Company updated (mock)" });
+  const { id } = req.params;
+  const { status, priority } = req.body;
+  const updateData = {};
+  if (status) {
+    updateData.status = status.toLowerCase() === 'active' ? 'ACTIVE' : 'DORMANT';
+  }
+  if (priority !== undefined) {
+    updateData.priority = priority;
+  }
+  const company = await Company.findByIdAndUpdate(id, updateData, { new: true });
+  res.status(200).json({ message: "Company updated", company });
 });
 
 const triggerJobDigestManually = asyncHandler(async (req, res) => {

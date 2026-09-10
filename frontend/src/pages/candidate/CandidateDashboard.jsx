@@ -24,12 +24,10 @@ import {
   Shield as ShieldIcon,
   AlertTriangle as AlertTriangleIcon,
   Megaphone as MegaphoneIcon,
-  CheckCheck as CheckCheckIcon,
   Clock as ClockIcon,
   Info as InfoIcon,
   X as CloseIcon,
   ChevronRight as ChevronRightIcon,
-  Inbox as InboxIcon,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
@@ -766,7 +764,7 @@ function CandidateDashboard() {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get("tab");
     if (tabParam === "messages" || tabParam === "alerts") {
-      setActiveTab("Messages");
+      window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
     }
   }, [location.search]);
 
@@ -921,10 +919,7 @@ function CandidateDashboard() {
                 type="button"
                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
                 onClick={() => {
-                  setActiveTab("Messages");
-                  if (urgentOfficialMessage) {
-                    handleSelectOfficialMessage(urgentOfficialMessage);
-                  }
+                  window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
                 }}
               >
                 <span>View Messages</span>
@@ -944,8 +939,7 @@ function CandidateDashboard() {
         )}
 
         {/* SEARCH CONSOLE BAR */}
-        {activeTab !== "Messages" && (
-          <div className="mb-6">
+        <div className="mb-6">
             <div 
               className="flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default" 
               onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
@@ -1012,10 +1006,9 @@ function CandidateDashboard() {
               </button>
             </div>
           </div>
-        )}
 
         {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
-        {activeTab !== "Messages" && isMobileSearchExpanded && (
+        {isMobileSearchExpanded && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
             <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-slide-in-right" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -1089,12 +1082,11 @@ function CandidateDashboard() {
             
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4">
-              <div className="grid grid-cols-4 p-1 bg-slate-100 rounded-full border border-slate-200">
+              <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200">
                 {[
                   { id: "All Jobs", label: "All Jobs" },
                   { id: "Recommended", label: "Recommended" },
                   { id: "Saved", label: "Saved" },
-                  { id: "Messages", label: "Messages", badge: unreadOfficialCount },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1121,122 +1113,7 @@ function CandidateDashboard() {
               </div>
             </div>
             
-            {activeTab === "Messages" ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-                  <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
-                    <button
-                      type="button"
-                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-0 ${
-                        officialFilter === "all" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
-                      }`}
-                      onClick={() => setOfficialFilter("all")}
-                    >
-                      All ({officialMessages.length})
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border-0 ${
-                        officialFilter === "unread" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
-                      }`}
-                      onClick={() => setOfficialFilter("unread")}
-                    >
-                      Unread ({unreadOfficialCount})
-                    </button>
-                  </div>
-
-                  {unreadOfficialCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleMarkAllOfficialRead}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 bg-transparent border-0 cursor-pointer"
-                    >
-                      <CheckCheckIcon size={14} />
-                      <span>Mark all read</span>
-                    </button>
-                  )}
-                </div>
-
-                {loadingOfficialMessages ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white animate-pulse space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                          <div className="h-3 bg-slate-200 rounded w-16"></div>
-                        </div>
-                        <div className="h-3 bg-slate-200 rounded w-1/4"></div>
-                        <div className="h-3 bg-slate-200 rounded w-3/4"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredOfficialMessages.length === 0 ? (
-                  <div className="text-center py-12 px-4 bg-white rounded-2xl border border-slate-200">
-                    <img
-                      src={workChatSvg}
-                      alt="No official communications"
-                      className="w-40 max-w-full mx-auto mb-4"
-                    />
-                    <h4 className="text-base font-bold text-slate-800 mb-1">
-                      {officialFilter === "unread" ? "No unread messages" : "No official messages"}
-                    </h4>
-                    <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                      {officialFilter === "unread"
-                        ? "You have read all official communications and announcements."
-                        : "Direct administrative messages, interview notifications, and platform alerts will appear here."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredOfficialMessages.map((msg) => {
-                      const isSelected = selectedOfficialMessage?._id === msg._id;
-                      return (
-                        <div
-                          key={msg._id}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                            !msg.isRead
-                              ? "bg-blue-50/40 border-blue-200 border-l-4 border-l-brand-600"
-                              : "bg-white border-slate-200 hover:border-blue-300"
-                          } ${
-                            isSelected ? "ring-2 ring-brand-500 shadow-sm" : "hover:shadow-sm"
-                          }`}
-                          onClick={() => handleSelectOfficialMessage(msg)}
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                              {!msg.isRead && <span className="w-2 h-2 rounded-full bg-brand-600 shrink-0" />}
-                              <h4 className="text-sm font-bold text-slate-900 truncate m-0">{msg.title}</h4>
-                            </div>
-                            <span className="text-[11px] text-slate-400 whitespace-nowrap flex items-center gap-1 shrink-0">
-                              <ClockIcon size={11} />
-                              {getRelativeTime(msg.createdAt)}
-                            </span>
-                          </div>
-
-                          <div className="my-1.5">
-                            {renderPriorityBadge(msg.priority)}
-                          </div>
-
-                          <p className="text-xs text-slate-600 line-clamp-2 my-2 leading-relaxed">
-                            {msg.content}
-                          </p>
-
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
-                            <span className="flex items-center gap-1">
-                              <ShieldIcon size={13} className="text-brand-600" />
-                              <span className="font-medium">{msg.sender?.name || "SkillBridge Administration"}</span>
-                            </span>
-                            <span className="text-brand-600 font-bold">
-                              Read details &rarr;
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : loading ? (
+            {loading ? (
               <div className="w-full space-y-3 py-2">
                 <JobCardSkeleton />
                 <JobCardSkeleton />
@@ -1408,65 +1285,7 @@ function CandidateDashboard() {
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
           <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:static lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] overflow-hidden flex flex-col`}>
-            {activeTab === "Messages" ? (
-              selectedOfficialMessage ? (
-                <div className="flex flex-col h-full overflow-hidden">
-                  <div className="p-6 overflow-y-auto flex-1 space-y-4">
-                    <button
-                      className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
-                      onClick={() => setIsMobileDetailView(false)}
-                    >
-                      &larr; Back to Messages
-                    </button>
-
-                    <div className="flex items-center gap-2 mb-2">
-                      {renderPriorityBadge(selectedOfficialMessage.priority)}
-                      <span className="text-xs text-slate-400 flex items-center gap-1 ml-auto">
-                        <ClockIcon size={12} />
-                        {new Date(selectedOfficialMessage.createdAt).toLocaleString("en-US", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </span>
-                    </div>
-
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
-                      {selectedOfficialMessage.title}
-                    </h2>
-
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 pb-3 border-b border-slate-100">
-                      <ShieldIcon size={16} className="text-brand-600" />
-                      <span>
-                        Dispatched by <strong className="text-slate-700">{selectedOfficialMessage.sender?.name || "SkillBridge Administration"}</strong>
-                        {selectedOfficialMessage.sender?.role && ` (${selectedOfficialMessage.sender.role.toUpperCase()})`}
-                      </span>
-                    </div>
-
-                    <div className="text-sm text-slate-700 bg-slate-50 p-5 rounded-2xl border border-slate-200 whitespace-pre-wrap leading-relaxed">
-                      {selectedOfficialMessage.content}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
-                      <span>Verified Platform Communication</span>
-                      {!selectedOfficialMessage.isRead && (
-                        <button
-                          type="button"
-                          onClick={() => handleSelectOfficialMessage(selectedOfficialMessage)}
-                          className="text-brand-600 font-bold hover:underline bg-transparent border-0 cursor-pointer"
-                        >
-                          Mark as read
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center text-sm">
-                  <InboxIcon size={36} className="text-slate-300 mx-auto mb-2" />
-                  <p>Select an official communication from the list to view full details.</p>
-                </div>
-              )
-            ) : selectedJob ? (
+            {selectedJob ? (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header section */}
                 <div className="p-6 border-b border-slate-200 bg-white">

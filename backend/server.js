@@ -117,6 +117,12 @@ connectDB().then(() => {
     const jobAggConfig = require("./config/jobAggregation");
     const syncService = require("./services/sync.service");
 
+    // Start Telegram Operations & Ticket Bot Poller
+    const { startTelegramBot } = require("./services/telegramBot");
+    startTelegramBot().catch((err) =>
+      console.warn("[TelegramBot] Error starting poller:", err.message)
+    );
+
     // SDE (Discovery Engine) INITIALIZATION COMPLETELY DISABLED
     // TO PREVENT BULLMQ FROM DRAINING FREE REDIS TOKENS
     /*

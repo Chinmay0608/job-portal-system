@@ -9,14 +9,19 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
+function getTelegramConfig() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID || process.env.TELGRAM_CHAT_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+  return { token, chatId };
+}
+
 /**
  * sendTelegramMessage
  * Sends text message to Telegram Bot API.
  * Gracefully skips if credentials are not configured in .env.
  */
 async function sendTelegramMessage(text, options = {}) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const { token, chatId } = getTelegramConfig();
 
   if (!token || !chatId) {
     return {
@@ -52,8 +57,7 @@ async function sendTelegramMessage(text, options = {}) {
  * Sends photo with HTML caption to Telegram if a screenshot URL exists.
  */
 async function sendTelegramPhoto(photoUrl, caption) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const { token, chatId } = getTelegramConfig();
 
   if (!token || !chatId || !photoUrl) {
     return { success: false, skipped: true };
@@ -84,20 +88,26 @@ async function sendTelegramPhoto(photoUrl, caption) {
  * Formats a support ticket and sends it to the Telegram chat.
  */
 async function sendTicketAlertToTelegram(ticket, outcome = {}) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const { token, chatId } = getTelegramConfig();
 
   if (!token || !chatId) {
     return { success: false, skipped: true, reason: "Telegram credentials not set" };
   }
 
-  const ticketRef = `#${String(ticket._id).slice(-8).toUpperCase()}`;
+  const rawId = ticket._id || ticket.id || (ticket._doc && ticket._doc._id);
+  const ticketRef = rawId ? `#${String(rawId).slice(-8).toUpperCase()}` : "#SUPPORT";
   const isHigh = outcome.isHighSeverity || ticket.severity === "high";
   const status = outcome.finalStatus ? outcome.finalStatus.toUpperCase() : (ticket.status || "OPEN").toUpperCase();
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
+  const headerText = outcome.finalStatus === "resolved"
+    ? "✅ SUPPORT TICKET RESOLVED (AI Auto-Action)"
+    : isHigh
+    ? "🔴 URGENT SUPPORT TICKET"
+    : "🎫 NEW SUPPORT TICKET RAISED";
+
   const lines = [
-    `<b>${isHigh ? "🔴 URGENT SUPPORT TICKET" : "🎫 NEW SUPPORT TICKET RAISED"}</b>`,
+    `<b>${headerText}</b>`,
     "",
     `<b>Ticket Ref:</b> <code>${ticketRef}</code>`,
     `<b>Status:</b> <b>${status}</b>`,
@@ -111,7 +121,9 @@ async function sendTicketAlertToTelegram(ticket, outcome = {}) {
     ""
   ];
 
-  if (ticket.aiSummary) {
+  if (outcome.resolverMessage) {
+    lines.push(`<b>Resolution Action:</b>\n<i>${escapeHtml(outcome.resolverMessage)}</i>`, "");
+  } else if (ticket.aiSummary) {
     lines.push(`<b>AI Summary:</b> ${escapeHtml(ticket.aiSummary)}`, "");
   }
 
@@ -136,6 +148,7 @@ async function sendTicketAlertToTelegram(ticket, outcome = {}) {
 }
 
 module.exports = {
+  getTelegramConfig,
   sendTelegramMessage,
   sendTelegramPhoto,
   sendTicketAlertToTelegram,

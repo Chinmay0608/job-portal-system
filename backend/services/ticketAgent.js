@@ -113,17 +113,17 @@ async function classifyWithGemini(description, pageUrl, userAgent) {
     .join("\n");
 
   const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash-lite",
+    model: "gemini-3.6-flash",
     contents: [{ role: "user", parts: [{ text: userMessage }] }],
-    systemInstruction: SYSTEM_PROMPT,
-    generationConfig: {
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
       responseMimeType: "application/json",
       temperature: 0.1,
       maxOutputTokens: 256,
     },
   });
 
-  const raw = response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  const raw = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
   let parsed;
   try {
     parsed = JSON.parse(raw);
@@ -256,9 +256,10 @@ async function _run(ticket) {
 
   // ── Step 4: Dispatch notification email ──
   try {
+    const ticketDoc = typeof ticket.toObject === "function" ? ticket.toObject() : ticket;
     await dispatch(
       // Use the freshest ticket data available
-      { ...ticket, ...updateFields, email: ticket.email },
+      { ...ticketDoc, ...updateFields, _id: ticket._id, email: ticket.email },
       { finalStatus, resolverMessage, isHighSeverity, isSpam }
     );
     const notifiedAt = new Date();
