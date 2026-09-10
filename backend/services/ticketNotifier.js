@@ -9,6 +9,7 @@
  */
 
 const sendEmail = require("../utils/sendEmail");
+const { sendTicketAlertToTelegram } = require("./telegramService");
 
 const BRAND = "SkillBridge";
 const SUPPORT_EMAIL = process.env.EMAIL_USER || "support@skillbridge.com";
@@ -206,9 +207,10 @@ async function dispatch(ticket, outcome) {
     emailPromises.push(notifyInProgress(ticket));
   }
 
-  // Admin notification email: for all non-spam tickets so admins are alerted
+  // Admin notification email & Telegram alert: for all non-spam tickets
   if (!isSpam) {
     emailPromises.push(notifyAdminNewTicket(ticket, outcome));
+    emailPromises.push(sendTicketAlertToTelegram(ticket, outcome));
   }
 
   // Fire both in parallel — failures are caught by the caller
