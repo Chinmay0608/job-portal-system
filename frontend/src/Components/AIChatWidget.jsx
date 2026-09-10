@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { postAIChatMessage } from "../Services/jobService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
+import dhruvAvatar from "../assets/dhruv_avatar.png";
 
 const SUGGESTION_CHIPS = [
   "Analyze my skill gaps",
@@ -64,6 +65,8 @@ export default function AIChatWidget({
     }
   });
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  const [showVoicePicker, setShowVoicePicker] = useState(false);
+
 
   // Dragging and movable card state
   const [position, setPosition] = useState({ x: null, y: null });
@@ -413,6 +416,7 @@ export default function AIChatWidget({
   const handleClose = () => {
     tts.stop();
     voiceRec.stopListening();
+    setShowVoicePicker(false);
     setIsOpen(false);
   };
 
@@ -536,22 +540,21 @@ export default function AIChatWidget({
             />
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", pointerEvents: "none" }}>
-              <div
+              <img
+                src={dhruvAvatar}
+                alt="Dhruv"
                 style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  backgroundColor: "#2563eb",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: "38px",
+                  height: "38px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+                  border: "2px solid #ffffff",
+                  flexShrink: 0,
                 }}
-              >
-                <BsRobot size={20} />
-              </div>
+              />
               <div>
-                <div style={{ fontWeight: "700", fontSize: "0.95rem", color: "#0f172a", lineHeight: 1.2, display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ fontWeight: "800", fontSize: "1.05rem", color: "#1d4ed8", letterSpacing: "0.5px", lineHeight: 1.2, display: "flex", alignItems: "center", gap: "6px" }}>
                   <span>DHRUV</span>
                   <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: "6px", backgroundColor: "#dbeafe", color: "#1e40af", fontWeight: "700" }}>AI</span>
                 </div>
@@ -611,6 +614,91 @@ export default function AIChatWidget({
                 >
                   {tts.isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
+              )}
+
+              {/* Voice Selector */}
+              {tts.isSupported && (
+                <div style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowVoicePicker(p => !p)}
+                    aria-label="Change voice"
+                    title={`Voice: ${(tts.voicePresets || []).find(p => p.key === tts.voiceKey)?.label || "Female"} — click to change`}
+                    style={{
+                      background: showVoicePicker ? "#eff6ff" : "transparent",
+                      border: showVoicePicker ? "1px solid #bfdbfe" : "1px solid transparent",
+                      padding: "4px 7px",
+                      cursor: "pointer",
+                      color: "#2563eb",
+                      borderRadius: "7px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      fontSize: "0.72rem",
+                      fontWeight: "600",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.85rem" }}>
+                      {(tts.voicePresets || []).find(p => p.key === tts.voiceKey)?.emoji || "🔊"}
+                    </span>
+                    <span style={{ fontSize: "0.68rem" }}>Voice</span>
+                  </button>
+
+                  {showVoicePicker && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 6px)",
+                        right: 0,
+                        zIndex: 10000,
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
+                        padding: "8px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                        minWidth: "130px",
+                      }}
+                      onMouseDown={e => e.stopPropagation()}
+                    >
+                      <p style={{ margin: "0 4px 4px", fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        Voice Style
+                      </p>
+                      {(tts.voicePresets || []).map(preset => (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          onClick={() => { tts.setVoiceKey(preset.key); setShowVoicePicker(false); }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "none",
+                            cursor: "pointer",
+                            background: tts.voiceKey === preset.key ? "#eff6ff" : "transparent",
+                            color: tts.voiceKey === preset.key ? "#1d4ed8" : "#334155",
+                            fontWeight: tts.voiceKey === preset.key ? "700" : "500",
+                            fontSize: "0.8rem",
+                            transition: "background 0.12s ease",
+                            textAlign: "left",
+                            width: "100%",
+                          }}
+                        >
+                          <span style={{ fontSize: "1rem" }}>{preset.emoji}</span>
+                          <span>{preset.label}</span>
+                          {tts.voiceKey === preset.key && (
+                            <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "#2563eb" }}>✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Reset Conversation */}
@@ -677,9 +765,18 @@ export default function AIChatWidget({
                     fontSize: "0.75rem",
                     fontWeight: "700",
                     flexShrink: 0,
+                    overflow: "hidden",
                   }}
                 >
-                  {m.role === "user" ? <BsPerson size={14} /> : <BsRobot size={14} />}
+                  {m.role === "user" ? (
+                    <BsPerson size={14} />
+                  ) : (
+                    <img
+                      src={dhruvAvatar}
+                      alt="Dhruv"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  )}
                 </div>
                 <div
                   style={{
