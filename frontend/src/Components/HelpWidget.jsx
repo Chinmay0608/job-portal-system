@@ -199,22 +199,23 @@ export default function HelpWidget() {
 
   return (
     <>
-      {/* Floating Trigger Button: Collapsed circular icon at rest, expands smoothly on hover/focus */}
+      {/* Floating Trigger Button */}
       {!isOpen && (
         <button
           id="help-widget-button"
           type="button"
           onClick={handleOpen}
-          className="group fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001] flex items-center bg-slate-900 hover:bg-slate-800 text-white p-2.5 sm:p-3 rounded-full font-semibold text-xs sm:text-sm shadow-2xl transition-all duration-300 ease-out hover:scale-105 active:scale-95 border border-slate-700/50 overflow-hidden cursor-pointer"
+          className="fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001] flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm shadow-2xl transition-all duration-200 ease-out hover:scale-105 active:scale-95 border border-slate-700/60 cursor-pointer select-none"
           title="Report an Issue"
           aria-label="Report an Issue"
         >
-          <LifeBuoy size={19} className="text-emerald-400 shrink-0 group-hover:rotate-45 transition-transform duration-300" />
-          <span className="max-w-0 opacity-0 whitespace-nowrap overflow-hidden group-hover:max-w-[130px] group-hover:opacity-100 group-hover:ml-2 group-hover:pr-1 group-focus-visible:max-w-[130px] group-focus-visible:opacity-100 group-focus-visible:ml-2 group-focus-visible:pr-1 transition-all duration-300 ease-out pointer-events-none">
+          <LifeBuoy size={18} className="text-emerald-400 shrink-0" />
+          <span className="text-white whitespace-nowrap font-semibold">
             Report Issue
           </span>
         </button>
       )}
+
 
       {/* Modal Backdrop & Dialog */}
       {isOpen && (
