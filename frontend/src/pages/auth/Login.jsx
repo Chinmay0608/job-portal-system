@@ -8,7 +8,6 @@ import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
-import AuthLayout from "../../Components/AuthLayout";
 
 function Login() {
   const navigate = useNavigate();
@@ -85,20 +84,10 @@ function Login() {
   };
 
   return (
-    <AuthLayout
-      badge="Career Acceleration"
-      headline="Welcome back to your career command center"
-      subheadline="Access verified job opportunities, manage applications, and connect directly with hiring managers."
-      stats={[
-        { label: "Active Openings", value: "2,400+" },
-        { label: "Interview Rate", value: "3.2x" },
-        { label: "Partner Rating", value: "4.9/5" },
-      ]}
-    >
-      <div className="w-full max-w-sm sm:max-w-md bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] p-5 sm:py-6 sm:px-7 space-y-3 sm:space-y-3.5 animate-scale-up">
-        {/* Brand Logo visible on mobile/tablet viewports (< lg) */}
-        <div className="flex lg:hidden justify-center cursor-pointer" onClick={() => navigate("/")}>
-          <SkillBridgeLogo width={190} center />
+    <div className="h-screen max-h-screen w-full bg-slate-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden font-sans">
+      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4 -translate-y-1 sm:-translate-y-2 animate-scale-up">
+        <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
+          <SkillBridgeLogo width={210} center />
         </div>
 
         <div className="text-center">
@@ -107,11 +96,11 @@ function Login() {
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "candidate" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
+              loginRole === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("candidate")}
           >
@@ -120,7 +109,7 @@ function Login() {
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "recruiter" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
+              loginRole === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("recruiter")}
           >
@@ -130,7 +119,7 @@ function Login() {
 
         <button
           type="button"
-          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
@@ -138,7 +127,7 @@ function Login() {
           <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
         </button>
 
-        <div className="relative flex py-0.5 items-center">
+        <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
           <div className="flex-grow border-t border-slate-200"></div>
@@ -153,7 +142,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
             />
           </div>
 
@@ -166,7 +155,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
               />
               <button
                 type="button"
@@ -190,7 +179,7 @@ function Login() {
 
           <button 
             type="submit" 
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/25 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-md shadow-blue-600/20 border-0 disabled:opacity-50 mt-1.5" 
+            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-1.5" 
             disabled={loading} 
             aria-label="Log in"
           >
@@ -208,7 +197,7 @@ function Login() {
           </p>
         </form>
       </div>
-    </AuthLayout>
+    </div>
   );
 }
 
