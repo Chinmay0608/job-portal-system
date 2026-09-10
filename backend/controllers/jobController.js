@@ -304,27 +304,54 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
   const userField = user.field || "Software Engineering";
 
   // 1. Detect candidate intent and tech/domain keywords dynamically
+  //    Phase A: classify overall intent from natural language patterns
+  const JOB_REQUEST_PATTERNS = /\b(find|show|recommend|suggest|get|list|give|look|search|identify|discover|explore|need|want|looking|help.*job|any.*job|new.*job|job.*opening|job.*opportunit|available.*job|job.*available|job.*near|job.*in|job.*for)\b/i;
+  const isJobRequest = JOB_REQUEST_PATTERNS.test(lastMsg)
+    || lastMsgLower.includes("job")
+    || lastMsgLower.includes("opening")
+    || lastMsgLower.includes("role")
+    || lastMsgLower.includes("position")
+    || lastMsgLower.includes("vacancy")
+    || lastMsgLower.includes("opportunit")
+    || lastMsgLower.includes("recruit")
+    || lastMsgLower.includes("career");
+
+  //    Phase B: extract the domain/tech keyword by removing request noise
   const extractSearchKeyword = (msg) => {
+    // If the message is *only* generic job-request language with no domain keyword
+    // (e.g. "can you help me identify a new job"), use the user's field rather than
+    // returning a garbage keyword like "identify new"
     const lower = msg.toLowerCase();
     const stripped = lower
-      .replace(/\b(i am looking for|looking for|i want|find me|show me|give me|recommend|suggest|search for|search|what are the|are there any|can you find|list|tell me about|any)\b/gi, " ")
-      .replace(/\b(jobs?|openings?|roles?|vacanc(?:y|ies)|opportunities|positions?|careers?)\b/gi, " ")
-      .replace(/\b(based on|related to|in|for|with|about|top|best|recent|latest|available)\b/gi, " ")
+      .replace(/\b(i am looking for|looking for|i want|help me|can you help|find me|show me|give me|recommend|suggest|search for|search|what are the|are there any|can you find|list|tell me about|identify|discover|explore|any|please|could you|would you)\b/gi, " ")
+      .replace(/\b(jobs?|openings?|roles?|vacanc(?:y|ies)|opportunities|positions?|careers?|listings?)\b/gi, " ")
+      .replace(/\b(based on|related to|in|for|with|about|top|best|recent|latest|available|new|a|an|the|some|me|my|i)\b/gi, " ")
       .replace(/[^a-z0-9+#.\s]/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
 
-    const stopWords = new Set(["my", "field", "me", "profile", "mine", "some", "any", "please", "the", "a", "an"]);
-    const tokens = stripped.split(" ").filter((t) => t && !stopWords.has(t));
-    const cleaned = tokens.join(" ");
+    // Domain / tech keywords that are meaningful job search terms
+    const TECH_KEYWORDS = /\b(react|node|python|java|javascript|typescript|angular|vue|flutter|kotlin|swift|golang|rust|c\+\+|c#|\.net|php|django|fastapi|spring|kubernetes|docker|aws|gcp|azure|devops|ml|ai|data|cloud|backend|frontend|fullstack|full.?stack|android|ios|mobile|embedded|blockchain|cybersecurity|security|qa|testing|sre|platform|infrastructure|database|sql|nosql|mongodb|postgres)\b/i;
 
-    if (cleaned.length >= 2) {
-      return cleaned;
-    }
+    const techMatch = lastMsg.match(TECH_KEYWORDS);
+    if (techMatch) return techMatch[0].toLowerCase();
+
+    const stopWords = new Set(["my", "field", "me", "profile", "mine", "some", "any", "please", "the", "a", "an", "is", "it", "to", "do", "not", "be"]);
+    const tokens = stripped.split(" ").filter((t) => t && t.length > 2 && !stopWords.has(t));
+
+    // Only use the stripped keyword if it is clearly a meaningful domain/skill term
+    // and not generic filler words left over from stripping
+    const GENERIC_FILLER = /^(new|latest|recent|help|good|work|great|best|give|show|find|list|want|need|look|tell|know|can|get|make|take|have)$/i;
+    const meaningfulTokens = tokens.filter(t => !GENERIC_FILLER.test(t));
+
+    const cleaned = meaningfulTokens.join(" ");
+    // Require at least 3 characters to avoid single-letter garbage
+    if (cleaned.length >= 3) return cleaned;
     return "";
   };
 
   const searchKeyword = extractSearchKeyword(lastMsg);
+
 
   // 2. Query matching active jobs from Database with relevance ranking
   let matchedJobs = [];
@@ -381,9 +408,26 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
   }
 
   // Only use general fallback jobs if the user DID NOT ask for a specific searchKeyword
-  if (matchedJobs.length === 0 && !searchKeyword) {
+  // But if they asked for jobs generically, still load jobs from their field
+  if (matchedJobs.length === 0) {
     try {
-      matchedJobs = await Job.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).limit(5).lean();
+      if (isJobRequest && userField) {
+        const safeField = escapeRegex(userField);
+        const skillRegexes = (userSkills || []).slice(0, 3).map((s) => new RegExp(escapeRegex(s), "i"));
+        matchedJobs = await Job.find({
+          isActive: { $ne: false },
+          $or: [
+            { role: { $regex: safeField, $options: "i" } },
+            { title: { $regex: safeField, $options: "i" } },
+            { keywords: { $regex: safeField, $options: "i" } },
+            ...(skillRegexes.length > 0 ? [{ skillsRequired: { $in: skillRegexes } }] : []),
+          ]
+        }).sort({ createdAt: -1 }).limit(5).lean();
+      }
+      // If still nothing, load any recent active jobs as a last resort
+      if (matchedJobs.length === 0 && !searchKeyword) {
+        matchedJobs = await Job.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).limit(5).lean();
+      }
     } catch (e) {}
   }
 
@@ -453,8 +497,6 @@ I'm right here whenever you'd like to explore new career opportunities in **${us
     }
 
     // Priority 3: Job Listings & Recommendations
-    const isJobRequest = searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("opening") || lastMsgLower.includes("provide") || lastMsgLower.includes("show") || lastMsgLower.includes("vacancy") || lastMsgLower.includes("position");
-
     if (isJobRequest) {
       if (matchedJobs.length > 0) {
         const jobListStr = matchedJobs
@@ -550,7 +592,7 @@ FORMATTING:
 - Use clear markdown: bolding (**bold**), bullet points (•), and relevant emojis (💡, 🚀, 🎯, ⚡). Keep answers crisp and easy to scan or listen to.`;
 
       let reply = null;
-      const modelsToTry = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"];
+      const modelsToTry = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"];
 
       for (const model of modelsToTry) {
         try {
