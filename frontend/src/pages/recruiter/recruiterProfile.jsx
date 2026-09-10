@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import "../../Styles/pages/recruiter/recruiterProfile.css";
 import { changePassword, updateProfile } from "../../Services/jobService";
 
 function RecruiterProfile() {

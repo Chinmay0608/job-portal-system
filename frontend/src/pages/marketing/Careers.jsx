@@ -1,5 +1,3 @@
-import "../../Styles/pages/marketing/Careers.css";
-
 function Careers() {
   const openings = [
     {

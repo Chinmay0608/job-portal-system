@@ -5,9 +5,9 @@ const SupportTicket = require("../models/SupportTicket");
 const User = require("../models/user");
 const ticketAgent = require("../services/ticketAgent");
 
-// ─── POST /api/support/report — any logged-in user ───────────────────────────
+// ─── POST /api/support/report — logged-in user or guest ───────────────────────
 const createTicket = asyncHandler(async (req, res) => {
-  const { description, pageUrl } = req.body;
+  const { description, pageUrl, email } = req.body;
 
   if (!description || description.trim().length < 5) {
     res.status(400);
@@ -16,12 +16,30 @@ const createTicket = asyncHandler(async (req, res) => {
     );
   }
 
-  // JWT only carries { id, role } — fetch email from DB (lean, minimal select)
-  const userDoc = await User.findById(req.user.id).select("email").lean();
-  const userEmail = userDoc?.email;
+  let userEmail = "";
+  let userId = null;
+
+  if (req.user && (req.user.id || req.user._id)) {
+    userId = req.user.id || req.user._id;
+    try {
+      const userDoc = await User.findById(userId).select("email").lean();
+      if (userDoc?.email) {
+        userEmail = userDoc.email;
+      }
+    } catch (err) {
+      console.warn("[createTicket] Could not fetch user from DB:", err.message);
+    }
+  }
+
+  // Fall back to email passed in request body or default guest address
   if (!userEmail) {
-    res.status(401);
-    throw new Error("Unable to determine your email address. Please log in again.");
+    const rawEmail = typeof email === "string" ? email.trim() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (rawEmail && emailRegex.test(rawEmail)) {
+      userEmail = rawEmail.toLowerCase();
+    } else {
+      userEmail = "guest@skillbridge.careers";
+    }
   }
 
   let screenshotUrl = "";
@@ -30,7 +48,7 @@ const createTicket = asyncHandler(async (req, res) => {
   }
 
   const ticket = await SupportTicket.create({
-    user: req.user.id || req.user._id,
+    user: userId,
     email: userEmail,
     description: description.trim(),
     screenshotUrl,

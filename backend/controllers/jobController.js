@@ -303,45 +303,85 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
   const userSkills = user.skills || [];
   const userField = user.field || "Software Engineering";
 
-  // 1. Detect candidate intent and tech/domain keywords
-  let searchKeyword = "";
-  const commonKeywords = ["java", "python", "react", "node", "express", "javascript", "c++", "aws", "docker", "frontend", "backend", "fullstack", "data", "marketing", "sales", "design", "remote", "devops", "sql", "mongodb"];
-  for (const kw of commonKeywords) {
-    if (lastMsgLower.includes(kw)) {
-      searchKeyword = kw;
-      break;
-    }
-  }
+  // 1. Detect candidate intent and tech/domain keywords dynamically
+  const extractSearchKeyword = (msg) => {
+    const lower = msg.toLowerCase();
+    const stripped = lower
+      .replace(/\b(i am looking for|looking for|i want|find me|show me|give me|recommend|suggest|search for|search|what are the|are there any|can you find|list|tell me about|any)\b/gi, " ")
+      .replace(/\b(jobs?|openings?|roles?|vacanc(?:y|ies)|opportunities|positions?|careers?)\b/gi, " ")
+      .replace(/\b(based on|related to|in|for|with|about|top|best|recent|latest|available)\b/gi, " ")
+      .replace(/[^a-z0-9+#.\s]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  // 2. Query matching active jobs from Database
+    const stopWords = new Set(["my", "field", "me", "profile", "mine", "some", "any", "please", "the", "a", "an"]);
+    const tokens = stripped.split(" ").filter((t) => t && !stopWords.has(t));
+    const cleaned = tokens.join(" ");
+
+    if (cleaned.length >= 2) {
+      return cleaned;
+    }
+    return "";
+  };
+
+  const searchKeyword = extractSearchKeyword(lastMsg);
+
+  // 2. Query matching active jobs from Database with relevance ranking
   let matchedJobs = [];
   const jobQuery = { isActive: { $ne: false } };
 
   if (searchKeyword) {
-    const safeKw = escapeRegex(searchKeyword);
+    const tokens = searchKeyword.split(" ").filter((t) => t.length > 1);
+    const tokenRegexes = tokens.map((t) => new RegExp(escapeRegex(t), "i"));
+    const phraseRegex = new RegExp(escapeRegex(searchKeyword), "i");
+
     jobQuery.$or = [
-      { title: { $regex: safeKw, $options: "i" } },
-      { description: { $regex: safeKw, $options: "i" } },
-      { keywords: { $regex: safeKw, $options: "i" } },
-      { skillsRequired: { $regex: safeKw, $options: "i" } },
+      { title: phraseRegex },
+      { skillsRequired: phraseRegex },
+      { keywords: phraseRegex },
+      { role: phraseRegex },
+      { description: phraseRegex },
+      {
+        $and: tokens.map((t) => {
+          const rx = new RegExp(escapeRegex(t), "i");
+          return {
+            $or: [{ title: rx }, { skillsRequired: rx }, { keywords: rx }, { role: rx }, { description: rx }],
+          };
+        }),
+      },
+      { title: { $in: tokenRegexes } },
+      { skillsRequired: { $in: tokenRegexes } },
     ];
   } else if (userField) {
     const safeField = escapeRegex(userField);
+    const skillRegexes = (userSkills || []).slice(0, 3).map((s) => new RegExp(escapeRegex(s), "i"));
     jobQuery.$or = [
       { role: { $regex: safeField, $options: "i" } },
       { title: { $regex: safeField, $options: "i" } },
-      { description: { $regex: safeField, $options: "i" } },
       { keywords: { $regex: safeField, $options: "i" } },
+      ...(skillRegexes.length > 0 ? [{ skillsRequired: { $in: skillRegexes } }] : []),
     ];
   }
 
   try {
-    matchedJobs = await Job.find(jobQuery).limit(5).lean();
+    matchedJobs = await Job.find(jobQuery).limit(10).lean();
+    // Rank jobs by relevance to search tokens if a specific keyword was searched
+    if (searchKeyword && matchedJobs.length > 0) {
+      const searchTokens = searchKeyword.toLowerCase().split(" ").filter((t) => t.length > 1);
+      matchedJobs.sort((a, b) => {
+        const aTitle = (a.title || "").toLowerCase();
+        const bTitle = (b.title || "").toLowerCase();
+        const aMatch = searchTokens.filter((t) => aTitle.includes(t)).length;
+        const bMatch = searchTokens.filter((t) => bTitle.includes(t)).length;
+        return bMatch - aMatch;
+      });
+    }
   } catch (e) {
     console.error("Error fetching jobs for AI coach:", e);
   }
 
-  if (matchedJobs.length === 0) {
+  // Only use general fallback jobs if the user DID NOT ask for a specific searchKeyword
+  if (matchedJobs.length === 0 && !searchKeyword) {
     try {
       matchedJobs = await Job.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).limit(5).lean();
     } catch (e) {}
@@ -349,6 +389,29 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
 
   // 3. Build dynamic smart reply
   const buildSmartFallbackReply = () => {
+    const cleanMsg = lastMsgLower.replace(/[^a-z0-9\s]/g, " ").trim();
+    const rawName = (user?.name || "").trim();
+    const displayName = rawName && rawName.toLowerCase() !== "user" ? rawName.split(" ")[0] : "there";
+
+    // Priority 0: Warm, gentle greetings and pleasantries
+    const isGreeting =
+      /^(hey|hi|hello|greetings|good\s*(morning|afternoon|evening)|howdy|sup|yo|what\s*s\s*up)\b/i.test(cleanMsg) ||
+      cleanMsg === "hey dhruv" ||
+      cleanMsg === "hi dhruv" ||
+      cleanMsg === "hello dhruv" ||
+      cleanMsg === "dhruv" ||
+      cleanMsg === "hey" ||
+      cleanMsg === "hi" ||
+      cleanMsg === "hello" ||
+      cleanMsg.startsWith("how are you") ||
+      cleanMsg.startsWith("how r u");
+
+    if (isGreeting) {
+      return `Hey **${displayName}**! 😊 It's wonderful to see you today. How are you doing?
+
+I'm right here whenever you'd like to explore new career opportunities in **${userField}**, polish your skills, or prep for an interview. How can I help you today?`;
+    }
+
     // Priority 1: Interview & Preparation Tips
     if (lastMsgLower.includes("interview") || lastMsgLower.includes("prep") || lastMsgLower.includes("tip")) {
       const topJob = matchedJobs[0];
@@ -390,7 +453,9 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
     }
 
     // Priority 3: Job Listings & Recommendations
-    if (searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("opening") || lastMsgLower.includes("provide") || lastMsgLower.includes("show")) {
+    const isJobRequest = searchKeyword || lastMsgLower.includes("job") || lastMsgLower.includes("role") || lastMsgLower.includes("recommend") || lastMsgLower.includes("opening") || lastMsgLower.includes("provide") || lastMsgLower.includes("show") || lastMsgLower.includes("vacancy") || lastMsgLower.includes("position");
+
+    if (isJobRequest) {
       if (matchedJobs.length > 0) {
         const jobListStr = matchedJobs
           .slice(0, 3)
@@ -405,27 +470,34 @@ const aiCareerCoach = asyncHandler(async (req, res) => {
             } else if (typeof j.skillsRequired === "string" && j.skillsRequired.trim()) {
               skillsStr = j.skillsRequired;
             } else {
-              skillsStr = "Domain & Full-stack Skills";
+              skillsStr = searchKeyword || "Web & Modern Stack";
             }
 
             return `${i + 1}. **${j.title}** at **${j.company}**\n   📍 ${j.location || "Remote"} | ${salaryStr}\n   ⚡ Skills: ${skillsStr}`;
           })
           .join("\n\n");
 
-        return `Here are top active **${searchKeyword ? searchKeyword.toUpperCase() : userField.toUpperCase()}** openings matching your profile:
+        const categoryTitle = searchKeyword ? searchKeyword.toUpperCase() : userField.toUpperCase();
+        return `Here are top active **${categoryTitle}** openings matching your request:
 
 ${jobListStr}
 
-💡 **Career Tip**: Ensure these skills are listed on your profile to maximize your match score!`;
+💡 **Career Tip**: Tailor your resume to emphasize experience in **${searchKeyword || userField}** to maximize your match score!`;
+      } else if (searchKeyword) {
+        return `I searched our database for **${searchKeyword}** roles, but there are no direct active openings listed right now.
+
+💡 **Suggested Next Steps**:
+• Try searching for related keywords like **Frontend**, **Full Stack**, or **JavaScript**.
+• Set up a job alert for **${searchKeyword}** so you get notified as soon as new positions are posted!`;
       }
     }
 
-    return `Hello **${user.name}**! I analyzed your profile in **${userField}** (Skills: ${userSkills.join(", ") || "None listed"}).
+    return `Hello **${displayName}**! 😊 I'm right here to support your career in **${userField}**.
 
-I can help you:
-• **Search roles** (e.g. "show me Software Engineering jobs")
-• **Analyze your skill gaps** (e.g. "Analyze my skill gaps")
-• **Get interview tips** for ${userField}`;
+Whenever you're ready, feel free to ask me to:
+• **Search roles** (e.g. "show me ${userField} jobs")
+• **Analyze your skill gaps** (e.g. "analyze my skills")
+• **Interview prep** (e.g. "give me interview tips for ${userField}")`;
   };
 
   const groqApiKey = process.env.GROQ_API_KEY;
@@ -444,46 +516,71 @@ I can help you:
         )
         .join("\n");
 
-      const systemPrompt = `You are DHRUV, SkillBridge's AI Career Coach & Skill Analyst.
+      const candidateDisplayName = (user?.name || "").trim().toLowerCase() !== "user" ? user.name.split(" ")[0] : "there";
+
+      const targetSearch = searchKeyword || userField;
+
+      const systemPrompt = `You are DHRUV, SkillBridge's universal voice assistant & AI career companion (like Siri / Alexa for professionals and job seekers).
 Candidate Context:
-- Name: ${user.name}
+- Name: ${candidateDisplayName === "there" ? "Candidate" : user.name}
 - Target Domain: ${userField}
+- Active Search Request: ${targetSearch}
 - Experience Level: ${user.experienceLevel || "Fresher"}
 - Skills: ${userSkills.join(", ") || "React, JavaScript"}
 
 Available Matching Jobs in Database:
 ${jobSummaries || "No direct matches found"}
 
-Task & Intent Guidance:
-1. If the candidate asks for INTERVIEW TIPS or PREPARATION (e.g. "Interview tips for my top match"): Provide 3-4 specific, actionable interview preparation tips for their top matching job (or target domain). Do NOT output a job list unless explicitly requested.
-2. If the candidate asks for SKILL GAPS: Detail their active skills vs missing in-demand skills.
-3. If the candidate asks for JOB RECOMMENDATIONS or OPENINGS: List the top matching jobs cleanly.
+Tone & Personality:
+- Warm, empathetic, encouraging, razor-sharp, natural, and conversational—like a brilliant, caring mentor (Siri/Alexa-style companion).
+- Responses must be pleasant and punchy for both text and voice readback. Avoid endless filler or wall-of-text fatigue.
 
-Formatting Instructions:
-- Use clear icons: 🎯 for interview tips, 📍 for location, 💼 for salary, ⚡ for skills.
-- Format key recommendations with bullet points and bolding (**bold**). Keep responses crisp, professional, and encouraging.`;
+CAPABILITIES (YOU CAN HELP WITH ANY QUERY):
+1. JOB SEARCH & MATCHING: When the candidate asks for jobs or roles in a specific area (e.g. "${targetSearch}"), recommend ONLY openings that strictly belong to that field. Never suggest unrelated positions (for instance, do NOT suggest SAS or network engineering when asked for web development).
+2. CODING & TECHNICAL QUERIES: If the candidate asks coding, programming, architecture, or tech questions (e.g. React, Node, SQL, Python, DSA, System Design, Git, Docker): Provide clear, practical explanations, code snippets, and best practices.
+3. INTERVIEW PREPARATION & BEHAVIORAL: Provide actionable tips, mock interview practice, STAR method answers, and advice on tough interview questions.
+4. SALARY NEGOTIATION & RESUME: Help write or refine bullet points, suggest keywords, explain market compensation, and share negotiation tactics.
+5. PLATFORM NAVIGATION: Guide them on SkillBridge features (e.g., "You can find your applied jobs under 'My Applications'", or "Check 'Salary Guide' in the menu to explore benchmarks").
+6. GENERAL KNOWLEDGE & PRODUCTIVITY: Answer any questions accurately, cheerfully, and helpfully.
 
-      const groqRes = await axios.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: lastMsg },
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${groqApiKey}`,
-            "Content-Type": "application/json",
-          },
-          timeout: 10000,
+GREETING & CASUAL BEHAVIOR:
+- When greeted ("Hey", "Hi", "Hey Dhruv", "Good morning", "How are you"), reply warmly and concisely (1-2 friendly sentences), greeting them by name (${candidateDisplayName === "there" ? "there" : candidateDisplayName}), and ask how you can help.
+
+FORMATTING:
+- Use clear markdown: bolding (**bold**), bullet points (•), and relevant emojis (💡, 🚀, 🎯, ⚡). Keep answers crisp and easy to scan or listen to.`;
+
+      let reply = null;
+      const modelsToTry = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"];
+
+      for (const model of modelsToTry) {
+        try {
+          const groqRes = await axios.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: lastMsg },
+              ],
+              temperature: 0.7,
+              max_tokens: 1024,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${groqApiKey}`,
+                "Content-Type": "application/json",
+              },
+              timeout: 10000,
+            }
+          );
+
+          reply = groqRes.data?.choices?.[0]?.message?.content?.trim();
+          if (reply) break;
+        } catch (modelErr) {
+          console.warn(`Groq model ${model} failed, trying alternative:`, modelErr?.response?.data?.error?.message || modelErr.message);
         }
-      );
+      }
 
-      const reply = groqRes.data?.choices?.[0]?.message?.content?.trim();
       if (reply) {
         return res.status(200).json({ role: "assistant", content: reply });
       }
@@ -501,7 +598,7 @@ Formatting Instructions:
     const ai = new GoogleGenAI({ apiKey });
     const jobSummaries = matchedJobs.map(j => `${j.title} at ${j.company} (${j.location}, Skills: ${Array.isArray(j.skillsRequired) ? j.skillsRequired.join(', ') : j.skillsRequired})`).join("\n");
 
-    const prompt = `You are SkillBridge's AI Career Coach & Skill Analyst.
+    const prompt = `You are DHRUV, SkillBridge's friendly, warm, and supportive AI Career Coach & Skill Analyst.
 Candidate Context:
 - Name: ${user.name}
 - Domain/Field: ${userField}
@@ -511,10 +608,12 @@ Candidate Context:
 Available Matching Jobs in Database:
 ${jobSummaries || "No direct matches found"}
 
-User Question:
+User Message:
 ${lastMsg}
 
-Provide a concise, highly actionable, encouraging response. Format key points with markdown bolding (**bold**).`;
+Instructions:
+- If the user is simply greeting you (e.g., "Hey", "Hi", "Hey Dhruv", "Hello", "How are you"): Reply with a warm, gentle, and encouraging greeting addressing them by first name (${user.name.split(" ")[0] || "friend"}). Ask how you can support their career journey today. Do NOT dump large lists or bullet points on a greeting.
+- If asking about jobs, skills, or interview tips: Provide concise, highly actionable, encouraging guidance. Format key points with markdown bolding (**bold**).`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -571,7 +670,7 @@ const updateJob = asyncHandler(async (req, res) => {
   if (skillsRequired !== undefined) updateData.skillsRequired = skillsRequired;
 
   const updatedJob = await Job.findByIdAndUpdate(jobId, updateData, {
-    new: true,
+    returnDocument: "after",
   });
 
   await clearCache("/api/jobs");

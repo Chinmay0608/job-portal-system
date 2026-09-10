@@ -1,4 +1,3 @@
-import "../../Styles/pages/marketing/AiRecruiting.css";
 import {
   FaRobot,
   FaBolt,

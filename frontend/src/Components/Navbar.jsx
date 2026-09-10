@@ -16,9 +16,8 @@ import AIChatWidget from "./AIChatWidget";
 import MessagesDrawer from "./MessagesDrawer";
 import { getUnreadMessagesCount } from "../Services/messageService";
 import NotificationsDrawer from "./NotificationsDrawer";
-import { getUnreadNotificationsCount } from "../Services/notificationService";
+import { getUnreadNotificationsCountAPI } from "../Services/notificationService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
-import "../Styles/components/navbar.css";
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,14 +39,25 @@ function Navbar() {
 
   const [user, setUser] = useState(getUser());
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(() => getUnreadNotificationsCount(user));
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   const voiceRec = useVoiceRecognition();
+  const { 
+    listenForWakeWord, 
+    stopWakeWord, 
+    isSupported: isVoiceSupported, 
+    isWakeListening 
+  } = voiceRec;
+
+  const [dhruvAutoVoice, setDhruvAutoVoice] = useState(false);
+  const [dhruvInitialQuery, setDhruvInitialQuery] = useState("");
+
   const [isWakeWordActive, setIsWakeWordActive] = useState(() => {
     try {
-      return localStorage.getItem("dhruv_wake_word_enabled") === "true";
+      // Hands-free "Hey Dhruv" is active by default unless explicitly disabled
+      return localStorage.getItem("dhruv_wake_word_enabled") !== "false";
     } catch {
-      return false;
+      return true;
     }
   });
 
@@ -86,13 +96,41 @@ function Navbar() {
   }, [user]);
 
   useEffect(() => {
-    const updateUnreadNotifs = () => {
-      setUnreadNotificationsCount(getUnreadNotificationsCount(user));
+    if (!user) {
+      setUnreadNotificationsCount(0);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchNotificationsUnread = async () => {
+      try {
+        const count = await getUnreadNotificationsCountAPI();
+        if (isMounted && typeof count === "number") {
+          setUnreadNotificationsCount(count);
+        }
+      } catch (err) {
+        console.warn("Error fetching unread notifications count:", err);
+      }
     };
-    updateUnreadNotifs();
-    window.addEventListener("skillbridge_notifications_updated", updateUnreadNotifs);
+
+    fetchNotificationsUnread();
+
+    const handleNotificationsSync = (e) => {
+      if (typeof e.detail?.unreadCount === "number") {
+        setUnreadNotificationsCount(e.detail.unreadCount);
+      } else {
+        fetchNotificationsUnread();
+      }
+    };
+
+    window.addEventListener("skillbridge_notifications_updated", handleNotificationsSync);
+
+    const pollInterval = setInterval(fetchNotificationsUnread, 45000);
+
     return () => {
-      window.removeEventListener("skillbridge_notifications_updated", updateUnreadNotifs);
+      isMounted = false;
+      window.removeEventListener("skillbridge_notifications_updated", handleNotificationsSync);
+      clearInterval(pollInterval);
     };
   }, [user]);
 
@@ -111,7 +149,7 @@ function Navbar() {
   useEffect(() => {
     const handleWakeSync = () => {
       try {
-        setIsWakeWordActive(localStorage.getItem("dhruv_wake_word_enabled") === "true");
+        setIsWakeWordActive(localStorage.getItem("dhruv_wake_word_enabled") !== "false");
       } catch (e) {
         console.warn(e);
       }
@@ -123,21 +161,29 @@ function Navbar() {
   }, []);
 
   // Background wake word detection when hands-free is enabled
+  // Global background wake word detection ("Hey Dhruv" - like Siri / Alexa)
   useEffect(() => {
-    if (!isWakeWordActive || isDhruvOpen || !voiceRec.isSupported) {
-      voiceRec.stopWakeWord();
+    if (!isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
+      stopWakeWord();
       return;
     }
 
-    voiceRec.listenForWakeWord(() => {
-      toast.success("Hey Dhruv detected! Opening Career Coach...", { icon: "🎙️" });
+    listenForWakeWord((promptAfterWake) => {
+      toast.success("Hey Dhruv! I'm listening...", { icon: "🎙️", duration: 3000 });
+      if (promptAfterWake && promptAfterWake.length > 2) {
+        setDhruvInitialQuery(promptAfterWake);
+        setDhruvAutoVoice(false);
+      } else {
+        setDhruvInitialQuery("");
+        setDhruvAutoVoice(true);
+      }
       setIsDhruvOpen(true);
     });
 
     return () => {
-      voiceRec.stopWakeWord();
+      stopWakeWord();
     };
-  }, [isWakeWordActive, isDhruvOpen, voiceRec]);
+  }, [isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
 
   const isHome = location.pathname === "/";
   const isCandidateDashboard = location.pathname === "/candidate-dashboard";
@@ -282,13 +328,22 @@ function Navbar() {
           <div className="nav-center">
             <button
               type="button"
-              className="header-dhruv-btn"
-              onClick={() => setIsDhruvOpen((prev) => !prev)}
+              className={`header-dhruv-btn ${isWakeListening ? "wake-listening" : ""}`}
+              onClick={() => {
+                setDhruvAutoVoice(false);
+                setDhruvInitialQuery("");
+                setIsDhruvOpen((prev) => !prev);
+              }}
               aria-label="Ask DHRUV AI Career Coach"
-              title="Ask DHRUV - AI Career Coach (Voice & 'Hey Dhruv' Enabled)"
+              title={
+                isWakeListening
+                  ? "DHRUV is listening for 'Hey Dhruv' (Click to open)"
+                  : "Ask DHRUV - AI Career Coach (Voice & 'Hey Dhruv' Enabled)"
+              }
             >
               <HiSparkles className="dhruv-sparkles-icon" />
               <span className="dhruv-btn-text">Ask DHRUV</span>
+              {isWakeListening && <span className="dhruv-listening-indicator" title="Microphone listening for 'Hey Dhruv'" />}
             </button>
           </div>
         )}
@@ -304,6 +359,16 @@ function Navbar() {
             >
               <FiHome size={18} />
               <span className="home-btn-label">Home</span>
+            </Link>
+          )}
+
+          {(!isLoggedIn || isHome) && (
+            <Link
+              to="/login"
+              className="mobile-header-login-btn"
+              aria-label="Login"
+            >
+              Login
             </Link>
           )}
 
@@ -367,11 +432,13 @@ function Navbar() {
 
                   {/* Bell Icon */}
                   <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Notifications">
+                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Official Notifications">
                       <span className="icon-with-badge">
                         <BsBellFill className="header-icon" />
                         {unreadNotificationsCount > 0 && (
-                          <span className="nav-unread-dot" title={`${unreadNotificationsCount} unread`} />
+                          <span className="nav-unread-count-pill" title={`${unreadNotificationsCount} unread official alerts`}>
+                            {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                          </span>
                         )}
                       </span>
                       <span className="mobile-only-label">
@@ -427,11 +494,13 @@ function Navbar() {
 
                   {/* Recruiter Bell Icon */}
                   <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Notifications">
+                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Official Notifications">
                       <span className="icon-with-badge">
                         <BsBellFill className="header-icon" />
                         {unreadNotificationsCount > 0 && (
-                          <span className="nav-unread-dot" title={`${unreadNotificationsCount} unread`} />
+                          <span className="nav-unread-count-pill" title={`${unreadNotificationsCount} unread official alerts`}>
+                            {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                          </span>
                         )}
                       </span>
                       <span className="mobile-only-label">
@@ -489,6 +558,8 @@ function Navbar() {
           isOpen={isDhruvOpen}
           setIsOpen={setIsDhruvOpen}
           hideFloatingTrigger={true}
+          autoStartVoice={dhruvAutoVoice}
+          initialQuery={dhruvInitialQuery}
         />
       )}
 
@@ -499,15 +570,12 @@ function Navbar() {
         user={user}
       />
 
-      {/* Notifications Drawer */}
+      {/* Multi-Role In-App Notifications Drawer */}
       <NotificationsDrawer
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         user={user}
-        onOpenMessages={() => {
-          setIsNotificationsOpen(false);
-          setIsMessagesOpen(true);
-        }}
+        onUnreadCountChange={(count) => setUnreadNotificationsCount(count)}
       />
     </nav>
   );

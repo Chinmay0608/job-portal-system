@@ -1,5 +1,3 @@
-import "../Styles/components/SplashScreen.css";
-
 function SplashScreen({ isExiting }) {
   return (
     <div className={`splash-screen ${isExiting ? "splash-exit" : ""}`}>

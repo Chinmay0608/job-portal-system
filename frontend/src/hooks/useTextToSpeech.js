@@ -73,7 +73,7 @@ export default function useTextToSpeech() {
 
   // Speak synthesized text
   const speak = useCallback(
-    (text) => {
+    (text, onFinished) => {
       if (!isSupported || isMuted || !text) return;
 
       const cleanedText = sanitizeForSpeech(text);
@@ -105,6 +105,7 @@ export default function useTextToSpeech() {
 
         utterance.onend = () => {
           setIsSpeaking(false);
+          if (onFinished) onFinished();
         };
 
         utterance.onerror = (event) => {
@@ -113,6 +114,7 @@ export default function useTextToSpeech() {
             console.warn("[TextToSpeech] Utterance error:", event.error);
           }
           setIsSpeaking(false);
+          if (onFinished) onFinished();
         };
 
         utteranceRef.current = utterance;

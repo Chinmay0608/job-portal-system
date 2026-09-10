@@ -210,7 +210,7 @@ const uploadResume = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user.id,
     { resume: req.file.path },
-    { new: true },
+    { returnDocument: "after" },
   );
 
   res.status(200).json({

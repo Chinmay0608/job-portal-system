@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { getRecruiterApplications, updateStatus } from "../../Services/jobService";
 import RetryBanner from "../../Components/RetryBanner";
 import toast from "react-hot-toast";
-import "../../Styles/pages/recruiter/RecruiterApplications.css";
+import StatusBadge from "../../Components/common/StatusBadge";
+import EmptyState from "../../Components/common/EmptyState";
+import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
+import undrawInterviewSvg from "../../assets/undraw_interview_yz52.svg";
 
 function RecruiterApplications() {
   const [applications, setApplications] = useState([]);
@@ -73,17 +76,18 @@ function RecruiterApplications() {
       {fetchError && <RetryBanner message={fetchError} onRetry={fetchApplications} />}
       {/* Loading State */}
       {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-dark" role="status" />
-          <p className="mt-3 text-muted">Loading applicants...</p>
+        <div className="space-y-4 max-w-4xl mx-auto py-6" role="status" aria-label="Loading applicants">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
         </div>
       ) : applications.length === 0 ? (
         /* Empty State */
-        <div className="empty-applications">
-          <div className="empty-icon">👥</div>
-          <h2>No applications yet</h2>
-          <p>Candidate applications will appear here.</p>
-        </div>
+        <EmptyState
+          illustration={undrawInterviewSvg}
+          title="No applications yet"
+          description="Candidate applications will appear here once job seekers discover and apply to your open positions."
+        />
       ) : (
         /* Applications Grid */
         <div className="applications-grid">
@@ -94,9 +98,7 @@ function RecruiterApplications() {
                   <h2 className="candidate-name">{application?.candidate?.name}</h2>
                   <p className="candidate-email">{application?.candidate?.email}</p>
                 </div>
-                <span className={`status-badge ${application.status}`}>
-                  {application.status}
-                </span>
+                <StatusBadge status={application.status} size="md" />
               </div>
 
               <div className="job-applied">

@@ -10,6 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function HelpWidget() {
   const [user, setUser] = useState(getStoredUser);
+  const [guestEmail, setGuestEmail] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [description, setDescription] = useState("");
@@ -18,6 +19,7 @@ export default function HelpWidget() {
   const [manualFile, setManualFile] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatusText, setSubmitStatusText] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef(null);
@@ -40,20 +42,39 @@ export default function HelpWidget() {
       const modalEl = document.getElementById("help-widget-modal");
       if (modalEl) modalEl.style.visibility = "hidden";
 
+      // Viewport-focused capture: snapshot what the user is actively viewing on screen
+      const viewportWidth = Math.min(window.innerWidth || 800, 1920);
+      const viewportHeight = Math.min(window.innerHeight || 600, 1080);
+      const scrollX = window.scrollX || window.pageXOffset || 0;
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
         logging: false,
-        ignoreElements: (el) => el.id === "help-widget-button",
+        scale: 1, // Crisp 1:1 scale without creating massive canvases on high-DPI/mobile
+        width: viewportWidth,
+        height: viewportHeight,
+        x: scrollX,
+        y: scrollY,
+        windowWidth: viewportWidth,
+        windowHeight: viewportHeight,
+        ignoreElements: (el) =>
+          el.id === "help-widget-button" || el.id === "help-widget-modal",
       });
 
       if (modalEl) modalEl.style.visibility = "visible";
 
-      canvas.toBlob((blob) => {
-        setScreenshotBlob(blob);
-      }, "image/png");
+      // Compress to high-efficiency JPEG (0.8 quality, ~100KB instead of multi-MB PNG)
+      canvas.toBlob(
+        (blob) => {
+          setScreenshotBlob(blob);
+        },
+        "image/jpeg",
+        0.8
+      );
 
-      setScreenshotDataUrl(canvas.toDataURL("image/png"));
+      setScreenshotDataUrl(canvas.toDataURL("image/jpeg", 0.8));
       setManualFile(null);
     } catch (err) {
       console.warn("Screenshot capture error:", err);
@@ -70,6 +91,7 @@ export default function HelpWidget() {
     setSubmitSuccess(false);
     setErrorMsg("");
     setDescription("");
+    setSubmitStatusText("");
     // Give modal a tick to render, then auto-capture the background page
     setTimeout(() => {
       captureScreen();
@@ -83,6 +105,8 @@ export default function HelpWidget() {
     setManualFile(null);
     setDescription("");
     setErrorMsg("");
+    setGuestEmail("");
+    setSubmitStatusText("");
   };
 
   const handleFileChange = (e) => {
@@ -114,26 +138,42 @@ export default function HelpWidget() {
 
     setIsSubmitting(true);
     setErrorMsg("");
+    setSubmitStatusText("");
+
+    // If server takes more than 3.5s (cold-start on Render free-tier), display reassuring message
+    const statusTimer = setTimeout(() => {
+      setSubmitStatusText("Connecting to server (waking up service if idle, please wait)...");
+    }, 3500);
 
     try {
       const formData = new FormData();
       formData.append("description", description.trim());
       formData.append("pageUrl", window.location.pathname + window.location.search);
 
+      if (!user && guestEmail.trim()) {
+        formData.append("email", guestEmail.trim());
+      }
+
       if (manualFile) {
         formData.append("screenshot", manualFile);
       } else if (screenshotBlob) {
-        formData.append("screenshot", screenshotBlob, "screenshot.png");
+        formData.append("screenshot", screenshotBlob, "screenshot.jpg");
       }
 
+      const headers = {
+        "Content-Type": "multipart/form-data",
+        "x-requested-with": "XMLHttpRequest",
+      };
+
       const token = localStorage.getItem("token");
+      if (token && token !== "null" && token !== "undefined") {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       await axios.post(`${API_BASE_URL}/api/support/report`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-          "x-requested-with": "XMLHttpRequest",
-        },
+        headers,
         withCredentials: true,
+        timeout: 45000,
       });
 
       setSubmitSuccess(true);
@@ -143,17 +183,19 @@ export default function HelpWidget() {
       }, 1800);
     } catch (err) {
       console.error("Failed to submit support ticket:", err);
-      setErrorMsg(
-        err.response?.data?.message || "Failed to submit report. Please try again."
-      );
-      toast.error("Failed to submit report");
+      const msg =
+        err.response?.data?.message ||
+        (err.code === "ECONNABORTED"
+          ? "Request timed out. The server may still be spinning up. Please try again."
+          : "Failed to submit report. Please try again.");
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
+      clearTimeout(statusTimer);
+      setSubmitStatusText("");
       setIsSubmitting(false);
     }
   };
-
-  // Only render for logged-in users
-  if (!user) return null;
 
   return (
     <>
@@ -301,7 +343,31 @@ export default function HelpWidget() {
                     </div>
                   </div>
 
-                  {/* Submit buttons */}
+                  {/* Guest email input (only if not logged in) */}
+                  {!user && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Your Email <span className="text-slate-400 font-normal">(optional — to receive triage updates)</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 placeholder:text-slate-400"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
+
+                  {/* Submit buttons & cold-start indicator */}
+                  {submitStatusText && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2 animate-pulse">
+                      <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" />
+                      <span>{submitStatusText}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
                     <button
                       type="button"

@@ -1,5 +1,3 @@
-import "../../Styles/pages/marketing/GetFeatured.css";
-
 function GetFeatured() {
   const benefits = [
     {

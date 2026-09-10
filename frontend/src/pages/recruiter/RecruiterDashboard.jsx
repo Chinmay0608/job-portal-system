@@ -3,7 +3,9 @@ import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplicat
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
-import "../../Styles/pages/recruiter/RecruiterDashboard.css";
+import EmptyState from "../../Components/common/EmptyState";
+import { JobCardSkeleton, MetricCardSkeleton } from "../../Components/common/SkeletonLoader";
+import undrawCareerSvg from "../../assets/undraw_career-progress_vfq5.svg";
 
 import {
   HiOutlineBriefcase,
@@ -213,266 +215,386 @@ function RecruiterDashboard() {
   };
 
   return (
-    <div className="recruiter-dashboard-shell seamless-page-canvas">
-      <main className="dashboard-main full-width-layout">
+    <div className="w-full min-h-screen bg-slate-50 font-sans pb-28 text-slate-900">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        {/* SUB-HEADER CONTEXT ROW */}
-        <div className="mobile-header-block-recruiter">
-          <p className="eyebrow-deck">RECRUITER DECK</p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 className="topbar-mobile-title">{user?.company || "Your Company"}</h2>
-            <button className="primary-accent-btn mobile-only-filter" onClick={handleQuickCreate} style={{ padding: '8px 16px', fontSize: '0.85rem', width: 'auto', borderRadius: '8px' }}>
-              <HiOutlinePlus style={{ marginRight: '4px' }} /> Post Job
+        {/* SUB-HEADER CONTEXT ROW (Mobile only) */}
+        <div className="block md:hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase mb-1">RECRUITER DECK</p>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900 m-0 truncate">{user?.company || "Your Company"}</h2>
+            <button 
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-xs flex items-center gap-1.5 border-0 shrink-0" 
+              onClick={handleQuickCreate}
+            >
+              <HiOutlinePlus size={16} /> Post Job
             </button>
           </div>
-          <hr className="dashed-cable-divider" />
         </div>
 
-        <section className="dashboard-topbar inline-subheading desktop-only-topbar">
-          <div className="topbar-copy">
-            <h2>Welcome back, Recruiter! 👋</h2>
-            <p className="eyebrow">Manage your jobs and find the best talent</p>
+        {/* TOPBAR (Desktop) */}
+        <section className="hidden md:flex items-center justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight m-0">Welcome back, Recruiter! 👋</h2>
+            <p className="text-sm font-medium text-slate-500 mt-1 m-0">Manage your jobs and find the best talent</p>
           </div>
-          <div className="topbar-actions">
-            <button type="button" className="primary-accent-btn" onClick={handleQuickCreate}>
-              <HiOutlinePlus /> Create Job
+          <div>
+            <button 
+              type="button" 
+              className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-xs flex items-center gap-2 border-0" 
+              onClick={handleQuickCreate}
+            >
+              <HiOutlinePlus size={18} /> Create Job
             </button>
           </div>
         </section>
 
-        {/* SCORECARDS — all values are live from fetchStats(), no placeholders */}
-        <section className="stats-grid">
-          <div className="stat-box">
-            <div className="stat-icon stat-icon-purple"><HiOutlineBriefcase /></div>
-            <div className="stat-info-block">
-              <h3 className="stat-number">{stats.totalJobs}</h3>
-              <p className="stat-label">Total Jobs</p>
-            </div>
-          </div>
-          <div className="stat-box">
-            <div className="stat-icon stat-icon-blue"><HiOutlineUserGroup /></div>
-            <div className="stat-info-block">
-              <h3 className="stat-number">{stats.totalApplications}</h3>
-              <p className="stat-label">Applications</p>
-            </div>
-          </div>
-          <div className="stat-box">
-            <div className="stat-icon stat-icon-green"><HiOutlineCheckCircle /></div>
-            <div className="stat-info-block">
-              <h3 className="stat-number">{stats.shortlisted}</h3>
-              <p className="stat-label">Shortlisted</p>
-            </div>
-          </div>
-          <div className="stat-box">
-            <div className="stat-icon stat-icon-red"><HiOutlineXCircle /></div>
-            <div className="stat-info-block">
-              <h3 className="stat-number">{stats.rejected}</h3>
-              <p className="stat-label">Rejected</p>
-            </div>
-          </div>
-        </section>
-
-        {/* JOBS LISTING — now full width since the sidebar form is gone */}
-        <section className="dashboard-grid single-column">
-          <section className="dashboard-panel jobs-panel">
-            <div className="panel-heading-row-top">
-              <h3>My Posted Jobs</h3>
-              <div className="filter-controls-cluster">
-                {/* Desktop Dropdown */}
-                <div className="dropdown-filter-pill desktop-only-filter" ref={filterRef}>
-                  <button
-                    type="button"
-                    className="filter-pill-trigger"
-                    onClick={() => setIsFilterOpen((prev) => !prev)}
-                  >
-                    <HiOutlineBriefcase className="filter-pill-icon" />
-                    <span>{statusFilter}</span>
-                    <HiChevronDown className={`pill-dropdown-arrow ${isFilterOpen ? "open" : ""}`} />
-                  </button>
-
-                  {isFilterOpen && (
-                    <div className="filter-dropdown-menu">
-                      {availableRoleTypes.map((type) => (
-                        <button
-                          type="button"
-                          key={type}
-                          className={`filter-dropdown-item ${statusFilter === type ? "selected" : ""}`}
-                          onClick={() => handleSelectFilter(type)}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+        {/* SCORECARDS */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {loading ? (
+            <>
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+            </>
+          ) : (
+            <>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                  <HiOutlineBriefcase />
                 </div>
-
-                {/* Mobile Scrollable Chips */}
-                <div className="mobile-chip-scroller mobile-only-filter">
-                  {availableRoleTypes.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      className={`scroll-chip ${statusFilter === type ? "active" : ""}`}
-                      onClick={() => handleSelectFilter(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="view-toggle-buttons desktop-only-filter">
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
-                    onClick={() => setViewMode("grid")}
-                    aria-label="Grid view"
-                  >
-                    <HiOutlineSquares2X2 />
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${viewMode === "list" ? "active" : ""}`}
-                    onClick={() => setViewMode("list")}
-                    aria-label="List view"
-                  >
-                    <HiOutlineListBullet />
-                  </button>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 m-0">{stats.totalJobs}</h3>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 m-0">Total Jobs</p>
                 </div>
               </div>
-            </div>
-
-            <div className={viewMode === "grid" ? "jobs-grid-cards" : "jobs-list-cards"}>
-              {loading ? (
-                <div className="loader-mesh-placeholder">Loading job opportunities...</div>
-              ) : filteredJobs.length === 0 ? (
-                <div className="empty-state-mesh">
-                  {jobs.length === 0
-                    ? "No job cards active. Create your first post using the button above."
-                    : "No jobs match this filter."}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-brand-600 flex items-center justify-center text-xl shrink-0">
+                  <HiOutlineUserGroup />
                 </div>
-              ) : (
-                visibleJobs.map((job) => (
-                  <article key={job._id} className="job-item-card">
-                    <div className="card-status-badge">
-                      <span className={job.isActive !== false ? "status-active" : "status-closed"}>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 m-0">{stats.totalApplications}</h3>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 m-0">Applications</p>
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                  <HiOutlineCheckCircle />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 m-0">{stats.shortlisted}</h3>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 m-0">Shortlisted</p>
+                </div>
+              </div>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shrink-0">
+                  <HiOutlineXCircle />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 m-0">{stats.rejected}</h3>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5 m-0">Rejected</p>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* JOBS LISTING */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <h3 className="text-xl font-black text-slate-900 m-0">My Posted Jobs</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Desktop Filter Dropdown */}
+              <div className="relative hidden md:block" ref={filterRef}>
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 flex items-center gap-2 cursor-pointer transition-colors"
+                  onClick={() => setIsFilterOpen((prev) => !prev)}
+                >
+                  <HiOutlineBriefcase className="text-slate-500" />
+                  <span>{statusFilter}</span>
+                  <HiChevronDown className={`transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isFilterOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-20 animate-fade-in">
+                    {availableRoleTypes.map((type) => (
+                      <button
+                        type="button"
+                        key={type}
+                        className={`w-full text-left px-4 py-2 text-xs font-bold transition-colors cursor-pointer border-0 ${
+                          statusFilter === type ? "bg-brand-50 text-brand-700" : "bg-transparent text-slate-700 hover:bg-slate-50"
+                        }`}
+                        onClick={() => handleSelectFilter(type)}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Scrollable Chips */}
+              <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+                {availableRoleTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border-0 cursor-pointer ${
+                      statusFilter === type
+                        ? "bg-brand-600 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                    onClick={() => handleSelectFilter(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Toggle Buttons */}
+              <div className="hidden md:inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  className={`p-1.5 rounded-lg text-sm transition-all cursor-pointer border-0 ${
+                    viewMode === "grid" ? "bg-white text-brand-600 shadow-xs font-bold" : "bg-transparent text-slate-500 hover:text-slate-900"
+                  }`}
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Grid view"
+                >
+                  <HiOutlineSquares2X2 size={18} />
+                </button>
+                <button
+                  type="button"
+                  className={`p-1.5 rounded-lg text-sm transition-all cursor-pointer border-0 ${
+                    viewMode === "list" ? "bg-white text-brand-600 shadow-xs font-bold" : "bg-transparent text-slate-500 hover:text-slate-900"
+                  }`}
+                  onClick={() => setViewMode("list")}
+                  aria-label="List view"
+                >
+                  <HiOutlineListBullet size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" : "flex flex-col gap-3.5"}>
+            {loading ? (
+              <div className="w-full col-span-full space-y-4 py-4" role="status" aria-label="Loading job opportunities">
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="w-full col-span-full py-8">
+                <EmptyState
+                  illustration={undrawCareerSvg}
+                  title={jobs.length === 0 ? "No posted jobs yet" : "No jobs match this filter"}
+                  description={
+                    jobs.length === 0
+                      ? "Post your first role to start receiving matched candidate applications."
+                      : "Try choosing another role filter or reset to view all listings."
+                  }
+                  actionText={jobs.length === 0 ? "Post a Job" : "Clear Filter"}
+                  onAction={jobs.length === 0 ? handleQuickCreate : () => setStatusFilter("All")}
+                />
+              </div>
+            ) : (
+              visibleJobs.map((job) => (
+                <article key={job._id} className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-3">
+                      <span className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                        job.isActive !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}>
                         {job.isActive !== false ? "Active" : "Closed"}
                       </span>
-                      <span className="time-posted">
+                      <span className="text-slate-400 font-medium">
                         {new Date(job.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <div className="card-core-identity">
-                      <h4>{job.title}</h4>
-                      <p className="card-company-subtext">{job.company}</p>
-                    </div>
+                    <h4 className="text-base font-black text-slate-900 leading-snug line-clamp-1 mb-1">{job.title}</h4>
+                    <p className="text-xs font-semibold text-slate-500 m-0">{job.company}</p>
 
-                    <div className="card-meta-metrics">
-                      <div className="card-location-row-meta">
-                        <HiOutlineMapPin className="meta-pin-icon" />
+                    <div className="flex items-center gap-3 text-xs text-slate-500 my-2.5">
+                      <div className="flex items-center gap-1">
+                        <HiOutlineMapPin className="text-slate-400" />
                         <span>{job.location || "Remote, India"}</span>
                       </div>
-                      
-                      <div className="card-applicant-count">
-                        <HiOutlineUserGroup className="meta-pin-icon" />
-                        {/* Static approximation since applicant count isn't in job schema directly */}
+                      <div className="flex items-center gap-1">
+                        <HiOutlineUserGroup className="text-slate-400" />
                         <span>Applicants</span>
                       </div>
                     </div>
 
-                    <div className="card-compensation-salary">
-                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `${Number(job.salary).toLocaleString("en-US")}`}
+                    <div className="text-sm font-extrabold text-slate-900 mb-4">
+                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")}`}
                     </div>
+                  </div>
 
-                    <div className="card-operational-ctas">
-                      <button type="button" className="cta-edit-outline" onClick={() => handleEdit(job)}>Edit</button>
-                      <button type="button" className="cta-delete-solid" onClick={() => handleDelete(job._id)}>Delete</button>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-
-            {!loading && hasMoreJobs && (
-              <button type="button" className="load-more-foot-link" onClick={handleLoadMore}>
-                Load more jobs <HiChevronDown />
-              </button>
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      className="flex-1 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer border-0" 
+                      onClick={() => handleEdit(job)}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      type="button" 
+                      className="py-2 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer border-0" 
+                      onClick={() => handleDelete(job._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))
             )}
-          </section>
+          </div>
+
+          {!loading && hasMoreJobs && (
+            <div className="flex justify-center pt-4">
+              <button 
+                type="button" 
+                className="px-6 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer" 
+                onClick={handleLoadMore}
+              >
+                <span>Load more jobs</span>
+                <HiChevronDown />
+              </button>
+            </div>
+          )}
         </section>
       </main>
 
       {/* MOBILE FLOATING ACTION BUTTON */}
-      <button className="mobile-fab-create-job" onClick={handleQuickCreate}>
+      <button 
+        className="md:hidden fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-5 py-3 rounded-full shadow-lg flex items-center gap-2 active:scale-95 cursor-pointer border-0" 
+        onClick={handleQuickCreate}
+      >
         <HiOutlinePlus size={20} /> Post a new job
       </button>
 
-      {/* CREATE / EDIT JOB MODAL — opens only when Create Job (or Edit) is clicked */}
+      {/* CREATE / EDIT JOB MODAL */}
       {showJobModal && (
-        <div className="job-modal-overlay" onClick={closeJobModal}>
-          <div className="job-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="panel-heading">
-              <h3>{editingJob ? "Edit " : "Create "}<span className="highlight-purple">{editingJob ? "Job" : "New Job"}</span></h3>
-              <button type="button" className="job-modal-close-btn" onClick={closeJobModal} aria-label="Close">
-                <HiXMark />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in" onClick={closeJobModal}>
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 my-auto space-y-4 animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 m-0">
+                  {editingJob ? "Edit " : "Create "}
+                  <span className="text-brand-600">{editingJob ? "Job" : "New Job"}</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 m-0">
+                  {editingJob ? "Update the details for this job listing" : "Fill in the details to post a new job"}
+                </p>
+              </div>
+              <button 
+                type="button" 
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer border-0" 
+                onClick={closeJobModal} 
+                aria-label="Close"
+              >
+                <HiXMark size={18} />
               </button>
             </div>
-            <p className="form-subtitle">
-              {editingJob ? "Update the details for this job listing" : "Fill in the details to post a new job"}
-            </p>
 
-            <form onSubmit={handleSubmit} className="job-form">
-              <div className="input-field-box">
-                <span className="field-prefix-icon"><HiOutlineBriefcase /></span>
-                <div className="input-stack">
-                  <label>Job Title</label>
-                  <input name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Frontend Developer" required />
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Job Title</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><HiOutlineBriefcase /></span>
+                  <input 
+                    name="title" 
+                    value={formData.title} 
+                    onChange={handleChange} 
+                    placeholder="e.g. Frontend Developer" 
+                    required 
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                  />
                 </div>
               </div>
 
-              <div className="input-field-box">
-                <span className="field-prefix-icon"><HiOutlineBriefcase /></span>
-                <div className="input-stack">
-                  <label>Company</label>
-                  <input name="company" value={formData.company} onChange={handleChange} placeholder="e.g. Google" required />
+              <div>
+                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Company</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><HiOutlineBriefcase /></span>
+                  <input 
+                    name="company" 
+                    value={formData.company} 
+                    onChange={handleChange} 
+                    placeholder="e.g. Google" 
+                    required 
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                  />
                 </div>
               </div>
 
-              <div className="input-field-box">
-                <span className="field-prefix-icon"><HiOutlineMapPin /></span>
-                <div className="input-stack">
-                  <label>Location</label>
-                  <input name="location" value={formData.location} onChange={handleChange} placeholder="e.g. Bangalore" required />
+              <div>
+                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Location</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><HiOutlineMapPin /></span>
+                  <input 
+                    name="location" 
+                    value={formData.location} 
+                    onChange={handleChange} 
+                    placeholder="e.g. Bangalore" 
+                    required 
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                  />
                 </div>
               </div>
 
-              <div className="form-row-split">
-                <div className="input-field-box split-box">
-                  <span className="field-prefix-icon"><HiOutlineCurrencyRupee /></span>
-                  <div className="input-stack">
-                    <label>Salary</label>
-                    <input name="salary" value={formData.salary} onChange={handleChange} placeholder="e.g. 1800000" inputMode="numeric" required />
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
-                    <CustomSelect
-                      name="role"
-                      options={[{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, { value: "Contract", label: "Contract" }]}
-                      value={formData.role}
-                      onChange={handleChange}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Salary</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"><HiOutlineCurrencyRupee /></span>
+                    <input 
+                      name="salary" 
+                      value={formData.salary} 
+                      onChange={handleChange} 
+                      placeholder="e.g. 1800000" 
+                      inputMode="numeric" 
+                      required 
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                     />
                   </div>
-              </div>
-
-              <div className="input-field-box textarea-field-box">
-                <span className="field-prefix-icon prefix-textarea-icon"><HiOutlineDocumentText /></span>
-                <div className="input-stack">
-                  <label>Job Description</label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} rows={4} placeholder="Write job description..." required />
+                </div>
+                <div>
+                  <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Role Type</label>
+                  <CustomSelect
+                    name="role"
+                    options={[{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, { value: "Contract", label: "Contract" }]}
+                    value={formData.role}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
-              <button type="submit" className="post-job-submit-btn" disabled={submitting}>
+              <div>
+                <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1 block">Job Description</label>
+                <div className="relative">
+                  <textarea 
+                    name="description" 
+                    value={formData.description} 
+                    onChange={handleChange} 
+                    rows={4} 
+                    placeholder="Write job description..." 
+                    required 
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-2" 
+                disabled={submitting}
+              >
                 {submitting ? "Saving..." : editingJob ? "Update Job" : "Post Job"}
               </button>
             </form>

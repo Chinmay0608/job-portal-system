@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
 const {
   createTicket,
@@ -10,8 +10,8 @@ const {
   getTicketLog,
 } = require("../controllers/supportController");
 
-// Reporter: submit a new ticket (must be authenticated)
-router.post("/report", protect, upload.single("screenshot"), createTicket);
+// Reporter: submit a new ticket (open to all: logged-in candidates, recruiters, and guests)
+router.post("/report", optionalAuth, upload.single("screenshot"), createTicket);
 
 // Admin: list tickets with optional status / severity / category filters
 router.get("/tickets", protect, authorizeRoles("admin"), getTicketsAdmin);

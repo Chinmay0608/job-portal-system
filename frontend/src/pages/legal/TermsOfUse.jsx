@@ -1,5 +1,4 @@
 import LegalLayout from "../../Components/LegalLayout";
-import "../../Styles/pages/legal/Legal.css";
 
 function TermsOfUse() {
   return (
