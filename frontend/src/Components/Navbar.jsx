@@ -167,11 +167,14 @@ function Navbar() {
   const isMyApplications = location.pathname === "/my-applications";
   const isSalaryGuide = location.pathname === "/salary-data";
 
+  // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
+  const canAccessAI = Boolean(isLoggedIn && user && user.role === "candidate" && !isHome);
+
   // Background wake word detection when hands-free is enabled
   // Global background wake word detection ("Hey Dhruv" - like Siri / Alexa)
-  // Strict rule: NEVER start microphone if user is on the landing page ("/")
+  // Strict rule: ONLY start microphone if user is logged in to their candidate dashboard
   useEffect(() => {
-    if (isHome || !isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
+    if (!canAccessAI || !isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
       stopWakeWord();
       return;
     }
@@ -191,7 +194,7 @@ function Navbar() {
     return () => {
       stopWakeWord();
     };
-  }, [isHome, isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
+  }, [canAccessAI, isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
 
   const getDashboardUrl = () => {
     if (!isLoggedIn) return "/";
@@ -324,8 +327,8 @@ function Navbar() {
           )}
         </div>
 
-        {/* Middle Section: DHRUV AI Assistant */}
-        {(!isHome && (!user || user?.role === "candidate")) && (
+        {/* Middle Section: DHRUV AI Assistant (Logged-in candidates only) */}
+        {canAccessAI && (
           <div className="nav-center">
             <button
               type="button"
@@ -546,8 +549,8 @@ function Navbar() {
         </div>
       </div>
 
-      {/* DHRUV AI Career Coach Drawer */}
-      {(!isHome && (!user || user?.role === "candidate")) && (
+      {/* DHRUV AI Career Coach Drawer (Logged-in candidates only) */}
+      {canAccessAI && (
         <AIChatWidget
           user={user}
           isOpen={isDhruvOpen}
