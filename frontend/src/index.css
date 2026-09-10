@@ -1109,10 +1109,6 @@ input[type="submit"]:active:not(:disabled),
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.mobile-header-login-btn {
-  display: none;
-}
-
 /* ==========================================================================
    MOBILE & TABLET RESPONSIVE LAYOUT
 ========================================================================== */
@@ -1154,28 +1150,6 @@ input[type="submit"]:active:not(:disabled),
     display: flex;
     align-items: center;
     gap: 8px;
-  }
-
-  .mobile-header-login-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    padding: 5px 12px;
-    border-radius: 9999px;
-    background: #2563eb;
-    color: #ffffff !important;
-    text-decoration: none;
-    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
-    transition: all 0.15s ease;
-    white-space: nowrap;
-    line-height: 1.2;
-  }
-
-  .mobile-header-login-btn:hover {
-    background: #1d4ed8;
-    color: #ffffff !important;
   }
 
   .mobile-menu-toggle {
@@ -1269,12 +1243,65 @@ input[type="submit"]:active:not(:disabled),
   .auth-buttons {
     flex-direction: column;
     width: 100%;
-    gap: 10px;
+    gap: 12px;
   }
 
-  .login-btn, .signup-btn {
+  .nav-right .auth-buttons .nav-tab-link {
+    width: 100%;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e293b;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .nav-right .auth-buttons .nav-tab-link:hover {
+    background-color: #f1f5f9;
+  }
+
+  .nav-right .login-btn {
     width: 100%;
     text-align: center;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #2563eb;
+    border: 1.5px solid #2563eb;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .nav-right .login-btn:hover {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .nav-right .signup-btn {
+    width: 100%;
+    text-align: center;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: 1.5px solid #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .nav-right .signup-btn:hover {
+    background-color: #1d4ed8;
   }
 }
 
@@ -1302,6 +1329,63 @@ input[type="submit"]:active:not(:disabled),
   }
   .indeed-navbar.navbar-dark .auth-buttons {
     transform: none;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right {
+    background-color: #0d1117 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .auth-buttons .nav-tab-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .auth-buttons .nav-tab-link:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .login-btn {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    width: 100% !important;
+    padding: 12px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .login-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16) !important;
+    border-color: #ffffff !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .signup-btn {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border: 1.5px solid #2563eb !important;
+    width: 100% !important;
+    padding: 12px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+  }
+
+  .indeed-navbar.navbar-dark .nav-right .signup-btn:hover {
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
   }
 }
 
@@ -1380,16 +1464,6 @@ input[type="submit"]:active:not(:disabled),
 /* Mobile Toggle on Dark Hero */
 .indeed-navbar.navbar-dark .mobile-menu-toggle {
   color: #ffffff !important;
-}
-
-.indeed-navbar.navbar-dark .mobile-header-login-btn {
-  background: #2563eb !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-}
-
-.indeed-navbar.navbar-dark .mobile-header-login-btn:hover {
-  background: #1d4ed8 !important;
 }
 
 /* Auth Buttons on Dark Hero Landing Header */
