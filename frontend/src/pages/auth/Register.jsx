@@ -107,23 +107,26 @@ function Register() {
         { label: "Avg. Time to Offer", value: "12 Days" },
       ]}
     >
-      <div className="w-full max-w-sm sm:max-w-md bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] p-5 sm:py-6 sm:px-7 space-y-3 sm:space-y-3.5 animate-scale-up">
+      <div className="relative w-full max-w-sm sm:max-w-md bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-800 shadow-[0_25px_60px_-15px_rgba(37,99,235,0.12)] rounded-3xl p-5 sm:py-6 sm:px-7 space-y-3 sm:space-y-3.5 animate-scale-up overflow-hidden">
+        {/* Top Brand Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent pointer-events-none" />
+
         {/* Brand Logo visible on mobile/tablet viewports (< lg) */}
-        <div className="flex lg:hidden justify-center cursor-pointer" onClick={() => navigate("/")}>
+        <div className="flex lg:hidden justify-center cursor-pointer pt-1" onClick={() => navigate("/")}>
           <SkillBridgeLogo width={190} center />
         </div>
 
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">Create an Account</h1>
-          <p className="text-xs text-slate-500 mt-1 m-0">Start your journey with SkillBridge</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight m-0">Create an Account</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 m-0">Start your journey with SkillBridge</p>
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+        <div className="grid grid-cols-2 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "candidate" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
+              formData.role === "candidate" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700" : "bg-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
             onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
           >
@@ -132,7 +135,7 @@ function Register() {
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "recruiter" ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" : "bg-transparent text-slate-500 hover:text-slate-800"
+              formData.role === "recruiter" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700" : "bg-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
             onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
           >
@@ -142,7 +145,7 @@ function Register() {
 
         <button
           type="button"
-          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+          className="w-full py-2.5 px-3 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
           onClick={handleGoogleSignup}
           disabled={googleLoading}
         >
@@ -151,14 +154,14 @@ function Register() {
         </button>
 
         <div className="relative flex py-0.5 items-center">
-          <div className="flex-grow border-t border-slate-200"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-slate-200"></div>
+          <div className="flex-grow border-t border-slate-200 dark:border-slate-700/60"></div>
+          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-slate-200 dark:border-slate-700/60"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Full Name</label>
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Full Name</label>
             <input
               type="text"
               name="name"
@@ -166,12 +169,12 @@ function Register() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Email Address</label>
             <input
               type="email"
               name="email"
@@ -179,24 +182,24 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
             <input
               type="tel"
               name="phone"
               placeholder="10-digit mobile number"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -205,11 +208,11 @@ function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50/80 hover:bg-slate-50 border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all duration-150"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 outline-none transition-all duration-150"
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 border-0 bg-transparent cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -220,17 +223,17 @@ function Register() {
 
           <button 
             type="submit" 
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:shadow-blue-600/25 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-md shadow-blue-600/20 border-0 disabled:opacity-50 mt-1.5" 
+            className="w-full py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-lg shadow-blue-600/25 active:scale-[0.99] border-0 disabled:opacity-50 mt-1.5" 
             disabled={loading} 
             aria-label="Create account"
           >
             {loading ? "Creating Account..." : "Create Account →"}
           </button>
 
-          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1.5 sm:pt-2">
+          <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 m-0 pt-1.5 sm:pt-2">
             Already have an account?{" "}
             <span 
-              className="font-bold text-brand-600 hover:underline cursor-pointer" 
+              className="font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer" 
               onClick={() => navigate("/login")}
             >
               Sign in
