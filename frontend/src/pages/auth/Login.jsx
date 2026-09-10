@@ -85,69 +85,69 @@ function Login() {
 
   return (
     <div className="h-screen max-h-screen w-full bg-slate-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden font-sans">
-      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-4 sm:p-6 space-y-2.5 sm:space-y-3 -translate-y-1 sm:-translate-y-2 animate-scale-up">
+      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4 -translate-y-1 sm:-translate-y-2 animate-scale-up">
         <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
-          <SkillBridgeLogo width={190} center />
+          <SkillBridgeLogo width={210} center />
         </div>
 
         <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">Welcome Back</h1>
-          <p className="text-xs text-slate-500 mt-0.5 m-0">Find the job made for you!</p>
+          <p className="text-xs text-slate-500 mt-1 m-0">Find the job made for you!</p>
         </div>
 
         {/* Role Selector Tabs */}
         <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
           <button 
             type="button"
-            className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
               loginRole === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("candidate")}
           >
-            <FaChessRook size={12} /> <span>Candidate</span>
+            <FaChessRook size={13} /> <span>Candidate</span>
           </button>
           <button 
             type="button"
-            className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
               loginRole === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setLoginRole("recruiter")}
           >
-            <FaBuilding size={12} /> <span>Recruiter</span>
+            <FaBuilding size={13} /> <span>Recruiter</span>
           </button>
         </div>
 
         <button
           type="button"
-          className="w-full py-2 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
+          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
-          <FcGoogle size={18} />
+          <FcGoogle size={19} />
           <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
         </button>
 
-        <div className="relative flex py-0.5 items-center">
+        <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
           <div className="flex-grow border-t border-slate-200"></div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-2.5">
+        <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-0.5">Email Address</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
             <input
               type="email"
               placeholder="mail@website.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-0.5">Password</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -155,7 +155,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3 py-1.5 sm:py-2 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
               />
               <button
                 type="button"
@@ -179,14 +179,14 @@ function Login() {
 
           <button 
             type="submit" 
-            className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-1" 
+            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-1.5" 
             disabled={loading} 
             aria-label="Log in"
           >
             {loading ? "Logging in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1">
+          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1.5 sm:pt-2">
             Not registered?{" "}
             <span 
               className="font-bold text-brand-600 hover:underline cursor-pointer" 
