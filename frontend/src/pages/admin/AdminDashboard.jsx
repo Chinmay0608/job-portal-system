@@ -11,22 +11,31 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import SupportTicketsView from './SupportTicketsView';
 import AdminMessagesView from './AdminMessagesView';
+import NotificationsDrawer from '../../Components/NotificationsDrawer';
+import { getUnreadNotificationsCountAPI } from '../../Services/notificationService';
 import { TableRowSkeleton } from '../../Components/common/SkeletonLoader';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
-const SidebarItem = ({ icon, label, active, onClick }) => (
+const SidebarItem = ({ icon, label, active, onClick, badge }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer border-0 ${
       active 
         ? 'bg-slate-100 text-slate-900 font-semibold shadow-sm' 
         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-medium'
     }`}
   >
-    {icon}
-    {label}
+    <div className="flex items-center gap-3">
+      {icon}
+      <span>{label}</span>
+    </div>
+    {badge !== undefined && badge > 0 && (
+      <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white shadow-xs">
+        {badge > 99 ? '99+' : badge}
+      </span>
+    )}
   </button>
 );
 
@@ -1186,6 +1195,41 @@ const AdminDashboard = () => {
   const [supportRefreshKey, setSupportRefreshKey] = useState(0);
   const [triggeringCrawl, setTriggeringCrawl] = useState(false);
 
+  // Notification and ticket counters
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
+
+  const [currentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  });
+
+  const fetchOpenTicketsCount = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/api/support/tickets?status=open`, getAuthHeaders());
+      if (data?.tickets) {
+        setOpenTicketsCount(data.tickets.length);
+      }
+    } catch (err) {
+      console.warn("Could not fetch open tickets count:", err.message);
+    }
+  };
+
+  const fetchNotificationsCount = async () => {
+    try {
+      const count = await getUnreadNotificationsCountAPI();
+      if (typeof count === "number") {
+        setUnreadNotificationsCount(count);
+      }
+    } catch (err) {
+      console.warn("Could not fetch unread notifications count:", err.message);
+    }
+  };
+
   const navigate = useNavigate();
 
   const handleTriggerCrawl = async () => {
@@ -1341,6 +1385,38 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    fetchNotificationsCount();
+    fetchOpenTicketsCount();
+
+    const handleSync = (e) => {
+      if (typeof e.detail?.unreadCount === "number") {
+        setUnreadNotificationsCount(e.detail.unreadCount);
+      } else {
+        fetchNotificationsCount();
+      }
+      fetchOpenTicketsCount();
+    };
+
+    const handleOpenSupport = () => {
+      setActiveTab('support');
+      setIsNotificationsOpen(false);
+    };
+
+    window.addEventListener("skillbridge_notifications_updated", handleSync);
+    window.addEventListener("skillbridge_open_admin_support", handleOpenSupport);
+    const interval = setInterval(() => {
+      fetchNotificationsCount();
+      fetchOpenTicketsCount();
+    }, 20000);
+
+    return () => {
+      window.removeEventListener("skillbridge_notifications_updated", handleSync);
+      window.removeEventListener("skillbridge_open_admin_support", handleOpenSupport);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'jobs') fetchJobs(jobsSearch, jobsPage, jobsLimit);
     if (activeTab === 'applications') fetchApplications();
@@ -1390,7 +1466,7 @@ const AdminDashboard = () => {
             <SidebarItem icon={<Database size={18} />} label="Jobs Registry" active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} />
             <SidebarItem icon={<Briefcase size={18} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
             <SidebarItem icon={<BookMarked size={18} />} label="Candidate Activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
-            <SidebarItem icon={<LifeBuoy size={18} />} label="Reported Issues" active={activeTab === 'support'} onClick={() => setActiveTab('support')} />
+            <SidebarItem icon={<LifeBuoy size={18} />} label="Reported Issues" active={activeTab === 'support'} onClick={() => setActiveTab('support')} badge={openTicketsCount} />
             <SidebarItem icon={<Send size={18} />} label="Direct Messages" active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} />
           </nav>
           
@@ -1456,10 +1532,18 @@ const AdminDashboard = () => {
               {metrics?.isOnline !== false ? `Crawler: Active • ${metrics?.crawlerSuccess || '100%'}` : "Crawler: Offline"}
             </div>
             
-            <div className="hidden md:block w-px h-6 bg-slate-200 mx-2"></div>
-            
-            <button onClick={() => toast("No new notifications")} className="text-slate-400 hover:text-slate-600 transition-colors relative p-2 hover:bg-slate-100 rounded-lg">
+            <button 
+              onClick={() => setIsNotificationsOpen(true)} 
+              className="text-slate-400 hover:text-slate-600 transition-colors relative p-2 hover:bg-slate-100 rounded-lg cursor-pointer border-0 bg-transparent"
+              title="Official Notifications"
+              aria-label="View notifications"
+            >
               <Bell size={18} />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-extrabold text-white shadow-xs">
+                  {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => {
@@ -1524,6 +1608,13 @@ const AdminDashboard = () => {
           ) : null}
         </div>
       </main>
+
+      <NotificationsDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        user={currentUser}
+        onUnreadCountChange={setUnreadNotificationsCount}
+      />
     </div>
   );
 };

@@ -90,8 +90,11 @@ function Navbar() {
     };
     updateUnread();
     window.addEventListener("skillbridge_messages_updated", updateUnread);
+    const handleOpenMessages = () => setIsMessagesOpen(true);
+    window.addEventListener("skillbridge_open_messages", handleOpenMessages);
     return () => {
       window.removeEventListener("skillbridge_messages_updated", updateUnread);
+      window.removeEventListener("skillbridge_open_messages", handleOpenMessages);
     };
   }, [user]);
 

@@ -134,7 +134,7 @@ export default function NotificationInboxModal({ isOpen, onClose, onUnreadCountC
 
   const handleNavigateToDashboardMessages = () => {
     if (onClose) onClose();
-    navigate("/candidate-dashboard?tab=messages");
+    window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
   };
 
   const filteredMessages = messages.filter((m) => {

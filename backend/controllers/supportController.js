@@ -4,6 +4,7 @@ const asyncHandler = require("express-async-handler");
 const SupportTicket = require("../models/SupportTicket");
 const User = require("../models/user");
 const ticketAgent = require("../services/ticketAgent");
+const { sendTicketAlertToTelegram } = require("../services/telegramService");
 
 // ─── POST /api/support/report — logged-in user or guest ───────────────────────
 const createTicket = asyncHandler(async (req, res) => {
@@ -61,6 +62,11 @@ const createTicket = asyncHandler(async (req, res) => {
     message: "Thanks — your report has been submitted.",
     ticket,
   });
+
+  // Instant notification to Telegram bot
+  sendTicketAlertToTelegram(ticket, { finalStatus: "open", isHighSeverity: false }).catch((err) =>
+    console.error("[Telegram] Instant alert failed:", err.message)
+  );
 
   // Fire-and-forget: agent runs in background after response is sent
   setImmediate(() => {

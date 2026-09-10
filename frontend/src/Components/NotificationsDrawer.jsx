@@ -195,8 +195,11 @@ export default function NotificationsDrawer({ isOpen, onClose, user, onUnreadCou
       onClose();
       if (targetUrl === "messages" || targetUrl === "/messages") {
         if (onOpenMessages) onOpenMessages();
-        else navigate("/candidate-dashboard?tab=messages");
+        else window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
       } else {
+        if (notif.type === "support_update" || targetUrl.includes("/admin")) {
+          window.dispatchEvent(new CustomEvent("skillbridge_open_admin_support"));
+        }
         navigate(targetUrl);
       }
     }
