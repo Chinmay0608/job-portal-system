@@ -97,7 +97,7 @@ function Register() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-5 animate-scale-up">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-4 sm:space-y-5 -translate-y-4 sm:-translate-y-8 lg:-translate-y-12 animate-scale-up">
         <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
           <SkillBridgeLogo width={280} center />
         </div>

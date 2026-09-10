@@ -26,6 +26,7 @@
 
 const { GoogleGenAI } = require("@google/genai");
 const SupportTicket = require("../models/SupportTicket");
+const User = require("../models/user");
 const { resolve } = require("./ticketResolver");
 const { dispatch } = require("./ticketNotifier");
 const { createNotification } = require("../utils/notify");
@@ -112,7 +113,7 @@ async function classifyWithGemini(description, pageUrl, userAgent) {
     .join("\n");
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-3.5-flash-lite",
     contents: [{ role: "user", parts: [{ text: userMessage }] }],
     systemInstruction: SYSTEM_PROMPT,
     generationConfig: {
@@ -282,6 +283,36 @@ async function _run(ticket) {
       addLog("notification_created", `recipient=${ticket.user}`);
     } catch (notifErr) {
       addLog("notification_error", String(notifErr.message).slice(0, 200));
+    }
+  }
+
+  // ── Step 4c: Dispatch in-app notification to all Admin accounts ──
+  if (!isSpam) {
+    try {
+      const adminUsers = await User.find({ role: "admin" }).select("_id email").lean();
+      if (adminUsers && adminUsers.length > 0) {
+        const ticketRef = `#${String(ticket._id).slice(-6).toUpperCase()}`;
+        const descSnippet = ticket.description
+          ? (ticket.description.slice(0, 90) + (ticket.description.length > 90 ? "..." : ""))
+          : "New issue reported";
+        const adminTitle = `🎫 ${isHighSeverity ? "[URGENT] " : ""}Support Ticket ${ticketRef}`;
+        const adminMsg = `${ticket.email || "A user"} reported: "${descSnippet}" on ${ticket.pageUrl || "app"} (${finalStatus.toUpperCase()})`;
+
+        for (const admin of adminUsers) {
+          await createNotification({
+            recipient: admin._id,
+            sender: ticket.user || null,
+            type: "support_update",
+            title: adminTitle,
+            message: adminMsg,
+            priority: isHighSeverity ? "urgent" : "high",
+            actionUrl: "/admin/dashboard",
+          });
+        }
+        addLog("admin_notification_created", `Notified ${adminUsers.length} admin(s)`);
+      }
+    } catch (adminErr) {
+      addLog("admin_notification_error", String(adminErr.message).slice(0, 200));
     }
   }
 
