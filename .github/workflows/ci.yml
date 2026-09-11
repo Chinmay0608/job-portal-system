@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Run ESLint Check
         run: npx eslint .
@@ -57,7 +57,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install Backend Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Comprehensive Codebase Syntax Audit
         run: |
