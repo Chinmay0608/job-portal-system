@@ -4,7 +4,7 @@ import {
   Globe,
   TrendingUp,
   HeartHandshake,
-  BriefcaseX,
+  Briefcase,
   ArrowRight,
   Mail,
   CheckCircle2,
@@ -86,7 +86,7 @@ function Careers() {
         {openings.length === 0 ? (
           <div className="zero-openings-card">
             <div className="zero-openings-icon">
-              <BriefcaseX size={36} className="text-indigo-600" />
+              <Briefcase size={36} className="text-indigo-600" />
             </div>
             <h3>No Active Positions Open Right Now</h3>
             <p>
