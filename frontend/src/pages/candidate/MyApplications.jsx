@@ -164,10 +164,7 @@ function MyApplications() {
                           {/* External Badge */}
                           {application.job.isExternal && (
                             <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded border border-slate-200 uppercase tracking-wide">
-                              External 
-                              {application.job.source && application.job.source !== 'INTERNAL' 
-                                ? ` • via ${application.job.source}` 
-                                : ''}
+                              External
                             </span>
                           )}
                         </div>

@@ -83,11 +83,6 @@ const formatSalary = (salaryText, min, max, currency) => {
   return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
 };
 
-const capitalizeSource = (source) => {
-  if (!source) return "";
-  const cleaned = source.replace('SDE_', '').toLowerCase();
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-};
 
 // Same field list used in Profile.jsx's calculateCompletion, kept identical
 // so the percentage shown here always matches the Profile page exactly.
@@ -1211,12 +1206,7 @@ function CandidateDashboard() {
                               {job.isExternal ? "External" : "Internal"}
                             </span>
                           )}
-                          
-                          {job.isExternal && job.source && (
-                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                              via {capitalizeSource(job.source)}
-                            </span>
-                          )}
+
                           
                           {job.experience && job.experience !== "Fresher" ? (
                             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
@@ -1346,11 +1336,7 @@ function CandidateDashboard() {
                         External
                       </span>
                     )}
-                    {selectedJob.isExternal && selectedJob.source && (
-                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                        via {capitalizeSource(selectedJob.source)}
-                      </span>
-                    )}
+
                     <span className="text-xs text-slate-400 ml-auto">
                       {getRelativeTime(selectedJob.createdAt)}
                     </span>
