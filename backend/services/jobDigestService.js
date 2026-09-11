@@ -280,7 +280,7 @@ const runJobDigest = async () => {
       field: candidate.field || "Software Engineering",
     };
 
-    const matched = calculateJobMatches(newJobs, candidateProfile, true)
+    const matched = (await calculateJobMatches(newJobs, candidateProfile, true))
       .filter((job) => job.matchPercentage >= MIN_MATCH_PERCENTAGE)
       .slice(0, MAX_JOBS_PER_EMAIL);
 

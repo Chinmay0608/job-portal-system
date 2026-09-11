@@ -4,7 +4,13 @@ const Redis = require("ioredis");
 // to prevent crashing environments without Redis.
 let redisClient = null;
 if (process.env.REDIS_URL) {
-  redisClient = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+  redisClient = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
+  });
+  redisClient.on("error", (err) => {
+    console.warn("[Cache Redis Warning]", err.message);
+  });
 }
 
 /**

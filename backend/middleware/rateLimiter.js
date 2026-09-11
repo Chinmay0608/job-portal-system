@@ -14,7 +14,13 @@ const limiterOptions = {
 
 // Only use Redis if configured, otherwise it defaults to memory store
 if (process.env.REDIS_URL) {
-  const redisClient = new Redis(process.env.REDIS_URL);
+  const redisClient = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
+  });
+  redisClient.on("error", (err) => {
+    console.warn("[RateLimiter Redis Warning]", err.message);
+  });
   limiterOptions.store = new RedisStore({
     sendCommand: (...args) => redisClient.call(...args),
   });

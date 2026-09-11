@@ -24,6 +24,10 @@ class QueueManager {
         }
       });
 
+      this.connection.on("error", (err) => {
+        console.warn("[SDE Queues Redis Error]", err.message);
+      });
+
       // Wait for 'ready' event or timeout
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {

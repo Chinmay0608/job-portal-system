@@ -13,6 +13,7 @@ const {
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,
+  semanticSearchJobs,
   deleteJob,
   updateJob,
   hideJob,
@@ -34,6 +35,7 @@ const router = express.Router();
 // The response is personalized per-user (e.g. filtered by req.user.hiddenJobs),
 // so caching by URL alone would leak hidden jobs across users or return stale data.
 router.get("/", optionalAuth, getAllJobs);
+router.get("/semantic-search", optionalAuth, semanticSearchJobs);
 router.get("/skills/search", cacheMiddleware(3600), searchMasterSkills);
 
 /* ==========================

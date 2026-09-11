@@ -2,13 +2,128 @@ const fs = require("fs");
 const { PDFParse } = require("pdf-parse");
 const logger = require("../utils/logger");
 const MasterSkill = require("../models/MasterSkill");
+const { pipeline } = require('@xenova/transformers');
+
+/**
+ * Lazy-loaded token-classification NER pipeline using Xenova/bert-base-NER
+ */
+class ResumeNERPipeline {
+  static instance = null;
+  static async getInstance() {
+    if (!this.instance) {
+      this.instance = await pipeline('token-classification', 'Xenova/bert-base-NER', {
+        quantized: true
+      });
+    }
+    return this.instance;
+  }
+}
+
+/**
+ * Stitches raw B-/I- subword tokens into structured names, organizations, and locations.
+ */
+function stitchNEREntities(rawEntities) {
+  const result = {
+    name: null,
+    organizations: [],
+    locations: [],
+    rawEntities: rawEntities || []
+  };
+
+  if (!Array.isArray(rawEntities) || rawEntities.length === 0) {
+    return result;
+  }
+
+  const names = [];
+  const orgs = [];
+  const locs = [];
+
+  let currentGroup = null;
+
+  for (const item of rawEntities) {
+    const label = item.entity || item.entity_group || "";
+    const word = item.word || "";
+    const type = label.includes("PER") ? "PER" : label.includes("ORG") ? "ORG" : label.includes("LOC") ? "LOC" : null;
+
+    if (!type) {
+      if (currentGroup) {
+        pushGroup(currentGroup, names, orgs, locs);
+        currentGroup = null;
+      }
+      continue;
+    }
+
+    const isSubword = word.startsWith("##");
+    const cleanWord = isSubword ? word.slice(2) : word;
+    const isBeginning = label.startsWith("B-") || !currentGroup || currentGroup.type !== type;
+
+    if (isBeginning && !isSubword) {
+      if (currentGroup) {
+        pushGroup(currentGroup, names, orgs, locs);
+      }
+      currentGroup = { type, text: cleanWord };
+    } else {
+      if (currentGroup && currentGroup.type === type) {
+        currentGroup.text += isSubword ? cleanWord : (" " + cleanWord);
+      } else {
+        if (currentGroup) pushGroup(currentGroup, names, orgs, locs);
+        currentGroup = { type, text: cleanWord };
+      }
+    }
+  }
+
+  if (currentGroup) {
+    pushGroup(currentGroup, names, orgs, locs);
+  }
+
+  if (names.length > 0) result.name = names[0];
+  result.organizations = Array.from(new Set(orgs));
+  result.locations = Array.from(new Set(locs));
+
+  return result;
+}
+
+function pushGroup(group, names, orgs, locs) {
+  const text = group.text.trim();
+  if (text.length < 2) return;
+  if (group.type === "PER") names.push(text);
+  else if (group.type === "ORG") orgs.push(text);
+  else if (group.type === "LOC") locs.push(text);
+}
+
+/**
+ * Extracts candidate names, organizations (employers/schools), and locations using local Hugging Face NER.
+ * @param {string} rawText 
+ * @returns {Promise<{ name: string|null, organizations: string[], locations: string[], rawEntities: Array }>}
+ */
+const extractResumeEntities = async (rawText) => {
+  if (!rawText || typeof rawText !== 'string') {
+    return { name: null, organizations: [], locations: [], rawEntities: [] };
+  }
+
+  const snippet = rawText.slice(0, 1200).replace(/\s+/g, ' ').trim();
+  if (!snippet) {
+    return { name: null, organizations: [], locations: [], rawEntities: [] };
+  }
+
+  try {
+    const ner = await ResumeNERPipeline.getInstance();
+    const rawEntities = await ner(snippet, { ignore_labels: ['O'] });
+    return stitchNEREntities(rawEntities);
+  } catch (err) {
+    logger.warn('[ResumeNERPipeline Error]: ' + err.message);
+    return { name: null, organizations: [], locations: [], rawEntities: [] };
+  }
+};
 
 /**
  * Extracts full profile information (phone, location, linkedin, github, about, education, experienceLevel, field, skills)
- * from resume text using Groq/Gemini AI with regex & MasterSkill fallbacks.
+ * from resume text using local NER + Groq/Gemini AI with regex & MasterSkill fallbacks.
  */
 const parseFullResumeText = async (resumeText, currentUser = {}) => {
   const extracted = {
+    name: null,
+    organizations: [],
     phone: null,
     location: null,
     linkedin: null,
@@ -18,9 +133,21 @@ const parseFullResumeText = async (resumeText, currentUser = {}) => {
     experienceLevel: null,
     field: null,
     skills: [],
+    nerEntities: null
   };
 
   if (!resumeText || !resumeText.trim()) return extracted;
+
+  // 0. Local In-Process NER Entity Extraction
+  try {
+    const nerResults = await extractResumeEntities(resumeText);
+    if (nerResults.name) extracted.name = nerResults.name;
+    if (nerResults.organizations.length > 0) extracted.organizations = nerResults.organizations;
+    if (nerResults.locations.length > 0) extracted.location = nerResults.locations.join(', ');
+    extracted.nerEntities = nerResults;
+  } catch (nerErr) {
+    logger.warn('[Resume Parser] Local NER extraction warning: ' + nerErr.message);
+  }
 
   // 1. Regex Extraction for LinkedIn, GitHub, Phone
   const linkedinMatch = resumeText.match(/https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?/i) ||
@@ -151,12 +278,12 @@ const parseFullResumeFromBuffer = async (buffer, currentUser = {}) => {
     return await parseFullResumeText(data.text, currentUser);
   } catch (err) {
     logger.error("[Resume Parser] Buffer parse error:", err.message);
-    return { phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
+    return { name: null, organizations: [], phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
   }
 };
 
 const parseFullResumeFromFile = async (filePath, currentUser = {}) => {
-  if (!filePath) return { phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
+  if (!filePath) return { name: null, organizations: [], phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
   
   try {
     if (filePath.startsWith("http")) {
@@ -173,7 +300,7 @@ const parseFullResumeFromFile = async (filePath, currentUser = {}) => {
     logger.error("[Resume Parser] File parse error:", err.message);
   }
 
-  return { phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
+  return { name: null, organizations: [], phone: null, location: null, linkedin: null, github: null, about: null, education: null, experienceLevel: null, field: null, skills: [] };
 };
 
 const extractSkillsFromResume = async (resumePath, existingUserSkills = []) => {
@@ -187,6 +314,8 @@ const extractSkillsFromBuffer = async (buffer, existingUserSkills = []) => {
 };
 
 module.exports = {
+  ResumeNERPipeline,
+  extractResumeEntities,
   parseFullResumeText,
   parseFullResumeFromBuffer,
   parseFullResumeFromFile,
