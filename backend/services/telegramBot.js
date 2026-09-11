@@ -3,7 +3,7 @@
 const axios = require("axios");
 const mongoose = require("mongoose");
 const SupportTicket = require("../models/SupportTicket");
-const Job = require("../models/Job");
+const Job = require("../models/job");
 const User = require("../models/user");
 const { getTelegramConfig, sendTelegramMessage, sendTelegramPhoto } = require("./telegramService");
 
