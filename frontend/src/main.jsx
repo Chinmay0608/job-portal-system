@@ -9,6 +9,17 @@ import axios from "axios";
 // Global default headers to satisfy backend CSRF checks
 axios.defaults.headers.common["x-requested-with"] = "XMLHttpRequest";
 
+// Auto-recover from stale chunks when new builds are deployed (Vite official pattern)
+window.addEventListener("vite:preloadError", (event) => {
+  console.warn("[Vite] Preload error detected (stale deployment chunk). Auto-reloading...");
+  const lastReload = sessionStorage.getItem("vite_preload_reload");
+  const now = Date.now();
+  if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+    sessionStorage.setItem("vite_preload_reload", now.toString());
+    window.location.reload();
+  }
+});
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <>
