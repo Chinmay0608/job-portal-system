@@ -57,14 +57,15 @@ class LifecycleManager {
     meta.lastSuccessfulCrawl = new Date();
     meta.consecutiveEmptyCrawls = 0;
     
-    const jobsFoundCount = deltas.newJobs + deltas.updatedJobs + deltas.unchangedJobs;
+    const d = typeof deltas === 'number' ? { newJobs: deltas, updatedJobs: 0, unchangedJobs: 0 } : (deltas || {});
+    const jobsFoundCount = (d.newJobs || 0) + (d.updatedJobs || 0) + (d.unchangedJobs || 0);
 
     // Moving averages
     meta.averageJobsFound = meta.averageJobsFound === 0 ? jobsFoundCount : Math.round((meta.averageJobsFound + jobsFoundCount) / 2);
-    meta.crawlDurationMs = meta.crawlDurationMs === 0 ? durationMs : Math.round((meta.crawlDurationMs + durationMs) / 2);
+    meta.crawlDurationMs = meta.crawlDurationMs === 0 ? (durationMs || 0) : Math.round((meta.crawlDurationMs + (durationMs || 0)) / 2);
     
     // Store deltas
-    meta.latestCrawlDeltas = deltas;
+    meta.latestCrawlDeltas = d;
     if (freshness) {
       meta.freshnessMetrics = freshness;
     }
@@ -100,6 +101,7 @@ class LifecycleManager {
     const meta = await this._getOrCreateMetadata(companyId);
     
     meta.consecutiveEmptyCrawls += 1;
+    meta.latestCrawlDeltas = meta.latestCrawlDeltas || {};
     meta.latestCrawlDeltas.failedJobs = failedJobs;
     await meta.save();
 

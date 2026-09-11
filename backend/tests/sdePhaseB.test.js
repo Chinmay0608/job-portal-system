@@ -3,11 +3,13 @@ const LifecycleManager = require('../services/sde/LifecycleManager');
 const Company = require('../models/Company');
 const CompanyRegistryMetadata = require('../models/CompanyRegistryMetadata');
 const CompanyLifecycleEvent = require('../models/CompanyLifecycleEvent');
+const CrawlDeltaLog = require('../models/CrawlDeltaLog');
 
 // Mock mongoose models
 jest.mock('../models/Company');
 jest.mock('../models/CompanyRegistryMetadata');
 jest.mock('../models/CompanyLifecycleEvent');
+jest.mock('../models/CrawlDeltaLog');
 jest.mock('axios');
 const axios = require('axios');
 
@@ -42,11 +44,12 @@ describe('SDE Phase B - Registry Service', () => {
 
     beforeEach(() => {
       mockCompany = { _id: '123', status: 'ACTIVE', priority: 5, save: jest.fn() };
-      mockMeta = { companyId: '123', consecutiveEmptyCrawls: 0, save: jest.fn() };
+      mockMeta = { companyId: '123', consecutiveEmptyCrawls: 0, latestCrawlDeltas: {}, save: jest.fn() };
       
       Company.findById.mockResolvedValue(mockCompany);
       CompanyRegistryMetadata.findOne.mockResolvedValue(mockMeta);
       CompanyLifecycleEvent.create.mockResolvedValue(true);
+      CrawlDeltaLog.findOneAndUpdate = jest.fn().mockResolvedValue(true);
     });
 
     it('transitions to STALE after 1 failure', async () => {

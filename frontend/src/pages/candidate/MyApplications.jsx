@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import RetryBanner from "../../Components/RetryBanner";
 import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import StatusBadge from "../../Components/common/StatusBadge";
 import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawResumeSvg from "../../assets/undraw_resume_jrgi.svg";
 
 function MyApplications() {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -22,15 +23,35 @@ function MyApplications() {
   }, []);
 
   const fetchApplications = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please sign in to view your applications");
+      navigate("/login");
+      return;
+    }
+
     try {
       setFetchError("");
       setLoading(true);
       const response = await getMyApplicationsAPI();
-      setApplications(response?.applications || []);
+      const validApps = (response?.applications || []).filter((app) => app && app.job);
+      setApplications(validApps);
     } catch (error) {
       console.error("Applications Error:", error);
-      setFetchError("Unable to load applications. Please try again.");
-      toast.error("Failed to load applications");
+      if (error?.response?.status === 401) {
+        toast.error("Your session has expired. Please sign in again.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
+      if (error?.code === "ECONNABORTED") {
+        setFetchError("The server took too long to respond while waking up. Please click Retry.");
+        toast.error("Server connection timeout. Click Retry.");
+      } else {
+        setFetchError("Unable to load applications. Please try again.");
+        toast.error("Failed to load applications");
+      }
       setApplications([]);
     } finally {
       setLoading(false);
