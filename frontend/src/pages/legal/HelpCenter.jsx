@@ -124,11 +124,6 @@ function HelpCenter() {
             <strong>Email:</strong>{" "}
             support@skillbridge.com
           </p>
-
-          <p>
-            <strong>Phone:</strong>{" "}
-            +91 98765 43210
-          </p>
         </div>
 
         <button>
