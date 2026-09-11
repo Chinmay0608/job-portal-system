@@ -32,7 +32,14 @@ const seedAdminUser = async () => {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
+    mongoose.connection.on("error", (err) => {
+      console.error("[MongoDB Runtime Error]:", err.message);
+    });
+
+    await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
     console.log("MongoDB Connected");
     await seedAdminUser();
   } catch (error) {

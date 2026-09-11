@@ -123,6 +123,10 @@ const updateProfile = asyncHandler(async (req, res) => {
     const resumePath = req.files.resume[0].path;
     const fullData = await parseFullResumeFromFile(resumePath, user);
 
+    if ((!user.name || !user.name.trim()) && fullData.name) {
+      user.name = fullData.name;
+      newlyFilledFields.push("Name");
+    }
     if ((!user.phone || !user.phone.trim()) && fullData.phone) {
       user.phone = fullData.phone;
       newlyFilledFields.push("Phone");
@@ -324,6 +328,10 @@ const extractSkills = asyncHandler(async (req, res) => {
   let newlyFilledFields = [];
   let newlyExtractedSkills = [];
 
+  if ((!user.name || !user.name.trim()) && fullData.name) {
+    user.name = fullData.name;
+    newlyFilledFields.push("Name");
+  }
   if ((!user.phone || !user.phone.trim()) && fullData.phone) {
     user.phone = fullData.phone;
     newlyFilledFields.push("Phone");

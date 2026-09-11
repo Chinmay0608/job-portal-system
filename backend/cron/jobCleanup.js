@@ -5,7 +5,13 @@ const Redis = require("ioredis");
 // Only initialize Redis client if a URL is provided
 let redisClient = null;
 if (process.env.REDIS_URL) {
-  redisClient = new Redis(process.env.REDIS_URL);
+  redisClient = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
+  });
+  redisClient.on("error", (err) => {
+    console.warn("[Job Cleanup Redis Warning]", err.message);
+  });
 }
 
 // Runs every day at midnight

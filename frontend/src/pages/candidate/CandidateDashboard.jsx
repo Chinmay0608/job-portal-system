@@ -967,7 +967,7 @@ function CandidateDashboard() {
                 />
               </div>
               <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
-              <div className="hidden md:flex w-52 items-center px-2">
+              <div className="hidden md:flex flex-1 items-center px-2 min-w-0">
                 <CustomSelect
                   borderless
                   options={[

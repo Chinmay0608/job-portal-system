@@ -171,7 +171,9 @@ function Navbar() {
   const isSalaryGuide = location.pathname === "/salary-data";
 
   // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
-  const canAccessAI = Boolean(isLoggedIn && user && user.role === "candidate" && !isHome);
+  // Also gated behind VITE_DHRUV_ENABLED=true so it never loads on production until fully trained
+  const isDhruvEnabled = import.meta.env.VITE_DHRUV_ENABLED === "true";
+  const canAccessAI = Boolean(isDhruvEnabled && isLoggedIn && user && user.role === "candidate" && !isHome);
 
   // Background wake word detection when hands-free is enabled
   // Global background wake word detection ("Hey Dhruv" - like Siri / Alexa)

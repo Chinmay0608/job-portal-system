@@ -30,6 +30,7 @@ const User = require("../models/user");
 const { resolve } = require("./ticketResolver");
 const { dispatch } = require("./ticketNotifier");
 const { createNotification } = require("../utils/notify");
+const { maskPII, isSpamOrGibberish } = require("../utils/textSanitizer");
 
 const AGENT_TIMEOUT_MS = 30_000;
 
@@ -195,6 +196,29 @@ async function _run(ticket) {
   };
 
   addLog("agent_started", `Processing ticket ${ticket._id}`);
+
+  // Mask PII in description before processing or calling Gemini
+  const sanitizedDescription = maskPII(ticket.description);
+  ticket.description = sanitizedDescription;
+
+  // Pre-processing check: If spam/gibberish, bypass Gemini API calls and close as spam immediately
+  if (isSpamOrGibberish(sanitizedDescription)) {
+    addLog("spam_detected", "Ticket description identified as spam/gibberish. Bypassing Gemini API call.");
+    const resolveResult = await resolve("close_spam", ticket);
+    const updateFields = {
+      category: "spam_or_test",
+      severity: "low",
+      aiSummary: "Closed as spam/gibberish by automated pre-processing.",
+      autoResolved: true,
+      status: "closed",
+    };
+    await conditionalStatusUpdate(ticket._id, updateFields);
+    addLog("status_updated", "status=closed autoResolved=true");
+    addLog("resolver_succeeded", resolveResult.message.slice(0, 200));
+    addLog("agent_complete", "finalStatus=closed");
+    await appendAgentLog(ticket._id, log);
+    return;
+  }
 
   // ── Step 1: Classify via Gemini (with keyword fallback) ──
   let classification;

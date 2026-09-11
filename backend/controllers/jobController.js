@@ -1,8 +1,10 @@
-﻿const Job = require("../models/job");
+const Job = require("../models/job");
 const User = require("../models/user");
 const Application = require("../models/Application"); // FIX I-03: Correct casing (Linux FS is case-sensitive)
 const MasterSkill = require("../models/MasterSkill");
 const { calculateJobMatches, FIELD_KEYWORDS } = require("../services/jobMatchService");
+const { classifyJob } = require("../services/jobClassifierService");
+const { getEmbedding, cosineSimilarity } = require("../services/embeddingService");
 const { clearCache } = require("../middleware/cacheMiddleware");
 const asyncHandler = require("express-async-handler");
 
@@ -61,22 +63,41 @@ const generateJobDescription = asyncHandler(async (req, res) => {
    CREATE JOB
 ========================== */
 const createJob = asyncHandler(async (req, res) => {
-  const { title, role, company, location, salary, description } = req.body;
+  const { title, role, company, location, salary, description, domain, category } = req.body;
 
   if (!title || !role || !company || !location || !salary || !description) {
     res.status(400);
     throw new Error("All fields are required");
   }
 
-  const job = await Job.create({
+  let assignedDomain = domain || category;
+  if (!assignedDomain || assignedDomain.toLowerCase() === "other" || assignedDomain.toLowerCase() === "uncategorized") {
+    try {
+      const classification = await classifyJob(title, description);
+      if (classification && classification.confidence > 0.65) {
+        assignedDomain = classification.primaryDomain;
+      }
+    } catch (err) {
+      console.warn("[Job Classification Warning]:", err.message);
+    }
+  }
+
+  const jobData = {
     title,
-    role,
+    role: assignedDomain || role,
     company,
     location,
     salary,
     description,
     recruiter: req.user.id,
-  });
+  };
+
+  if (assignedDomain) {
+    jobData.domain = assignedDomain;
+    jobData.category = assignedDomain;
+  }
+
+  const job = await Job.create(jobData);
 
   await clearCache("/api/jobs");
 
@@ -279,10 +300,68 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
   const jobs = await Job.find(query);
 
   // Scores jobs against candidate's field & skills, filtering out domain mismatches (like Marketing)
-  const recommendedJobs = calculateJobMatches(jobs, user);
+  const recommendedJobs = await calculateJobMatches(jobs, user);
 
   res.status(200).json({
     jobs: recommendedJobs,
+  });
+});
+
+/* ==========================
+   SEMANTIC SEARCH JOBS & VECTOR EMBEDDING CACHE
+========================== */
+const jobEmbeddingCache = new Map();
+const MAX_CACHE_SIZE = 1000;
+
+const getJobEmbeddingCached = async (job) => {
+  const cacheKey = `${job._id || job.id}_${job.updatedAt || job.title}`;
+  if (jobEmbeddingCache.has(cacheKey)) {
+    return jobEmbeddingCache.get(cacheKey);
+  }
+
+  const skillsText = Array.isArray(job.skillsRequired) ? job.skillsRequired.join(', ') : '';
+  const text = `${job.title || ''} skills: ${skillsText} ${(job.description || '').slice(0, 200)}`.trim();
+  const vec = await getEmbedding(text);
+
+  if (jobEmbeddingCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = jobEmbeddingCache.keys().next().value;
+    jobEmbeddingCache.delete(firstKey);
+  }
+  jobEmbeddingCache.set(cacheKey, vec);
+  return vec;
+};
+
+const semanticSearchJobs = asyncHandler(async (req, res) => {
+  const queryText = (req.query.q || req.query.query || '').trim();
+  if (!queryText) {
+    return res.status(400).json({ message: "Search query parameter 'q' is required." });
+  }
+
+  const queryVec = await getEmbedding(queryText);
+
+  // Retrieve active candidate listings
+  const jobs = await Job.find(getBaseActiveJobQuery()).limit(50).lean();
+
+  const scoredJobs = await Promise.all(
+    jobs.map(async (job) => {
+      const jobVec = await getJobEmbeddingCached(job);
+      const similarity = cosineSimilarity(queryVec, jobVec);
+      const semanticScore = Math.round(Math.max(0, Math.min(1, similarity)) * 100);
+      return {
+        ...job,
+        semanticScore,
+        similarity: Number(similarity.toFixed(4))
+      };
+    })
+  );
+
+  scoredJobs.sort((a, b) => b.semanticScore - a.semanticScore);
+  const topJobs = scoredJobs.slice(0, 20);
+
+  res.status(200).json({
+    query: queryText,
+    count: topJobs.length,
+    jobs: topJobs
   });
 });
 
@@ -920,6 +999,7 @@ module.exports = {
   getAllJobs,
   getRecruiterJobs,
   getRecommendedJobs,
+  semanticSearchJobs,
   deleteJob,
   updateJob,
   hideJob,

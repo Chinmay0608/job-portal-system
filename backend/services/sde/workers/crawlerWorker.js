@@ -64,7 +64,22 @@ class CrawlerWorker {
       const incomingExternalIds = new Set(rawJobs.map(j => j.externalId));
       const now = new Date();
 
+      const { classifyJob } = require('../../../jobClassifierService');
+
       for (const rawJob of rawJobs) {
+        // Auto-classify domain if missing or "other"
+        if (!rawJob.domain && (!rawJob.category || rawJob.category.toLowerCase() === 'other' || rawJob.category.toLowerCase() === 'uncategorized')) {
+          try {
+            const classification = await classifyJob(rawJob.title, rawJob.description);
+            if (classification && classification.confidence > 0.65) {
+              rawJob.domain = classification.primaryDomain;
+              rawJob.category = classification.primaryDomain;
+            }
+          } catch (err) {
+            console.warn(`[CrawlerWorker] Domain classification failed for ${rawJob.title}:`, err.message);
+          }
+        }
+
         // 2. Hash optimization
         const hash = HashOptimizer.generateHash(rawJob);
 

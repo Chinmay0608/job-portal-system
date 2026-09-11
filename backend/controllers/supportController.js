@@ -5,6 +5,7 @@ const SupportTicket = require("../models/SupportTicket");
 const User = require("../models/user");
 const ticketAgent = require("../services/ticketAgent");
 const { sendTicketAlertToTelegram } = require("../services/telegramService");
+const { maskPII } = require("../utils/textSanitizer");
 
 // ─── POST /api/support/report — logged-in user or guest ───────────────────────
 const createTicket = asyncHandler(async (req, res) => {
@@ -51,7 +52,7 @@ const createTicket = asyncHandler(async (req, res) => {
   const ticket = await SupportTicket.create({
     user: userId,
     email: userEmail,
-    description: description.trim(),
+    description: maskPII(description.trim()),
     screenshotUrl,
     pageUrl: pageUrl || "",
     userAgent: req.headers["user-agent"] || "",
