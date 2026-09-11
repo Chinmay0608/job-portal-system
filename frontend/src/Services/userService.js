@@ -23,6 +23,7 @@ export const getMyApplicationsAPI = async () => {
   const token = localStorage.getItem("token");
   const response = await axios.get(`${API}/applications/my-applications`, {
     withCredentials: true,
+    timeout: 25000,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
@@ -42,7 +43,18 @@ export const withdrawApplication = async (applicationId) => {
 
   return response.data;
 };
+
 export const updateApplicationStatus = async (applicationId, status) => {
-  const { data } = await api.patch(`/api/applications/update/${applicationId}`, { status });
+  const token = localStorage.getItem("token");
+  const { data } = await axios.patch(
+    `${API}/applications/update/${applicationId}`,
+    { status },
+    {
+      withCredentials: true,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
   return data;
 };

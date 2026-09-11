@@ -11,6 +11,13 @@ jest.mock("../../services/sync.service", () => ({
   runAllSync: jest.fn().mockResolvedValue([])
 }));
 
+jest.mock("../../services/embeddingService", () => ({
+  getEmbedding: jest.fn().mockResolvedValue(new Float32Array(0)),
+  cosineSimilarity: jest.fn().mockReturnValue(1),
+  findBestSkillMatch: jest.fn().mockResolvedValue(null)
+}));
+
+
 describe("Job Controller - Sync Endpoints", () => {
   let req, res, next;
 

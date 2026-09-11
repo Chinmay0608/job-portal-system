@@ -1127,12 +1127,16 @@ function CandidateDashboard() {
                 actionText={activeTab === "saved" ? "Browse All Jobs" : "Clear Filters"}
                 onAction={
                   activeTab === "saved"
-                    ? () => handleTabChange("all")
+                    ? () => setActiveTab("all")
                     : () => {
                         setSearch("");
                         setLocationFilter("");
-                        setRoleTypeFilter("");
-                        setRemoteFilter(false);
+                        setExperienceFilter("");
+                        setSalaryFilter("");
+                        setCompanyFilter("");
+                        setSourceFilter("");
+                        setEmploymentTypeFilter("All");
+                        setIsRemoteFilter("All");
                       }
                 }
               />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications } from "../../Services/jobService";
+import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications, generateJobDescriptionAPI } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
@@ -89,16 +89,16 @@ function RecruiterDashboard() {
     }
     setIsGeneratingAI(true);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/jobs/generate-description`,
-        { title: formData.title, company: formData.company, role: formData.role },
-        getAuthHeaders()
-      );
-      setFormData(prev => ({ ...prev, description: response.data.description }));
+      const response = await generateJobDescriptionAPI({
+        title: formData.title,
+        company: formData.company,
+        role: formData.role,
+      });
+      setFormData(prev => ({ ...prev, description: response.description }));
       toast.success('AI Description Generated successfully!');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to generate description with AI.');
+      toast.error(error?.response?.data?.message || 'Failed to generate description with AI.');
     } finally {
       setIsGeneratingAI(false);
     }

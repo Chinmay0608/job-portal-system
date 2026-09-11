@@ -32,8 +32,7 @@ jobs:
         run: npm ci
 
       - name: Run ESLint Check
-        run: npx eslint . --max-warnings=0
-        continue-on-error: true
+        run: npx eslint .
 
       - name: Run Vite Build Verification
         run: npm run build
@@ -60,15 +59,12 @@ jobs:
       - name: Install Backend Dependencies
         run: npm ci
 
-      - name: Core Syntax Audit
+      - name: Comprehensive Codebase Syntax Audit
         run: |
-          node -c server.js
-          node -c controllers/jobController.js
-          node -c controllers/applicationController.js
+          find . -maxdepth 3 -name "*.js" -not -path "*/node_modules/*" -exec node -c {} +
 
       - name: Run Test Suite
         run: npm test -- --runInBand --forceExit
-        continue-on-error: true
         env:
           NODE_ENV: test
           JWT_SECRET: ci_dummy_test_secret_12345

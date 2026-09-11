@@ -54,6 +54,11 @@ export const postAIFeedback = async ({ prompt, response, rating }) => {
   return res.data;
 };
 
+export const generateJobDescriptionAPI = async ({ title, company, role }) => {
+  const res = await api.post("/api/jobs/generate-description", { title, company, role });
+  return res.data;
+};
+
 
 
 export const getRecruiterJobs = async () => (await api.get("/api/jobs/my-jobs")).data;
