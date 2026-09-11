@@ -57,6 +57,11 @@
     "prettier": "^3.9.6",
     "supertest": "^7.2.2"
   },
+  "jest": {
+    "testMatch": [
+      "**/*.test.js"
+    ]
+  },
   "lint-staged": {
     "*.js": [
       "prettier --write",
