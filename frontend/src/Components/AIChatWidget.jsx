@@ -468,7 +468,12 @@ export default function AIChatWidget({
           0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.35), inset 0 0 15px rgba(129, 140, 248, 0.25); }
           50% { box-shadow: 0 0 25px rgba(192, 132, 252, 0.55), inset 0 0 20px rgba(56, 189, 248, 0.45); }
         }
+        @keyframes dhruvTypingDot {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+          30% { transform: translateY(-4px); opacity: 1; }
+        }
       `}</style>
+
 
       {/* Floating Trigger Button */}
       {!hideFloatingTrigger && !isOpen && (
@@ -968,12 +973,76 @@ export default function AIChatWidget({
             ))}
 
             {isLoading && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#64748b", fontSize: "0.8rem" }}>
-                <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <BsRobot size={14} />
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  alignSelf: "flex-start",
+                  maxWidth: "88%",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    backgroundColor: "#2563eb",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    overflow: "hidden",
+                  }}
+                >
+                  <img
+                    src={dhruvAvatar}
+                    alt="Dhruv"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
                 </div>
-                <div style={{ padding: "8px 12px", background: "#f1f5f9", borderRadius: "12px", fontStyle: "italic" }}>
-                  DHRUV is analyzing your career profile...
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    backgroundColor: "#f1f5f9",
+                    borderRadius: "16px",
+                    borderTopLeftRadius: "4px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    height: "36px",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: "#64748b",
+                      borderRadius: "50%",
+                      display: "inline-block",
+                      animation: "dhruvTypingDot 1.4s infinite ease-in-out",
+                    }}
+                  />
+                  <span
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: "#64748b",
+                      borderRadius: "50%",
+                      display: "inline-block",
+                      animation: "dhruvTypingDot 1.4s infinite ease-in-out 0.2s",
+                    }}
+                  />
+                  <span
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: "#64748b",
+                      borderRadius: "50%",
+                      display: "inline-block",
+                      animation: "dhruvTypingDot 1.4s infinite ease-in-out 0.4s",
+                    }}
+                  />
                 </div>
               </div>
             )}
