@@ -6,6 +6,7 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 import ScrollToTop from "./Components/ScrollToTop";
 import SplashScreen from "./Components/SplashScreen";
 import HelpWidget from "./Components/HelpWidget";
+import DesktopAdvisoryModal from "./Components/DesktopAdvisoryModal";
 
 // ==========================================================================
 // 1. AUTHENTICATION INFRASTRUCTURE DOMAIN IMPORT SEGMENT
@@ -150,6 +151,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <DesktopAdvisoryModal />
       {showSplash && <SplashScreen isExiting={isSplashExiting} />}
       <AppContent />
     </BrowserRouter>
