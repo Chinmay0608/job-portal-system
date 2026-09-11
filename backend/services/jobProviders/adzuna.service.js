@@ -124,6 +124,11 @@ class AdzunaProvider extends BaseProvider {
     return skills;
   }
 
+  formatINR(num) {
+    if (num === null || num === undefined || isNaN(num)) return "";
+    return Math.round(Number(num)).toLocaleString("en-IN");
+  }
+
   normalizeJob(rawJob) {
     const skillsRequired = [];
     if (rawJob.category && rawJob.category.label) {
@@ -143,7 +148,9 @@ class AdzunaProvider extends BaseProvider {
       company: rawJob.company && rawJob.company.display_name ? rawJob.company.display_name : "Hiring Enterprise",
       location: rawJob.location && rawJob.location.display_name ? rawJob.location.display_name : "India",
       salary: rawJob.salary_min && rawJob.salary_max 
-        ? `₹${Number(rawJob.salary_min).toLocaleString()} - ₹${Number(rawJob.salary_max).toLocaleString()}` 
+        ? `₹${this.formatINR(rawJob.salary_min)} - ₹${this.formatINR(rawJob.salary_max)}` 
+        : rawJob.salary_min 
+        ? `₹${this.formatINR(rawJob.salary_min)}`
         : "Competitive Salary",
       salaryMin: rawJob.salary_min ? Number(rawJob.salary_min) : null,
       salaryMax: rawJob.salary_max ? Number(rawJob.salary_max) : null,
