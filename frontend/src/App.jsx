@@ -8,6 +8,7 @@ import SplashScreen from "./Components/SplashScreen";
 import HelpWidget from "./Components/HelpWidget";
 import DesktopAdvisoryModal from "./Components/DesktopAdvisoryModal";
 import ChunkErrorBoundary from "./Components/ChunkErrorBoundary";
+import CookieConsentBanner from "./Components/CookieConsentBanner";
 
 // ==========================================================================
 // 1. AUTHENTICATION INFRASTRUCTURE DOMAIN IMPORT SEGMENT
@@ -108,6 +109,7 @@ function AppContent() {
       </main>
       {!hideLayout && <Footer />}
       <HelpWidget />
+      <CookieConsentBanner />
     </>
   );
 }
