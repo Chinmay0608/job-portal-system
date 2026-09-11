@@ -109,8 +109,6 @@ function PrivacyPolicy() {
 
       <p>
         <strong>Email:</strong> support@skillbridge.com
-        <br />
-        <strong>Phone:</strong> +91 98765 43210
       </p>
 
     </LegalLayout>
