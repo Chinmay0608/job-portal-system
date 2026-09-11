@@ -252,10 +252,17 @@ async function handleCommand(commandText, chatId) {
   }
 }
 
+let currentAbortController = null;
+
 async function startTelegramBot() {
   const { token } = getTelegramConfig();
   if (!token) {
     console.log("[TelegramBot] Skipping bot poller: TELEGRAM_BOT_TOKEN not configured");
+    return;
+  }
+
+  if (process.env.DISABLE_TELEGRAM_POLLING === "true") {
+    console.log("[TelegramBot] Skipping bot poller: DISABLE_TELEGRAM_POLLING is set to true");
     return;
   }
 
@@ -267,13 +274,21 @@ async function startTelegramBot() {
   isPolling = true;
   shouldStop = false;
   let offset = 0;
+  let consecutiveConflicts = 0;
 
   console.log("[TelegramBot] 🚀 Starting Telegram Bot polling loop...");
 
   while (!shouldStop) {
     try {
+      currentAbortController = new AbortController();
       const url = `https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=20`;
-      const response = await axios.get(url, { timeout: 35000 });
+      const response = await axios.get(url, {
+        timeout: 35000,
+        signal: currentAbortController.signal,
+      });
+      currentAbortController = null;
+      consecutiveConflicts = 0;
+
       const updates = response.data?.result || [];
 
       for (const update of updates) {
@@ -291,13 +306,32 @@ async function startTelegramBot() {
         }
       }
     } catch (error) {
-      if (shouldStop) break;
-      const errMsg = error.response?.data?.description || error.message;
+      currentAbortController = null;
+      if (shouldStop || axios.isCancel(error) || error.name === "CanceledError" || error.name === "AbortError") {
+        break;
+      }
+      const errMsg = error.response?.data?.description || error.message || "";
+      const status = error.response?.status;
+
       if (error.code === "ECONNABORTED" || (errMsg && errMsg.includes("timeout"))) {
         continue;
       }
-      console.warn("[TelegramBot] Polling error (retrying in 5s):", errMsg);
-      await new Promise((r) => setTimeout(r, 5000));
+
+      const isConflict = status === 409 || (errMsg && (errMsg.includes("Conflict") || errMsg.includes("terminated by other")));
+
+      if (isConflict) {
+        consecutiveConflicts++;
+        const backoffSec = Math.min(60, 10 * consecutiveConflicts);
+        if (consecutiveConflicts === 1 || consecutiveConflicts % 6 === 0) {
+          console.warn(
+            `[TelegramBot] ⚠️ 409 Conflict: Another bot instance (e.g., production on Render or another local process) is active (attempt ${consecutiveConflicts}). Backing off for ${backoffSec}s.\n[TelegramBot] Tip: Set DISABLE_TELEGRAM_POLLING=true in backend/.env to disable local polling when testing.`
+          );
+        }
+        await new Promise((r) => setTimeout(r, backoffSec * 1000));
+      } else {
+        console.warn("[TelegramBot] Polling error (retrying in 5s):", errMsg);
+        await new Promise((r) => setTimeout(r, 5000));
+      }
     }
   }
 
@@ -307,6 +341,23 @@ async function startTelegramBot() {
 
 function stopTelegramBot() {
   shouldStop = true;
+  if (currentAbortController) {
+    try {
+      currentAbortController.abort();
+    } catch (e) {}
+  }
+}
+
+if (typeof process !== "undefined") {
+  process.once("SIGUSR2", () => {
+    stopTelegramBot();
+  });
+  process.on("SIGINT", () => {
+    stopTelegramBot();
+  });
+  process.on("SIGTERM", () => {
+    stopTelegramBot();
+  });
 }
 
 module.exports = {
