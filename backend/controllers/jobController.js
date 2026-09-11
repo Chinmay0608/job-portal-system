@@ -534,18 +534,26 @@ Candidate Profile:
     ? `\nActive SkillBridge Jobs Matching This Candidate (ground your recommendations ONLY in these real listings):\n${jobSummariesText}`
     : `\nNo active jobs currently match this candidate's profile. Acknowledge this honestly â€” do NOT invent or hallucinate job listings.`;
 
-  // â”€â”€ 7. Build system instruction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const systemInstruction = `You are DHRUV, SkillBridge's empathetic, data-driven AI Career Coach and Job Search Assistant.
+  // ── 7. Build system instruction ──────────────────────────────────────────
+  const systemInstruction = `You are DHRUV, SkillBridge's authentic, data-driven AI Career Coach and Job Search Assistant.
 
 ${candidateContextBlock}
 ${jobsContextBlock}
 
-Operational Directives:
-1. When the candidate asks for job recommendations, cite ONLY the real platform jobs listed above. Never hallucinate, invent, or describe jobs not present in the list. If no jobs are listed, say so honestly and suggest they refine their profile or check back soon.
-2. Be candid about skill gaps without discouraging â€” name the delta and suggest a concrete action.
-3. Keep responses clean of markdown tables, raw HTML, or heavily nested formatting so the voice readback sounds natural.
-4. Greet warmly but briefly. Do not dump job lists on a greeting message.
-5. For coding or technical questions not related to job search, answer accurately and helpfully.`;
+Conversational Directives & Persona:
+1. Natural Acknowledgment & Casual Queries:
+   - If the candidate asks an everyday, casual, or non-career question (such as weather, sports, current events, or general trivia), DO NOT output a generic canned persona pitch or robotic menu.
+   - Briefly and playfully acknowledge what was asked in one quick, witty sentence (e.g., "I don't have real-time weather sensors wired in, but I can definitely help you forecast your next career move!"), then smoothly bridge back to jobs, interview prep, or tech skills.
+   - For simple greetings (like "Hi", "Hello", "Hey Dhruv", "How are you?"), respond warmly and concisely like a supportive tech peer. Keep it to 1-2 friendly sentences without dumping a laundry list or feature catalog.
+2. Authentic & Grounded Tone:
+   - Maintain an authentic, slightly witty, peer-to-peer developer tone.
+   - Keep spoken readback via Web Speech TTS crisp, clean, and conversational — avoid markdown tables, raw HTML, or deeply nested lists so spoken audio flows naturally.
+3. Grounded Job Recommendations:
+   - When the candidate asks for job recommendations, cite ONLY the real platform jobs listed above. Never hallucinate or invent jobs. If no matching jobs are listed, acknowledge it honestly and suggest profile adjustments or checking back soon.
+4. Skill Gaps & Interview Prep:
+   - Be candid about skill gaps without discouraging — name the delta clearly and suggest concrete next steps.
+5. Technical Questions:
+   - For coding, system design, or technical questions, answer accurately, clearly, and concisely.`;
 
   // ── 8. Try Groq (openai/gpt-oss-120b) first ──────────────────────────────────
   const groqApiKey = process.env.GROQ_API_KEY;
@@ -616,9 +624,10 @@ Operational Directives:
       );
 
       const response = await Promise.race([geminiCall, timeout]);
-      const reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      let reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (reply) {
-        return res.status(200).json({ role: "assistant", content: reply });
+        reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+        if (reply) return res.status(200).json({ role: "assistant", content: reply });
       }
     } catch (error) {
       console.error("[aiCareerCoach] Gemini error:", error?.message || error);
@@ -634,7 +643,11 @@ Operational Directives:
       ["hey dhruv", "hi dhruv", "hello dhruv", "dhruv", "how are you", "how r u"].some((g) => lastMsgLower.startsWith(g));
 
     if (isGreeting) {
-      return `Hey ${displayName}! Great to see you. I'm DHRUV, your SkillBridge career coach. I'm here to help you find ${userField} roles, analyze your skills, or prep for interviews. What can I help you with today?`;
+      return `Hey ${displayName}! Great to connect. What are we tackling today — finding open roles, prepping for an interview, or brushing up on skills?`;
+    }
+
+    if (lastMsgLower.includes("weather") || lastMsgLower.includes("rain") || lastMsgLower.includes("temperature") || lastMsgLower.includes("forecast")) {
+      return `I don't have real-time weather sensors plugged into the platform, but I can definitely help you forecast your next career move! What are we focusing on today — open roles, interview prep, or resume check?`;
     }
 
     if (lastMsgLower.includes("interview") || lastMsgLower.includes("prep") || lastMsgLower.includes("tip")) {
@@ -670,7 +683,7 @@ Operational Directives:
       }
     }
 
-    return `Hey ${displayName}! I'm right here to support your ${userField} career journey. You can ask me to find open roles, analyze your skill gaps, or help you prep for an interview. What would you like to tackle?`;
+    return `Hey ${displayName}! I'm right here in your corner. What would you like to focus on next — finding open roles, prepping for an interview, or exploring new skills?`;
   }
 });
 
