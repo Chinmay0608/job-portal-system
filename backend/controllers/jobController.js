@@ -547,12 +547,12 @@ Operational Directives:
 4. Greet warmly but briefly. Do not dump job lists on a greeting message.
 5. For coding or technical questions not related to job search, answer accurately and helpfully.`;
 
-  // â”€â”€ 8. Try Groq (llama-3.3-70b) first â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 8. Try Groq (openai/gpt-oss-120b) first ──────────────────────────────────
   const groqApiKey = process.env.GROQ_API_KEY;
   if (groqApiKey && groqApiKey.startsWith("gsk_")) {
     try {
       const axios = require("axios");
-      const modelsToTry = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"];
+      const modelsToTry = ["openai/gpt-oss-120b", "groq/compound", "qwen/qwen3.6-27b"];
       let reply = null;
 
       for (const model of modelsToTry) {
@@ -577,7 +577,10 @@ Operational Directives:
             }
           );
           reply = groqRes.data?.choices?.[0]?.message?.content?.trim();
-          if (reply) break;
+          if (reply) {
+            reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+            if (reply) break;
+          }
         } catch (modelErr) {
           console.warn(`[aiCareerCoach] Groq model ${model} failed:`, modelErr?.response?.data?.error?.message || modelErr.message);
         }
@@ -589,41 +592,40 @@ Operational Directives:
     }
   }
 
-  // â”€â”€ 9. Gemini 2.0 Flash fallback (with 20-second timeout) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 9. Gemini 3.6 Flash fallback (with 20-second timeout) ────────────────
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.startsWith("AQ.")) {
-    return res.status(200).json({ role: "assistant", content: buildSmartFallbackReply() });
+  if (apiKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+
+      const geminiCall = ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: messages.slice(-6).map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+        config: {
+          systemInstruction,
+          temperature: 0.65,
+          maxOutputTokens: 1024,
+        },
+      });
+
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Gemini timed out after 20s")), 20000)
+      );
+
+      const response = await Promise.race([geminiCall, timeout]);
+      const reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (reply) {
+        return res.status(200).json({ role: "assistant", content: reply });
+      }
+    } catch (error) {
+      console.error("[aiCareerCoach] Gemini error:", error?.message || error);
+    }
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-
-    const geminiCall = ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: messages.slice(-6).map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-      systemInstruction: { role: "user", parts: [{ text: systemInstruction }] },
-      generationConfig: {
-        temperature: 0.65,
-        maxOutputTokens: 1024,
-      },
-    });
-
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Gemini timed out after 20s")), 20000)
-    );
-
-    const response = await Promise.race([geminiCall, timeout]);
-    const reply = response.text?.trim();
-    if (!reply) throw new Error("Gemini returned empty response");
-
-    return res.status(200).json({ role: "assistant", content: reply });
-  } catch (error) {
-    console.error("[aiCareerCoach] Gemini error:", error?.message || error);
-    return res.status(200).json({ role: "assistant", content: buildSmartFallbackReply() });
-  }
+  return res.status(200).json({ role: "assistant", content: buildSmartFallbackReply() });
 
   // â”€â”€ 10. Smart local fallback (no AI available) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function buildSmartFallbackReply() {

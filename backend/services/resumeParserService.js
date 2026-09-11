@@ -214,12 +214,12 @@ ${resumeText.slice(0, 4500)}`;
     }
   }
 
-  if (!aiJson && geminiApiKey && !geminiApiKey.startsWith("AQ.")) {
+  if (!aiJson && geminiApiKey) {
     try {
       const { GoogleGenAI } = require("@google/genai");
       const ai = new GoogleGenAI({ apiKey: geminiApiKey });
       const gemRes = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
       });
       const text = gemRes.text ? gemRes.text.trim() : "";
