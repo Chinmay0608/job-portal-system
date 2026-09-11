@@ -168,7 +168,6 @@ function Navbar() {
   const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
   const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
   const isMyApplications = location.pathname === "/my-applications";
-  const isSalaryGuide = location.pathname === "/salary-data";
 
   // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
   // Also gated behind VITE_DHRUV_ENABLED=true so it never loads on production until fully trained
@@ -288,20 +287,12 @@ function Navbar() {
           {!isHome && (
             <div className="nav-links-left desktop-only">
               {(!isLoggedIn || user?.role === "candidate") && (
-                <>
-                  <Link 
-                    to={isLoggedIn ? "/candidate-dashboard" : "/"} 
-                    className={`nav-tab-link ${isCandidateDashboard ? "active" : ""}`}
-                  >
-                    Home
-                  </Link>
-                  <Link 
-                    to="/salary-data" 
-                    className={`nav-tab-link ${isSalaryGuide ? "active" : ""}`}
-                  >
-                    Salary guide
-                  </Link>
-                </>
+                <Link 
+                  to={isLoggedIn ? "/candidate-dashboard" : "/"} 
+                  className={`nav-tab-link ${isCandidateDashboard ? "active" : ""}`}
+                >
+                  Home
+                </Link>
               )}
 
               {user?.role === "recruiter" && (
@@ -380,13 +371,9 @@ function Navbar() {
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           {(!isLoggedIn || isHome) ? (
             <div className="auth-buttons">
-              {!isHome ? (
+              {!isHome && (
                 <Link className="nav-tab-link mobile-only-tab" to="/" style={{ padding: "8px 0", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
                   <FiHome size={18} /> Home
-                </Link>
-              ) : (
-                <Link className="nav-tab-link mobile-only-tab" to="/salary-data">
-                  Salary guide
                 </Link>
               )}
               <Link className="login-btn nav-hover" to="/login">Login</Link>

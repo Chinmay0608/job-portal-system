@@ -218,8 +218,8 @@ function About() {
             <Link to="/jobs" className="cta-primary-btn">
               Explore Jobs Now
             </Link>
-            <Link to="/success-stories" className="cta-secondary-btn">
-              Read Success Stories
+            <Link to="/careers" className="cta-secondary-btn">
+              View Open Careers
             </Link>
           </div>
         </div>

@@ -39,10 +39,6 @@ import Home from "./pages/marketing/Home";
 const About = lazy(() => import("./pages/marketing/About"));
 const Blog = lazy(() => import("./pages/marketing/Blog"));
 const Careers = lazy(() => import("./pages/marketing/Careers"));
-const SalaryData = lazy(() => import("./pages/marketing/SalaryData"));
-const GetFeatured = lazy(() => import("./pages/marketing/GetFeatured"));
-const AiRecruiting = lazy(() => import("./pages/marketing/AiRecruiting"));
-const SuccessStories = lazy(() => import("./pages/marketing/SuccessStories"));
 
 // ==========================================================================
 // 5. LEGAL COMPLIANCE & REGULATORY DECLARATIONS IMPORT SEGMENT
@@ -99,10 +95,6 @@ function AppContent() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/help-center" element={<HelpCenter />} />
-              <Route path="/salary-data" element={<SalaryData />} />
-              <Route path="/get-featured" element={<GetFeatured />} />
-              <Route path="/ai-recruiting" element={<AiRecruiting />} />
-              <Route path="/success-stories" element={<SuccessStories />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
