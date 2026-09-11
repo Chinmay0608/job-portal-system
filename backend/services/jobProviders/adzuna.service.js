@@ -78,24 +78,64 @@ class AdzunaProvider extends BaseProvider {
     }
   }
 
+  extractSkills(description) {
+    if (!description) return [];
+    const descLower = description.toLowerCase();
+    const skills = [];
+
+    const skillMap = [
+      { name: "Node.js", keywords: ["node.js", "nodejs", "node"] },
+      { name: "React", keywords: ["react", "react.js", "reactjs"] },
+      { name: "JavaScript", keywords: ["javascript", "ecmascript"] },
+      { name: "TypeScript", keywords: ["typescript"] },
+      { name: "Python", keywords: ["python"] },
+      { name: "Java", keywords: ["java"] },
+      { name: "C++", keywords: ["c++", "cpp"] },
+      { name: "Go", keywords: ["golang"] },
+      { name: "Ruby", keywords: ["ruby", "rails"] },
+      { name: "PHP", keywords: ["php"] },
+      { name: "SQL", keywords: ["sql", "postgresql", "mysql"] },
+      { name: "MongoDB", keywords: ["mongodb"] },
+      { name: "Docker", keywords: ["docker"] },
+      { name: "Kubernetes", keywords: ["kubernetes", "k8s"] },
+      { name: "AWS", keywords: ["aws", "amazon web services"] },
+      { name: "Azure", keywords: ["azure"] },
+      { name: "GCP", keywords: ["gcp"] },
+      { name: "Marketing", keywords: ["marketing"] },
+      { name: "Sales", keywords: ["sales"] },
+      { name: "UI/UX Design", keywords: ["figma", "ui/ux"] },
+      { name: "Finance", keywords: ["finance", "excel"] },
+      { name: "Management", keywords: ["management", "leadership"] }
+    ];
+
+    for (const item of skillMap) {
+      const matched = item.keywords.some(kw => {
+        if (kw === "java") {
+          return /\bjava\b/i.test(description) && !descLower.includes("javascript");
+        }
+        return descLower.includes(kw);
+      });
+
+      if (matched && !skills.includes(item.name)) {
+        skills.push(item.name);
+      }
+    }
+
+    return skills;
+  }
+
   normalizeJob(rawJob) {
     const skillsRequired = [];
     if (rawJob.category && rawJob.category.label) {
       skillsRequired.push(rawJob.category.label);
     }
     
-    const desc = rawJob.description ? rawJob.description.toLowerCase() : "";
-    if (desc.includes("javascript") || desc.includes("js")) skillsRequired.push("JavaScript");
-    if (desc.includes("react")) skillsRequired.push("React");
-    if (desc.includes("node")) skillsRequired.push("Node.js");
-    if (desc.includes("python")) skillsRequired.push("Python");
-    if (desc.includes("java")) skillsRequired.push("Java");
-    if (desc.includes("sql")) skillsRequired.push("SQL");
-    if (desc.includes("marketing")) skillsRequired.push("Marketing");
-    if (desc.includes("sales")) skillsRequired.push("Sales");
-    if (desc.includes("design") || desc.includes("figma")) skillsRequired.push("UI/UX Design");
-    if (desc.includes("finance") || desc.includes("excel")) skillsRequired.push("Finance");
-    if (desc.includes("management") || desc.includes("leadership")) skillsRequired.push("Management");
+    const extracted = this.extractSkills(rawJob.description);
+    extracted.forEach(skill => {
+      if (!skillsRequired.includes(skill)) {
+        skillsRequired.push(skill);
+      }
+    });
 
     return {
       title: rawJob.title ? rawJob.title.replace(/<\/?[^>]+(>|$)/g, "") : "Professional Position",
