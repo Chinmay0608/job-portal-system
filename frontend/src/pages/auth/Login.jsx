@@ -1,35 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import { FaChessRook, FaBuilding } from "react-icons/fa";
+import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectDestination = searchParams.get("redirect") || location.state?.redirectAfterLogin || "";
+  const isAdminTarget = 
+    searchParams.get("admin") === "true" || 
+    redirectDestination.includes("/admin") || 
+    searchParams.get("role") === "admin";
+
+  const [email, setEmail] = useState(isAdminTarget ? "admin@gmail.com" : "");
+  const [password, setPassword] = useState(isAdminTarget ? "admin123" : "");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [loginRole, setLoginRole] = useState("candidate");
+  const [loginRole, setLoginRole] = useState(isAdminTarget ? "recruiter" : "candidate");
 
-  const location = useLocation();
+  useEffect(() => {
+    if (isAdminTarget) {
+      setEmail("admin@gmail.com");
+      setPassword("admin123");
+      setLoginRole("recruiter");
+    }
+  }, [location.search, location.state, isAdminTarget]);
+
+  const fillAdminCredentials = () => {
+    setEmail("admin@gmail.com");
+    setPassword("admin123");
+    setLoginRole("recruiter");
+    toast.success("Admin credentials autofilled");
+  };
 
   const redirectUser = (user) => {
-    if (user?.role === "candidate") {
-      const destination = location.state?.redirectAfterLogin || "/candidate-dashboard";
-      
+    const params = new URLSearchParams(location.search);
+    const destination = params.get("redirect") || location.state?.redirectAfterLogin;
+
+    if (destination && destination.startsWith("/")) {
       navigate(destination, {
         state: {
           roleType: location.state?.roleType
         }
       });
-    } else if (user?.role === "admin") {
+      return;
+    }
+
+    if (user?.role === "candidate") {
+      navigate("/candidate-dashboard", {
+        state: {
+          roleType: location.state?.roleType
+        }
+      });
+    } else if (user?.role === "admin" || user?.email?.toLowerCase() === "admin@gmail.com") {
       navigate("/admin/dashboard");
     } else {
       navigate("/recruiter-dashboard");
@@ -42,6 +74,9 @@ function Login() {
       setLoading(true);
       const response = await loginUser({ email, password });
       localStorage.setItem("user", JSON.stringify(response.user));
+      if (response.token) {
+        localStorage.setItem("token", response.token);
+      }
       toast.success("Login successful");
       redirectUser(response.user);
     } catch (error) {
@@ -132,6 +167,39 @@ function Login() {
           <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
           <div className="flex-grow border-t border-slate-200"></div>
         </div>
+
+        {isAdminTarget && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 sm:p-3 text-amber-900 flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <span className="text-[11px] sm:text-xs font-medium">
+                Admin Support Desk access: credentials pre-filled. Click <strong>Sign In</strong> to proceed.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={fillAdminCredentials}
+              className="text-[10px] sm:text-[11px] font-bold text-amber-800 hover:text-amber-950 underline ml-2 cursor-pointer bg-transparent border-0 whitespace-nowrap"
+            >
+              Reset
+            </button>
+          </div>
+        )}
+
+        {loginRole === "recruiter" && !isAdminTarget && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={fillAdminCredentials}
+              className="text-[11px] text-slate-500 hover:text-brand-600 font-semibold bg-transparent border-0 cursor-pointer underline transition-colors"
+            >
+              Fill Admin Demo Credentials
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>

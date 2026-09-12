@@ -1191,7 +1191,17 @@ const AdminDashboard = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [loadingActivity, setLoadingActivity] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('metrics');
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'support' || tab === 'tickets') return 'support';
+      if (tab && ['metrics', 'users', 'jobs', 'applications', 'activity', 'messages', 'security', 'ai', 'configuration'].includes(tab)) {
+        return tab;
+      }
+    } catch {}
+    return 'metrics';
+  });
   const [supportRefreshKey, setSupportRefreshKey] = useState(0);
   const [triggeringCrawl, setTriggeringCrawl] = useState(false);
 

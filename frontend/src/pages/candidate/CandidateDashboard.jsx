@@ -432,9 +432,6 @@ function CandidateDashboard() {
     });
   }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, user?.field, debouncedFetchJobs]);
 
-
-
-
   const submitApplication = async (fileToSubmit) => {
     const resumeToSend = fileToSubmit || resumeFile;
 
@@ -1005,67 +1002,177 @@ function CandidateDashboard() {
         {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
         {isMobileSearchExpanded && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
-            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-slide-in-right" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-3.5 max-h-[90vh] overflow-y-auto animate-slide-in-right" onClick={e => e.stopPropagation()}>
+              
+              {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-base font-extrabold text-slate-900 m-0">Search Filters</h3>
-                <button className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center border-0 cursor-pointer" onClick={() => setIsMobileSearchExpanded(false)}>✕</button>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 m-0">Search & Filters</h3>
+                  <p className="text-xs text-slate-500 m-0 mt-0.5">Filter by role, location, pay, experience, and mode</p>
+                </div>
+                <button 
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center border-0 cursor-pointer font-bold transition-colors" 
+                  onClick={() => setIsMobileSearchExpanded(false)}
+                  aria-label="Close filters"
+                >
+                  ✕
+                </button>
               </div>
+
               <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl">
-                  <FiSearch className="text-slate-400 text-lg shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Job title, keywords, or company"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-transparent border-0 outline-none text-sm text-slate-900"
-                  />
-                </div>
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl">
-                  <FiMapPin className="text-slate-400 text-lg shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="City, state, zip code, or 'remote'"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                    className="w-full bg-transparent border-0 outline-none text-sm text-slate-900"
-                  />
-                </div>
-                <div className="w-full">
-                  <CustomSelect
-                    options={[
-                      { value: "", label: "All Experience" },
-                      { value: "Fresher", label: "Fresher" },
-                      { value: "0-2 Years", label: "0-2 Years" },
-                      { value: "2-5 Years", label: "2-5 Years" },
-                      { value: "5+ Years", label: "5+ Years" }
-                    ]}
-                    value={experienceFilter}
-                    onChange={(e) => setExperienceFilter(e.target.value)}
-                    className="w-full"
-                  />
+                {/* 1. Keyword / Title Search */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Keywords / Title</label>
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+                    <FiSearch className="text-slate-400 text-base shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Job title, skills, or company"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
 
-                <button 
-                  className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shadow-md mt-2"
-                  onClick={() => {
-                    setIsMobileSearchExpanded(false);
-                    setCurrentPage(1);
-                    fetchJobs({
-                      searchTerm: search,
-                      locationTerm: locationFilter,
-                      experienceTerm: experienceFilter,
-                      salaryTerm: salaryFilter,
-                      companyTerm: companyFilter,
-                      sourceTerm: sourceFilter,
-                      employmentTerm: employmentTypeFilter,
-                      remoteTerm: isRemoteFilter,
-                      page: 1,
-                    });
-                  }}
-                >
-                  Apply Filters
-                </button>
+                {/* 2. Location */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Location</label>
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+                    <FiMapPin className="text-slate-400 text-base shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="City, State, or India"
+                      value={locationFilter}
+                      onChange={(e) => setLocationFilter(e.target.value)}
+                      className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Experience & Pay in 2-col grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Experience</label>
+                    <CustomSelect
+                      options={[
+                        { value: "", label: "All Experience" },
+                        { value: "Fresher", label: "Fresher (0 yrs)" },
+                        { value: "0-2 Years", label: "0-2 Years" },
+                        { value: "2-5 Years", label: "2-5 Years" },
+                        { value: "5+ Years", label: "5+ Years" }
+                      ]}
+                      value={experienceFilter}
+                      onChange={(e) => setExperienceFilter(e.target.value)}
+                      placeholder="All Experience"
+                      className="w-full text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Pay / Salary</label>
+                    <CustomSelect
+                      options={[
+                        { value: "", label: "Any Pay / Salary" },
+                        { value: "300000", label: "₹3 LPA+ ($40k+)" },
+                        { value: "600000", label: "₹6 LPA+ ($75k+)" },
+                        { value: "1000000", label: "₹10 LPA+ ($120k+)" },
+                        { value: "1800000", label: "₹18 LPA+ ($200k+)" },
+                        { value: "2500000", label: "₹25 LPA+ ($300k+)" }
+                      ]}
+                      value={salaryFilter}
+                      onChange={(e) => setSalaryFilter(e.target.value)}
+                      placeholder="Any Pay"
+                      className="w-full text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Job Type & Remote Option */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Job Type</label>
+                    <CustomSelect
+                      options={[
+                        { value: "All", label: "All Types" },
+                        { value: "Full-time", label: "Full-time" },
+                        { value: "Internship", label: "Internship" },
+                        { value: "Contract", label: "Contract" },
+                        { value: "Part-time", label: "Part-time" }
+                      ]}
+                      value={employmentTypeFilter}
+                      onChange={(e) => setEmploymentTypeFilter(e.target.value)}
+                      placeholder="All Types"
+                      className="w-full text-sm"
+                    />
+                  </div>
+
+                  <div className="pt-2 sm:pt-4">
+                    <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isRemoteFilter === "true"}
+                        onChange={(e) => setIsRemoteFilter(e.target.checked ? "true" : "All")}
+                        className="w-4 h-4 cursor-pointer accent-brand-600 rounded"
+                      />
+                      <span className="text-xs font-bold text-slate-800">Remote roles only</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-100 mt-1">
+                  <button 
+                    type="button"
+                    className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-colors border-0"
+                    onClick={() => {
+                      setSearch("");
+                      setLocationFilter("");
+                      setExperienceFilter("");
+                      setSalaryFilter("");
+                      setCompanyFilter("");
+                      setSourceFilter("");
+                      setEmploymentTypeFilter("All");
+                      setIsRemoteFilter("All");
+                      setIsMobileSearchExpanded(false);
+                      setCurrentPage(1);
+                      fetchJobs({
+                        searchTerm: "",
+                        locationTerm: "",
+                        experienceTerm: "",
+                        salaryTerm: "",
+                        companyTerm: "",
+                        sourceTerm: "",
+                        employmentTerm: "All",
+                        remoteTerm: "All",
+                        page: 1,
+                      });
+                    }}
+                  >
+                    Reset All
+                  </button>
+                  <button 
+                    type="button"
+                    className="flex-2 py-2.5 px-5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-md shadow-brand-600/20 border-0"
+                    onClick={() => {
+                      setIsMobileSearchExpanded(false);
+                      setCurrentPage(1);
+                      fetchJobs({
+                        searchTerm: search,
+                        locationTerm: locationFilter,
+                        experienceTerm: experienceFilter,
+                        salaryTerm: salaryFilter,
+                        companyTerm: companyFilter,
+                        sourceTerm: sourceFilter,
+                        employmentTerm: employmentTypeFilter,
+                        remoteTerm: isRemoteFilter,
+                        page: 1,
+                      });
+                    }}
+                  >
+                    Apply Filters
+                  </button>
+                </div>
               </div>
             </div>
           </div>

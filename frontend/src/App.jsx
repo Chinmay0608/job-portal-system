@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
 import ProtectedRoute from "./Components/ProtectedRoute";
@@ -96,6 +96,7 @@ function AppContent() {
               <Route path="/blog" element={<Blog />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/help-center" element={<HelpCenter />} />
+              <Route path="/help" element={<Navigate to="/help-center" replace />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />

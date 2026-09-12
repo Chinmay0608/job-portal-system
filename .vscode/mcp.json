@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "graphify": {
+      "command": "uvx",
+      "args": [
+        "graphify"
+      ]
+    }
+  }
+}

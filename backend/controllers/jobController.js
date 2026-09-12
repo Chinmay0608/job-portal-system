@@ -173,21 +173,28 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (search) {
-    const safeSearch = escapeRegex(search);
-    // TODO: Switch to $text search for better efficiency instead of $regex
-    const searchCondition = {
-      $or: [
-        { title: { $regex: safeSearch, $options: "i" } },
-        { company: { $regex: safeSearch, $options: "i" } },
-        { keywords: { $regex: safeSearch, $options: "i" } }
-      ],
-    };
+    const rawTokens = search.trim().split(/\s+/).filter(Boolean);
+    if (rawTokens.length > 0) {
+      const tokenConditions = rawTokens.map((token) => {
+        const safeToken = escapeRegex(token);
+        return {
+          $or: [
+            { title: { $regex: safeToken, $options: "i" } },
+            { company: { $regex: safeToken, $options: "i" } },
+            { keywords: { $regex: safeToken, $options: "i" } },
+            { role: { $regex: safeToken, $options: "i" } },
+          ],
+        };
+      });
 
-    if (query.$or) {
-      query.$and = [searchCondition, { $or: query.$or }];
-      delete query.$or;
-    } else {
-      query.$or = searchCondition.$or;
+      if (!query.$and) {
+        query.$and = [];
+      }
+      if (query.$or) {
+        query.$and.push({ $or: query.$or });
+        delete query.$or;
+      }
+      query.$and.push(...tokenConditions);
     }
   }
 
@@ -209,8 +216,12 @@ const getAllJobs = asyncHandler(async (req, res) => {
     }
   }
 
-  if (experience && experience !== "All Experience") {
-    query.experienceRequired = experience;
+  if (experience && experience !== "All Experience" && experience !== "All") {
+    if (experience === "Fresher") {
+      query.experienceRequired = { $in: ["Fresher", "0-2 Years", "Entry Level", "Not Specified"] };
+    } else {
+      query.experienceRequired = experience;
+    }
   }
 
   if (source && source !== "All") {
@@ -942,6 +953,12 @@ const triggerScheduledSync = async (req, res, next) => {
     // Await this one (unlike the manual endpoint) so GitHub Actions gets a
     // real pass/fail result and logs, rather than firing-and-forgetting.
     const metrics = await syncService.runAllSync();
+
+    // Automatically trigger personalized candidate job digest alerts in background
+    const { runJobDigest } = require("../services/jobDigestService");
+    runJobDigest().catch((digestErr) => {
+      console.error("[Scheduled Sync] Post-sync job digest dispatch error:", digestErr.message);
+    });
 
     res.status(200).json({
       success: true,

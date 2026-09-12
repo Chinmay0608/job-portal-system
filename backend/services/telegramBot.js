@@ -40,7 +40,7 @@ async function handleCommand(commandText, chatId) {
           "• /myid — Check your Telegram Chat ID",
           "• /help — Full Command Directory",
           "",
-          `👉 <a href="${frontendUrl}/admin/dashboard">Open Admin Support Desk</a>`,
+          `👉 <a href="${frontendUrl}/admin/dashboard?tab=support">Open Admin Support Desk</a>`,
         ].join("\n");
         return await sendTelegramMessage(welcome, { extra: { chat_id: chatId } });
       }
@@ -220,7 +220,7 @@ async function handleCommand(commandText, chatId) {
           "⚡ <b>Direct Access: SkillBridge Admin Support Desk</b>",
           "",
           "Tap the link below to open your secure admin control center:",
-          `👉 <a href="${frontendUrl}/admin/dashboard">Open Admin Support Desk</a>`,
+          `👉 <a href="${frontendUrl}/admin/dashboard?tab=support">Open Admin Support Desk</a>`,
         ].join("\n");
         return await sendTelegramMessage(text, { extra: { chat_id: chatId } });
       }

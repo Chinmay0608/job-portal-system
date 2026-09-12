@@ -1,8 +1,41 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import debounce from "lodash.debounce";
 import CustomSelect from "../../Components/CustomSelect";
-import { changePassword, updateProfile, extractSkillsAPI, getUserProfile, getMyApplications, getResumeSignedUrlAPI } from "../../Services/jobService";
+import { 
+  changePassword, 
+  updateProfile, 
+  extractSkillsAPI, 
+  getUserProfile, 
+  getMyApplications, 
+  getResumeSignedUrlAPI 
+} from "../../Services/jobService";
+import { 
+  Camera, 
+  FileText, 
+  Sparkles, 
+  Eye, 
+  Download, 
+  Upload, 
+  X, 
+  Check, 
+  Lock, 
+  Bell, 
+  Plus, 
+  Briefcase, 
+  Bookmark
+} from "lucide-react";
+
+// Curated list of popular tech & domain skills for instant 0ms local autocomplete
+const COMMON_SKILLS = [
+  "JavaScript", "TypeScript", "React", "Node.js", "Python", "Java", "C++", "C#", "C",
+  "SQL", "MongoDB", "PostgreSQL", "MySQL", "AWS", "Docker", "Kubernetes", "Git",
+  "HTML5", "CSS3", "Express.js", "Next.js", "Redux", "Tailwind CSS", "GraphQL", "REST APIs",
+  "Data Structures", "Algorithms", "Machine Learning", "Deep Learning", "Data Analysis",
+  "Figma", "UI/UX Design", "DevOps", "Cybersecurity", "Linux", "Go", "Rust", "Swift",
+  "Kotlin", "Flutter", "React Native", "Spring Boot", "Django", "FastAPI", "Pandas",
+  "NumPy", "TensorFlow", "PyTorch", "Tableau", "Power BI", "Agile", "Scrum", "Jira"
+];
 
 function CandidateProfile() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -43,22 +76,36 @@ function CandidateProfile() {
   // Helper to sanitize skills and discard any accidentally saved emails
   const sanitizeSkills = (list) =>
     (Array.isArray(list) ? list : []).filter(
-      (s) => typeof s === "string" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
+      (s) => typeof s === "string" && !/^[^s@]+@[^s@]+.[^s@]+$/.test(s.trim())
     );
 
   // Dynamic User Saved Skills
   const [skills, setSkills] = useState(() => sanitizeSkills(user?.skills));
   const [skillInput, setSkillInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [skillError, setSkillError] = useState("");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
+  const skillBoxRef = useRef(null);
+
   // Auto-clear skillInput if browser aggressively autofills an email address into it
   useEffect(() => {
-    if (skillInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(skillInput.trim())) {
+    if (skillInput && /^[^s@]+@[^s@]+.[^s@]+$/.test(skillInput.trim())) {
       setSkillInput("");
     }
   }, [skillInput]);
+
+  // Click outside to close suggestions dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (skillBoxRef.current && !skillBoxRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // 3. File Uploads State
   const [profileImage, setProfileImage] = useState(null);
@@ -94,7 +141,7 @@ function CandidateProfile() {
     return Math.round((completed / fields.length) * 100);
   };
 
-  // Mount effect: Fetch fresh user profile and applications count from backend
+  // Mount effect: Fetch fresh profile data
   useEffect(() => {
     const fetchFreshProfile = async () => {
       try {
@@ -142,13 +189,6 @@ function CandidateProfile() {
       setEmailNotificationsEnabled(user.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true);
     }
   }, [user]);
-
-  /* Safe Resume URL Fix */
-  const getResumeUrl = (resumePath) => {
-    if (!resumePath) return "#";
-    if (resumePath.startsWith("http")) return resumePath;
-    return `${API_URL}/${resumePath.replace(/^\/+/, "")}`;
-  };
 
   const handleSave = async () => {
     try {
@@ -312,7 +352,7 @@ function CandidateProfile() {
     }
 
     // Guard against email addresses autofilled by browsers
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    if (/^[^s@]+@[^s@]+.[^s@]+$/.test(trimmed)) {
       setSkillInput("");
       setSkillError("Email addresses cannot be added as skills.");
       return;
@@ -322,6 +362,7 @@ function CandidateProfile() {
     if (skills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
       setSkillInput("");
       setSuggestions([]);
+      setIsDropdownOpen(false);
       return;
     }
 
@@ -334,6 +375,7 @@ function CandidateProfile() {
     setSkills((prevSkills) => [...prevSkills, skillToAdd]);
     setSkillInput("");
     setSuggestions([]);
+    setIsDropdownOpen(false);
     setSkillError("");
   };
 
@@ -363,57 +405,54 @@ function CandidateProfile() {
     }
   };
 
-  // Async function to fetch skills from backend API
-  const fetchSkillSuggestions = async (query) => {
-    try {
-      if (!query.trim()) {
-        setSuggestions([]);
-        return;
+  // Debounced API search using useRef to preserve timer identity across re-renders
+  const debouncedFetchApiRef = useRef(
+    debounce(async (query, currentSkills) => {
+      try {
+        if (!query.trim()) return;
+        const res = await fetch(
+          `${API_URL}/api/jobs/skills/search?query=${encodeURIComponent(query)}`
+        );
+        if (res.ok) {
+          const apiSkills = await res.json();
+          if (Array.isArray(apiSkills)) {
+            setSuggestions((prev) => {
+              const combined = Array.from(
+                new Set([...prev, ...apiSkills])
+              ).filter((s) => !currentSkills.some((sk) => sk.toLowerCase() === s.toLowerCase()));
+              return combined.slice(0, 10);
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Skill search API error:", err);
       }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/jobs/skills/search?query=${encodeURIComponent(query)}`
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch skills:", response.statusText);
-        setSuggestions([]);
-        return;
-      }
-
-      const data = await response.json();
-      
-      // Filter out already-added skills
-      const filtered = data.filter(
-        (skill) => !skills.some(s => s.toLowerCase() === skill.toLowerCase())
-      );
-
-      setSuggestions(filtered.slice(0, 8));
-    } catch (error) {
-      console.error("Error fetching skill suggestions:", error);
-      setSuggestions([]);
-    }
-  };
-
-  // Debounced skill search function
-  const debouncedSkillSearch = useCallback(
-    debounce((query) => {
-      fetchSkillSuggestions(query);
-    }, 250),
-    [skills]
+    }, 200)
   );
 
   const handleSkillInputChange = (value) => {
     setActiveSuggestionIndex(-1);
     setSkillInput(value);
 
-    // Only trigger API call if input has content
-    if (value.trim().length > 0) {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed.length > 0) {
       setSkillError("");
-      debouncedSkillSearch(value);
+      
+      // 1. Instant local matching (0ms response)
+      const localMatches = COMMON_SKILLS.filter(
+        (s) =>
+          s.toLowerCase().includes(trimmed) &&
+          !skills.some((sk) => sk.toLowerCase() === s.toLowerCase())
+      );
+      
+      setSuggestions(localMatches.slice(0, 8));
+      setIsDropdownOpen(true);
+
+      // 2. Query backend for comprehensive MasterSkill matches
+      debouncedFetchApiRef.current(value, skills);
     } else {
-      // Clear suggestions and error when input is empty
       setSuggestions([]);
+      setIsDropdownOpen(false);
       setSkillError("");
     }
   };
@@ -423,27 +462,27 @@ function CandidateProfile() {
   };
 
   return (
-    <div className="profile-page">
-      <div className="profile-container">
+    <div className="w-full min-h-screen bg-slate-50/70 text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* LEFT COLUMN: SIDEBAR */}
-        <div className="profile-sidebar">
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center lg:sticky lg:top-24">
 
-          <div className="avatar-wrapper">
+          <div className="relative mb-4">
             {user?.profileImage ? (
               <img
                 src={user.profileImage.startsWith("http") ? user.profileImage : `${API_URL}/${user.profileImage.replace(/^\/+/, "")}`}
                 alt="profile"
-                className="profile-avatar"
+                className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-md"
               />
             ) : (
-              <div className="avatar-circle">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 text-white text-3xl font-extrabold flex items-center justify-center border-4 border-slate-100 shadow-md">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
 
-            <label className="upload-avatar-btn">
-              📷
+            <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-105 active:scale-95" title="Change Avatar">
+              <Camera size={14} />
               <input
                 type="file"
                 accept="image/*"
@@ -453,117 +492,143 @@ function CandidateProfile() {
             </label>
           </div>
 
-          <h2>{user?.name || "Guest User"}</h2>
-          <p>{user?.email}</p>
-          <span className="role-badge">{user?.role || "Candidate"}</span>
+          <h2 className="text-xl font-bold text-slate-900 m-0">{user?.name || "Guest User"}</h2>
+          <p className="text-xs text-slate-500 mt-1 mb-3 break-all">{user?.email}</p>
+          <span className="px-3 py-1 bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold rounded-full uppercase tracking-wider mb-5">
+            {user?.role || "Candidate"}
+          </span>
 
-          <div className="completion-section">
-            <div className="completion-header">
-              <p>Profile strength</p>
-              <span className="completion-percent">{savedCompletion}%</span>
+          {/* Profile Strength */}
+          <div className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 mb-5 text-left">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
+              <span>Profile Strength</span>
+              <span className="text-brand-600 font-extrabold">{savedCompletion}%</span>
             </div>
-            <div className="progress-bar">
+            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-4">
               <div
-                className="progress-fill"
+                className="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${savedCompletion}%` }}
               />
             </div>
 
-            <div className="profile-stats">
-              <div className="stat-card">
-                <p>Applications</p>
-                <h3>{applicationsCount}</h3>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200/60 shadow-xs">
+                <div className="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1">
+                  <Briefcase size={12} /> Applications
+                </div>
+                <div className="text-lg font-extrabold text-slate-900 mt-0.5">{applicationsCount}</div>
               </div>
-              <div className="stat-card">
-                <p>Saved Jobs</p>
-                <h3>{savedJobsCount}</h3>
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200/60 shadow-xs">
+                <div className="text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1">
+                  <Bookmark size={12} /> Saved Jobs
+                </div>
+                <div className="text-lg font-extrabold text-slate-900 mt-0.5">{savedJobsCount}</div>
               </div>
             </div>
           </div>
 
-          <div className="resume-box">
-            <h3>Resume</h3>
+          {/* Resume Management */}
+          <div className="w-full text-left">
+            <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+              <FileText size={15} className="text-brand-600" /> Resume / CV
+            </h3>
+            
             {user?.resume && (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <div className="flex gap-2 mb-3">
                 <button
                   type="button"
                   onClick={handlePreviewResume}
                   disabled={loading || resumeUploading}
-                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#111827', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
+                  className="flex-1 py-2 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  👁️ Preview
+                  <Eye size={13} /> Preview
                 </button>
                 <button
                   type="button"
                   onClick={handleDownloadResume}
                   disabled={loading || resumeUploading}
-                  style={{ flex: 1, textAlign: 'center', padding: '8px', background: '#0d1117', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}
+                  className="flex-1 py-2 px-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl border-0 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                 >
-                  ⬇️ Download
+                  <Download size={13} /> Download
                 </button>
               </div>
             )}
+
             <label
-              className="resume-upload-label"
-              style={{
-                opacity: resumeUploading ? 0.6 : 1,
-                pointerEvents: resumeUploading ? "none" : "auto",
-                cursor: resumeUploading ? "not-allowed" : "pointer"
-              }}
+              className={`w-full py-2.5 px-3 rounded-xl border border-dashed text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                resumeUploading
+                  ? "bg-brand-50 border-brand-300 text-brand-600 opacity-70 cursor-not-allowed"
+                  : user?.resume
+                  ? "bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-700"
+                  : "bg-brand-50 hover:bg-brand-100 border-brand-300 text-brand-700"
+              }`}
             >
+              <Upload size={14} />
               {resumeUploading
-                ? "⏳ Uploading & saving resume..."
+                ? "Uploading & parsing..."
                 : user?.resume
-                ? "Upload replacement file"
-                : "Upload new file"}
+                ? "Replace resume file"
+                : "Upload resume (PDF, DOC)"}
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
+                hidden
                 disabled={resumeUploading}
                 onChange={handleResumeFileChange}
               />
             </label>
+
             {resumeUploading ? (
-              <p style={{ fontSize: "0.75rem", color: "#2563eb", marginTop: "4px", fontWeight: 600 }}>
-                ⏳ Uploading and saving to your profile...
+              <p className="text-[11px] text-brand-600 font-semibold mt-2 text-center">
+                ⏳ Uploading and saving to profile...
               </p>
             ) : user?.resume ? (
-              <p style={{ fontSize: "0.75rem", color: "#16a34a", marginTop: "4px", fontWeight: 600 }}>
-                ✓ Resume is saved & active on your profile!
+              <p className="text-[11px] text-emerald-600 font-semibold mt-2 text-center flex items-center justify-center gap-1">
+                <Check size={12} className="stroke-[3]" /> Resume is active on your profile
               </p>
             ) : (
-              <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px" }}>
-                Upload your resume (PDF, DOC, DOCX) to save it permanently.
+              <p className="text-[11px] text-slate-400 mt-2 text-center">
+                Upload PDF or DOCX to unlock 1-click apply & AI parsing.
               </p>
             )}
           </div>
+
         </div>
 
         {/* RIGHT COLUMN: MAIN FORM WORKSPACE */}
-        <div className="profile-content">
+        <div className="lg:col-span-8 space-y-6">
 
-          <div className="profile-content-header">
-            <span className="profile-eyebrow">Candidate profile</span>
-            <h1>My Profile</h1>
-            <p className="profile-content-subtitle">
-              Keep this up to date — recruiters see this before they see your resume.
+          {/* Page Header */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">Candidate Profile</span>
+            <h1 className="text-2xl font-extrabold text-slate-900 mt-1 mb-1">My Profile</h1>
+            <p className="text-xs sm:text-sm text-slate-500 m-0">
+              Keep this information updated — hiring managers and AI matching use this to recommend you the best jobs.
             </p>
           </div>
 
-          {/* Clean Input Grid Layout Block */}
-          <div className="profile-section-card">
-            <h2 className="profile-section-title">Basic information</h2>
+          {/* Basic Information Card */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
+              Basic Information
+            </h2>
 
-            <div className="profile-grid">
-              {/* Field 1: Full Name */}
-              <div className="input-group">
-                <label>Full Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Full Name</label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                  placeholder="Your full name"
+                />
               </div>
 
-              {/* Field 2: Email */}
-              <div className="input-group">
-                <label>Email</label>
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Email Address</label>
                 <input
                   type="email"
                   name="email"
@@ -571,44 +636,72 @@ function CandidateProfile() {
                   value={email}
                   disabled
                   readOnly
+                  className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-sm text-slate-500 outline-none cursor-not-allowed"
                 />
               </div>
 
-              {/* Field 3: Phone */}
-              <div className="input-group">
-                <label>Phone Number</label>
-                <input type="text" placeholder="e.g., +91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              {/* Phone */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone Number</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g., +91 98765 43210" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                />
               </div>
 
-              {/* Field 4: Location */}
-              <div className="input-group">
-                <label>Location</label>
-                <input type="text" placeholder="e.g., Jaipur, India" value={location} onChange={(e) => setLocation(e.target.value)} />
+              {/* Location */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Location</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g., Jaipur, India / Remote" 
+                  value={location} 
+                  onChange={(e) => setLocation(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                />
               </div>
 
-              {/* Dropdown 1: Select Degree Group */}
-              <div className="input-group">
-                <label>Highest Qualification</label>
+              {/* Highest Qualification */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Highest Qualification</label>
                 <CustomSelect
-                  options={[{ value: "", label: "Select Degree" }, { value: "B.Tech", label: "B.Tech" }, { value: "M.Tech", label: "M.Tech" }, { value: "BCA", label: "BCA" }, { value: "MCA", label: "MCA" }]}
+                  options={[
+                    { value: "", label: "Select Degree" }, 
+                    { value: "B.Tech", label: "B.Tech / B.E." }, 
+                    { value: "M.Tech", label: "M.Tech / M.E." }, 
+                    { value: "BCA", label: "BCA" }, 
+                    { value: "MCA", label: "MCA" },
+                    { value: "B.Sc", label: "B.Sc Computer Science" },
+                    { value: "Other", label: "Other Graduate / Diploma" }
+                  ]}
                   value={education}
                   onChange={(e) => setEducation(e.target.value)}
+                  className="w-full text-sm"
                 />
               </div>
 
-              {/* Dropdown 2: Experience Level Group */}
-              <div className="input-group">
-                <label>Experience Level</label>
+              {/* Experience Level */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Experience Level</label>
                 <CustomSelect
-                  options={[{ value: "Fresher", label: "Fresher" }, { value: "0-2 Years", label: "0-2 Years" }, { value: "2-5 Years", label: "2-5 Years" }, { value: "5+ Years", label: "5+ Years" }]}
+                  options={[
+                    { value: "Fresher", label: "Fresher / Entry Level" }, 
+                    { value: "0-2 Years", label: "0-2 Years (Junior)" }, 
+                    { value: "2-5 Years", label: "2-5 Years (Mid-Level)" }, 
+                    { value: "5+ Years", label: "5+ Years (Senior/Lead)" }
+                  ]}
                   value={experienceLevel}
                   onChange={(e) => setExperienceLevel(e.target.value)}
+                  className="w-full text-sm"
                 />
               </div>
 
-              {/* Dropdown 3: Domain / Field of Work */}
-              <div className="input-group">
-                <label>Domain / Field of Work</label>
+              {/* Domain / Field of Work */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Domain / Field of Work</label>
                 <CustomSelect
                   options={[
                     { value: "Software Engineering", label: "Software Engineering / IT" },
@@ -624,60 +717,92 @@ function CandidateProfile() {
                   ]}
                   value={field}
                   onChange={(e) => setField(e.target.value)}
+                  className="w-full text-sm"
                 />
               </div>
 
-              {/* Field 5: LinkedIn */}
-              <div className="input-group">
-                <label>LinkedIn</label>
-                <input type="text" placeholder="e.g., linkedin.com/in/yourname" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+              {/* LinkedIn */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">LinkedIn Profile</label>
+                <input 
+                  type="text" 
+                  placeholder="linkedin.com/in/username" 
+                  value={linkedin} 
+                  onChange={(e) => setLinkedin(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                />
               </div>
 
-              {/* Field 6: GitHub */}
-              <div className="input-group">
-                <label>GitHub</label>
-                <input type="text" placeholder="e.g., github.com/yourname" value={github} onChange={(e) => setGithub(e.target.value)} />
+              {/* GitHub */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">GitHub / Portfolio</label>
+                <input 
+                  type="text" 
+                  placeholder="github.com/username" 
+                  value={github} 
+                  onChange={(e) => setGithub(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                />
+              </div>
+
+              {/* About */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">About You / Summary</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Brief summary of your skills, background, and what you're looking for..." 
+                  value={about} 
+                  onChange={(e) => setAbout(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 p-3.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-y"
+                />
               </div>
             </div>
           </div>
 
-          {/* Skills Engine Block */}
-          <div className="profile-section-card">
-            <div className="skills-section">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3>Skills</h3>
-                {user?.resume && (
-                  <button 
-                    type="button"
-                    onClick={handleExtractSkills}
-                    disabled={loading}
-                    style={{
-                      background: "#2563eb", color: "white", border: "none", 
-                      padding: "6px 12px", borderRadius: "6px", fontSize: "0.8rem", 
-                      fontWeight: "600", cursor: loading ? "not-allowed" : "pointer",
-                      opacity: loading ? 0.7 : 1
-                    }}
-                  >
-                    ✨ Extract from Resume
-                  </button>
-                )}
+          {/* Skills Engine Block (Ticket 2 Fix) */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 m-0">Skills & Tech Stack</h2>
+                <p className="text-xs text-slate-500 m-0 mt-0.5">Add your key technical and professional skills for matching</p>
               </div>
-              <div className="skill-input-box" style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  name="candidate_skill_search_query"
-                  id="candidate_skill_search_query"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  data-lpignore="true"
-                  data-1p-ignore="true"
-                  data-form-type="other"
-                  placeholder="Add skill..."
-                  value={skillInput}
-                  onChange={(e) => handleSkillInputChange(e.target.value)}
-                  onKeyDown={(e) => {
+              {user?.resume && (
+                <button 
+                  type="button"
+                  onClick={handleExtractSkills}
+                  disabled={loading}
+                  className="self-start sm:self-auto py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Sparkles size={13} className="text-indigo-600" />
+                  Extract from Resume
+                </button>
+              )}
+            </div>
+
+            {/* Input & Autocomplete Dropdown */}
+            <div ref={skillBoxRef} className="relative w-full mb-4">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    name="candidate_skill_search_query"
+                    id="candidate_skill_search_query"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    placeholder="Type a skill (e.g. React, Python, Docker, SQL)..."
+                    value={skillInput}
+                    onChange={(e) => handleSkillInputChange(e.target.value)}
+                    onFocus={() => {
+                      if (skillInput.trim().length > 0 && suggestions.length > 0) {
+                        setIsDropdownOpen(true);
+                      }
+                    }}
+                    onKeyDown={(e) => {
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
                         if (activeSuggestionIndex < suggestions.length - 1) {
@@ -696,80 +821,81 @@ function CandidateProfile() {
                           handleAddSkill(skillInput);
                         }
                         setActiveSuggestionIndex(-1);
+                      } else if (e.key === "Escape") {
+                        setIsDropdownOpen(false);
                       }
                     }}
-                />
-                <button type="button" className="add-skill-btn" onClick={() => handleAddSkill(skillInput)}>
-                  Add
-                </button>
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all placeholder:text-slate-400 font-medium"
+                  />
+                </div>
 
-                {suggestions.length > 0 && (
-                  <div
-                    className="skill-suggestions"
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      zIndex: 100,
-                      backgroundColor: "white",
-                      border: "1px solid #ddd",
-                      borderTop: "none",
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-                    }}
-                  >
-                    {suggestions.map((suggestion, index) => (
-                        <button
-                          type="button"
-                          key={suggestion}
-                          className="skill-suggestion-item"
-                          style={{
-                            width: "100%",
-                            textAlign: "left",
-                            padding: "10px 12px",
-                            border: "none",
-                            backgroundColor: index === activeSuggestionIndex ? "#f0f0f0" : "transparent",
-                            cursor: "pointer",
-                            display: "block",
-                            fontSize: "14px",
-                            transition: "background-color 0.2s"
-                          }}
-                          onMouseEnter={() => setActiveSuggestionIndex(index)}
-                          onMouseLeave={() => setActiveSuggestionIndex(-1)}
-                          onClick={() => {
-                            handleAddSkill(suggestion);
-                            setActiveSuggestionIndex(-1);
-                          }}
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                  </div>
-                )}
+                <button 
+                  type="button" 
+                  onClick={() => handleAddSkill(skillInput)}
+                  className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add
+                </button>
               </div>
 
-              {skillError && <p className="skill-error">{skillError}</p>}
+              {/* Suggestions Dropdown */}
+              {isDropdownOpen && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-xl max-h-56 overflow-y-auto z-50 py-1 divide-y divide-slate-100">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      type="button"
+                      key={suggestion}
+                      className={`w-full text-left px-3.5 py-2 text-xs font-medium transition-colors flex items-center justify-between cursor-pointer border-0 ${
+                        index === activeSuggestionIndex 
+                          ? "bg-brand-50 text-brand-700 font-bold" 
+                          : "bg-white text-slate-800 hover:bg-slate-50"
+                      }`}
+                      onMouseEnter={() => setActiveSuggestionIndex(index)}
+                      onClick={() => {
+                        handleAddSkill(suggestion);
+                        setActiveSuggestionIndex(-1);
+                      }}
+                    >
+                      <span>{suggestion}</span>
+                      <Plus size={12} className="text-slate-400" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              <div className="skills-tags">
-                {skills.length === 0 && (
-                  <span className="skills-empty">No skills added yet — add your first one above.</span>
-                )}
-                {skills.map((skill, index) => (
-                  <span key={index} className="skill-chip">
-                    {skill}
-                    <button type="button" onClick={() => removeSkill(skill)}>
-                      &times;
+            {skillError && <p className="text-xs text-rose-600 font-medium mb-3">{skillError}</p>}
+
+            {/* Skill Badges / Tags */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {skills.length === 0 ? (
+                <span className="text-xs text-slate-400 italic">No skills added yet — type and add your skills above.</span>
+              ) : (
+                skills.map((skill, index) => (
+                  <span 
+                    key={index} 
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <span>{skill}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => removeSkill(skill)}
+                      className="text-slate-400 hover:text-rose-600 p-0.5 rounded-md hover:bg-white/80 transition-colors border-0 bg-transparent cursor-pointer"
+                      title={`Remove ${skill}`}
+                    >
+                      <X size={12} />
                     </button>
                   </span>
-                ))}
-              </div>
+                ))
+              )}
             </div>
           </div>
 
-          <div className="profile-section-card password-card">
-            <h2 className="profile-section-title">Change password</h2>
+          {/* Change Password Card */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <Lock size={16} className="text-slate-600" /> Change Password
+            </h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -777,7 +903,6 @@ function CandidateProfile() {
               }}
               autoComplete="off"
             >
-              {/* Hidden username input binds password manager credentials to this form, preventing browser from autofilling email into skills */}
               <input
                 type="text"
                 name="username"
@@ -788,9 +913,9 @@ function CandidateProfile() {
                 tabIndex="-1"
                 aria-hidden="true"
               />
-              <div className="profile-grid">
-                <div className="input-group">
-                  <label>Current Password</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Current Password</label>
                   <input
                     type="password"
                     name="current-password"
@@ -798,10 +923,11 @@ function CandidateProfile() {
                     placeholder="Current password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                   />
                 </div>
-                <div className="input-group">
-                  <label>New Password</label>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">New Password</label>
                   <input
                     type="password"
                     name="new-password"
@@ -809,10 +935,11 @@ function CandidateProfile() {
                     placeholder="New password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                   />
                 </div>
-                <div className="input-group">
-                  <label>Confirm New Password</label>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Confirm New Password</label>
                   <input
                     type="password"
                     name="confirm-password"
@@ -820,42 +947,58 @@ function CandidateProfile() {
                     placeholder="Confirm new password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                   />
                 </div>
               </div>
-              <div className="profile-save-bar">
-                <button type="submit" className="update-password-btn" disabled={loading}>
+              <div className="flex justify-end">
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                >
                   {loading ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </form>
           </div>
 
-          <div className="profile-section-card">
-            <h2 className="profile-section-title">Job Recommendations & Alerts</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "16px" }}>
+          {/* Job Alerts & Notification Preferences */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <Bell size={16} className="text-slate-600" /> Job Alerts & Email Digest
+            </h2>
+            <div className="flex items-start gap-3">
               <input
                 type="checkbox"
                 id="emailNotificationsToggle"
                 checked={emailNotificationsEnabled}
                 onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
-                style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "#2563eb" }}
+                className="w-4 h-4 mt-1 cursor-pointer accent-brand-600 rounded"
               />
-              <label htmlFor="emailNotificationsToggle" style={{ cursor: "pointer", fontSize: "15px", fontWeight: "500", color: "#1f2937" }}>
-                Email me about new matching jobs
-              </label>
+              <div>
+                <label htmlFor="emailNotificationsToggle" className="block text-sm font-bold text-slate-800 cursor-pointer">
+                  Email me about new matching jobs & openings
+                </label>
+                <p className="text-xs text-slate-500 mt-0.5 m-0">
+                  Receive job alert digests with opportunities tailored directly to your skills and field whenever new positions are posted or synced.
+                </p>
+              </div>
             </div>
-            <p style={{ margin: "6px 0 0 32px", fontSize: "13px", color: "#6b7280" }}>
-              Receive a weekly digest of newly posted opportunities tailored to your skills and field.
-            </p>
           </div>
 
-          {/* Action Trigger Base */}
-          <div className="profile-save-bar">
-            <button type="button" className="save-btn" onClick={handleSave} disabled={loading}>
-              {loading ? "Saving..." : "Save Profile"}
+          {/* Sticky Save Bar */}
+          <div className="flex justify-end pt-2">
+            <button 
+              type="button" 
+              onClick={handleSave} 
+              disabled={loading}
+              className="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 active:scale-98 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-brand-600/20 cursor-pointer disabled:opacity-50"
+            >
+              {loading ? "Saving Profile..." : "Save Profile Changes"}
             </button>
           </div>
+
         </div>
 
       </div>
