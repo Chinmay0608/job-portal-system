@@ -1,4 +1,13 @@
 require("dotenv").config();
+
+// Process-level crash prevention and diagnostics
+process.on("uncaughtException", (err) => {
+  console.error("[Fatal Uncaught Exception]:", err.message, err.stack);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[Unhandled Promise Rejection]:", reason);
+});
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");

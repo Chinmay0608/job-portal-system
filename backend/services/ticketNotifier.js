@@ -172,7 +172,7 @@ async function notifyAdminNewTicket(ticket, outcome) {
       </tr>
     </table>
     <p style="margin-top:18px;">
-      <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/dashboard" style="display:inline-block;padding:10px 20px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:13px;">
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/dashboard?tab=support" style="display:inline-block;padding:10px 20px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:13px;">
         Open Admin Support Desk &rarr;
       </a>
     </p>

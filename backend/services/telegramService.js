@@ -127,7 +127,7 @@ async function sendTicketAlertToTelegram(ticket, outcome = {}) {
     lines.push(`<b>AI Summary:</b> ${escapeHtml(ticket.aiSummary)}`, "");
   }
 
-  lines.push(`<a href="${frontendUrl}/admin/dashboard">👉 Open Admin Support Desk</a>`);
+  lines.push(`<a href="${frontendUrl}/admin/dashboard?tab=support">👉 Open Admin Support Desk</a>`);
 
   const message = lines.join("\n");
 

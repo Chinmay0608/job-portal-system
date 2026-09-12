@@ -266,12 +266,31 @@ const runJobDigest = async () => {
   let emailsSent = 0;
 
   for (const candidate of candidates) {
-    const sinceDate = candidate.lastJobDigestSentAt || new Date(0);
-
-    const newJobs = await Job.find({
+    let query = {
       isActive: { $ne: false },
-      createdAt: { $gt: sinceDate },
-    });
+    };
+
+    if (candidate.lastJobDigestSentAt) {
+      query.createdAt = { $gt: candidate.lastJobDigestSentAt };
+    } else {
+      // Default to jobs created within the last 14 days
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+      query.createdAt = { $gte: fourteenDaysAgo };
+    }
+
+    let newJobs = await Job.find(query).limit(100).lean();
+
+    // Fallback: if no brand-new jobs since last timestamp, inspect active jobs from the last 7 days
+    if (newJobs.length === 0) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      newJobs = await Job.find({
+        isActive: { $ne: false },
+        createdAt: { $gte: sevenDaysAgo },
+      })
+        .sort({ createdAt: -1 })
+        .limit(60)
+        .lean();
+    }
 
     if (newJobs.length === 0) continue;
 

@@ -25,9 +25,14 @@ async function getEmbedding(text) {
   if (!text || typeof text !== 'string') {
     return new Float32Array(0);
   }
-  const extractor = await EmbeddingPipeline.getInstance();
-  const output = await extractor(text, { pooling: 'mean', normalize: true });
-  return output.data;
+  try {
+    const extractor = await EmbeddingPipeline.getInstance();
+    const output = await extractor(text, { pooling: 'mean', normalize: true });
+    return output.data;
+  } catch (err) {
+    console.warn('[EmbeddingService Warning] Embedding generation failed:', err.message);
+    return new Float32Array(0);
+  }
 }
 
 /**

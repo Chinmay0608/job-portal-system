@@ -27,6 +27,27 @@ const CANDIDATE_LABELS = [
   'Cybersecurity'
 ];
 
+const KEYWORD_DOMAIN_MAP = [
+  { domain: 'Frontend Development', keywords: ['frontend', 'react', 'vue', 'angular', 'css', 'html', 'next.js', 'ui developer'] },
+  { domain: 'Backend Engineering', keywords: ['backend', 'node', 'express', 'django', 'spring', 'golang', 'java', 'sql', 'postgres', 'microservices'] },
+  { domain: 'Full Stack Development', keywords: ['full stack', 'fullstack', 'mern', 'mean'] },
+  { domain: 'DevOps & Cloud', keywords: ['devops', 'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'sre', 'ci/cd'] },
+  { domain: 'Data Science & Machine Learning', keywords: ['data scientist', 'machine learning', 'deep learning', 'ai', 'data engineer', 'nlp', 'computer vision'] },
+  { domain: 'Mobile Development', keywords: ['android', 'ios', 'flutter', 'react native', 'swift', 'kotlin'] },
+  { domain: 'Quality Assurance & SDET', keywords: ['qa', 'tester', 'sdet', 'test automation', 'cypress', 'selenium'] },
+  { domain: 'Cybersecurity', keywords: ['security', 'cyber', 'soc', 'penetration', 'infosec'] }
+];
+
+function fallbackKeywordClassify(text) {
+  const lower = text.toLowerCase();
+  for (const item of KEYWORD_DOMAIN_MAP) {
+    if (item.keywords.some(kw => lower.includes(kw))) {
+      return { primaryDomain: item.domain, confidence: 0.8 };
+    }
+  }
+  return { primaryDomain: 'Uncategorized', confidence: 0 };
+}
+
 /**
  * Classifies a job's title and description into standard technical domains.
  * @param {string} title 
@@ -39,13 +60,18 @@ async function classifyJob(title = '', description = '') {
     return { primaryDomain: 'Uncategorized', confidence: 0 };
   }
 
-  const classifier = await ZeroShotPipeline.getInstance();
-  const result = await classifier(text, CANDIDATE_LABELS);
+  try {
+    const classifier = await ZeroShotPipeline.getInstance();
+    const result = await classifier(text, CANDIDATE_LABELS);
 
-  return {
-    primaryDomain: result.labels[0],
-    confidence: result.scores[0]
-  };
+    return {
+      primaryDomain: result.labels[0],
+      confidence: result.scores[0]
+    };
+  } catch (err) {
+    console.warn('[JobClassifier Warning] Failed to run zero-shot classifier, using keyword fallback:', err.message);
+    return fallbackKeywordClassify(text);
+  }
 }
 
 module.exports = {
