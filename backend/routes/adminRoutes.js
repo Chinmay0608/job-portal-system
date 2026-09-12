@@ -13,11 +13,11 @@ const AiUsageLog = require('../models/AiUsageLog');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const { logSecurityEvent } = require('../middleware/securityAuditMiddleware');
 
-const isAdminUser = (user) => {
-  if (!user) return false;
-  if (user.role === 'admin') return true;
+const isAdminUser = (user, decodedUser) => {
+  if (user && user.role === 'admin') return true;
+  if (decodedUser && decodedUser.role === 'admin') return true;
   const seedEmail = process.env.SEED_ADMIN_EMAIL?.toLowerCase();
-  const userEmail = user.email?.toLowerCase();
+  const userEmail = (user?.email || decodedUser?.email)?.toLowerCase();
   if (seedEmail && userEmail === seedEmail) return true;
   if (userEmail === 'admin@gmail.com') return true;
   return false;
@@ -25,8 +25,8 @@ const isAdminUser = (user) => {
 
 router.get('/sde/health', protect, authorizeRoles('recruiter', 'admin'), async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!isAdminUser(user)) {
+    const user = req.user?.id ? await User.findById(req.user.id) : null;
+    if (!isAdminUser(user, req.user)) {
       return res.status(403).json({ error: 'Access denied: Admins only' });
     }
 

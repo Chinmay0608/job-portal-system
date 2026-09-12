@@ -16,7 +16,14 @@ import { getUnreadNotificationsCountAPI } from '../../Services/notificationServi
 import { TableRowSkeleton } from '../../Components/common/SkeletonLoader';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token && token !== 'null' && token !== 'undefined') {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return { headers, withCredentials: true };
+};
 
 const SidebarItem = ({ icon, label, active, onClick, badge }) => (
   <button 
