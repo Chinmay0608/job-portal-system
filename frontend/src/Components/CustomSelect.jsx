@@ -49,26 +49,26 @@ const getCustomStyles = (borderless) => ({
       color: '#ffffff',
     },
   }),
-  menu: (provided) => ({
+  menu: (provided, state) => ({
     ...provided,
     borderRadius: '16px',
     border: '1px solid #e2e8f0',
-    boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+    boxShadow: '0 12px 30px -4px rgba(15, 23, 42, 0.18), 0 6px 12px -4px rgba(15, 23, 42, 0.08)',
     padding: '6px',
     overflow: 'hidden',
-    marginTop: '6px',
+    marginTop: state?.placement === 'top' ? '0' : '6px',
+    marginBottom: state?.placement === 'top' ? '6px' : '0',
     backgroundColor: '#ffffff',
-    zIndex: 99999,
-    animation: 'dropdownRollDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-    transformOrigin: 'top center',
+    zIndex: 999999,
   }),
   menuList: (provided) => ({
     ...provided,
     padding: '0',
+    maxHeight: '220px',
   }),
   menuPortal: (provided) => ({
     ...provided,
-    zIndex: 99999,
+    zIndex: 999999,
   }),
   singleValue: (provided) => ({
     ...provided,
@@ -108,6 +108,8 @@ const CustomSelect = ({
   name,
   borderless = false,
   "aria-label": ariaLabel,
+  menuPlacement = "auto",
+  maxMenuHeight = 220,
 }) => {
   const selectedOption = options?.find(opt => opt.value === value) || null;
 
@@ -125,6 +127,10 @@ const CustomSelect = ({
         isSearchable={isSearchable}
         isDisabled={isDisabled}
         name={name}
+        menuPlacement={menuPlacement}
+        menuPosition="fixed"
+        maxMenuHeight={maxMenuHeight}
+        menuShouldScrollIntoView={true}
         menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
       />
     </div>

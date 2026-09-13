@@ -1002,7 +1002,7 @@ function CandidateDashboard() {
         {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
         {isMobileSearchExpanded && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
-            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-3.5 max-h-[90vh] overflow-y-auto animate-slide-in-right" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 pb-8 shadow-2xl flex flex-col gap-3.5 max-h-[88vh] overflow-y-auto overscroll-contain animate-slide-in-right" onClick={e => e.stopPropagation()}>
               
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
