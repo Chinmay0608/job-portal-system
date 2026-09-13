@@ -3,7 +3,9 @@
     "graphify": {
       "command": "uvx",
       "args": [
-        "graphify"
+        "--from",
+        "graphify",
+        "graphify-mcp"
       ]
     }
   }
