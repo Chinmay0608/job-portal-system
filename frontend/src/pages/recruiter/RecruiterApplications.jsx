@@ -16,10 +16,6 @@ function RecruiterApplications() {
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
   /* Fetch Applications */
   const fetchApplications = async () => {
     try {
@@ -35,6 +31,10 @@ function RecruiterApplications() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
   /* Resume URL Fix */
   const getResumeUrl = (resume) => {

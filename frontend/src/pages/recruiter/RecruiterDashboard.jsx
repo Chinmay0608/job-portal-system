@@ -57,11 +57,11 @@ function RecruiterDashboard() {
   // Pagination
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
-  useEffect(() => { fetchDashboardData(); }, []);
-
   const fetchDashboardData = async () => {
     await Promise.all([fetchJobs(), fetchStats()]);
   };
+
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
