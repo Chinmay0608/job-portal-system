@@ -11,10 +11,23 @@ jobs:
   trigger-sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Wake up backend (Warmup)
+        run: |
+          echo "Pinging backend server to wake from sleep if inactive..."
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "${{ secrets.BACKEND_URL }}/api/health" || echo "000")
+            echo "Warmup attempt $i: HTTP $code"
+            if [ "$code" = "200" ] || [ "$code" = "301" ] || [ "$code" = "302" ]; then
+              echo "Backend is active and responding."
+              break
+            fi
+            sleep 5
+          done
+
       - name: Call backend sync endpoint
         run: |
           response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-            --max-time 120 \
+            --max-time 300 \
             -X POST "${{ secrets.BACKEND_URL }}/api/jobs/internal-sync" \
             -H "x-requested-with: XMLHttpRequest" \
             -H "x-sync-secret: ${{ secrets.SYNC_SECRET_KEY }}")
@@ -22,7 +35,7 @@ jobs:
           echo "HTTP status: $response"
           cat /tmp/response.json
 
-          if [ "$response" -ge 400 ]; then
+          if [ "$response" -ge 400 ] || [ "$response" = "000" ]; then
             echo "Sync request failed with status $response"
             exit 1
           fi

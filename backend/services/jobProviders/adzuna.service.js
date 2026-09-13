@@ -36,36 +36,79 @@ class AdzunaProvider extends BaseProvider {
         "support",
         "consultant"
       ];
-      
-      for (const term of searchTerms) {
-        for (let page = 1; page <= 3; page++) {
-          const url = `${this.config.baseUrl}/in/search/${page}`;
-          try {
-            const response = await axios.get(url, {
-              params: {
-                app_id: this.config.appId,
-                app_key: this.config.apiKey,
-                results_per_page: 50,
-                what: term,
-                max_days_old: 14,
-                "content-type": "application/json",
-              },
-            });
 
-            if (response.data && response.data.results) {
-              allResults = allResults.concat(response.data.results);
+      const fetchPage = async (term, page) => {
+        const url = `${this.config.baseUrl}/in/search/${page}`;
+        try {
+          const response = await axios.get(url, {
+            params: {
+              app_id: this.config.appId,
+              app_key: this.config.apiKey,
+              results_per_page: 50,
+              what: term,
+              max_days_old: 14,
+              "content-type": "application/json",
+            },
+            timeout: 8000,
+          });
+
+          if (response.data && response.data.results) {
+            return response.data.results;
+          }
+        } catch (err) {
+          if (err.response && err.response.status === 429) {
+            // Respect rate limit: brief backoff and retry once
+            await new Promise((res) => setTimeout(res, 600));
+            try {
+              const retryRes = await axios.get(url, {
+                params: {
+                  app_id: this.config.appId,
+                  app_key: this.config.apiKey,
+                  results_per_page: 50,
+                  what: term,
+                  max_days_old: 14,
+                  "content-type": "application/json",
+                },
+                timeout: 8000,
+              });
+              if (retryRes.data && retryRes.data.results) {
+                return retryRes.data.results;
+              }
+            } catch (retryErr) {
+              console.error(`[Adzuna Engine] Retry failed for term "${term}" page ${page}:`, retryErr.message);
             }
-          } catch (err) {
+          } else {
             console.error(`[Adzuna Engine] Error fetching term "${term}" page ${page}:`, err.message);
           }
-          // Delay to respect API rate limits
-          await new Promise((res) => setTimeout(res, 300));
+        }
+        return [];
+      };
+
+      // Construct tasks for 2 pages per search term (50 jobs * 2 = 100 jobs/term max)
+      const tasks = [];
+      for (const term of searchTerms) {
+        for (let page = 1; page <= 2; page++) {
+          tasks.push({ term, page });
         }
       }
-      
+
+      // Execute in controlled concurrency chunks of 2 with 250ms spacing
+      for (let i = 0; i < tasks.length; i += 2) {
+        const chunk = tasks.slice(i, i + 2);
+        const chunkResults = await Promise.all(chunk.map((t) => fetchPage(t.term, t.page)));
+        chunkResults.forEach((res) => {
+          if (res && res.length) {
+            allResults = allResults.concat(res);
+          }
+        });
+        if (i + 2 < tasks.length) {
+          await new Promise((res) => setTimeout(res, 250));
+        }
+      }
+
       // Deduplicate fetched jobs by Adzuna ID
       const uniqueMap = new Map();
-      allResults.forEach(j => {
+      allResults.forEach((j) => {
         if (j.id && !uniqueMap.has(String(j.id))) {
           uniqueMap.set(String(j.id), j);
         }
