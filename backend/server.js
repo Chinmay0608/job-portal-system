@@ -67,7 +67,7 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "x-requested-with", "x-csrf-token"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-requested-with", "x-csrf-token", "x-sync-secret"],
   }),
 );
 
@@ -106,6 +106,14 @@ app.use("/api/notifications", notificationRoutes);
    HEALTH CHECK
 ========================== */
 const queueManager = require('./services/sde/queues');
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    sdeOnline: queueManager.isOnline || false,
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.get("/", (req, res) => {
   const sdeStatus = queueManager.isOnline ? "ONLINE" : "OFFLINE";
