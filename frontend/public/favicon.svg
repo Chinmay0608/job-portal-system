@@ -1,46 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Background Canvas Gradient -->
+    <linearGradient id="canvasGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="50%" stop-color="#0A0F1D" />
       <stop offset="100%" stop-color="#020617" />
     </linearGradient>
-    <linearGradient id="bridgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#60A5FA" />
-      <stop offset="50%" stop-color="#3B82F6" />
-      <stop offset="100%" stop-color="#2563EB" />
+
+    <!-- Left Arch Ribbon (Indigo -> Royal Blue) -->
+    <linearGradient id="ribbonLeft" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#3B82F6" />
     </linearGradient>
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="100%" stop-color="#818CF8" />
+
+    <!-- Right Arch Ribbon (Royal Blue -> Vibrant Cyan) -->
+    <linearGradient id="ribbonRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="50%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#06B6D4" />
     </linearGradient>
+
+    <!-- Central Bridge Deck Beam -->
+    <linearGradient id="deckGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="50%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+
+    <!-- Ambient Glow Filter -->
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
 
-  <!-- Background rounded rect -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
-  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4" />
+  <!-- Squircle Base with premium border highlight -->
+  <rect width="512" height="512" rx="120" fill="url(#canvasGrad)" />
+  <rect width="506" height="506" x="3" y="3" rx="117" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3" />
 
-  <!-- Subtle ambient inner glow -->
-  <circle cx="256" cy="256" r="160" fill="#3B82F6" opacity="0.16" />
+  <!-- Ambient Light Reflection inside squircle -->
+  <circle cx="256" cy="180" r="140" fill="#4F46E5" opacity="0.18" />
+  <circle cx="340" cy="340" r="120" fill="#06B6D4" opacity="0.14" />
 
-  <!-- Modern Geometric 'S' & Bridge Emblem -->
-  <!-- Top Bridge Span / S-curve upper -->
-  <path d="M 155 185 C 155 145, 195 130, 250 130 L 310 130 C 355 130, 385 160, 385 200 C 385 240, 345 260, 290 260 L 225 260 C 170 260, 130 285, 130 335 C 130 385, 165 410, 235 410 L 330 410 C 355 410, 375 395, 375 375" 
+  <!-- Architectural Bridge Structure -->
+  <!-- Left Pillar & Soaring Arch -->
+  <path d="M 120 380 L 120 250 C 120 180, 170 130, 240 130 C 275 130, 305 145, 325 170" 
         fill="none" 
-        stroke="url(#bridgeGrad)" 
-        stroke-width="36" 
-        stroke-linecap="round" 
-        stroke-linejoin="round" />
+        stroke="url(#ribbonLeft)" 
+        stroke-width="40" 
+        stroke-linecap="round" />
 
-  <!-- Bridge Suspension Arc / Connectivity Beam -->
-  <path d="M 150 355 Q 256 225 365 355" 
+  <!-- Right Pillar & Descending Arch -->
+  <path d="M 392 132 L 392 262 C 392 332, 342 382, 272 382 C 237 382, 207 367, 187 342" 
         fill="none" 
-        stroke="url(#accentGrad)" 
-        stroke-width="18" 
-        stroke-linecap="round" 
-        opacity="0.95" />
+        stroke="url(#ribbonRight)" 
+        stroke-width="40" 
+        stroke-linecap="round" />
 
-  <!-- Synapse / Talent Connection Nodes -->
-  <circle cx="150" cy="355" r="15" fill="#38BDF8" />
-  <circle cx="256" cy="245" r="18" fill="#FFFFFF" />
-  <circle cx="365" cy="355" r="15" fill="#60A5FA" />
+  <!-- Central Bridge Deck / Horizon Span -->
+  <path d="M 110 256 L 402 256" 
+        fill="none" 
+        stroke="url(#deckGrad)" 
+        stroke-width="26" 
+        stroke-linecap="round" />
+
+  <!-- Keystone / Talent Connection Beacon -->
+  <circle cx="256" cy="256" r="24" fill="#FFFFFF" filter="url(#subtleGlow)" />
+  <circle cx="256" cy="256" r="14" fill="#38BDF8" />
+
+  <!-- Anchor Cable Accents -->
+  <circle cx="120" cy="256" r="8" fill="#FFFFFF" opacity="0.9" />
+  <circle cx="392" cy="256" r="8" fill="#FFFFFF" opacity="0.9" />
 </svg>
