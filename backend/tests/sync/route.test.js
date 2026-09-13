@@ -34,6 +34,7 @@ jest.mock("../../controllers/jobController", () => ({
   getJobsAdmin: jest.fn(),
   semanticSearchJobs: jest.fn(),
   triggerScheduledSync: jest.fn(),
+  getPublicStats: jest.fn(),
 }));
 
 const app = express();

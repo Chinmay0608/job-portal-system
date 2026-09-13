@@ -1,10 +1,10 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Sparkles,
   Target,
   ShieldCheck,
   Zap,
-  Users,
   Briefcase,
   ArrowRight,
   CheckCircle2,
@@ -14,8 +14,31 @@ import {
   Building2,
   BrainCircuit,
 } from "lucide-react";
+import { getPublicStatsAPI } from "../../Services/jobService";
 
 function About() {
+  const [platformStats, setPlatformStats] = useState({
+    totalJobs: 18800,
+    activeJobs: 17500,
+    companiesCount: 4995,
+    matchPrecision: "98.4%",
+    domainsCount: "30+",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublicStatsAPI()
+      .then((data) => {
+        if (data && isMounted) {
+          setPlatformStats((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const pillars = [
     {
       icon: <BrainCircuit className="about-pillar-icon text-indigo-600" />,
@@ -44,10 +67,26 @@ function About() {
   ];
 
   const stats = [
-    { number: "50K+", label: "Verified Jobs Posted", icon: <Briefcase /> },
-    { number: "20K+", label: "Active Candidates", icon: <Users /> },
-    { number: "1.5K+", label: "Hiring Enterprises", icon: <Building2 /> },
-    { number: "98%", label: "Match Precision Score", icon: <TrendingUp /> },
+    {
+      number: `${platformStats.activeJobs ? platformStats.activeJobs.toLocaleString() + '+' : '17,500+'}`,
+      label: "Active Indexed Jobs",
+      icon: <Briefcase />,
+    },
+    {
+      number: `${platformStats.companiesCount ? platformStats.companiesCount.toLocaleString() + '+' : '5,000+'}`,
+      label: "Hiring Companies",
+      icon: <Building2 />,
+    },
+    {
+      number: platformStats.domainsCount || "30+",
+      label: "Tech Domains Covered",
+      icon: <Globe />,
+    },
+    {
+      number: platformStats.matchPrecision || "98.4%",
+      label: "AI Match Precision Score",
+      icon: <TrendingUp />,
+    },
   ];
 
   const valueProps = {

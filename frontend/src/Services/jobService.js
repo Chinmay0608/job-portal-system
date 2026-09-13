@@ -63,6 +63,7 @@ export const generateJobDescriptionAPI = async ({ title, company, role }) => {
 
 export const getRecruiterJobs = async () => (await api.get("/api/jobs/my-jobs")).data;
 export const getRecommendedJobs = async () => (await api.get("/api/jobs/recommended")).data;
+export const getPublicStatsAPI = async () => (await api.get("/api/jobs/public-stats")).data;
 
 // USER MODULE
 export const getUserProfile = async () => (await api.get("/api/users/profile")).data;
