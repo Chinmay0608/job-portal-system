@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Building2,
   BrainCircuit,
+  Users,
 } from "lucide-react";
 import { getPublicStatsAPI } from "../../Services/jobService";
 

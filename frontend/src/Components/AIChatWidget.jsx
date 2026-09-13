@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { HiSparkles, HiXMark, HiPaperAirplane, HiArrowPath } from "react-icons/hi2";
-import { BsRobot, BsPerson } from "react-icons/bs";
+import { BsPerson } from "react-icons/bs";
 import { 
   Mic, 
   MicOff, 
   Volume2, 
   VolumeX, 
   Radio, 
-  Sparkles,
-  Play,
   Square,
   ThumbsUp,
   ThumbsDown,
@@ -211,6 +209,29 @@ export default function AIChatWidget({
     }
   }, [voiceRec.isListening, voiceRec.interimTranscript]);
 
+  // Handle Speech-to-Text Microphone toggle
+  const handleMicClick = () => {
+    if (!voiceRec.isSupported) {
+      toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (voiceRec.isListening) {
+      voiceRec.stopListening();
+    } else {
+      tts.stop();
+      voiceRec.startListening({
+        onResult: (finalText) => {
+          if (finalText && finalText.trim()) {
+            const cleanFinal = finalText.trim();
+            setInput(cleanFinal);
+            sendMessage(cleanFinal);
+          }
+        },
+      });
+    }
+  };
+
   // Send message function
   const sendMessage = useCallback(async (queryText) => {
     const textToSend = queryText || input;
@@ -306,29 +327,6 @@ export default function AIChatWidget({
       setIsLoading(false);
     }
   }, [input, isLoading, messages, tts, user, isHandsFree, voiceRec.isListening]);
-
-  // Handle Speech-to-Text Microphone toggle
-  const handleMicClick = () => {
-    if (!voiceRec.isSupported) {
-      toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
-      return;
-    }
-
-    if (voiceRec.isListening) {
-      voiceRec.stopListening();
-    } else {
-      tts.stop();
-      voiceRec.startListening({
-        onResult: (finalText) => {
-          if (finalText && finalText.trim()) {
-            const cleanFinal = finalText.trim();
-            setInput(cleanFinal);
-            sendMessage(cleanFinal);
-          }
-        },
-      });
-    }
-  };
 
   // Handle auto-start voice or initial query when opened via wake word
   useEffect(() => {

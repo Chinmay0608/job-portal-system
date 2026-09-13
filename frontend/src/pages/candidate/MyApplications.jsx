@@ -18,10 +18,6 @@ function MyApplications() {
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
   const fetchApplications = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -57,6 +53,10 @@ function MyApplications() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
   const handleWithdraw = async (applicationId, jobTitle) => {
     const confirmWithdraw = window.confirm(`Withdraw your application for ${jobTitle}?`);
