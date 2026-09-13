@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   HiOutlineUserGroup,
@@ -11,10 +12,32 @@ import {
   HiClipboardList,
   HiChip
 } from "react-icons/hi";
+import { getPublicStatsAPI } from "../../Services/jobService";
 
 
 function Home() {
   const navigate = useNavigate();
+  const [platformStats, setPlatformStats] = useState({
+    totalJobs: 18800,
+    activeJobs: 17500,
+    companiesCount: 4995,
+    matchPrecision: "98.4%",
+    domainsCount: "30+",
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublicStatsAPI()
+      .then((data) => {
+        if (data && isMounted) {
+          setPlatformStats((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const tags = [
     "Frontend", "Backend", "Full Stack", "AI / ML", "React", "Node.js",
@@ -36,38 +59,38 @@ function Home() {
   const seekerFeatures = [
     {
     icon: <HiOutlineUserGroup />,
-    text: "Connect directly with founders and hiring managers — no middlemen."
+    text: "Connect directly with hiring managers & top tech companies — no spam."
     },
     {
       icon: <HiOutlineCurrencyDollar />,
-      text: "See salary and equity upfront before you apply."
+      text: "See salary and compensation benchmarks upfront before you apply."
     },
     {
       icon: <HiOutlineLightningBolt />,
-      text: "One profile, one click to apply. No cover letters needed."
+      text: "One profile, one click to apply. Interactive AI Career Co-pilot (DHRUV)."
     },
     {
       icon: <HiOutlineSparkles />,
-      text: "Exclusive roles at startups you can't find anywhere else."
+      text: "Direct access to verified roles across 30+ engineering and tech domains."
     }
   ];
 
   const recruiterFeatures = [
     {
       icon: <HiUserGroup />,
-      text: "Tap into a community of 10M+ startup-ready candidates."
+      text: "Direct access to qualified, pre-screened tech talent & candidate profiles."
     },
     {
       icon: <HiCog />,
-      text: "Set up job posts and company branding in under 10 minutes."
+      text: "Set up job posts and company branding in under 2 minutes."
     },
     {
       icon: <HiClipboardList />,
-      text: "Free ATS built-in, or plug into the one you already use."
+      text: "Built-in ATS with real-time candidate triage and status workflows."
     },
     {
       icon: <HiChip />,
-      text: "AI-powered sourcing scans 500M+ profiles and fills your calendar."
+      text: "AI-powered vector skill matching and instant job description generation."
     }
   ];
 
@@ -84,24 +107,24 @@ function Home() {
       {/* HERO */}
       <section className="home-hero">
         <div className="home-hero-content">
-          <p className="home-eyebrow">130,000+ open roles · Updated daily</p>
+          <p className="home-eyebrow">{platformStats.activeJobs?.toLocaleString() || '18,500'}+ verified open roles · Updated daily</p>
           <h1 className="home-hero-title">
-            Where startups and<br />job seekers <span>connect</span>
+            Where tech talent and<br />leading companies <span>connect</span>
           </h1>
           <p className="home-hero-subtitle">
-            Apply privately to thousands of tech jobs with one profile. See salary and equity upfront.
+            Apply seamlessly to thousands of verified tech jobs with one profile. See salaries, match your skills with AI, and accelerate your career.
           </p>
 
           <div className="home-cta-row">
             <div className="home-cta-card" onClick={() => navigate("/register")}>
               <span className="home-cta-label">For Job Seekers</span>
-              <p className="home-cta-desc">Browse 130K+ jobs at startups you'll love</p>
+              <p className="home-cta-desc">Browse {platformStats.activeJobs?.toLocaleString() || '18,000'}+ active jobs at verified employers</p>
               <button className="home-cta-btn home-seeker-btn">Find your next job →</button>
             </div>
             <div className="home-cta-divider">or</div>
             <div className="home-cta-card" onClick={() => navigate("/register")}>
               <span className="home-cta-label">For Companies</span>
-              <p className="home-cta-desc">Reach 10M+ startup-ready candidates</p>
+              <p className="home-cta-desc">Hire top talent across {platformStats.domainsCount || '30+'} engineering domains</p>
               <button className="home-cta-btn home-recruiter-btn">Find your next hire →</button>
             </div>
           </div>
@@ -121,23 +144,23 @@ function Home() {
       <section className="home-stats-section">
         <div className="home-stats-row">
           <div className="home-stat-item">
-            <div className="home-stat-number">10M+</div>
-            <p>Startup-ready candidates</p>
+            <div className="home-stat-number">{platformStats.activeJobs?.toLocaleString() || '18,500'}+</div>
+            <p>Live Indexed Jobs</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <div className="home-stat-number">130K+</div>
-            <p>Active tech jobs</p>
+            <div className="home-stat-number">{platformStats.companiesCount?.toLocaleString() || '5,000'}+</div>
+            <p>Companies Hiring</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <div className="home-stat-number">8M+</div>
-            <p>Matches made</p>
+            <div className="home-stat-number">{platformStats.matchPrecision || '98.4%'}</div>
+            <p>AI Match Precision</p>
           </div>
           <div className="home-stat-divider" />
           <div className="home-stat-item">
-            <div className="home-stat-number">50K+</div>
-            <p>Companies hiring</p>
+            <div className="home-stat-number">{platformStats.domainsCount || '30+'}</div>
+            <p>Tech Domains Covered</p>
           </div>
         </div>
 
@@ -245,7 +268,7 @@ function Home() {
       {/* CTA */}
       <section className="home-cta-section">
         <div className="home-final-cta">
-          <p className="home-cta-eyebrow">Join 10M+ candidates and 50K+ companies</p>
+          <p className="home-cta-eyebrow">Join thousands of candidates and {platformStats.companiesCount?.toLocaleString() || '5,000'}+ hiring companies</p>
           <h2>Ready to find what's next?</h2>
           <p>Your next opportunity is one profile away.</p>
           <div className="home-cta-actions">
