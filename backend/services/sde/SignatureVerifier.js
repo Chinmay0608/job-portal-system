@@ -20,6 +20,12 @@ class SignatureVerifier {
       if (hostname.includes('jobs.lever.co') || hostname.includes('api.lever.co')) {
         return { platform: 'LEVER', confidence: 100, reason: 'Known Lever Hostname' };
       }
+      if (hostname.includes('myworkdayjobs.com') || hostname.includes('workday.com')) {
+        return { platform: 'WORKDAY', confidence: 100, reason: 'Known Workday Hostname' };
+      }
+      if (hostname.includes('smartrecruiters.com')) {
+        return { platform: 'SMARTRECRUITERS', confidence: 100, reason: 'Known SmartRecruiters Hostname' };
+      }
 
       // Fetch the page to check Redirects, HTML, and JS
       const response = await axios.get(urlString, {
@@ -38,6 +44,12 @@ class SignatureVerifier {
       if (finalHostname.includes('jobs.lever.co')) {
         return { platform: 'LEVER', confidence: 95, reason: 'Redirected to Lever Hostname' };
       }
+      if (finalHostname.includes('myworkdayjobs.com')) {
+        return { platform: 'WORKDAY', confidence: 95, reason: 'Redirected to Workday Hostname' };
+      }
+      if (finalHostname.includes('smartrecruiters.com')) {
+        return { platform: 'SMARTRECRUITERS', confidence: 95, reason: 'Redirected to SmartRecruiters Hostname' };
+      }
 
       // 3. HTML Markers & 4. JavaScript Bundles Check
       const html = response.data;
@@ -50,6 +62,16 @@ class SignatureVerifier {
         // Lever Markers
         if (html.includes('<meta name="generator" content="Lever">') || html.includes('lever-jobs-container')) {
           return { platform: 'LEVER', confidence: 85, reason: 'Found Lever HTML/JS Marker' };
+        }
+
+        // Workday Markers
+        if (html.includes('workday') || html.includes('wd-app')) {
+          return { platform: 'WORKDAY', confidence: 85, reason: 'Found Workday HTML/JS Marker' };
+        }
+
+        // SmartRecruiters Markers
+        if (html.includes('smartrecruiters') || html.includes('st-widget')) {
+          return { platform: 'SMARTRECRUITERS', confidence: 85, reason: 'Found SmartRecruiters HTML/JS Marker' };
         }
       }
 

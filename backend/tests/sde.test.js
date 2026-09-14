@@ -31,9 +31,9 @@ describe('SDE Core Components', () => {
   });
 
   describe('PluginRegistry', () => {
-    it('should auto-register Greenhouse and Lever plugins', () => {
+    it('should auto-register Greenhouse, Lever, Workday, and SmartRecruiters plugins', () => {
       const plugins = PluginRegistry.getAllPlugins();
-      expect(plugins.length).toBeGreaterThanOrEqual(2);
+      expect(plugins.length).toBeGreaterThanOrEqual(4);
       
       const greenhouse = PluginRegistry.getPlugin('GREENHOUSE');
       expect(greenhouse).toBeDefined();
@@ -42,6 +42,14 @@ describe('SDE Core Components', () => {
       const lever = PluginRegistry.getPlugin('LEVER');
       expect(lever).toBeDefined();
       expect(lever.capabilities.supportsPagination).toBe(false);
+
+      const workday = PluginRegistry.getPlugin('WORKDAY');
+      expect(workday).toBeDefined();
+      expect(workday.capabilities.supportsPagination).toBe(true);
+
+      const smartrecruiters = PluginRegistry.getPlugin('SMARTRECRUITERS');
+      expect(smartrecruiters).toBeDefined();
+      expect(smartrecruiters.capabilities.supportsPagination).toBe(true);
     });
   });
 });
