@@ -32,6 +32,18 @@ describe('SDE Phase B - Registry Service', () => {
       expect(res.confidence).toBe(100);
     });
 
+    it('detects Workday via Hostname', async () => {
+      const res = await SignatureVerifier.verify('https://adobe.wd5.myworkdayjobs.com/external');
+      expect(res.platform).toBe('WORKDAY');
+      expect(res.confidence).toBe(100);
+    });
+
+    it('detects SmartRecruiters via Hostname', async () => {
+      const res = await SignatureVerifier.verify('https://jobs.smartrecruiters.com/Square');
+      expect(res.platform).toBe('SMARTRECRUITERS');
+      expect(res.confidence).toBe(100);
+    });
+
     it('handles malformed URLs safely', async () => {
       const res = await SignatureVerifier.verify('not-a-url');
       expect(res.platform).toBe('UNKNOWN');
