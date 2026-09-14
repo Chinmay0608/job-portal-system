@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { 
@@ -211,26 +212,46 @@ export default function SupportTicketsView() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
+  const navigate = useNavigate();
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
   const [deletingTicketId, setDeletingTicketId] = useState(null);
   const [logTicketId, setLogTicketId] = useState(null);
+
+  const handle401 = useCallback((err) => {
+    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+      toast.error("Session expired or unauthorized. Please sign in again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
+      return true;
+    }
+    return false;
+  }, [navigate]);
 
   useEffect(() => {
     let active = true;
     axios.get(`${API_BASE_URL}/api/support/tickets`, getAuthHeaders())
       .then(res => { if (active) { setTickets(res.data?.tickets || []); setLoading(false); } })
-      .catch(err => { console.error(err); if (active) { toast.error('Failed to load support tickets'); setLoading(false); } });
+      .catch(err => {
+        if (!handle401(err) && active) {
+          toast.error('Failed to load support tickets');
+          setLoading(false);
+        }
+      });
     return () => { active = false; };
-  }, []);
+  }, [handle401]);
 
   const handleRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
       const res = await axios.get(`${API_BASE_URL}/api/support/tickets`, getAuthHeaders());
       setTickets(res.data?.tickets || []);
-    } catch { toast.error('Failed to load support tickets'); }
-    finally { setRefreshing(false); }
-  }, []);
+    } catch (err) {
+      if (!handle401(err)) {
+        toast.error('Failed to load support tickets');
+      }
+    } finally { setRefreshing(false); }
+  }, [handle401]);
 
   const stats = useMemo(() => {
     const total = tickets.length;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createJob, getRecruiterJobs, deleteJob, updateJob, getRecruiterApplications, generateJobDescriptionAPI } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -57,11 +57,38 @@ function RecruiterDashboard() {
   // Pagination
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
-  const fetchDashboardData = async () => {
-    await Promise.all([fetchJobs(), fetchStats()]);
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      const response = await getRecruiterJobs();
+      setJobs(response?.jobs || []);
+    } catch (error) {
+      toast.error("Failed to load jobs");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchDashboardData(); }, []);
+  const fetchStats = async () => {
+    try {
+      const [appRes, jobRes] = await Promise.all([getRecruiterApplications(), getRecruiterJobs()]);
+      const apps = appRes?.applications || [];
+      setStats({
+        totalJobs: (jobRes?.jobs || []).length,
+        totalApplications: apps.length,
+        shortlisted: apps.filter((a) => a.status === "shortlisted").length,
+        rejected: apps.filter((a) => a.status === "rejected").length,
+      });
+    } catch (error) {
+      console.error("Stats Error:", error);
+    }
+  };
+
+  const fetchDashboardData = useCallback(async () => {
+    await Promise.all([fetchJobs(), fetchStats()]);
+  }, []);
+
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,32 +151,7 @@ function RecruiterDashboard() {
     }
   };
 
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const response = await getRecruiterJobs();
-      setJobs(response?.jobs || []);
-    } catch (error) {
-      toast.error("Failed to load jobs");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchStats = async () => {
-    try {
-      const [appRes, jobRes] = await Promise.all([getRecruiterApplications(), getRecruiterJobs()]);
-      const apps = appRes?.applications || [];
-      setStats({
-        totalJobs: (jobRes?.jobs || []).length,
-        totalApplications: apps.length,
-        shortlisted: apps.filter((a) => a.status === "shortlisted").length,
-        rejected: apps.filter((a) => a.status === "rejected").length,
-      });
-    } catch (error) {
-      console.error("Stats Error:", error);
-    }
-  };
 
   const handleDelete = async (jobId) => {
     try {
