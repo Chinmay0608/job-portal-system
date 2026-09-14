@@ -140,6 +140,23 @@ connectDB().then(() => {
       console.warn("[TelegramBot] Error starting poller:", err.message)
     );
 
+    // BullMQ Email Queue Daily 1-Hour Window (Runs every night from 00:00 AM to 01:00 AM to save Redis tokens)
+    cron.schedule("0 0 * * *", async () => {
+      console.log("[Email Daily Window] 🚀 Opening 1-hour BullMQ Email worker window (00:00 - 01:00 AM)...");
+      try {
+        const { startEmailWindow, stopEmailWindow } = require("./queue/emailQueue");
+        await startEmailWindow();
+
+        // Schedule automatic window close after 1 hour (3,600,000 ms)
+        setTimeout(async () => {
+          console.log("[Email Daily Window] 🛑 Closing BullMQ Email worker window after 1 hour.");
+          await stopEmailWindow();
+        }, 60 * 60 * 1000);
+      } catch (err) {
+        console.error("[Email Daily Window Error]:", err.message);
+      }
+    });
+
     // SDE BullMQ Crawler Daily 1-Hour Window (Runs every night from 2:00 AM to 3:00 AM to save Redis tokens)
     cron.schedule("0 2 * * *", async () => {
       console.log("[SDE Daily Window] 🚀 Opening 1-hour BullMQ SDE crawler window (2:00 AM - 3:00 AM)...");
