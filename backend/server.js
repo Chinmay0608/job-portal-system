@@ -140,25 +140,34 @@ connectDB().then(() => {
       console.warn("[TelegramBot] Error starting poller:", err.message)
     );
 
-    // SDE (Discovery Engine) INITIALIZATION COMPLETELY DISABLED
-    // TO PREVENT BULLMQ FROM DRAINING FREE REDIS TOKENS
-    /*
-    (async () => {
-      console.log("[SDE] Initializing Discovery Engine...");
-      await queueManager.initialize();
-      
-      if (queueManager.isOnline) {
-        const crawlerWorker = require('./services/sde/workers/crawlerWorker');
-        crawlerWorker.start();
-        
-        const discoveryWorker = require('./services/sde/workers/discoveryWorker');
-        discoveryWorker.start();
+    // SDE BullMQ Crawler Daily 1-Hour Window (Runs every night from 2:00 AM to 3:00 AM to save Redis tokens)
+    cron.schedule("0 2 * * *", async () => {
+      console.log("[SDE Daily Window] 🚀 Opening 1-hour BullMQ SDE crawler window (2:00 AM - 3:00 AM)...");
+      try {
+        await queueManager.initialize();
+        if (queueManager.isOnline) {
+          const crawlerWorker = require('./services/sde/workers/crawlerWorker');
+          crawlerWorker.start();
 
-        const scheduler = require('./services/sde/scheduler');
-        scheduler.start();
+          const scheduler = require('./services/sde/scheduler');
+          await scheduler.sweep();
+
+          // Schedule automatic window close in 1 hour (3,600,000 ms)
+          setTimeout(async () => {
+            console.log("[SDE Daily Window] 🛑 Closing BullMQ SDE crawler window after 1 hour. Pausing workers to save Redis tokens.");
+            if (crawlerWorker.worker) {
+              await crawlerWorker.worker.pause();
+            }
+            if (queueManager.connection) {
+              await queueManager.connection.quit();
+              queueManager.isOnline = false;
+            }
+          }, 60 * 60 * 1000);
+        }
+      } catch (err) {
+        console.error("[SDE Daily Window Error]:", err.message);
       }
-    })();
-    */
+    });
 
     // unified cron interval from config
     cron.schedule(jobAggConfig.syncInterval, async () => {
