@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
@@ -303,11 +303,13 @@ function CandidateDashboard() {
     }
   };
 
-  const debouncedFetchJobs = useCallback(
-    debounce((params) => {
-      fetchJobs(params);
-    }, 400),
-    [user?.field]
+  const debouncedFetchJobs = useMemo(
+    () =>
+      debounce((params) => {
+        fetchJobs(params);
+      }, 400),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const handleOnboardingComplete = async (updatedUser) => {

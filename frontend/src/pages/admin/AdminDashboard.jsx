@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { 
   LayoutDashboard, Users, Activity, Settings, LogOut, Search, Bell, 
@@ -1225,6 +1225,19 @@ const AdminDashboard = () => {
     }
   });
 
+  const navigate = useNavigate();
+
+  const handle401 = useCallback((err) => {
+    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+      toast.error("Session expired or unauthorized. Please sign in again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
+      return true;
+    }
+    return false;
+  }, [navigate]);
+
   const fetchOpenTicketsCount = async () => {
     try {
       const { data } = await axios.get(`${API_BASE_URL}/api/support/tickets?status=open`, getAuthHeaders());
@@ -1232,7 +1245,9 @@ const AdminDashboard = () => {
         setOpenTicketsCount(data.tickets.length);
       }
     } catch (err) {
-      console.warn("Could not fetch open tickets count:", err.message);
+      if (!handle401(err)) {
+        console.warn("Could not fetch open tickets count:", err.message);
+      }
     }
   };
 
@@ -1243,11 +1258,11 @@ const AdminDashboard = () => {
         setUnreadNotificationsCount(count);
       }
     } catch (err) {
-      console.warn("Could not fetch unread notifications count:", err.message);
+      if (!handle401(err)) {
+        console.warn("Could not fetch unread notifications count:", err.message);
+      }
     }
   };
-
-  const navigate = useNavigate();
 
   const handleTriggerCrawl = async () => {
     setTriggeringCrawl(true);
@@ -1256,7 +1271,9 @@ const AdminDashboard = () => {
       toast.success("Manual crawl triggered successfully!");
       setTimeout(() => fetchHealth(), 4000);
     } catch (err) {
-      toast.error("Failed to trigger manual crawl");
+      if (!handle401(err)) {
+        toast.error("Failed to trigger manual crawl");
+      }
     } finally {
       setTriggeringCrawl(false);
     }
@@ -1268,7 +1285,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/sde/health`, getAuthHeaders());
       setMetrics(data);
     } catch (err) {
-      console.error("Failed to fetch SDE metrics", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch SDE metrics", err);
+      }
     } finally {
       setLoadingMetrics(false);
     }
@@ -1280,7 +1299,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, getAuthHeaders());
       setUsers(data);
     } catch (err) {
-      console.error("Failed to fetch users", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch users", err);
+      }
     } finally {
       setLoadingUsers(false);
     }
@@ -1306,7 +1327,9 @@ const AdminDashboard = () => {
         });
       }
     } catch (err) {
-      console.error("Failed to fetch jobs registry", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch jobs registry", err);
+      }
     } finally {
       setLoadingJobs(false);
     }
@@ -1318,7 +1341,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/applications`, getAuthHeaders());
       setApplications(data);
     } catch (err) {
-      console.error("Failed to fetch applications", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch applications", err);
+      }
     } finally {
       setLoadingApps(false);
     }
@@ -1330,7 +1355,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/candidate-activity`, getAuthHeaders());
       setActivityData(data);
     } catch (err) {
-      console.error("Failed to fetch candidate activity", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch candidate activity", err);
+      }
     } finally {
       setLoadingActivity(false);
     }
@@ -1342,7 +1369,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/security/logs`, getAuthHeaders());
       setSecurityData(data);
     } catch (err) {
-      console.error("Failed to fetch security logs", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch security logs", err);
+      }
     } finally {
       setLoadingSecurity(false);
     }
@@ -1354,7 +1383,9 @@ const AdminDashboard = () => {
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/ai/usage`, getAuthHeaders());
       setAiData(data);
     } catch (err) {
-      console.error("Failed to fetch AI usage", err);
+      if (!handle401(err)) {
+        console.error("Failed to fetch AI usage", err);
+      }
     } finally {
       setLoadingAi(false);
     }
