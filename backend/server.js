@@ -51,25 +51,69 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
+const rawAllowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  "https://job-portal-system-alpha.vercel.app",
+  "https://job-portal-system.vercel.app",
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : [],
+]
+  .flat()
+  .filter(Boolean)
+  .map((url) => url.trim().replace(/\/+$/, ""));
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) {
-        return callback(null, true);
-      }
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  const cleanOrigin = origin.trim().replace(/\/+$/, "");
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+  // Direct match in allowed list
+  if (rawAllowedOrigins.includes(cleanOrigin)) {
+    return true;
+  }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "x-requested-with", "x-csrf-token", "x-sync-secret"],
-  }),
-);
+  // Any Vercel preview or production deployment (*.vercel.app)
+  if (/^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(cleanOrigin)) {
+    return true;
+  }
+
+  // Any Render app / preview (*.onrender.com)
+  if (/^https:\/\/([a-zA-Z0-9_-]+\.)?onrender\.com$/.test(cleanOrigin)) {
+    return true;
+  }
+
+  return false;
+};
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-requested-with",
+    "x-csrf-token",
+    "x-sync-secret",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
