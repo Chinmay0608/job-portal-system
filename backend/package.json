@@ -6,7 +6,7 @@
   "scripts": {
     "seed:companies": "node scripts/seedCompanies.js",
     "seed:10k-companies": "node scripts/seed10kCompanies.js",
-    "start": "node --max-old-space-size=450 server.js",
+    "start": "node --max-old-space-size=350 server.js",
     "dev": "nodemon server.js",
     "test": "jest",
     "prepare": "node -e \"try { if (!process.env.RENDER && process.env.NODE_ENV !== 'production') require('child_process').execSync('husky', { stdio: 'ignore' }); } catch (e) {}\""
