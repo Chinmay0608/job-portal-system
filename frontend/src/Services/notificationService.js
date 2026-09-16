@@ -41,9 +41,6 @@ export const getNotifications = async ({ page = 1, limit = 20, unreadOnly = fals
   const res = await api.get(
     `/api/notifications?page=${page}&limit=${limit}&unreadOnly=${Boolean(unreadOnly)}`
   );
-  if (res.data && typeof res.data.unreadCount === "number") {
-    notifyNotificationsUpdated(res.data.unreadCount);
-  }
   return res.data;
 };
 
@@ -57,6 +54,7 @@ export const markAsRead = async (id) => {
     {},
     { headers: { "x-requested-with": "XMLHttpRequest" } }
   );
+  notifyNotificationsUpdated();
   return res.data;
 };
 
@@ -79,6 +77,7 @@ export const markAllAsRead = async () => {
  */
 export const deleteNotification = async (id) => {
   const res = await api.delete(`/api/notifications/${id}`);
+  notifyNotificationsUpdated();
   return res.data;
 };
 
@@ -88,18 +87,9 @@ export const deleteNotification = async (id) => {
 export const getUnreadNotificationsCountAPI = async () => {
   try {
     const res = await api.get("/api/notifications/unread-count");
-    const count = res.data?.unreadCount || 0;
-    notifyNotificationsUpdated(count);
-    return count;
+    return res.data?.unreadCount || 0;
   } catch {
-    try {
-      const fallback = await api.get("/api/notifications?limit=1");
-      const count = fallback.data?.unreadCount || 0;
-      notifyNotificationsUpdated(count);
-      return count;
-    } catch {
-      return 0;
-    }
+    return 0;
   }
 };
 

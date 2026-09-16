@@ -565,7 +565,7 @@ function Navbar() {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         user={user}
-        onUnreadCountChange={(count) => setUnreadNotificationsCount(count)}
+        onUnreadCountChange={setUnreadNotificationsCount}
       />
     </nav>
   );
