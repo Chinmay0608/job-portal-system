@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   BsBellFill, 
@@ -111,6 +111,11 @@ export default function NotificationsDrawer({ isOpen, onClose, user, onUnreadCou
   const [activeTab, setActiveTab] = useState("all"); // "all" | "unread"
   const [isLoading, setIsLoading] = useState(false);
 
+  const onUnreadChangeRef = useRef(onUnreadCountChange);
+  useEffect(() => {
+    onUnreadChangeRef.current = onUnreadCountChange;
+  }, [onUnreadCountChange]);
+
   // Fetch real notifications from backend API
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -124,25 +129,21 @@ export default function NotificationsDrawer({ isOpen, onClose, user, onUnreadCou
           ? res.unreadCount
           : notifs.filter((n) => !n.isRead).length;
         setUnreadCount(unread);
-        if (onUnreadCountChange) onUnreadCountChange(unread);
+        if (onUnreadChangeRef.current) onUnreadChangeRef.current(unread);
       }
     } catch (err) {
       console.warn("Failed to fetch notifications:", err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [user, onUnreadCountChange]);
+  }, [user]);
 
+  // Fetch only when drawer is explicitly opened
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
     }
   }, [isOpen, fetchNotifications]);
-
-  // Initial fetch on mount to sync badge count
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {

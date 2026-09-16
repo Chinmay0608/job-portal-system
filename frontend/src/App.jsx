@@ -59,8 +59,15 @@ function AppContent() {
   const location = useLocation();
 
   // Integrated /recruiter-dashboard layout toggle rule parameters
-  const hideLayout = ["/login", "/register", "/forgot-password", "/admin/dashboard"].includes(location.pathname.toLowerCase()) || 
-                     location.pathname.toLowerCase().startsWith("/reset-password");
+  const hideLayout = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/admin",
+    "/admin/dashboard",
+    "/admin-dashboard",
+  ].includes(location.pathname.toLowerCase()) || 
+  location.pathname.toLowerCase().startsWith("/reset-password");
 
   return (
     <>
@@ -83,7 +90,9 @@ function AppContent() {
 
               {/* ========================================== */}
               {/* ================= ADMIN ================== */}
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/dashboard" element={<ProtectedRoute role={["admin", "recruiter"]}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin-dashboard" element={<ProtectedRoute role={["admin", "recruiter"]}><AdminDashboard /></ProtectedRoute>} />
 
               {/* ========================================== */}
               {/* ============== RECRUITER ================= */}
