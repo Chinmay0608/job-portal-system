@@ -1,4 +1,12 @@
 require("dotenv").config();
+const dns = require("dns");
+
+// Set IPv4 first to prevent ENETUNREACH errors on cloud container platforms (Render/AWS)
+if (dns.setDefaultResultOrder) {
+  try {
+    dns.setDefaultResultOrder("ipv4first");
+  } catch (e) {}
+}
 
 // Process-level crash prevention and diagnostics
 process.on("uncaughtException", (err) => {
