@@ -1,27 +1,58 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { HiSparkles, HiXMark, HiPaperAirplane, HiArrowPath } from "react-icons/hi2";
+import { Link, useNavigate } from "react-router-dom";
+import { HiSparkles, HiPaperAirplane } from "react-icons/hi2";
 import { BsPerson } from "react-icons/bs";
 import { 
-  Mic, 
-  MicOff, 
+  RotateCcw,
   Volume2, 
   VolumeX, 
+  X,
+  Menu,
+  HelpCircle,
+  Search,
+  FileText,
+  Bell,
+  Send,
+  Mic, 
+  MicOff, 
   Radio, 
   Square,
   ThumbsUp,
   ThumbsDown,
+  Sparkles,
+  UploadCloud,
+  Briefcase,
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { postAIChatMessage, postAIFeedback } from "../Services/jobService";
+import { postAIChatMessage, postAIFeedback, getJobs } from "../Services/jobService";
+import { uploadResume } from "../Services/userService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
 import dhruvAvatar from "../assets/dhruv_avatar.png";
 
-
 const SUGGESTION_CHIPS = [
-  "Analyze my skill gaps",
+  "How can I prepare for an interview?",
   "Recommend top jobs for my field",
-  "Interview tips for my top match",
+  "Analyze my skill gaps",
+];
+
+const FAQ_QUESTIONS = [
+  "How can I prepare for technical interviews?",
+  "What are the top skills recruiters look for?",
+  "How does SkillBridge AI match my profile?",
+  "How do I apply for jobs on SkillBridge?",
+];
+
+const GUIDED_ROLES = [
+  "Frontend Developer",
+  "Full Stack Engineer",
+  "Backend Node.js / Python",
+  "Data Scientist / AI Engineer",
+  "DevOps / Cloud Engineer",
+  "UI/UX Designer",
 ];
 
 const renderFormattedContent = (content) => {
@@ -53,11 +84,18 @@ export default function AIChatWidget({
   autoStartVoice = false,
   initialQuery = ""
 }) {
+  const navigate = useNavigate();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalSetIsOpen || setInternalIsOpen;
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [showPrivacyBanner, setShowPrivacyBanner] = useState(true);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const fileInputRef = useRef(null);
+  const quickMenuRef = useRef(null);
+
   const [isHandsFree, setIsHandsFree] = useState(() => {
     try {
       return localStorage.getItem("dhruv_wake_word_enabled") !== "false";
@@ -70,7 +108,26 @@ export default function AIChatWidget({
   // Keyed by message id → "positive" | "negative" | null
   const [messageFeedback, setMessageFeedback] = useState({});
 
-
+  // Close quick menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        quickMenuRef.current && 
+        !quickMenuRef.current.contains(e.target) &&
+        !e.target.closest(".dhruv-menu-btn")
+      ) {
+        setShowQuickMenu(false);
+      }
+    };
+    if (showQuickMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showQuickMenu]);
 
   // Dragging and movable card state
   const [position, setPosition] = useState({ x: null, y: null });
@@ -186,12 +243,14 @@ export default function AIChatWidget({
     {
       id: "welcome",
       role: "assistant",
-      content: `Hi ${user?.name || "there"}! I'm **DHRUV**, your SkillBridge AI Career Coach.\n\nHere are some options to get started:`,
+      content: `Hi ${user?.name || "there"}! I'm **Dhruv**, your AI Career Guide.\n\nHow can I help you accelerate your career today?`,
       isWelcome: true,
+      suggestions: SUGGESTION_CHIPS,
     },
   ]);
 
   const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
   const voiceRec = useVoiceRecognition();
   const tts = useTextToSpeech();
 
@@ -200,7 +259,7 @@ export default function AIChatWidget({
     if (isOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading]);
 
   // Update input text with interim speech while candidate is talking
   useEffect(() => {
@@ -233,13 +292,14 @@ export default function AIChatWidget({
   };
 
   // Send message function
-  const sendMessage = useCallback(async (queryText) => {
-    const textToSend = queryText || input;
+  const sendMessage = useCallback(async (queryText, customPayload = null) => {
+    const textToSend = queryText !== undefined ? queryText : input;
     if (!textToSend.trim() || isLoading) return;
 
     // Stop speaking any previous message
     tts.stop();
     setSpeakingMessageId(null);
+    setShowQuickMenu(false);
 
     const userMessage = {
       id: Date.now().toString(),
@@ -256,7 +316,7 @@ export default function AIChatWidget({
         [...messages, userMessage].map((m) => ({ role: m.role, content: m.content }))
       );
 
-      const aiResponseContent = data?.content || "I am analyzing your profile matches.";
+      const aiResponseContent = data?.content || "I am analyzing your career matches.";
       const aiMsgId = (Date.now() + 1).toString();
 
       const aiMessage = {
@@ -297,8 +357,8 @@ export default function AIChatWidget({
       const displayName = user?.name && user.name.toLowerCase() !== "user" ? user.name.split(" ")[0] : (user?.name || "there");
 
       const fallbackContent = isGreeting
-        ? `Hey **${displayName}**! 😊 Great to see you. How are you doing today? How can I help you on your career journey?`
-        : `Hi **${displayName}**! I'm DHRUV, your career coach. I'm right here to help you discover top jobs in **${user?.field || "Software Engineering"}**, analyze your skills, or practice for an interview!`;
+        ? `Hey **${displayName}**! 😊 Great to see you. How can I help you on your career journey today?`
+        : `Hi **${displayName}**! I'm Dhruv, your career guide. I'm right here to help you discover top jobs in **${user?.field || "Software Engineering"}**, analyze your skills, or prepare for an interview!`;
       const fallbackId = Date.now().toString();
 
       setMessages((prev) => [
@@ -348,7 +408,7 @@ export default function AIChatWidget({
     }
 
     voiceRec.listenForWakeWord((promptAfterWake) => {
-      toast("DHRUV detected wake word! Listening...", { icon: "⚡" });
+      toast("Dhruv detected wake word! Listening...", { icon: "⚡" });
       if (promptAfterWake && promptAfterWake.length > 2) {
         sendMessage(promptAfterWake);
       } else {
@@ -406,42 +466,199 @@ export default function AIChatWidget({
     tts.stop();
     setSpeakingMessageId(null);
     voiceRec.stopListening();
+    setShowQuickMenu(false);
     setMessages([
       {
         id: "welcome",
         role: "assistant",
-        content: `Conversation reset! I'm **DHRUV**. How can I help with your ${user?.field || "Software Engineering"} career goals today?`,
+        content: `Conversation restarted! I'm **Dhruv**, your AI Career Guide.\n\nHow can I help with your ${user?.field || "Software Engineering"} career goals today?`,
         isWelcome: true,
+        suggestions: SUGGESTION_CHIPS,
       },
+    ]);
+    toast.success("Chat restarted", { icon: "🔄" });
+  };
+
+  // Quick Action Menu Handlers
+  const handleAskQuestion = () => {
+    setShowQuickMenu(false);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `💡 **Ask Anything**\n\nI'm ready to answer any career or platform questions! You can type below or pick one of these popular questions:`,
+        suggestions: FAQ_QUESTIONS,
+      },
+    ]);
+    if (inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 150);
+    }
+  };
+
+  const handleGuidedJobSearch = () => {
+    setShowQuickMenu(false);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `🔍 **Guided Job Search**\n\nI'll help you find live openings matched to your profile. Select your target specialization or type your custom role:`,
+        roleOptions: GUIDED_ROLES,
+      },
+    ]);
+  };
+
+  const handleSelectGuidedRole = async (roleName) => {
+    const userMsg = {
+      id: Date.now().toString(),
+      role: "user",
+      content: `Show me ${roleName} openings`,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
+    try {
+      const res = await getJobs({ search: roleName, limit: 3 });
+      const jobs = res?.jobs || res?.data || [];
+
+      if (jobs.length > 0) {
+        const jobListings = jobs.slice(0, 3).map((j, i) => 
+          `${i + 1}. **${j.title}** at **${j.company || "Leading Company"}**\n   📍 ${j.location || "Remote"} • 💼 ${j.type || "Full-time"}\n   🔗 [View & Apply on SkillBridge](/candidate/dashboard?search=${encodeURIComponent(j.title)})`
+        ).join("\n\n");
+
+        const replyContent = `🎯 Found top live positions for **${roleName}**:\n\n${jobListings}\n\nWould you like me to analyze interview questions for these roles or explore other skills?`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: replyContent,
+            suggestions: [
+              `Interview tips for ${roleName}`,
+              `Required skills for ${roleName}`,
+              "Recommend more jobs"
+            ]
+          }
+        ]);
+      } else {
+        sendMessage(`Find top hiring trends and career roadmap for ${roleName}`);
+      }
+    } catch (err) {
+      console.error("Guided search error:", err);
+      sendMessage(`What are the top job opportunities and requirements for ${roleName}?`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTriggerUploadResume = () => {
+    setShowQuickMenu(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleResumeFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input value so subsequent uploads trigger onChange
+    e.target.value = "";
+
+    const userMsg = {
+      id: Date.now().toString(),
+      role: "user",
+      content: `Uploaded Resume: **${file.name}**`,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+    setIsUploadingResume(true);
+
+    try {
+      const result = await uploadResume(file);
+      const parsedInfo = result?.user || result?.data || {};
+      const skills = parsedInfo.skills || [];
+      const field = parsedInfo.field || user?.field || "Technology";
+
+      const skillsSnippet = skills.length > 0 ? `\n• **Skills Detected**: ${skills.slice(0, 8).join(", ")}` : "";
+      const content = `🎉 **Resume Analyzed Successfully!**\n\n• **File**: ${file.name}\n• **Target Field**: ${field}${skillsSnippet}\n• **Profile Status**: Updated with AI parsing\n\nWould you like me to match live jobs for these skills or audit your profile?`;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content,
+          suggestions: [
+            "Recommend top jobs for my resume",
+            "Analyze my skill gaps",
+            "Interview questions for my profile"
+          ]
+        }
+      ]);
+      toast.success("Resume parsed and synced successfully!", { icon: "📄" });
+    } catch (err) {
+      console.error("Resume upload error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: `⚠️ I had trouble extracting the resume text. You can still ask me any career question or share your key skills directly here!`,
+        }
+      ]);
+      toast.error("Failed to upload resume. Please try a valid PDF or Word document.");
+    } finally {
+      setIsLoading(false);
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleSetJobAlerts = () => {
+    setShowQuickMenu(false);
+    const candidateField = user?.field || "Software Development";
+    const candidateEmail = user?.email || "your registered email";
+    const content = `🔔 **AI Job Digest Alerts**\n\nSkillBridge automatically runs candidate matching and delivers a curated weekly job digest every **Monday at 9:00 AM** to:\n📧 **${candidateEmail}**\n\n• **Current Alert Filter**: **${candidateField}**\n• **Status**: Active ✅\n\nWould you like to browse current matches or explore new openings in your domain?`;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        role: "assistant",
+        content,
+        suggestions: [
+          `Browse ${candidateField} jobs now`,
+          "How to optimize my alerts",
+          "Analyze skill gaps"
+        ]
+      }
     ]);
   };
 
   // Submit thumbs-up / thumbs-down feedback for an assistant message
   const handleFeedback = useCallback(async (msg, rating) => {
-    // Find the user prompt that immediately preceded this assistant message
     const msgIndex = messages.findIndex((m) => m.id === msg.id);
     const precedingUser = msgIndex > 0 ? messages.slice(0, msgIndex).reverse().find((m) => m.role === "user") : null;
     const prompt = precedingUser?.content || "Candidate query";
 
-    // Optimistic UI update
     setMessageFeedback((prev) => ({ ...prev, [msg.id]: rating }));
-
 
     try {
       await postAIFeedback({ prompt, response: msg.content, rating });
+      toast.success(rating === "positive" ? "Feedback submitted!" : "Thanks for your feedback", { duration: 1500 });
     } catch {
-      // Silently revert on failure so the UX isn't broken
       setMessageFeedback((prev) => ({ ...prev, [msg.id]: null }));
     }
   }, [messages]);
-
-
 
   // Close widget & clean up voice
   const handleClose = () => {
     tts.stop();
     voiceRec.stopListening();
     setShowVoicePicker(false);
+    setShowQuickMenu(false);
     setIsOpen(false);
   };
 
@@ -454,17 +671,9 @@ export default function AIChatWidget({
           70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
           100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        @keyframes dhruvGlow {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; }
-        }
         @keyframes dhruvWaveBar {
           0%, 100% { transform: scaleY(0.35); opacity: 0.55; }
           50% { transform: scaleY(1.35); opacity: 1; }
-        }
-        @keyframes dhruvSiriPulse {
-          0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.35), inset 0 0 15px rgba(129, 140, 248, 0.25); }
-          50% { box-shadow: 0 0 25px rgba(192, 132, 252, 0.55), inset 0 0 20px rgba(56, 189, 248, 0.45); }
         }
         @keyframes dhruvTypingDot {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
@@ -472,6 +681,14 @@ export default function AIChatWidget({
         }
       `}</style>
 
+      {/* Hidden File Input for Resume Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleResumeFileChange}
+        accept=".pdf,.doc,.docx"
+        style={{ display: "none" }}
+      />
 
       {/* Floating Trigger Button */}
       {!hideFloatingTrigger && !isOpen && (
@@ -503,7 +720,7 @@ export default function AIChatWidget({
           <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <HiSparkles size={20} />
           </div>
-          <span>Ask DHRUV</span>
+          <span>Ask Dhruv</span>
         </button>
       )}
 
@@ -520,8 +737,8 @@ export default function AIChatWidget({
             zIndex: 9999,
             width: "390px",
             maxWidth: "calc(100vw - 32px)",
-            height: "580px",
-            maxHeight: "84vh",
+            height: "600px",
+            maxHeight: "86vh",
             backgroundColor: "#ffffff",
             borderRadius: "24px",
             border: "1px solid #cbd5e1",
@@ -536,7 +753,7 @@ export default function AIChatWidget({
             transition: isDragging ? "none" : "box-shadow 0.2s ease",
           }}
         >
-          {/* Header (Drag Handle) */}
+          {/* Header (Drag Handle & Controls Matching Screenshot) */}
           <div
             onMouseDown={handleDragStart}
             onTouchStart={handleDragStart}
@@ -547,56 +764,48 @@ export default function AIChatWidget({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "14px 16px 10px",
-              backgroundColor: isDragging ? "#f1f5f9" : "#f8fafc",
-              borderBottom: "1px solid #e2e8f0",
+              padding: "12px 16px",
+              backgroundColor: isDragging ? "#f1f5f9" : "#ffffff",
+              borderBottom: "1px solid #f1f5f9",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
             }}
           >
-            {/* Drag Handle Bar Indicator */}
-            <div
-              style={{
-                position: "absolute",
-                top: "4px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: "36px",
-                height: "4px",
-                borderRadius: "9999px",
-                backgroundColor: isDragging ? "#3b82f6" : "#cbd5e1",
-                transition: "background-color 0.15s ease",
-              }}
-            />
-
+            {/* Left: Chatbot Icon / Logo & Title */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", pointerEvents: "none" }}>
-              <img
-                src={dhruvAvatar}
-                alt="Dhruv"
+              <div
                 style={{
-                  width: "38px",
-                  height: "38px",
+                  width: "36px",
+                  height: "36px",
                   borderRadius: "50%",
-                  objectFit: "cover",
-                  boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
-                  border: "2px solid #ffffff",
+                  backgroundColor: "#0284c7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#ffffff",
+                  boxShadow: "0 2px 8px rgba(2, 132, 199, 0.3)",
                   flexShrink: 0,
+                  overflow: "hidden",
                 }}
-              />
+              >
+                <img
+                  src={dhruvAvatar}
+                  alt="Dhruv"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
               <div>
-                <div style={{ fontWeight: "800", fontSize: "1.05rem", color: "#1d4ed8", letterSpacing: "0.5px", lineHeight: 1.2, display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>DHRUV</span>
-                  <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: "6px", backgroundColor: "#dbeafe", color: "#1e40af", fontWeight: "700" }}>AI</span>
+                <div style={{ fontWeight: "700", fontSize: "1.05rem", color: "#1e293b", letterSpacing: "-0.2px", lineHeight: 1.2 }}>
+                  Dhruv Career Guide
                 </div>
-                <div style={{ fontSize: "0.73rem", color: "#64748b" }}>Career Coach & Voice Assistant</div>
               </div>
             </div>
 
-            {/* Header Audio & Voice Controls */}
+            {/* Right: Header Action Controls (Restart, TTS, Close) */}
             <div
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              style={{ display: "flex", alignItems: "center", gap: "2px" }}
+              style={{ display: "flex", alignItems: "center", gap: "4px" }}
             >
               {/* Hands-Free Wake Word Toggle */}
               {voiceRec.isSupported && (
@@ -608,22 +817,48 @@ export default function AIChatWidget({
                   style={{
                     background: isHandsFree ? "#ecfdf5" : "transparent",
                     border: isHandsFree ? "1px solid #a7f3d0" : "1px solid transparent",
-                    padding: "6px 8px",
+                    padding: "6px",
                     cursor: "pointer",
                     color: isHandsFree ? "#059669" : "#64748b",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
-                    gap: "4px",
-                    fontSize: "0.72rem",
-                    fontWeight: "600",
                     transition: "all 0.15s ease",
                   }}
                 >
-                  <Radio size={14} className={isHandsFree ? "animate-pulse text-emerald-600" : ""} />
-                  <span style={{ fontSize: "0.68rem" }}>{isHandsFree ? "Wake ON" : "Wake"}</span>
+                  <Radio size={16} className={isHandsFree ? "animate-pulse text-emerald-600" : ""} />
                 </button>
               )}
+
+              {/* Reset / Restart Chat */}
+              <button
+                type="button"
+                onClick={handleReset}
+                aria-label="Restart chat"
+                title="Restart chat"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: "6px",
+                  cursor: "pointer",
+                  color: "#475569",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s ease, color 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
+                }}
+              >
+                <RotateCcw size={18} />
+              </button>
 
               {/* TTS Audio Readback Mute Toggle */}
               {tts.isSupported && (
@@ -637,140 +872,88 @@ export default function AIChatWidget({
                     border: "none",
                     padding: "6px",
                     cursor: "pointer",
-                    color: tts.isMuted ? "#94a3b8" : "#2563eb",
-                    borderRadius: "6px",
-                    transition: "color 0.15s ease",
+                    color: tts.isMuted ? "#94a3b8" : "#475569",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "background 0.15s ease, color 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
                   }}
                 >
-                  {tts.isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  {tts.isMuted ? <VolumeX size={19} /> : <Volume2 size={19} />}
                 </button>
               )}
-
-              {/* Voice Selector */}
-              {tts.isSupported && (
-                <div style={{ position: "relative" }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowVoicePicker(p => !p)}
-                    aria-label="Change voice"
-                    title={`Voice: ${(tts.voicePresets || []).find(p => p.key === tts.voiceKey)?.label || "Female"} — click to change`}
-                    style={{
-                      background: showVoicePicker ? "#eff6ff" : "transparent",
-                      border: showVoicePicker ? "1px solid #bfdbfe" : "1px solid transparent",
-                      padding: "4px 7px",
-                      cursor: "pointer",
-                      color: "#2563eb",
-                      borderRadius: "7px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "3px",
-                      fontSize: "0.72rem",
-                      fontWeight: "600",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <span style={{ fontSize: "0.85rem" }}>
-                      {(tts.voicePresets || []).find(p => p.key === tts.voiceKey)?.emoji || "🔊"}
-                    </span>
-                    <span style={{ fontSize: "0.68rem" }}>Voice</span>
-                  </button>
-
-                  {showVoicePicker && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "calc(100% + 6px)",
-                        right: 0,
-                        zIndex: 10000,
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "12px",
-                        boxShadow: "0 8px 24px rgba(0,0,0,0.13)",
-                        padding: "8px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                        minWidth: "130px",
-                      }}
-                      onMouseDown={e => e.stopPropagation()}
-                    >
-                      <p style={{ margin: "0 4px 4px", fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                        Voice Style
-                      </p>
-                      {(tts.voicePresets || []).map(preset => (
-                        <button
-                          key={preset.key}
-                          type="button"
-                          onClick={() => { tts.setVoiceKey(preset.key); setShowVoicePicker(false); }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "7px 10px",
-                            borderRadius: "8px",
-                            border: "none",
-                            cursor: "pointer",
-                            background: tts.voiceKey === preset.key ? "#eff6ff" : "transparent",
-                            color: tts.voiceKey === preset.key ? "#1d4ed8" : "#334155",
-                            fontWeight: tts.voiceKey === preset.key ? "700" : "500",
-                            fontSize: "0.8rem",
-                            transition: "background 0.12s ease",
-                            textAlign: "left",
-                            width: "100%",
-                          }}
-                        >
-                          <span style={{ fontSize: "1rem" }}>{preset.emoji}</span>
-                          <span>{preset.label}</span>
-                          {tts.voiceKey === preset.key && (
-                            <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "#2563eb" }}>✓</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Reset Conversation */}
-              <button
-                type="button"
-                onClick={handleReset}
-                aria-label="Reset conversation"
-                title="Reset Conversation"
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  padding: "6px",
-                  cursor: "pointer",
-                  color: "#64748b",
-                  borderRadius: "6px",
-                }}
-              >
-                <HiArrowPath size={16} />
-              </button>
 
               {/* Close Button */}
               <button
                 type="button"
                 onClick={handleClose}
-                aria-label="Close DHRUV assistant"
+                aria-label="Close Dhruv Assistant"
                 title="Close"
                 style={{
                   background: "transparent",
                   border: "none",
                   padding: "6px",
                   cursor: "pointer",
-                  color: "#64748b",
-                  borderRadius: "6px",
+                  color: "#475569",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s ease, color 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#fee2e2";
+                  e.currentTarget.style.color = "#dc2626";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
                 }}
               >
-                <HiXMark size={20} />
+                <X size={20} />
               </button>
             </div>
           </div>
 
+          {/* Privacy Statement Notice Banner (Matching Screenshot) */}
+          {showPrivacyBanner && (
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderBottom: "1px solid #e2e8f0",
+                padding: "10px 16px",
+                fontSize: "0.78rem",
+                lineHeight: "1.4",
+                color: "#64748b",
+                position: "relative",
+              }}
+            >
+              <span>
+                If you would like further information about how SkillBridge uses the details you provide to us, please see our Recruitment{" "}
+                <Link
+                  to="/privacy-policy"
+                  style={{
+                    color: "#0369a1",
+                    fontWeight: "600",
+                    textDecoration: "underline",
+                  }}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Privacy Statement.
+                </Link>
+              </span>
+            </div>
+          )}
+
           {/* Messages Thread */}
-          <div style={{ flex: 1, padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ flex: 1, padding: "14px 16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -778,16 +961,17 @@ export default function AIChatWidget({
                   display: "flex",
                   gap: "8px",
                   alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                  maxWidth: "88%",
+                  maxWidth: "92%",
                   flexDirection: m.role === "user" ? "row-reverse" : "row",
                 }}
               >
+                {/* Avatar Icon */}
                 <div
                   style={{
                     width: "28px",
                     height: "28px",
                     borderRadius: "50%",
-                    backgroundColor: m.role === "user" ? "#f1f5f9" : "#2563eb",
+                    backgroundColor: m.role === "user" ? "#f1f5f9" : "#0284c7",
                     color: m.role === "user" ? "#0f172a" : "#ffffff",
                     display: "flex",
                     alignItems: "center",
@@ -796,6 +980,7 @@ export default function AIChatWidget({
                     fontWeight: "700",
                     flexShrink: 0,
                     overflow: "hidden",
+                    border: "1px solid #e2e8f0",
                   }}
                 >
                   {m.role === "user" ? (
@@ -808,24 +993,28 @@ export default function AIChatWidget({
                     />
                   )}
                 </div>
+
+                {/* Message Bubble */}
                 <div
                   style={{
                     position: "relative",
                     padding: "10px 14px",
-                    borderRadius: "16px",
+                    borderRadius: "18px",
                     fontSize: "0.85rem",
                     lineHeight: 1.5,
-                    backgroundColor: m.role === "user" ? "#2563eb" : "#f1f5f9",
+                    backgroundColor: m.role === "user" ? "#0284c7" : "#ffffff",
                     color: m.role === "user" ? "#ffffff" : "#1e293b",
-                    borderTopRightRadius: m.role === "user" ? "4px" : "16px",
-                    borderTopLeftRadius: m.role === "user" ? "16px" : "4px",
+                    borderTopRightRadius: m.role === "user" ? "4px" : "18px",
+                    borderTopLeftRadius: m.role === "user" ? "18px" : "4px",
+                    boxShadow: m.role === "user" ? "none" : "0 1px 3px rgba(0,0,0,0.05)",
+                    border: m.role === "user" ? "none" : "1px solid #e2e8f0",
                   }}
                 >
                   {renderFormattedContent(m.content)}
 
-                  {/* Audio + Feedback actions for Assistant Messages */}
+                  {/* Audio & Feedback Toolbar for Assistant Messages */}
                   {m.role === "assistant" && !m.isWelcome && tts.isSupported && (
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", gap: "6px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", gap: "6px", borderTop: "1px solid #f1f5f9", paddingTop: "6px" }}>
                       {/* Listen / Stop */}
                       <button
                         type="button"
@@ -837,8 +1026,8 @@ export default function AIChatWidget({
                           gap: "4px",
                           fontSize: "0.72rem",
                           fontWeight: "600",
-                          color: speakingMessageId === m.id && tts.isSpeaking ? "#2563eb" : "#64748b",
-                          backgroundColor: "#ffffff",
+                          color: speakingMessageId === m.id && tts.isSpeaking ? "#0284c7" : "#64748b",
+                          backgroundColor: "#f8fafc",
                           border: "1px solid #e2e8f0",
                           padding: "3px 8px",
                           borderRadius: "12px",
@@ -848,7 +1037,7 @@ export default function AIChatWidget({
                       >
                         {speakingMessageId === m.id && tts.isSpeaking ? (
                           <>
-                            <Square size={10} className="fill-blue-600 text-blue-600" />
+                            <Square size={10} className="fill-sky-600 text-sky-600" />
                             <span>Stop</span>
                           </>
                         ) : (
@@ -879,8 +1068,8 @@ export default function AIChatWidget({
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                width: "26px",
-                                height: "26px",
+                                width: "24px",
+                                height: "24px",
                                 borderRadius: "50%",
                                 border: `1px solid ${isSelected ? activeColor : "#e2e8f0"}`,
                                 background: isSelected ? `${activeColor}18` : "#ffffff",
@@ -898,51 +1087,48 @@ export default function AIChatWidget({
                     </div>
                   )}
 
-                  {/* Non-TTS fallback: still show feedback buttons */}
-                  {m.role === "assistant" && !m.isWelcome && !tts.isSupported && (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px", gap: "4px" }}>
-                      {[
-                        { rating: "positive", Icon: ThumbsUp,   activeColor: "#16a34a", label: "Helpful"     },
-                        { rating: "negative", Icon: ThumbsDown, activeColor: "#dc2626", label: "Not helpful" },
-                      ].map(({ rating, Icon, activeColor, label }) => {
-                        const current = messageFeedback[m.id];
-                        const isSelected = current === rating;
-                        const isDisabled = !!current;
-                        return (
-                          <button
-                            key={rating}
-                            type="button"
-                            title={label}
-                            disabled={isDisabled}
-                            onClick={() => !isDisabled && handleFeedback(m, rating)}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: "26px",
-                              height: "26px",
-                              borderRadius: "50%",
-                              border: `1px solid ${isSelected ? activeColor : "#e2e8f0"}`,
-                              background: isSelected ? `${activeColor}18` : "#ffffff",
-                              color: isSelected ? activeColor : "#94a3b8",
-                              cursor: isDisabled ? "default" : "pointer",
-                              transition: "all 0.15s ease",
-                              flexShrink: 0,
-                            }}
-                          >
-                            <Icon size={11} />
-                          </button>
-                        );
-                      })}
+                  {/* Guided Role Options Buttons */}
+                  {m.roleOptions && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+                      {m.roleOptions.map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleSelectGuidedRole(role)}
+                          disabled={isLoading}
+                          style={{
+                            textAlign: "left",
+                            fontSize: "0.8rem",
+                            padding: "8px 12px",
+                            borderRadius: "10px",
+                            border: "1px solid #bfdbfe",
+                            backgroundColor: "#eff6ff",
+                            color: "#1d4ed8",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            transition: "background-color 0.15s ease, transform 0.1s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#dbeafe";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#eff6ff";
+                          }}
+                        >
+                          <span>{role}</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      ))}
                     </div>
                   )}
 
-
-
-                  {/* Suggestion Chips on Welcome message */}
-                  {m.isWelcome && (
+                  {/* Interactive Suggestion Chips */}
+                  {m.suggestions && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
-                      {SUGGESTION_CHIPS.map((chip) => (
+                      {m.suggestions.map((chip) => (
                         <button
                           key={chip}
                           type="button"
@@ -955,10 +1141,19 @@ export default function AIChatWidget({
                             borderRadius: "10px",
                             border: "1px solid #cbd5e1",
                             backgroundColor: "#ffffff",
-                            color: "#2563eb",
+                            color: "#0369a1",
                             fontWeight: "600",
                             cursor: "pointer",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                            transition: "all 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f0f9ff";
+                            e.currentTarget.style.borderColor = "#7dd3fc";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#ffffff";
+                            e.currentTarget.style.borderColor = "#cbd5e1";
                           }}
                         >
                           • {chip}
@@ -985,7 +1180,7 @@ export default function AIChatWidget({
                     width: "28px",
                     height: "28px",
                     borderRadius: "50%",
-                    backgroundColor: "#2563eb",
+                    backgroundColor: "#0284c7",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1002,20 +1197,21 @@ export default function AIChatWidget({
                 <div
                   style={{
                     padding: "10px 14px",
-                    backgroundColor: "#f1f5f9",
-                    borderRadius: "16px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "18px",
                     borderTopLeftRadius: "4px",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "5px",
                     height: "36px",
+                    border: "1px solid #e2e8f0",
                   }}
                 >
                   <span
                     style={{
                       width: "6px",
                       height: "6px",
-                      backgroundColor: "#64748b",
+                      backgroundColor: "#0284c7",
                       borderRadius: "50%",
                       display: "inline-block",
                       animation: "dhruvTypingDot 1.4s infinite ease-in-out",
@@ -1025,7 +1221,7 @@ export default function AIChatWidget({
                     style={{
                       width: "6px",
                       height: "6px",
-                      backgroundColor: "#64748b",
+                      backgroundColor: "#0284c7",
                       borderRadius: "50%",
                       display: "inline-block",
                       animation: "dhruvTypingDot 1.4s infinite ease-in-out 0.2s",
@@ -1035,7 +1231,7 @@ export default function AIChatWidget({
                     style={{
                       width: "6px",
                       height: "6px",
-                      backgroundColor: "#64748b",
+                      backgroundColor: "#0284c7",
                       borderRadius: "50%",
                       display: "inline-block",
                       animation: "dhruvTypingDot 1.4s infinite ease-in-out 0.4s",
@@ -1047,39 +1243,38 @@ export default function AIChatWidget({
             <div ref={chatEndRef} />
           </div>
 
-          {/* Active Voice Listening Banner (Siri / Alexa Voice Wave) */}
+          {/* Active Voice Listening Banner */}
           {voiceRec.isListening && (
             <div
               style={{
-                background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
-                borderTop: "1px solid rgba(59, 130, 246, 0.4)",
+                background: "linear-gradient(135deg, #0f172a 0%, #0369a1 100%)",
+                borderTop: "1px solid rgba(56, 189, 248, 0.4)",
                 padding: "9px 14px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 fontSize: "0.8rem",
                 color: "#ffffff",
-                boxShadow: "0 -4px 14px rgba(37, 99, 235, 0.25)",
+                boxShadow: "0 -4px 14px rgba(2, 132, 199, 0.25)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", overflow: "hidden" }}>
-                {/* Siri / Alexa animated frequency bars */}
                 <div style={{ display: "flex", alignItems: "center", gap: "3px", height: "18px" }}>
                   <span style={{ width: "3px", height: "14px", backgroundColor: "#38bdf8", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out" }} />
-                  <span style={{ width: "3px", height: "20px", backgroundColor: "#818cf8", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.15s" }} />
-                  <span style={{ width: "3px", height: "12px", backgroundColor: "#c084fc", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.3s" }} />
+                  <span style={{ width: "3px", height: "20px", backgroundColor: "#bae6fd", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.15s" }} />
+                  <span style={{ width: "3px", height: "12px", backgroundColor: "#7dd3fc", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.3s" }} />
                   <span style={{ width: "3px", height: "16px", backgroundColor: "#34d399", borderRadius: "2px", animation: "dhruvWaveBar 0.75s infinite ease-in-out 0.2s" }} />
                 </div>
-                <span style={{ fontWeight: "700", color: "#38bdf8", fontSize: "0.78rem", letterSpacing: "0.2px" }}>Listening...</span>
+                <span style={{ fontWeight: "700", color: "#38bdf8", fontSize: "0.78rem" }}>Listening...</span>
                 <span style={{ color: "#e2e8f0", fontStyle: "italic", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "180px", fontSize: "0.78rem" }}>
-                  {voiceRec.interimTranscript ? `"${voiceRec.interimTranscript}"` : "Speak any query naturally"}
+                  {voiceRec.interimTranscript ? `"${voiceRec.interimTranscript}"` : "Speak any question..."}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={voiceRec.stopListening}
                 style={{
-                  background: "rgba(255, 255, 255, 0.15)",
+                  background: "rgba(255, 255, 255, 0.2)",
                   border: "none",
                   color: "#ffffff",
                   fontWeight: "600",
@@ -1087,7 +1282,6 @@ export default function AIChatWidget({
                   fontSize: "0.72rem",
                   padding: "4px 9px",
                   borderRadius: "6px",
-                  transition: "background 0.15s ease",
                 }}
               >
                 Done
@@ -1095,88 +1289,255 @@ export default function AIChatWidget({
             </div>
           )}
 
-          {/* Input Bar with Voice & Send Controls */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 14px",
-              borderTop: "1px solid #e2e8f0",
-              backgroundColor: "#ffffff",
-            }}
-          >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={voiceRec.isListening ? "Listening to your voice..." : "Ask about your job matches or say 'Hey Dhruv'..."}
+          {/* Quick Action Popover Menu (Matching Screenshot Floating ☰ Popover) */}
+          {showQuickMenu && (
+            <div
+              ref={quickMenuRef}
               style={{
-                flex: 1,
-                border: "none",
-                outline: "none",
-                fontSize: "0.88rem",
-                color: "#0f172a",
-                backgroundColor: "transparent",
+                position: "absolute",
+                bottom: "74px",
+                left: "14px",
+                width: "230px",
+                backgroundColor: "#ffffff",
+                borderRadius: "14px",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08)",
+                zIndex: 10001,
+                padding: "6px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+                animation: "fadeIn 0.15s ease-out",
               }}
-            />
-
-            {/* Microphone Button (Speech-to-Text) */}
-            {voiceRec.isSupported && (
+            >
+              {/* Option 1: Ask a question */}
               <button
                 type="button"
-                onClick={handleMicClick}
-                disabled={isLoading}
-                aria-label={voiceRec.isListening ? "Stop voice listening" : "Start voice speech recognition"}
-                title={voiceRec.isListening ? "Listening... Click to stop" : "Speak to DHRUV (Voice Command)"}
+                onClick={handleAskQuestion}
                 style={{
-                  width: "34px",
-                  height: "34px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#1e293b",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background-color 0.12s ease",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                <HelpCircle size={17} color="#475569" />
+                <span>Ask a question</span>
+              </button>
+
+              {/* Option 2: Guided Job Search */}
+              <button
+                type="button"
+                onClick={handleGuidedJobSearch}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#1e293b",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background-color 0.12s ease",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                <Search size={17} color="#475569" />
+                <span>Guided Job Search</span>
+              </button>
+
+              {/* Option 3: Upload Resume */}
+              <button
+                type="button"
+                onClick={handleTriggerUploadResume}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#1e293b",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background-color 0.12s ease",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                <FileText size={17} color="#475569" />
+                <span>Upload Resume</span>
+              </button>
+
+              {/* Option 4: Set Job Alerts */}
+              <button
+                type="button"
+                onClick={handleSetJobAlerts}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#1e293b",
+                  fontSize: "0.85rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "background-color 0.12s ease",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                <Bell size={17} color="#475569" />
+                <span>Set Job Alerts</span>
+              </button>
+            </div>
+          )}
+
+          {/* Footer Input Bar Container (Pill Shaped Matching Screenshot) */}
+          <div
+            style={{
+              padding: "12px 14px",
+              backgroundColor: "#ffffff",
+              borderTop: "1px solid #f1f5f9",
+            }}
+          >
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMessage();
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 10px 6px 12px",
+                backgroundColor: "#ffffff",
+                border: "1.5px solid #cbd5e1",
+                borderRadius: "9999px",
+                transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#0284c7")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#cbd5e1")}
+            >
+              {/* Left: ☰ Hamburger Action Menu Button */}
+              <button
+                type="button"
+                className="dhruv-menu-btn"
+                onClick={() => setShowQuickMenu((prev) => !prev)}
+                aria-label="Quick Actions Menu"
+                title="Quick Actions Menu"
+                style={{
+                  background: showQuickMenu ? "#e0f2fe" : "transparent",
+                  border: "none",
+                  padding: "6px",
+                  cursor: "pointer",
+                  color: showQuickMenu ? "#0284c7" : "#0284c7",
                   borderRadius: "50%",
-                  backgroundColor: voiceRec.isListening ? "#ef4444" : "#f1f5f9",
-                  color: voiceRec.isListening ? "#ffffff" : "#475569",
-                  border: voiceRec.isListening ? "2px solid #dc2626" : "1px solid #cbd5e1",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer",
-                  animation: voiceRec.isListening ? "dhruvMicPulse 1.5s infinite" : "none",
-                  transition: "all 0.2s ease",
+                  transition: "all 0.15s ease",
                   flexShrink: 0,
                 }}
               >
-                {voiceRec.isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                <Menu size={20} />
               </button>
-            )}
 
-            {/* Send Message Button */}
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              aria-label="Send message to DHRUV"
-              title="Send Message"
-              style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "50%",
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                border: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: input.trim() ? "pointer" : "default",
-                opacity: input.trim() && !isLoading ? 1 : 0.4,
-                flexShrink: 0,
-              }}
-            >
-              <HiPaperAirplane size={14} />
-            </button>
-          </form>
+              {/* Text Input Field */}
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={voiceRec.isListening ? "Listening to your voice..." : "Ask anything"}
+                style={{
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  fontSize: "0.9rem",
+                  color: "#0f172a",
+                  backgroundColor: "transparent",
+                  fontFamily: "inherit",
+                }}
+              />
+
+              {/* Voice Mic Button */}
+              {voiceRec.isSupported && (
+                <button
+                  type="button"
+                  onClick={handleMicClick}
+                  disabled={isLoading}
+                  aria-label={voiceRec.isListening ? "Stop voice listening" : "Start voice speech recognition"}
+                  title={voiceRec.isListening ? "Listening... Click to stop" : "Speak to Dhruv"}
+                  style={{
+                    background: voiceRec.isListening ? "#ef4444" : "transparent",
+                    color: voiceRec.isListening ? "#ffffff" : "#64748b",
+                    border: "none",
+                    padding: "6px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    animation: voiceRec.isListening ? "dhruvMicPulse 1.5s infinite" : "none",
+                    flexShrink: 0,
+                  }}
+                >
+                  {voiceRec.isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+              )}
+
+              {/* Send Button (Paper Airplane) */}
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                aria-label="Send message"
+                title="Send"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: input.trim() ? "pointer" : "default",
+                  color: input.trim() ? "#0284c7" : "#94a3b8",
+                  opacity: input.trim() && !isLoading ? 1 : 0.45,
+                  transition: "all 0.15s ease",
+                  flexShrink: 0,
+                }}
+              >
+                <Send size={18} />
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </>
