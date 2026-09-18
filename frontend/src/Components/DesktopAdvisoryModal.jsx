@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Monitor, Copy, Check, X, Sparkles, Laptop, Smartphone, ExternalLink } from "lucide-react";
+import { Monitor, Copy, Check, X, Sparkles } from "lucide-react";
 import { FaChrome, FaSafari } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -33,7 +33,9 @@ function DesktopAdvisoryModal() {
     setIsOpen(false);
     try {
       sessionStorage.setItem(STORAGE_KEY, "true");
-    } catch {}
+    } catch {
+      // Ignore storage errors
+    }
   };
 
   const handleCopyLink = async () => {
