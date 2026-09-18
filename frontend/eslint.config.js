@@ -24,6 +24,7 @@ export default defineConfig([
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/immutability': 'warn',
       'react-hooks/use-memo': 'warn',
+      'react-hooks/purity': 'warn',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
     },

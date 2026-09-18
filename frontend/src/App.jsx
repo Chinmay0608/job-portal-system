@@ -146,7 +146,9 @@ function App() {
       setShowSplash(false);
       try {
         sessionStorage.setItem("hasSeenSplash", "true");
-      } catch {}
+      } catch {
+        // Ignore session storage errors
+      }
     }, 1200);
 
     return () => {

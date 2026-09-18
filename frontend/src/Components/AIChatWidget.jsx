@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { HiSparkles, HiPaperAirplane } from "react-icons/hi2";
+import { Link } from "react-router-dom";
+import { HiSparkles } from "react-icons/hi2";
 import { BsPerson } from "react-icons/bs";
 import { 
   RotateCcw,
@@ -19,12 +19,7 @@ import {
   Square,
   ThumbsUp,
   ThumbsDown,
-  Sparkles,
-  UploadCloud,
-  Briefcase,
   ArrowRight,
-  CheckCircle2,
-  ExternalLink
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { postAIChatMessage, postAIFeedback, getJobs } from "../Services/jobService";
@@ -32,6 +27,9 @@ import { uploadResume } from "../Services/userService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
 import dhruvAvatar from "../assets/dhruv_avatar.png";
+
+const createUniqueMsgId = (prefix = "msg") =>
+  `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
 const SUGGESTION_CHIPS = [
   "How can I prepare for an interview?",
@@ -84,17 +82,17 @@ export default function AIChatWidget({
   autoStartVoice = false,
   initialQuery = ""
 }) {
-  const navigate = useNavigate();
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalSetIsOpen || setInternalIsOpen;
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
-  const [showPrivacyBanner, setShowPrivacyBanner] = useState(true);
-  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const fileInputRef = useRef(null);
   const quickMenuRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const cardRef = useRef(null);
 
   const [isHandsFree, setIsHandsFree] = useState(() => {
     try {
@@ -104,9 +102,10 @@ export default function AIChatWidget({
     }
   });
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
-  const [showVoicePicker, setShowVoicePicker] = useState(false);
-  // Keyed by message id → "positive" | "negative" | null
   const [messageFeedback, setMessageFeedback] = useState({});
+
+  const voiceRec = useVoiceRecognition();
+  const tts = useTextToSpeech();
 
   // Close quick menu when clicking outside
   useEffect(() => {
@@ -139,10 +138,8 @@ export default function AIChatWidget({
     origX: 0,
     origY: 0,
   });
-  const cardRef = useRef(null);
 
   const handleDragStart = (e) => {
-    // If target is an interactive element (button, input, select, link), do not drag
     if (e.target.closest("button, input, textarea, a, select")) {
       return;
     }
@@ -188,7 +185,6 @@ export default function AIChatWidget({
 
       setPosition({ x: targetX, y: targetY });
 
-      // Prevent scrolling on touch screens while dragging the card
       if (e.cancelable && e.type.startsWith("touch")) {
         e.preventDefault();
       }
@@ -249,11 +245,6 @@ export default function AIChatWidget({
     },
   ]);
 
-  const chatEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const voiceRec = useVoiceRecognition();
-  const tts = useTextToSpeech();
-
   // Scroll to bottom of chat
   useEffect(() => {
     if (isOpen) {
@@ -268,41 +259,17 @@ export default function AIChatWidget({
     }
   }, [voiceRec.isListening, voiceRec.interimTranscript]);
 
-  // Handle Speech-to-Text Microphone toggle
-  const handleMicClick = () => {
-    if (!voiceRec.isSupported) {
-      toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
-      return;
-    }
-
-    if (voiceRec.isListening) {
-      voiceRec.stopListening();
-    } else {
-      tts.stop();
-      voiceRec.startListening({
-        onResult: (finalText) => {
-          if (finalText && finalText.trim()) {
-            const cleanFinal = finalText.trim();
-            setInput(cleanFinal);
-            sendMessage(cleanFinal);
-          }
-        },
-      });
-    }
-  };
-
-  // Send message function
-  const sendMessage = useCallback(async (queryText, customPayload = null) => {
+  // Send message function (declared before handleMicClick to prevent hoist warnings)
+  const sendMessage = useCallback(async (queryText) => {
     const textToSend = queryText !== undefined ? queryText : input;
     if (!textToSend.trim() || isLoading) return;
 
-    // Stop speaking any previous message
     tts.stop();
     setSpeakingMessageId(null);
     setShowQuickMenu(false);
 
     const userMessage = {
-      id: Date.now().toString(),
+      id: createUniqueMsgId("user"),
       role: "user",
       content: textToSend.trim(),
     };
@@ -317,7 +284,7 @@ export default function AIChatWidget({
       );
 
       const aiResponseContent = data?.content || "I am analyzing your career matches.";
-      const aiMsgId = (Date.now() + 1).toString();
+      const aiMsgId = createUniqueMsgId("ai");
 
       const aiMessage = {
         id: aiMsgId,
@@ -327,19 +294,10 @@ export default function AIChatWidget({
 
       setMessages((prev) => [...prev, aiMessage]);
 
-      // Automatically speak the response if voice readback is enabled
       if (!tts.isMuted) {
         setSpeakingMessageId(aiMsgId);
         tts.speak(aiResponseContent, () => {
           setSpeakingMessageId(null);
-          // Continuous Siri/Alexa turn-taking: If hands-free is enabled, auto-listen for follow-up query!
-          if (isHandsFree) {
-            setTimeout(() => {
-              if (!voiceRec.isListening) {
-                handleMicClick();
-              }
-            }, 350);
-          }
         });
       }
     } catch (err) {
@@ -359,7 +317,7 @@ export default function AIChatWidget({
       const fallbackContent = isGreeting
         ? `Hey **${displayName}**! 😊 Great to see you. How can I help you on your career journey today?`
         : `Hi **${displayName}**! I'm Dhruv, your career guide. I'm right here to help you discover top jobs in **${user?.field || "Software Engineering"}**, analyze your skills, or prepare for an interview!`;
-      const fallbackId = Date.now().toString();
+      const fallbackId = createUniqueMsgId("ai_fb");
 
       setMessages((prev) => [
         ...prev,
@@ -374,19 +332,35 @@ export default function AIChatWidget({
         setSpeakingMessageId(fallbackId);
         tts.speak(fallbackContent, () => {
           setSpeakingMessageId(null);
-          if (isHandsFree) {
-            setTimeout(() => {
-              if (!voiceRec.isListening) {
-                handleMicClick();
-              }
-            }, 350);
-          }
         });
       }
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, tts, user, isHandsFree, voiceRec.isListening]);
+  }, [input, isLoading, messages, tts, user]);
+
+  // Handle Speech-to-Text Microphone toggle
+  const handleMicClick = useCallback(() => {
+    if (!voiceRec.isSupported) {
+      toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (voiceRec.isListening) {
+      voiceRec.stopListening();
+    } else {
+      tts.stop();
+      voiceRec.startListening({
+        onResult: (finalText) => {
+          if (finalText && finalText.trim()) {
+            const cleanFinal = finalText.trim();
+            setInput(cleanFinal);
+            sendMessage(cleanFinal);
+          }
+        },
+      });
+    }
+  }, [voiceRec, tts, sendMessage]);
 
   // Handle auto-start voice or initial query when opened via wake word
   useEffect(() => {
@@ -398,7 +372,7 @@ export default function AIChatWidget({
       }, 350);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, initialQuery, autoStartVoice]);
+  }, [isOpen, initialQuery, autoStartVoice, handleMicClick, sendMessage, voiceRec.isListening]);
 
   // Continuous wake word listening when DHRUV drawer is open and hands-free is enabled
   useEffect(() => {
@@ -419,7 +393,7 @@ export default function AIChatWidget({
     return () => {
       voiceRec.stopWakeWord();
     };
-  }, [isOpen, isHandsFree, voiceRec.isSupported, voiceRec.isListening]);
+  }, [isOpen, isHandsFree, voiceRec, handleMicClick, sendMessage]);
 
   // Toggle Hands-Free Wake Word Mode ("Hey Dhruv")
   const toggleHandsFree = () => {
@@ -485,7 +459,7 @@ export default function AIChatWidget({
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: createUniqueMsgId("ask"),
         role: "assistant",
         content: `💡 **Ask Anything**\n\nI'm ready to answer any career or platform questions! You can type below or pick one of these popular questions:`,
         suggestions: FAQ_QUESTIONS,
@@ -501,7 +475,7 @@ export default function AIChatWidget({
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: createUniqueMsgId("guided"),
         role: "assistant",
         content: `🔍 **Guided Job Search**\n\nI'll help you find live openings matched to your profile. Select your target specialization or type your custom role:`,
         roleOptions: GUIDED_ROLES,
@@ -511,7 +485,7 @@ export default function AIChatWidget({
 
   const handleSelectGuidedRole = async (roleName) => {
     const userMsg = {
-      id: Date.now().toString(),
+      id: createUniqueMsgId("role_select"),
       role: "user",
       content: `Show me ${roleName} openings`,
     };
@@ -532,7 +506,7 @@ export default function AIChatWidget({
         setMessages((prev) => [
           ...prev,
           {
-            id: (Date.now() + 1).toString(),
+            id: createUniqueMsgId("jobs_result"),
             role: "assistant",
             content: replyContent,
             suggestions: [
@@ -564,17 +538,15 @@ export default function AIChatWidget({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset file input value so subsequent uploads trigger onChange
     e.target.value = "";
 
     const userMsg = {
-      id: Date.now().toString(),
+      id: createUniqueMsgId("resume_upload"),
       role: "user",
       content: `Uploaded Resume: **${file.name}**`,
     };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
-    setIsUploadingResume(true);
 
     try {
       const result = await uploadResume(file);
@@ -588,7 +560,7 @@ export default function AIChatWidget({
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: createUniqueMsgId("resume_parsed"),
           role: "assistant",
           content,
           suggestions: [
@@ -604,7 +576,7 @@ export default function AIChatWidget({
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: createUniqueMsgId("resume_err"),
           role: "assistant",
           content: `⚠️ I had trouble extracting the resume text. You can still ask me any career question or share your key skills directly here!`,
         }
@@ -612,7 +584,6 @@ export default function AIChatWidget({
       toast.error("Failed to upload resume. Please try a valid PDF or Word document.");
     } finally {
       setIsLoading(false);
-      setIsUploadingResume(false);
     }
   };
 
@@ -625,7 +596,7 @@ export default function AIChatWidget({
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: createUniqueMsgId("alerts"),
         role: "assistant",
         content,
         suggestions: [
@@ -657,7 +628,6 @@ export default function AIChatWidget({
   const handleClose = () => {
     tts.stop();
     voiceRec.stopListening();
-    setShowVoicePicker(false);
     setShowQuickMenu(false);
     setIsOpen(false);
   };
@@ -923,34 +893,32 @@ export default function AIChatWidget({
           </div>
 
           {/* Privacy Statement Notice Banner (Matching Screenshot) */}
-          {showPrivacyBanner && (
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderBottom: "1px solid #e2e8f0",
-                padding: "10px 16px",
-                fontSize: "0.78rem",
-                lineHeight: "1.4",
-                color: "#64748b",
-                position: "relative",
-              }}
-            >
-              <span>
-                If you would like further information about how SkillBridge uses the details you provide to us, please see our Recruitment{" "}
-                <Link
-                  to="/privacy-policy"
-                  style={{
-                    color: "#0369a1",
-                    fontWeight: "600",
-                    textDecoration: "underline",
-                  }}
-                  onClick={() => setIsOpen(false)}
-                >
-                  Privacy Statement.
-                </Link>
-              </span>
-            </div>
-          )}
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderBottom: "1px solid #e2e8f0",
+              padding: "10px 16px",
+              fontSize: "0.78rem",
+              lineHeight: "1.4",
+              color: "#64748b",
+              position: "relative",
+            }}
+          >
+            <span>
+              If you would like further information about how SkillBridge uses the details you provide to us, please see our Recruitment{" "}
+              <Link
+                to="/privacy-policy"
+                style={{
+                  color: "#0369a1",
+                  fontWeight: "600",
+                  textDecoration: "underline",
+                }}
+                onClick={() => setIsOpen(false)}
+              >
+                Privacy Statement.
+              </Link>
+            </span>
+          </div>
 
           {/* Messages Thread */}
           <div style={{ flex: 1, padding: "14px 16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#f8fafc" }}>
@@ -1458,7 +1426,7 @@ export default function AIChatWidget({
                   border: "none",
                   padding: "6px",
                   cursor: "pointer",
-                  color: showQuickMenu ? "#0284c7" : "#0284c7",
+                  color: "#0284c7",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
