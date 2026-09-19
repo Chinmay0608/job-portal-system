@@ -86,7 +86,7 @@ function Security() {
         To report a security vulnerability, request a security assessment summary, or ask questions regarding our infrastructure safeguards, please contact our dedicated security team:
       </p>
       <p>
-        <strong>Email:</strong> <a href="mailto:security@skillbridge.com" className="text-indigo-600 underline">security@skillbridge.com</a> | <a href="mailto:SkillBridge684@gmail.com" className="text-indigo-600 underline">SkillBridge684@gmail.com</a><br />
+        <strong>Email:</strong> <a href="mailto:SkillBridge684@gmail.com" className="text-indigo-600 underline">SkillBridge684@gmail.com</a><br />
         <strong>Emergency Response Hours:</strong> 24/7/365
       </p>
     </LegalLayout>
