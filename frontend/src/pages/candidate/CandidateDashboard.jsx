@@ -44,22 +44,130 @@ const getRelativeTime = (dateString) => {
 
   const renderExternalDescription = (text) => {
     if (!text) return null;
-    let decoded = decodeHTMLEntities(text);
-    
-    // Heuristic: If it looks like raw markdown that lost its newlines (e.g. multiple spaces between sentences)
-    // Convert multiple spaces to newlines if it starts with markdown headers.
-    if (decoded.includes("##")) {
-      // Replace 3+ spaces with a double newline
-      decoded = decoded.replace(/\s{3,}/g, '\n\n');
-      // Ensure headers have newlines before them
-      decoded = decoded.replace(/(?<!\n)(#{1,6}\s)/g, '\n\n$1');
-      // Ensure list items have newlines before them
-      decoded = decoded.replace(/(?<!\n)(-\s)/g, '\n$1');
+    const decoded = decodeHTMLEntities(text);
+
+    // ── If text already has markdown headings, parse it directly ──────────
+    if (decoded.includes("##") || decoded.includes("**")) {
+      let md = decoded;
+      // Collapse 3+ spaces into paragraph breaks
+      md = md.replace(/[ \t]{3,}/g, '\n\n');
+      // Ensure headings get a blank line before them
+      md = md.replace(/(?<!\n)(#{1,6}\s)/g, '\n\n$1');
+      // Ensure list items get a newline before them
+      md = md.replace(/(?<!\n)([-*]\s)/g, '\n$1');
+      const html = marked.parse(md);
+      return (
+        <div
+          className="prose prose-slate prose-sm max-w-none
+            prose-headings:font-semibold prose-headings:text-slate-800
+            prose-p:text-slate-700 prose-p:leading-relaxed
+            prose-li:text-slate-700 prose-li:leading-relaxed
+            prose-ul:list-disc prose-ul:pl-5
+            prose-strong:text-slate-800"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+        />
+      );
     }
-    
-    // Parse with marked. Marked will safely parse HTML tags too.
-    const htmlContent = marked.parse(decoded);
-    return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />;
+
+    // ── Known section header keywords ─────────────────────────────────────
+    const SECTION_HEADERS = [
+      "About the role", "About the Role",
+      "About the company", "About the Company", "About Us", "About us",
+      "The Role", "The role",
+      "Job Description", "Job description",
+      "Responsibilities", "Key Responsibilities", "Your Responsibilities",
+      "Requirements", "Key Requirements", "What You'll Need", "What you'll need",
+      "Skills Required", "Skills & Experience", "Required Skills",
+      "Qualifications", "Minimum Qualifications", "Required Qualifications",
+      "What We Offer", "What we offer", "Benefits", "Perks & Benefits",
+      "Nice to Have", "Nice-to-Have", "Preferred Qualifications",
+      "How to Apply", "Application Process", "Next Steps",
+      "Location", "Working Hours", "Compensation",
+    ];
+
+    // Build a regex that splits on these headers (keeping the delimiter)
+    const escapedHeaders = SECTION_HEADERS.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const splitRegex = new RegExp(`(?=${escapedHeaders.join('|')})`, 'g');
+
+    // ── Step 1: Strip pipe-separated metadata line at the very start ──────
+    // e.g. "Technical Support Engineer | Bengaluru | Hybrid • Full-time | up to 5 LPA"
+    // Detect if first ~200 chars are mostly pipe-delimited metadata
+    let body = decoded;
+    const metaMatch = decoded.match(/^([^\n]{0,300}?\|[^\n]{0,300})(?:\s{2,}|\n)([\s\S]*)/);
+    if (metaMatch) {
+      // The first match group is the metadata line, second is the real body
+      // Only strip it if it doesn't look like a prose sentence (few words between pipes)
+      const segments = metaMatch[1].split('|').map(s => s.trim());
+      const looksLikeMeta = segments.every(s => s.split(' ').length <= 8);
+      if (looksLikeMeta) {
+        body = metaMatch[2].trim();
+      }
+    }
+
+    // ── Step 2: Try to split into sections ────────────────────────────────
+    const rawSections = body.split(splitRegex).map(s => s.trim()).filter(Boolean);
+
+    if (rawSections.length <= 1) {
+      // No section headers found — just render as flowing paragraphs
+      // Split on double-space, pipe, or newline to get pseudo-paragraphs
+      const paras = body
+        .split(/\n{2,}|(?<=\w)  +(?=[A-Z])|\|/)
+        .map(p => p.trim())
+        .filter(p => p.length > 2);
+
+      return (
+        <div className="space-y-3 text-sm text-slate-700 leading-relaxed">
+          {paras.map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
+      );
+    }
+
+    // ── Step 3: Render each section with heading + body ───────────────────
+    return (
+      <div className="space-y-5 text-sm text-slate-700 leading-relaxed">
+        {rawSections.map((section, idx) => {
+          // Find which header starts this section
+          const matchedHeader = SECTION_HEADERS.find(h => section.startsWith(h));
+          let heading = matchedHeader || null;
+          let content = heading ? section.slice(heading.length).replace(/^[:.\s]+/, '').trim() : section;
+
+          // Split content into lines/bullets
+          const lines = content
+            .split(/\n+|(?<=\w)  +(?=[A-Z•\-*])/)
+            .map(l => l.replace(/^[•\-*]\s*/, '').trim())
+            .filter(l => l.length > 1);
+
+          // Heuristic: if most lines are short (≤12 words), render as a list
+          const avgWords = lines.reduce((acc, l) => acc + l.split(' ').length, 0) / (lines.length || 1);
+          const isList = lines.length > 2 && avgWords <= 12;
+
+          return (
+            <div key={idx}>
+              {heading && (
+                <h4 className="font-semibold text-slate-800 text-sm mb-2 border-b border-slate-100 pb-1">
+                  {heading}
+                </h4>
+              )}
+              {isList ? (
+                <ul className="list-disc pl-4 space-y-1">
+                  {lines.map((line, i) => (
+                    <li key={i} className="text-slate-700">{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="space-y-2">
+                  {lines.map((line, i) => (
+                    <p key={i} className="text-slate-700">{line}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const decodeHTMLEntities = (text) => {
@@ -1608,16 +1716,11 @@ function CandidateDashboard() {
                     <h4 className="text-sm font-bold text-slate-900 mb-3">Full Job Description</h4>
                     
                     <div className={`relative overflow-hidden transition-all duration-300 ${isDescriptionExpanded ? "max-h-none" : "max-h-96"}`}>
-                      <div className="text-sm text-slate-700 leading-relaxed space-y-3 prose prose-slate max-w-none">
-                        {selectedJob.isExternal ? (
-                          renderExternalDescription(selectedJob.description)
-                        ) : (
-                          <div>
-                            {selectedJob.description.split('\n').map((p, i) => (
-                              <p key={i} className="mb-2">{p}</p>
-                            ))}
-                          </div>
-                        )}
+                      <div className="text-sm text-slate-700 leading-relaxed space-y-3">
+                        {selectedJob.description
+                          ? renderExternalDescription(selectedJob.description)
+                          : <p className="text-slate-400 italic">No description available.</p>
+                        }
                       </div>
                       {!isDescriptionExpanded && (
                         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
