@@ -122,7 +122,7 @@ function HelpCenter() {
         <div className="contact-box">
           <p>
             <strong>Email:</strong>{" "}
-            support@skillbridge.com
+            SkillBridge684@gmail.com
           </p>
         </div>
 

@@ -93,7 +93,7 @@ function Careers() {
               We currently do not have any active role openings available. However, we are continuously expanding and love connecting with talented engineers, designers, and growth leaders!
             </p>
             <div className="zero-openings-actions">
-              <a href="mailto:careers@skillbridge.com" className="talent-pool-btn">
+              <a href="mailto:SkillBridge684@gmail.com" className="talent-pool-btn">
                 <Mail size={18} /> Join Our Talent Network
               </a>
               <Link to="/about" className="learn-more-btn">
@@ -139,7 +139,7 @@ function Careers() {
         <div className="careers-cta-card">
           <h2>Don’t See Your Ideal Role?</h2>
           <p>We’re always eager to meet exceptional builders. Send us your portfolio, GitHub, or resume and let’s start a conversation.</p>
-          <a href="mailto:careers@skillbridge.com" className="cta-mail-btn">
+          <a href="mailto:SkillBridge684@gmail.com" className="cta-mail-btn">
             <Mail size={18} /> Contact Talent Team
           </a>
         </div>

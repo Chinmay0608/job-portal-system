@@ -12,7 +12,7 @@ const sendEmail = require("../utils/sendEmail");
 const { sendTicketAlertToTelegram } = require("./telegramService");
 
 const BRAND = "SkillBridge";
-const SUPPORT_EMAIL = process.env.EMAIL_USER || "support@skillbridge.com";
+const SUPPORT_EMAIL = process.env.EMAIL_USER || "SkillBridge684@gmail.com";
 const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || process.env.EMAIL_USER;
 
 // ─── Shared HTML shell ────────────────────────────────────────────────────────
