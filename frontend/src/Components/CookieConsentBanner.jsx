@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Cookie, ShieldCheck, X, Check } from "lucide-react";
+import { X } from "lucide-react";
 
 function CookieConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -9,12 +9,12 @@ function CookieConsentBanner() {
     try {
       const consent = localStorage.getItem("cookieConsent");
       if (!consent) {
-        // Delay showing banner slightly so splash screen / page load settles smoothly
-        const timer = setTimeout(() => setIsVisible(true), 1200);
+        // Subtle entrance delay after page mount
+        const timer = setTimeout(() => setIsVisible(true), 1000);
         return () => clearTimeout(timer);
       }
     } catch {
-      // Fallback if localStorage is restricted
+      // Ignore localStorage availability errors
     }
   }, []);
 
@@ -41,80 +41,65 @@ function CookieConsentBanner() {
   if (!isVisible) return null;
 
   return (
-    <div 
-      className="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-[460px] z-[9999] transition-all duration-300 animate-fade-in-up"
-      role="region" 
-      aria-label="Cookie and Privacy Consent Banner"
+    <aside
+      className="fixed bottom-5 left-4 right-4 sm:right-auto sm:left-6 z-[9990] max-w-sm sm:max-w-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+      aria-label="Cookie consent banner"
     >
-      <div className="relative overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/70 shadow-2xl shadow-black/60 p-4 sm:p-5 text-slate-100 flex flex-col gap-3.5">
-        
-        {/* Glow ambient background accent */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
+      <div className="bg-slate-900/95 text-slate-200 border border-slate-800/90 shadow-2xl backdrop-blur-md rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-inner">
-              <Cookie size={18} className="animate-pulse" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white tracking-tight m-0 flex items-center gap-1.5">
-                Cookie & Privacy Choices
-              </h3>
-              <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                <ShieldCheck size={12} /> Privacy First & Encrypted
-              </span>
-            </div>
-          </div>
-
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-white tracking-tight m-0">
+            We value your privacy
+          </h3>
           <button
+            type="button"
             onClick={handleEssentialOnly}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/80 transition-colors cursor-pointer border-0 bg-transparent"
-            title="Dismiss and Accept Essential Only"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800 transition-colors cursor-pointer border-0 bg-transparent"
+            title="Dismiss and use essential cookies only"
             aria-label="Dismiss cookie banner"
           >
-            <X size={15} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Content */}
-        <p className="text-xs text-slate-300 leading-relaxed m-0 relative z-10">
-          SkillBridge uses essential cookies and local storage for authentication, security, and preference management. We respect your data. Read our{" "}
-          <Link 
-            to="/cookie-policy" 
-            className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 font-semibold transition-colors"
+        {/* Description */}
+        <p className="text-xs text-slate-300 leading-relaxed m-0">
+          We use cookies and local storage to provide authentication, protect your account, and personalize your experience on SkillBridge. You can review our{" "}
+          <Link
+            to="/cookie-policy"
+            className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors font-medium"
           >
             Cookie Policy
           </Link>{" "}
           and{" "}
-          <Link 
-            to="/privacy-policy" 
-            className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 font-semibold transition-colors"
+          <Link
+            to="/privacy-policy"
+            className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors font-medium"
           >
             Privacy Policy
-          </Link>.
+          </Link>{" "}
+          for details.
         </p>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80 relative z-10">
+        {/* Button Actions */}
+        <div className="flex items-center justify-end gap-2.5 pt-1">
           <button
+            type="button"
             onClick={handleEssentialOnly}
-            className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 transition-all cursor-pointer shadow-sm active:scale-98"
+            className="px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 rounded-lg transition-colors cursor-pointer"
           >
             Essential Only
           </button>
           <button
+            type="button"
             onClick={handleAcceptAll}
-            className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 shadow-md shadow-indigo-600/30 border border-indigo-400/30 transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
+            className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors cursor-pointer border-0"
           >
-            <Check size={13} className="stroke-[3]" />
             Accept All
           </button>
         </div>
-
       </div>
-    </div>
+    </aside>
   );
 }
 
