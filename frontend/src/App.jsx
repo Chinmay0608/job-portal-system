@@ -23,14 +23,14 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // ==========================================================================
 const CandidateDashboard = lazy(() => import("./pages/candidate/CandidateDashboard"));
 const MyApplications = lazy(() => import("./pages/candidate/MyApplications"));
-const CandidateProfile = lazy(() => import("./pages/candidate/candidateProfile"));
+const CandidateProfile = lazy(() => import("./pages/candidate/CandidateProfile"));
 
 // ==========================================================================
 // 3. RECRUITER ADMINISTRATIVE MANAGEMENT IMPORT SEGMENT
 // ==========================================================================
 const RecruiterDashboard = lazy(() => import("./pages/recruiter/RecruiterDashboard"));
 const RecruiterApplications = lazy(() => import("./pages/recruiter/RecruiterApplications"));
-const RecruiterProfile = lazy(() => import("./pages/recruiter/recruiterProfile"));
+const RecruiterProfile = lazy(() => import("./pages/recruiter/RecruiterProfile"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 
 // ==========================================================================
