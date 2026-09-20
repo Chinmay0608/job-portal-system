@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
 const Message = require("../models/Message");
 const User = require("../models/user");
+const Notification = require("../models/Notification");
 const sendEmail = require("../utils/sendEmail");
 
 // Helper to build branded email template for admin communications
@@ -119,6 +120,42 @@ const sendMessage = asyncHandler(async (req, res) => {
     priority,
     sendEmailCopy: Boolean(sendEmailCopy),
   });
+
+  // Create corresponding in-app Notification records for notification bell alert
+  try {
+    const notifPriority = priority === "urgent" ? "urgent" : priority === "announcement" ? "high" : "normal";
+    if (targetRole === "specific" && recipientUser) {
+      await Notification.create({
+        recipient: recipientUser._id,
+        sender: req.user.id || req.user._id,
+        type: "platform_announcement",
+        title: title.trim(),
+        message: content.trim().slice(0, 500),
+        priority: notifPriority,
+        actionUrl: "messages",
+      });
+    } else {
+      const query = { role: { $in: ["candidate", "recruiter"] } };
+      if (targetRole === "candidate") query.role = "candidate";
+      if (targetRole === "recruiter") query.role = "recruiter";
+
+      const recipients = await User.find(query).select("_id").lean();
+      if (recipients.length > 0) {
+        const notifDocs = recipients.map((u) => ({
+          recipient: u._id,
+          sender: req.user.id || req.user._id,
+          type: "platform_announcement",
+          title: title.trim(),
+          message: content.trim().slice(0, 500),
+          priority: notifPriority,
+          actionUrl: "messages",
+        }));
+        await Notification.insertMany(notifDocs);
+      }
+    }
+  } catch (notifErr) {
+    console.error("[Admin Message Notification Error]:", notifErr.message);
+  }
 
   // Asynchronous email dispatch via setImmediate (non-blocking)
   if (sendEmailCopy) {

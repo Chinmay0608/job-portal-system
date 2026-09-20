@@ -1,14 +1,31 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   FiSearch, 
   FiX, 
   FiSend, 
   FiArrowLeft, 
   FiArchive, 
-  FiBriefcase 
+  FiBriefcase,
+  FiRefreshCw
 } from "react-icons/fi";
 import { BsChatSquareTextFill, BsCheck2All } from "react-icons/bs";
-import { STORAGE_KEY_PREFIX } from "../Services/messageService";
+import {
+  Shield as ShieldIcon,
+  AlertTriangle as AlertTriangleIcon,
+  Megaphone as MegaphoneIcon,
+  BellRing as BellRingIcon,
+  Loader2 as Loader2Icon,
+  CheckCircle2 as CheckCircleIcon,
+  User as UserIcon,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import {
+  STORAGE_KEY_PREFIX,
+  getMyMessages,
+  markMessageAsRead,
+  markAllMessagesAsRead,
+  notifyMessagesUpdated,
+} from "../Services/messageService";
 
 const generateMsgId = () => "msg-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9);
 
@@ -74,37 +91,6 @@ const INITIAL_CONVERSATIONS_CANDIDATE = [
       "Excited to move forward! Please send over the calendar invite.",
       "I am available any weekday between 2 PM and 5 PM."
     ]
-  },
-  {
-    id: "conv-3",
-    name: "SkillBridge Concierge",
-    role: "Career Support Operations",
-    company: "SkillBridge",
-    color: "#2563EB",
-    initials: "SB",
-    jobTitle: "Direct Employer Messaging System",
-    unread: false,
-    archived: false,
-    lastTime: "2d ago",
-    messages: [
-      {
-        id: "m-5",
-        sender: "recruiter",
-        text: "Welcome to SkillBridge Messages! When employers review your resume or invite you to an interview, their direct messages will appear right here.",
-        time: "2 days ago"
-      },
-      {
-        id: "m-6",
-        sender: "recruiter",
-        text: "You can chat in real-time, coordinate interview times, and ask recruiters questions about application expectations. Best of luck with your search!",
-        time: "2 days ago"
-      }
-    ],
-    quickReplies: [
-      "Thanks! Excited to connect with companies.",
-      "How do I update my notification preferences?",
-      "Can recruiters see my full resume here?"
-    ]
   }
 ];
 
@@ -144,7 +130,18 @@ const INITIAL_CONVERSATIONS_RECRUITER = [
 
 export default function MessagesDrawer({ isOpen, onClose, user }) {
   const userKey = STORAGE_KEY_PREFIX + (user?._id || user?.email || "guest");
-  
+
+  // Tab mode: "official" (backend DB messages) | "threads" (mock/recruiter chat)
+  const [activeTab, setActiveTab] = useState("official");
+
+  // Backend Official Communications State
+  const [officialMessages, setOfficialMessages] = useState([]);
+  const [loadingOfficial, setLoadingOfficial] = useState(false);
+  const [unreadOfficialCount, setUnreadOfficialCount] = useState(0);
+  const [selectedOfficialMsg, setSelectedOfficialMsg] = useState(null);
+  const [officialFilter, setOfficialFilter] = useState("all"); // "all" | "unread"
+
+  // Local/Mock Conversation Threads State
   const [conversations, setConversations] = useState(() => {
     try {
       const saved = localStorage.getItem(userKey);
@@ -165,22 +162,47 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
   
   const messagesEndRef = useRef(null);
 
-  // Sync to localStorage
+  // Fetch official messages from backend API
+  const fetchOfficialMessages = useCallback(async () => {
+    if (!user) return;
+    setLoadingOfficial(true);
+    try {
+      const res = await getMyMessages({ page: 1, limit: 50 });
+      if (res?.success) {
+        const msgs = res.messages || [];
+        setOfficialMessages(msgs);
+        const unread = typeof res.unreadCount === "number"
+          ? res.unreadCount
+          : msgs.filter((m) => !m.isRead).length;
+        setUnreadOfficialCount(unread);
+
+        // If there are unread official messages, default to official tab
+        if (unread > 0) {
+          setActiveTab("official");
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch official messages in drawer:", err);
+    } finally {
+      setLoadingOfficial(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchOfficialMessages();
+    }
+  }, [isOpen, fetchOfficialMessages]);
+
+  // Sync conversations to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(userKey, JSON.stringify(conversations));
-      // Dispatch storage event so navbar badge updates immediately
       window.dispatchEvent(new Event("skillbridge_messages_updated"));
     } catch (e) {
       console.error("Failed to save messages:", e);
     }
   }, [conversations, userKey]);
-
-  // Close drawer and reset active thread
-  const handleClose = () => {
-    setActiveId(null);
-    onClose();
-  };
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -194,7 +216,7 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     };
   }, [isOpen]);
 
-  // Auto scroll chat to bottom
+  // Auto scroll chat thread to bottom
   useEffect(() => {
     if (activeId) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -206,6 +228,7 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) {
         setActiveId(null);
+        setSelectedOfficialMsg(null);
         onClose();
       }
     };
@@ -213,9 +236,48 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Close drawer and reset active thread/selection
+  const handleClose = () => {
+    setActiveId(null);
+    setSelectedOfficialMsg(null);
+    onClose();
+  };
+
+  // Official Message selection & mark read
+  const handleSelectOfficialMsg = async (msg) => {
+    setSelectedOfficialMsg(msg);
+    if (!msg.isRead) {
+      setOfficialMessages((prev) =>
+        prev.map((m) => (m._id === msg._id ? { ...m, isRead: true } : m))
+      );
+      setUnreadOfficialCount((prev) => {
+        const next = Math.max(0, prev - 1);
+        notifyMessagesUpdated(next);
+        return next;
+      });
+      try {
+        await markMessageAsRead(msg._id);
+      } catch (err) {
+        console.error("Failed to mark message as read:", err);
+      }
+    }
+  };
+
+  const handleMarkAllOfficialRead = async () => {
+    setOfficialMessages((prev) => prev.map((m) => ({ ...m, isRead: true })));
+    setUnreadOfficialCount(0);
+    notifyMessagesUpdated(0);
+    try {
+      await markAllMessagesAsRead();
+      toast.success("All official messages marked as read");
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
+  };
+
+  // Conversation thread operations
   const activeConv = conversations.find((c) => c.id === activeId);
 
-  // Select conversation & mark as read
   const handleSelectConversation = (convId) => {
     setActiveId(convId);
     setConversations((prev) =>
@@ -223,7 +285,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     );
   };
 
-  // Toggle archive
   const handleToggleArchive = (convId, e) => {
     e?.stopPropagation();
     setConversations((prev) =>
@@ -231,7 +292,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     );
   };
 
-  // Send a message
   const handleSendMessage = (textToSend) => {
     const content = (textToSend || replyInput).trim();
     if (!content || !activeId) return;
@@ -257,8 +317,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     );
 
     setReplyInput("");
-
-    // Simulate realistic recruiter acknowledgment
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
@@ -292,7 +350,11 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     }, 1400);
   };
 
-  // Filter conversations
+  const filteredOfficialMessages = officialMessages.filter((m) => {
+    if (officialFilter === "unread") return !m.isRead;
+    return true;
+  });
+
   const filteredConversations = conversations.filter((c) => {
     if (filter === "unread" && !c.unread) return false;
     if (filter === "archived" && !c.archived) return false;
@@ -309,7 +371,34 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
     return true;
   });
 
-  const unreadTotal = conversations.filter((c) => c.unread && !c.archived).length;
+  const unreadTotalThreads = conversations.filter((c) => c.unread && !c.archived).length;
+  const grandUnreadTotal = unreadOfficialCount + unreadTotalThreads;
+
+  const getPriorityBadge = (p) => {
+    switch (p) {
+      case "urgent":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 uppercase">
+            <AlertTriangleIcon size={10} />
+            Urgent
+          </span>
+        );
+      case "announcement":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 uppercase">
+            <MegaphoneIcon size={10} />
+            Notice
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+            <BellRingIcon size={10} />
+            Direct
+          </span>
+        );
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -329,10 +418,10 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <BsChatSquareTextFill size={20} className="text-brand-600" />
-              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight m-0">Messages</h2>
-              {unreadTotal > 0 && (
+              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight m-0">Messages & Notices</h2>
+              {grandUnreadTotal > 0 && (
                 <span className="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded-full tracking-wide">
-                  {unreadTotal} Unread
+                  {grandUnreadTotal} Unread
                 </span>
               )}
             </div>
@@ -347,11 +436,94 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
           </button>
         </div>
 
-        {/* View Mode: Active Thread vs Conversation List */}
-        {activeConv ? (
-          /* =======================================================
-             ACTIVE CONVERSATION CHAT THREAD VIEW
-             ======================================================= */
+        {/* Category Navigation Tabs */}
+        {!activeConv && !selectedOfficialMsg && (
+          <div className="flex border-b border-slate-200 bg-white shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("official")}
+              className={`flex-1 py-3 px-4 text-xs font-extrabold flex items-center justify-center gap-2 transition-colors border-b-2 ${
+                activeTab === "official"
+                  ? "border-brand-600 text-brand-600 bg-blue-50/40"
+                  : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <ShieldIcon size={15} />
+              <span>Official Notices</span>
+              {unreadOfficialCount > 0 && (
+                <span className="bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  {unreadOfficialCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("threads")}
+              className={`flex-1 py-3 px-4 text-xs font-extrabold flex items-center justify-center gap-2 transition-colors border-b-2 ${
+                activeTab === "threads"
+                  ? "border-brand-600 text-brand-600 bg-blue-50/40"
+                  : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              <UserIcon size={15} />
+              <span>Recruiter Threads</span>
+              {unreadTotalThreads > 0 && (
+                <span className="bg-brand-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                  {unreadTotalThreads}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* VIEW 1: SELECTED OFFICIAL MESSAGE DETAIL */}
+        {selectedOfficialMsg ? (
+          <div className="flex-1 flex flex-col h-full bg-slate-50 min-h-0">
+            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-surface-border shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedOfficialMsg(null)}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-brand-600 transition-colors"
+              >
+                <FiArrowLeft size={16} />
+                <span>Back to Official Notices</span>
+              </button>
+              {getPriorityBadge(selectedOfficialMsg.priority)}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 text-xs text-brand-700 font-bold uppercase tracking-wider">
+                  <ShieldIcon size={16} />
+                  <span>Official Administrative Communication</span>
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 leading-snug">
+                  {selectedOfficialMsg.title}
+                </h3>
+                <div className="text-xs text-slate-400 flex items-center justify-between pt-1 border-t border-slate-100">
+                  <span>From: {selectedOfficialMsg.sender?.name || "SkillBridge Administration"}</span>
+                  <span>{new Date(selectedOfficialMsg.createdAt).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
+                {selectedOfficialMsg.content}
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border-t border-slate-200 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedOfficialMsg(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : activeConv ? (
+          /* VIEW 2: ACTIVE RECRUITER CHAT THREAD */
           <div className="flex-1 flex flex-col h-full bg-slate-50 min-h-0">
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-surface-border shrink-0">
               <div className="flex items-center gap-3 min-w-0">
@@ -389,7 +561,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               </button>
             </div>
 
-            {/* Target Job Reference Pill */}
             {activeConv.jobTitle && (
               <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 font-semibold flex items-center gap-2 shrink-0">
                 <FiBriefcase size={14} />
@@ -397,7 +568,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               </div>
             )}
 
-            {/* Thread Messages */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-3 min-h-0">
               <div className="text-center my-2.5 relative">
                 <span className="bg-slate-200 text-slate-600 text-[11px] font-semibold px-2.5 py-0.5 rounded-full tracking-wider uppercase">
@@ -443,7 +613,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
                 </div>
               ))}
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex gap-2.5 max-w-[85%] self-start">
                   <div 
@@ -463,7 +632,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Reply Suggestions */}
             {activeConv.quickReplies && activeConv.quickReplies.length > 0 && (
               <div className="px-4 py-2 flex gap-2 overflow-x-auto bg-white border-t border-slate-100 shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {activeConv.quickReplies.map((reply, i) => (
@@ -479,7 +647,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               </div>
             )}
 
-            {/* Composer */}
             <form 
               className="p-3 sm:px-4 bg-white border-t border-surface-border flex items-center gap-2.5 shrink-0"
               onSubmit={(e) => {
@@ -505,12 +672,128 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               </button>
             </form>
           </div>
+        ) : activeTab === "official" ? (
+          /* VIEW 3: OFFICIAL NOTICES LIST (BACKEND MESSAGES) */
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50">
+            {/* Action Bar */}
+            <div className="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setOfficialFilter("all")}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                    officialFilter === "all"
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  All ({officialMessages.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfficialFilter("unread")}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                    officialFilter === "unread"
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  Unread ({unreadOfficialCount})
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchOfficialMessages}
+                  disabled={loadingOfficial}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                  title="Refresh Official Messages"
+                >
+                  <FiRefreshCw size={14} className={loadingOfficial ? "animate-spin text-brand-600" : ""} />
+                </button>
+
+                {unreadOfficialCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllOfficialRead}
+                    className="flex items-center gap-1 text-[11px] font-bold text-brand-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+                  >
+                    <BsCheck2All size={13} />
+                    <span>Mark all read</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Official List Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-0">
+              {loadingOfficial && officialMessages.length === 0 ? (
+                <div className="py-16 text-center text-slate-400 space-y-2">
+                  <Loader2Icon className="w-8 h-8 animate-spin mx-auto text-brand-600" />
+                  <p className="text-xs">Loading official communications...</p>
+                </div>
+              ) : filteredOfficialMessages.length === 0 ? (
+                <div className="py-16 px-6 text-center space-y-3">
+                  <div className="w-14 h-14 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center mx-auto text-xl">
+                    <ShieldIcon size={24} />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">
+                    {officialFilter === "unread" ? "No Unread Official Notices" : "No Official Messages Yet"}
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    Direct communications, platform alerts, and support responses sent by administration will appear here.
+                  </p>
+                </div>
+              ) : (
+                filteredOfficialMessages.map((msg) => (
+                  <div
+                    key={msg._id}
+                    onClick={() => handleSelectOfficialMsg(msg)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-blue-300 hover:shadow-md ${
+                      !msg.isRead
+                        ? "bg-white border-blue-300 shadow-sm border-l-4 border-l-brand-600"
+                        : "bg-white border-slate-200 opacity-90"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-md bg-blue-50 text-brand-600 flex items-center justify-center font-bold text-xs shrink-0">
+                          <ShieldIcon size={12} />
+                        </span>
+                        <h4 className={`text-xs text-slate-900 m-0 truncate ${!msg.isRead ? "font-extrabold text-slate-900" : "font-bold"}`}>
+                          {msg.title}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {getPriorityBadge(msg.priority)}
+                        {!msg.isRead && <span className="w-2 h-2 rounded-full bg-brand-600" title="Unread" />}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-2 font-normal">
+                      {msg.content}
+                    </p>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+                      <span>{msg.sender?.name || "SkillBridge Administration"}</span>
+                      <span>
+                        {new Date(msg.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         ) : (
-          /* =======================================================
-             CONVERSATIONS LIST VIEW
-             ======================================================= */
+          /* VIEW 4: RECRUITER THREADS LIST (MOCK/LOCAL) */
           <>
-            {/* Search & Filter Controls */}
             <div className="px-4 py-3 bg-white border-b border-slate-100 shrink-0 space-y-2.5">
               <div className="relative flex items-center">
                 <FiSearch className="absolute left-3 text-slate-400 text-sm" />
@@ -553,7 +836,7 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
                   }`}
                   onClick={() => setFilter("unread")}
                 >
-                  Unread {unreadTotal > 0 && `(${unreadTotal})`}
+                  Unread {unreadTotalThreads > 0 && `(${unreadTotalThreads})`}
                 </button>
                 <button
                   type="button"
@@ -569,7 +852,6 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
               </div>
             </div>
 
-            {/* List */}
             <div className="flex-1 overflow-y-auto py-2 min-h-0">
               {filteredConversations.length > 0 ? (
                 filteredConversations.map((c) => {

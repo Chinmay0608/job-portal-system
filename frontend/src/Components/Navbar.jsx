@@ -10,17 +10,18 @@ import {
 } from "react-icons/bs";
 import { FiMenu, FiX, FiArrowLeft, FiHome } from "react-icons/fi";
 import { HiSparkles } from "react-icons/hi2";
-import { logoutUser } from "../Services/authUtils";
+import { logoutUser, getStoredUser, notifyAuthChanged } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
 import AIChatWidget from "./AIChatWidget";
 import MessagesDrawer from "./MessagesDrawer";
-import { getUnreadMessagesCount } from "../Services/messageService";
+import { getUnreadMessagesCount, getUnreadCount } from "../Services/messageService";
 import NotificationsDrawer from "./NotificationsDrawer";
 import { getUnreadNotificationsCountAPI } from "../Services/notificationService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(getStoredUser);
+  const isLoggedIn = Boolean(user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDhruvOpen, setIsDhruvOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
@@ -28,16 +29,6 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getUser = () => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-      return null;
-    }
-  };
-
-  const [user, setUser] = useState(getUser());
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
@@ -63,16 +54,17 @@ function Navbar() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const currentUser = getUser();
-      setIsLoggedIn(!!currentUser);
+      const currentUser = getStoredUser();
       setUser(currentUser);
     };
 
     checkAuth();
     window.addEventListener("storage", checkAuth);
+    window.addEventListener("skillbridge_auth_changed", checkAuth);
 
     return () => {
       window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("skillbridge_auth_changed", checkAuth);
     };
   }, [location.pathname]);
 
@@ -85,15 +77,35 @@ function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const updateUnread = () => {
-      setUnreadMessagesCount(getUnreadMessagesCount(user));
+    if (!user) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    let isMounted = true;
+    const updateUnread = async (e) => {
+      if (e?.detail && typeof e.detail.unreadCount === "number") {
+        if (isMounted) setUnreadMessagesCount(e.detail.unreadCount);
+        return;
+      }
+      try {
+        const count = await getUnreadCount();
+        if (isMounted) setUnreadMessagesCount(count);
+      } catch (err) {
+        console.warn("Error fetching unread message count:", err);
+      }
     };
+
     updateUnread();
     window.addEventListener("skillbridge_messages_updated", updateUnread);
+    window.addEventListener("skillbridge_official_messages_updated", updateUnread);
     const handleOpenMessages = () => setIsMessagesOpen(true);
     window.addEventListener("skillbridge_open_messages", handleOpenMessages);
+
     return () => {
+      isMounted = false;
       window.removeEventListener("skillbridge_messages_updated", updateUnread);
+      window.removeEventListener("skillbridge_official_messages_updated", updateUnread);
       window.removeEventListener("skillbridge_open_messages", handleOpenMessages);
     };
   }, [user]);
@@ -229,10 +241,8 @@ function Navbar() {
     } catch (err) {
       console.error(err);
     } finally {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      setIsLoggedIn(false);
       setUser(null);
+      notifyAuthChanged();
       toast.success("Logged out successfully");
       navigate("/login", { replace: true });
     }
@@ -280,7 +290,7 @@ function Navbar() {
               }
             }}
           >
-            <SkillBridgeLogo width={160} className="brand-svg-logo" />
+            <SkillBridgeLogo width={176} className="brand-svg-logo" />
           </Link>
 
           {/* Left Text Navigation Links (Only on inner app pages, not landing page) */}

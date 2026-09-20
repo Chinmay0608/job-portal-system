@@ -21,6 +21,11 @@ export const notifyMessagesUpdated = (unreadCount) => {
         detail: { unreadCount },
       })
     );
+    window.dispatchEvent(
+      new CustomEvent("skillbridge_messages_updated", {
+        detail: { unreadCount },
+      })
+    );
   } catch (err) {
     console.warn("Could not dispatch messages updated event:", err);
   }
