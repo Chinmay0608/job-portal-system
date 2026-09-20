@@ -956,7 +956,7 @@ function CandidateDashboard() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 font-sans pb-24">
+    <div className="w-full min-h-screen bg-slate-50 font-sans pb-3">
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
       {jobLoadError && (
         <div className="flex justify-end px-6 w-full mb-4">
@@ -1041,7 +1041,7 @@ function CandidateDashboard() {
         )}
 
         {/* SEARCH CONSOLE BAR */}
-        <div className="mb-6">
+        <div className="mb-3.5">
             <div 
               className="flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default" 
               onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
@@ -1290,7 +1290,7 @@ function CandidateDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[90px] lg:h-[calc(100vh-110px)] overflow-y-auto pr-0 lg:pr-2 pb-6 space-y-4 custom-scrollbar`}>
+          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
             
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4">
@@ -1495,7 +1495,7 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[90px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-110px)] overflow-hidden flex flex-col`}>
+          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
             {selectedJob ? (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header section */}
