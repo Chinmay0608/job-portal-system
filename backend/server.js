@@ -192,25 +192,26 @@ connectDB().then(() => {
     );
 
     // BullMQ Email Queue Daily 1-Hour Window (Runs every night from 00:00 AM to 01:00 AM to save Redis tokens)
+    // BullMQ Email Daily 2-Hour Window (Runs from 00:00 to 02:00 AM)
     cron.schedule("0 0 * * *", async () => {
-      console.log("[Email Daily Window] 🚀 Opening 1-hour BullMQ Email worker window (00:00 - 01:00 AM)...");
+      console.log("[Email Daily Window] 🚀 Opening 2-hour BullMQ Email worker window (00:00 - 02:00 AM)...");
       try {
         const { startEmailWindow, stopEmailWindow } = require("./queue/emailQueue");
         await startEmailWindow();
 
-        // Schedule automatic window close after 1 hour (3,600,000 ms)
+        // Schedule automatic window close after 2 hours (7,200,000 ms)
         setTimeout(async () => {
-          console.log("[Email Daily Window] 🛑 Closing BullMQ Email worker window after 1 hour.");
+          console.log("[Email Daily Window] 🛑 Closing BullMQ Email worker window after 2 hours.");
           await stopEmailWindow();
-        }, 60 * 60 * 1000);
+        }, 2 * 60 * 60 * 1000);
       } catch (err) {
         console.error("[Email Daily Window Error]:", err.message);
       }
     });
 
-    // SDE BullMQ Crawler Daily 1-Hour Window (Runs every night from 2:00 AM to 3:00 AM to save Redis tokens)
+    // SDE BullMQ Crawler Daily 2-Hour Window (Runs every night from 2:00 AM to 4:00 AM to save Redis tokens)
     cron.schedule("0 2 * * *", async () => {
-      console.log("[SDE Daily Window] 🚀 Opening 1-hour BullMQ SDE crawler window (2:00 AM - 3:00 AM)...");
+      console.log("[SDE Daily Window] 🚀 Opening 2-hour BullMQ SDE crawler window (2:00 AM - 4:00 AM)...");
       try {
         await queueManager.initialize();
         if (queueManager.isOnline) {
@@ -220,9 +221,9 @@ connectDB().then(() => {
           const scheduler = require('./services/sde/scheduler');
           await scheduler.sweep();
 
-          // Schedule automatic window close in 1 hour (3,600,000 ms)
+          // Schedule automatic window close in 2 hours (7,200,000 ms)
           setTimeout(async () => {
-            console.log("[SDE Daily Window] 🛑 Closing BullMQ SDE crawler window after 1 hour. Pausing workers to save Redis tokens.");
+            console.log("[SDE Daily Window] 🛑 Closing BullMQ SDE crawler window after 2 hours. Pausing workers to save Redis tokens.");
             if (crawlerWorker.worker) {
               await crawlerWorker.worker.pause();
             }
@@ -230,7 +231,7 @@ connectDB().then(() => {
               await queueManager.connection.quit();
               queueManager.isOnline = false;
             }
-          }, 60 * 60 * 1000);
+          }, 2 * 60 * 60 * 1000);
         }
       } catch (err) {
         console.error("[SDE Daily Window Error]:", err.message);

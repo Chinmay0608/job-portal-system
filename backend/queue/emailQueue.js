@@ -46,7 +46,7 @@ const startEmailWindow = async () => {
       await emailWorker.resume();
     }
 
-    console.log("[Email Window] 🚀 BullMQ Email Worker started (00:00 - 01:00 daily window).");
+    console.log("[Email Window] 🚀 BullMQ Email Worker started (00:00 - 02:00 daily window).");
   } catch (err) {
     console.error("[Email Window Error]:", err.message);
   }
@@ -55,7 +55,7 @@ const startEmailWindow = async () => {
 const stopEmailWindow = async () => {
   try {
     if (emailWorker) {
-      console.log("[Email Window] 🛑 Closing 1-hour email window. Pausing worker to save Redis tokens.");
+      console.log("[Email Window] 🛑 Closing 2-hour email window. Pausing worker to save Redis tokens.");
       await emailWorker.pause();
     }
     if (redisConnection) {
