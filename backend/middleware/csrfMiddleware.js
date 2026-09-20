@@ -6,6 +6,7 @@ const csrfProtection = (req, res, next) => {
     "/api/auth/logout",
     "/api/auth/google",
     "/api/auth/google/callback",
+    "/api/auth/google-login",
     "/api/auth/refresh",
   ];
   if (exemptPaths.some((p) => req.path === p || req.path.startsWith(p + "/"))) {
