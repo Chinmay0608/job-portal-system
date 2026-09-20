@@ -34,16 +34,7 @@ const RecruiterProfile = lazy(() => import("./pages/recruiter/RecruiterProfile")
 const RecruiterComingSoon = lazy(() => import("./pages/recruiter/RecruiterComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 
-const isLocalEnvironment = () => {
-  if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname;
-  return (
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
-    hostname.endsWith(".local")
-  );
-};
+import { isLocalEnvironment } from "./utils/envUtils";
 
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
