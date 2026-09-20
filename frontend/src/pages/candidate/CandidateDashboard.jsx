@@ -849,6 +849,15 @@ function CandidateDashboard() {
     setVisibleCount(JOBS_PER_PAGE);
   }, [search, locationFilter, salaryFilter, companyFilter, activeTab]);
 
+  // Auto-sync selectedJob to the top item of the active tab if current selection is not present
+  useEffect(() => {
+    if (!loading && displayedJobs.length > 0) {
+      if (!selectedJob || !displayedJobs.some((j) => j._id === selectedJob._id)) {
+        setSelectedJob(displayedJobs[0]);
+      }
+    }
+  }, [activeTab, loading]);
+
   const profileCompletion = user ? calculateCompletion(user) : 0;
 
   const retryFetchJobs = () => {
@@ -1322,34 +1331,50 @@ function CandidateDashboard() {
             
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4">
-              <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200">
+              <div className="relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
+                {/* Sliding Active Pill Indicator */}
+                <div
+                  className="absolute top-1 bottom-1 left-1 w-[calc((100%-8px)/3)] bg-brand-600 rounded-full shadow-xs transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
+                  style={{
+                    transform: `translateX(${
+                      activeTab === "Recommended" ? "100%" : activeTab === "Saved" ? "200%" : "0%"
+                    })`,
+                  }}
+                />
+
                 {[
                   { id: "All Jobs", label: "All Jobs" },
                   { id: "Recommended", label: "Recommended" },
                   { id: "Saved", label: "Saved" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    className={`py-2 px-1 text-xs font-bold rounded-full transition-all cursor-pointer flex items-center justify-center gap-1 border-0 ${
-                      activeTab === tab.id
-                        ? "bg-brand-600 text-white shadow-xs"
-                        : "bg-transparent text-slate-600 hover:text-slate-900"
-                    }`}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      setIsMobileDetailView(false);
-                    }}
-                  >
-                    <span className="truncate">{tab.label}</span>
-                    {tab.badge > 0 && (
-                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                        activeTab === tab.id ? "bg-white text-brand-600" : "bg-rose-500 text-white"
-                      }`}>
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`relative z-10 py-2 px-1 text-xs font-bold rounded-full transition-colors duration-200 cursor-pointer flex items-center justify-center gap-1 border-0 bg-transparent outline-none focus:outline-none ${
+                        isActive
+                          ? "text-white"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setIsMobileDetailView(false);
+                      }}
+                    >
+                      <span className="truncate">{tab.label}</span>
+                      {tab.badge > 0 && (
+                        <span
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold transition-colors duration-200 ${
+                            isActive ? "bg-white text-brand-600" : "bg-rose-500 text-white"
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
@@ -1363,16 +1388,24 @@ function CandidateDashboard() {
             ) : displayedJobs.length === 0 ? (
               <EmptyState
                 illustration={workChatSvg}
-                title={activeTab === "saved" ? "No saved jobs yet" : "No matching jobs found"}
+                title={
+                  activeTab === "Saved"
+                    ? "No saved jobs yet"
+                    : activeTab === "Recommended"
+                    ? "No recommended jobs found"
+                    : "No matching jobs found"
+                }
                 description={
-                  activeTab === "saved"
+                  activeTab === "Saved"
                     ? "Bookmark jobs while browsing to review and apply to them later."
+                    : activeTab === "Recommended"
+                    ? "We couldn't find any recommendations matching your current criteria or skills. Try browsing all jobs."
                     : "We couldn't find any opportunities matching your criteria. Try loosening search terms or clearing filters."
                 }
-                actionText={activeTab === "saved" ? "Browse All Jobs" : "Clear Filters"}
+                actionText={activeTab === "Saved" || activeTab === "Recommended" ? "Browse All Jobs" : "Clear Filters"}
                 onAction={
-                  activeTab === "saved"
-                    ? () => setActiveTab("all")
+                  activeTab === "Saved" || activeTab === "Recommended"
+                    ? () => setActiveTab("All Jobs")
                     : () => {
                         setSearch("");
                         setLocationFilter("");
@@ -1413,7 +1446,7 @@ function CandidateDashboard() {
                                 <img 
                                   src={job.companyLogo} 
                                   alt={job.company} 
-                                  className="w-4 h-4 object-contain rounded shrink-0"
+                                  className="w-[18px] h-[18px] object-contain rounded shrink-0"
                                   onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                               )}
@@ -1567,7 +1600,7 @@ function CandidateDashboard() {
                       <img 
                         src={selectedJob.companyLogo} 
                         alt={selectedJob.company} 
-                        className="w-7 h-7 object-contain rounded"
+                        className="w-[31px] h-[31px] object-contain rounded"
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     )}
