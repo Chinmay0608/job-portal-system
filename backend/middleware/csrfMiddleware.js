@@ -1,4 +1,17 @@
 const csrfProtection = (req, res, next) => {
+  // Exempt auth endpoints that cannot carry a Bearer token yet
+  const exemptPaths = [
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/auth/logout",
+    "/api/auth/google",
+    "/api/auth/google/callback",
+    "/api/auth/refresh",
+  ];
+  if (exemptPaths.some((p) => req.path === p || req.path.startsWith(p + "/"))) {
+    return next();
+  }
+
   // Only protect state-changing methods
   if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
     // Check if the request is using a Bearer token
@@ -23,3 +36,4 @@ const csrfProtection = (req, res, next) => {
 };
 
 module.exports = csrfProtection;
+
