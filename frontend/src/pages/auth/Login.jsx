@@ -91,7 +91,8 @@ function Login() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google-login`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const response = await fetch(`${baseUrl}/api/auth/google-login`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -107,7 +108,13 @@ function Login() {
       redirectUser(data.user);
     } catch (error) {
       console.error("Google Login Error:", error);
-      toast.error(error.message || "Google Login Failed");
+      let errMsg = error.message || "Google Login Failed";
+      if (error?.code === "auth/unauthorized-domain") {
+        errMsg = "Domain not authorized in Firebase Console. Add your domain to Firebase Auth -> Settings -> Authorized Domains.";
+      } else if (error?.code === "auth/invalid-api-key" || error?.code === "auth/configuration-not-found") {
+        errMsg = "Firebase API Key missing. Set VITE_FIREBASE_* in Vercel environment variables.";
+      }
+      toast.error(errMsg);
     } finally {
       setGoogleLoading(false);
     }
