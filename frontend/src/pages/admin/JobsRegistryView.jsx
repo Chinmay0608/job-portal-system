@@ -3,6 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { HiOutlineSearch, HiOutlineBriefcase, HiOutlineCheckCircle, HiOutlineGlobeAlt, HiOutlineOfficeBuilding, HiOutlineChevronDown, HiOutlineChevronUp, HiOutlineTrash, HiOutlineBan } from "react-icons/hi";
 import CustomSelect from "../../Components/CustomSelect";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function JobsRegistryView() {
   const [jobs, setJobs] = useState([]);
@@ -21,7 +22,7 @@ function JobsRegistryView() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/admin/all`, {
+      const res = await axios.get(`${getApiBaseUrl()}/api/jobs/admin/all`, {
         params: { page, limit: 15, source: sourceFilter, status: statusFilter, search },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -43,7 +44,7 @@ function JobsRegistryView() {
     try {
       const token = localStorage.getItem("token");
       const newStatus = currentStatus === "open" ? "closed" : "open";
-      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/${id}`, 
+      await axios.patch(`${getApiBaseUrl()}/api/jobs/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` }}
       );
@@ -58,7 +59,7 @@ function JobsRegistryView() {
     if (!window.confirm("Are you sure you want to permanently delete this job?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/${id}`, {
+      await axios.delete(`${getApiBaseUrl()}/api/jobs/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Job deleted");

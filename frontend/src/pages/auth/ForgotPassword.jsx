@@ -4,13 +4,12 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +20,7 @@ function ForgotPassword() {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
+      const response = await axios.post(`${getApiBaseUrl()}/api/auth/forgot-password`, { email });
 
       toast.success(response?.data?.message || "Reset link sent successfully");
       navigate("/login");

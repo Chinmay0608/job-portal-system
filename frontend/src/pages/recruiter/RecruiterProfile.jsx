@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { changePassword, updateProfile } from "../../Services/jobService";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function RecruiterProfile() {
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_URL = getApiBaseUrl();
 
   /* Safe User Parse */
   let storedUser = null;

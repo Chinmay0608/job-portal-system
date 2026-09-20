@@ -9,7 +9,9 @@ import {
   ShieldAlert, Zap, Tag
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { getApiBaseUrl } from '../../Services/authUtils';
+
+const API_BASE_URL = getApiBaseUrl();
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   const headers = {};

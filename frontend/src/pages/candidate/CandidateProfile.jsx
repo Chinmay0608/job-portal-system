@@ -37,8 +37,10 @@ const COMMON_SKILLS = [
   "NumPy", "TensorFlow", "PyTorch", "Tableau", "Power BI", "Agile", "Scrum", "Jira"
 ];
 
+import { getApiBaseUrl } from "../../Services/authUtils";
+
 function CandidateProfile() {
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_URL = getApiBaseUrl();
 
   /* Safe User Parse */
   let storedUser = null;

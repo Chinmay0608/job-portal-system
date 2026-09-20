@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../Services/authService";
-import { setStoredUser } from "../../Services/authUtils";
+import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
@@ -42,7 +42,7 @@ function Register() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/auth/google-login`, {
         method: "POST",
         headers: { 

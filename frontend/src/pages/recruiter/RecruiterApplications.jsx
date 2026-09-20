@@ -7,6 +7,8 @@ import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawInterviewSvg from "../../assets/undraw_interview_yz52.svg";
 
+import { getApiBaseUrl } from "../../Services/authUtils";
+
 function RecruiterApplications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +16,7 @@ function RecruiterApplications() {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_URL = getApiBaseUrl();
 
   /* Fetch Applications */
   const fetchApplications = async () => {

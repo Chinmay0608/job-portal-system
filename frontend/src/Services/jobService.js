@@ -1,12 +1,13 @@
 import axios from "axios";
-import { logoutUser } from "./authUtils";
+import { logoutUser, getApiBaseUrl } from "./authUtils";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = getApiBaseUrl();
 
 // Creates a specialized Axios messenger client bound to the backend domain
 const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 
 api.interceptors.request.use((config) => {
+  config.baseURL = getApiBaseUrl();
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

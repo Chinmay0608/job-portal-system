@@ -42,6 +42,15 @@ export const setStoredUser = (user, token) => {
   }
 };
 
+export const getApiBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
+  // Prevent Mixed Content errors on HTTPS deployment (e.g., Vercel) if env variable is set to insecure http://
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && envUrl.startsWith("http://")) {
+    return "";
+  }
+  return envUrl;
+};
+
 export const getStoredUser = () => {
   try {
     return JSON.parse(localStorage.getItem("user") || "null");
