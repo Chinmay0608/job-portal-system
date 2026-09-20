@@ -3,18 +3,11 @@ const bcrypt = require("bcryptjs");
 
 const seedAdminUser = async () => {
   try {
-    const adminEmail = process.env.SEED_ADMIN_EMAIL;
-    const adminPassword = process.env.SEED_ADMIN_PASSWORD;
-
-    if (!adminEmail || !adminPassword) {
-      console.log(
-        "[Admin Seed] SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set — skipping admin seed."
-      );
-      return;
-    }
+    const adminEmail = (process.env.SEED_ADMIN_EMAIL || "admin@gmail.com").trim().toLowerCase();
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123";
 
     const User = require("../models/user");
-    const existingAdmin = await User.findOne({ email: adminEmail });
+    const existingAdmin = await User.findOne({ email: adminEmail }).select("+password");
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 12);
       await User.create({
@@ -24,6 +17,13 @@ const seedAdminUser = async () => {
         role: "recruiter",
       });
       console.log(`[Admin Seed] Created admin user (${adminEmail}).`);
+    } else {
+      const isMatch = await bcrypt.compare(adminPassword, existingAdmin.password || "");
+      if (!isMatch) {
+        existingAdmin.password = await bcrypt.hash(adminPassword, 12);
+        await existingAdmin.save();
+        console.log(`[Admin Seed] Synchronized admin credentials for (${adminEmail}).`);
+      }
     }
   } catch (err) {
     console.error("[Admin Seed Error] Failed to seed admin user:", err.message);
