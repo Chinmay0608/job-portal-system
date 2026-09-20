@@ -1290,7 +1290,7 @@ function CandidateDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 h-[calc(100vh-210px)] overflow-y-auto pr-0 lg:pr-2 pb-10 space-y-4`}>
+          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[90px] lg:h-[calc(100vh-110px)] overflow-y-auto pr-0 lg:pr-2 pb-6 space-y-4 custom-scrollbar`}>
             
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4">
@@ -1495,11 +1495,11 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:static lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] overflow-hidden flex flex-col`}>
+          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[90px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-110px)] overflow-hidden flex flex-col`}>
             {selectedJob ? (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header section */}
-                <div className="p-6 border-b border-slate-200 bg-white">
+                <div className="p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
                   <button 
                     className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
                     onClick={() => setIsMobileDetailView(false)}
@@ -1676,7 +1676,7 @@ function CandidateDashboard() {
                 </div>
 
                 {/* Scroll body */}
-                <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <div className="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
                   {/* Qualifications match box */}
                   <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl">
                     <h4 className="text-sm font-bold text-slate-900 mb-3">Your qualifications for this job</h4>
