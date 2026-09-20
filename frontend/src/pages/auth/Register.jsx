@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../Services/authService";
+import { setStoredUser } from "../../Services/authUtils";
 import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
@@ -52,7 +53,7 @@ function Register() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Authentication Failed");
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setStoredUser(data.user, data.token);
       toast.success("Account initialized with Google successfully");
       redirectUser(data.user);
     } catch (error) {

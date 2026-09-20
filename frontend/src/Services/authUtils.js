@@ -1,5 +1,13 @@
 import { logoutUserAPI } from "./authService";
 
+export const notifyAuthChanged = () => {
+  try {
+    window.dispatchEvent(new Event("skillbridge_auth_changed"));
+  } catch (err) {
+    console.warn("Could not dispatch auth changed event:", err);
+  }
+};
+
 export const logoutUser = async () => {
   try {
     await logoutUserAPI();
@@ -9,6 +17,28 @@ export const logoutUser = async () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("last_google_email");
+    notifyAuthChanged();
+  }
+};
+
+export const setStoredUser = (user, token) => {
+  try {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
+    }
+    if (token !== undefined) {
+      if (token) {
+        localStorage.setItem("token", token);
+      } else {
+        localStorage.removeItem("token");
+      }
+    }
+  } catch (error) {
+    console.error("Error setting stored user:", error);
+  } finally {
+    notifyAuthChanged();
   }
 };
 
