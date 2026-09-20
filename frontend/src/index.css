@@ -618,7 +618,7 @@ input[type="submit"]:active:not(:disabled),
 }
 
 .brand-svg-logo {
-  height: 36px;
+  height: 40px;
   width: auto;
   display: block;
 }
@@ -1541,7 +1541,7 @@ input[type="submit"]:active:not(:disabled),
   }
 
   .brand-svg-logo {
-    height: 30px;
+    height: 33px;
   }
 
   .navbar-container {
