@@ -22,7 +22,7 @@ export const uploadResume = async (file) => {
 
 export const getMyApplicationsAPI = async () => {
   const token = localStorage.getItem("token");
-  const response = await axios.get(`${API}/applications/my-applications`, {
+  const response = await axios.get(`${getApi()}/applications/my-applications`, {
     withCredentials: true,
     timeout: 25000,
     headers: {
@@ -35,7 +35,7 @@ export const getMyApplicationsAPI = async () => {
 
 export const withdrawApplication = async (applicationId) => {
   const token = localStorage.getItem("token");
-  const response = await axios.delete(`${API}/applications/${applicationId}`, {
+  const response = await axios.delete(`${getApi()}/applications/${applicationId}`, {
     withCredentials: true,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -48,7 +48,7 @@ export const withdrawApplication = async (applicationId) => {
 export const updateApplicationStatus = async (applicationId, status) => {
   const token = localStorage.getItem("token");
   const { data } = await axios.patch(
-    `${API}/applications/update/${applicationId}`,
+    `${getApi()}/applications/update/${applicationId}`,
     { status },
     {
       withCredentials: true,
