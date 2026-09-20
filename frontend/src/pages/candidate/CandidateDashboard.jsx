@@ -21,6 +21,7 @@ import {
   markAllMessagesAsRead,
   notifyMessagesUpdated,
 } from "../../Services/messageService";
+import DashboardTour from "../../Components/DashboardTour";
 import {
   Shield as ShieldIcon,
   AlertTriangle as AlertTriangleIcon,
@@ -29,6 +30,7 @@ import {
   Info as InfoIcon,
   X as CloseIcon,
   ChevronRight as ChevronRightIcon,
+  Compass as CompassIcon,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
@@ -326,6 +328,7 @@ function CandidateDashboard() {
   // Profile completion nudge: one-time modal shown on first dashboard visit
   // if the candidate's profile is below the completion threshold.
   const [showProfileNudge, setShowProfileNudge] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
@@ -503,6 +506,14 @@ function CandidateDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.hasCompletedOnboarding]);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem("has_seen_dashboard_tour_v1");
+    if (!hasSeen) {
+      const timer = setTimeout(() => setIsTourOpen(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     if (location.state?.roleType === "remote") {
@@ -994,6 +1005,7 @@ function CandidateDashboard() {
 
   return (
     <div className="w-full min-h-screen bg-slate-50 font-sans pb-3">
+      <DashboardTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
       {jobLoadError && (
         <div className="flex justify-end px-6 w-full mb-4">
@@ -1002,22 +1014,29 @@ function CandidateDashboard() {
       )}
       
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
-        {/* MOBILE HEADER BLOCK */}
-        <div className="block md:hidden mb-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase m-0">WELCOME BACK</p>
-              <h2 className="text-xl font-black text-slate-900 m-0">{user?.name?.split(" ")[0] || "Candidate"}</h2>
-            </div>
-            {/* Circular Profile Completion Ring */}
-            <div 
-              className="w-11 h-11 rounded-full flex items-center justify-center p-0.5 cursor-pointer shadow-sm transition-transform active:scale-95" 
-              onClick={() => navigate("/candidate-profile")}
-              style={{ background: `conic-gradient(#2563eb ${profileCompletion}%, #e5e7eb 0)` }}
+        {/* DASHBOARD TOP HEADER & TOUR BAR */}
+        <div className="mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
+          </div>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsTourOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 border-0 cursor-pointer"
+              title="Launch interactive dashboard walkthrough"
             >
-              <div className="w-full h-full bg-white rounded-full flex items-center justify-center font-extrabold text-xs text-brand-600">
-                {profileCompletion}%
-              </div>
+              <CompassIcon size={15} />
+              <span>Guided Tour 🧭</span>
+            </button>
+            <div 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer transition-colors"
+              onClick={() => navigate("/candidate-profile")}
+              title="Click to complete candidate profile"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Profile {profileCompletion}%</span>
             </div>
           </div>
         </div>
@@ -1078,7 +1097,7 @@ function CandidateDashboard() {
         )}
 
         {/* SEARCH CONSOLE BAR */}
-        <div className="mb-3.5">
+        <div className="mb-3.5" data-tour="search-filters">
             <div 
               className="flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default" 
               onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
@@ -1327,10 +1346,10 @@ function CandidateDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
+          <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
             
             {/* SEGMENTED CONTROL ROW */}
-            <div className="mb-4">
+            <div className="mb-4" data-tour="recommended-toggle">
               <div className="relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
                 {/* Sliding Active Pill Indicator */}
                 <div
@@ -1581,7 +1600,7 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
+          <div data-tour="job-details" className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
             {selectedJob ? (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header section */}
