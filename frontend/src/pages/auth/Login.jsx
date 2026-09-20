@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
+import { setStoredUser } from "../../Services/authUtils";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
@@ -73,10 +74,7 @@ function Login() {
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-      localStorage.setItem("user", JSON.stringify(response.user));
-      if (response.token) {
-        localStorage.setItem("token", response.token);
-      }
+      setStoredUser(response.user, response.token);
       toast.success("Login successful");
       redirectUser(response.user);
     } catch (error) {
@@ -104,10 +102,7 @@ function Login() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google Login Failed");
-      localStorage.setItem("user", JSON.stringify(data.user));
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      setStoredUser(data.user, data.token);
       toast.success("Google login successful");
       redirectUser(data.user);
     } catch (error) {
