@@ -327,6 +327,12 @@ async function startTelegramBot() {
             `[TelegramBot] ⚠️ 409 Conflict: Another bot instance (e.g., production on Render or another local process) is active (attempt ${consecutiveConflicts}). Backing off for ${backoffSec}s.\n[TelegramBot] Tip: Set DISABLE_TELEGRAM_POLLING=true in backend/.env to disable local polling when testing.`
           );
         }
+        // Give up after 15 consecutive conflicts (~12 min total backoff).
+        // During a Render rolling deploy, the old instance dies and the new one wins.
+        if (consecutiveConflicts >= 15) {
+          console.warn("[TelegramBot] ⛔ Too many consecutive 409 conflicts. Stopping poller — new instance should take over.");
+          break;
+        }
         await new Promise((r) => setTimeout(r, backoffSec * 1000));
       } else {
         console.warn("[TelegramBot] Polling error (retrying in 5s):", errMsg);

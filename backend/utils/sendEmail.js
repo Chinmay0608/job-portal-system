@@ -12,24 +12,27 @@ if (dns.setDefaultResultOrder) {
 
 let transporter = null;
 
+const createTransporter = () =>
+  nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,          // 587+STARTTLS avoids IPv6 resolution issues on Render
+    secure: false,      // STARTTLS (upgraded after handshake)
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    family: 4,          // Explicitly force IPv4 socket
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+
 const getTransporter = () => {
   if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      family: 4, // Explicitly force IPv4 to prevent ENETUNREACH on cloud environments like Render
-      connectionTimeout: 10000, // 10s connection timeout
-      greetingTimeout: 10000,   // 10s greeting timeout
-      socketTimeout: 15000,     // 15s socket timeout
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    transporter = createTransporter();
   }
   return transporter;
 };
@@ -58,9 +61,14 @@ const sendEmail = async (to, subject, html) => {
     return info;
   } catch (error) {
     console.error("Error sending email:", error.message || error);
+    // Reset cached transporter on auth/connection errors so next call retries fresh
+    if (error.code === "EAUTH" || error.code === "ECONNECTION" || error.code === "ENETUNREACH") {
+      transporter = null;
+    }
     // Don't throw error to prevent crashing the main thread if email fails
     return null;
   }
 };
 
 module.exports = sendEmail;
+
