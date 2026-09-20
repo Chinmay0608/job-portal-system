@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile } from "../../Services/jobService";
-import { setStoredUser } from "../../Services/authUtils";
+import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
@@ -357,7 +357,7 @@ function CandidateDashboard() {
     }
   });
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_URL = getApiBaseUrl();
 
   // Define all functions before useEffect hooks
   const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, field, page }) => {

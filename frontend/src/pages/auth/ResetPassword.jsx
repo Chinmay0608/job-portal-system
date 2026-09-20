@@ -2,14 +2,13 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function ResetPassword() {
   const navigate = useNavigate();
   const { token } = useParams();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +24,7 @@ function ResetPassword() {
 
     try {
       setLoading(true);
-      const response = await axios.put(`${API_URL}/api/auth/reset-password/${token}`, {
+      const response = await axios.put(`${getApiBaseUrl()}/api/auth/reset-password/${token}`, {
         password: trimmedPassword,
       });
 

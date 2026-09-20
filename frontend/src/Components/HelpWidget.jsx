@@ -4,9 +4,9 @@ import html2canvas from "html2canvas";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { LifeBuoy, X, Camera, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
-import { getStoredUser } from "../Services/authUtils";
+import { getStoredUser, getApiBaseUrl } from "../Services/authUtils";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export default function HelpWidget() {
   const [user, setUser] = useState(getStoredUser);

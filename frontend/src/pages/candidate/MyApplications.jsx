@@ -8,6 +8,8 @@ import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawResumeSvg from "../../assets/undraw_resume_jrgi.svg";
 
+import { getApiBaseUrl } from "../../Services/authUtils";
+
 function MyApplications() {
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
@@ -16,7 +18,7 @@ function MyApplications() {
   const [fetchError, setFetchError] = useState("");
   const [filter, setFilter] = useState("All");
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_URL = getApiBaseUrl();
 
   const fetchApplications = async () => {
     const token = localStorage.getItem("token");

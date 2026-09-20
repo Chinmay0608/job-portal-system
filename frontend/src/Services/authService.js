@@ -1,6 +1,7 @@
 import axios from "axios";
+import { getApiBaseUrl } from "./authUtils";
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/auth`;
+const getAuthApiUrl = () => `${getApiBaseUrl()}/api/auth`;
 
 // Common headers for all auth requests (satisfies CSRF middleware)
 const authHeaders = {
@@ -10,7 +11,7 @@ const authHeaders = {
 
 // 1. Account Creation: Sends registration form data to the server
 export const registerUser = async (userData) => {
-  const response = await axios.post(`${API_URL}/register`, userData, {
+  const response = await axios.post(`${getAuthApiUrl()}/register`, userData, {
     headers: authHeaders,
     withCredentials: true,
   });
@@ -22,7 +23,7 @@ export const registerUser = async (userData) => {
 
 // 2. Session Authorization: Sends email/password to get a security token
 export const loginUser = async (userData) => {
-  const response = await axios.post(`${API_URL}/login`, userData, {
+  const response = await axios.post(`${getAuthApiUrl()}/login`, userData, {
     headers: authHeaders,
     withCredentials: true,
   });
@@ -34,7 +35,7 @@ export const loginUser = async (userData) => {
 
 // 3. Logout User
 export const logoutUserAPI = async () => {
-  const response = await axios.post(`${API_URL}/logout`, {}, {
+  const response = await axios.post(`${getAuthApiUrl()}/logout`, {}, {
     headers: authHeaders,
     withCredentials: true,
   });

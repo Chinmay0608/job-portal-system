@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { HiOutlineCog, HiOutlineOfficeBuilding, HiOutlineKey, HiOutlineDocumentText } from "react-icons/hi";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function ConfigView() {
   const [companies, setCompanies] = useState([]);
@@ -21,8 +22,8 @@ function ConfigView() {
       const token = localStorage.getItem("token");
       
       const [compRes, confRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/companies`, { headers: { Authorization: `Bearer ${token}` }}),
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/config`, { headers: { Authorization: `Bearer ${token}` }})
+        axios.get(`${getApiBaseUrl()}/api/admin/companies`, { headers: { Authorization: `Bearer ${token}` }}),
+        axios.get(`${getApiBaseUrl()}/api/admin/config`, { headers: { Authorization: `Bearer ${token}` }})
       ]);
       
       setCompanies(compRes.data || []);
@@ -42,7 +43,7 @@ function ConfigView() {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/companies/${id}`, 
+      await axios.put(`${getApiBaseUrl()}/api/admin/companies/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` }}
       );
@@ -56,7 +57,7 @@ function ConfigView() {
   const handleConfigChange = async (key, newValue) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/admin/config/${key}`, 
+      await axios.put(`${getApiBaseUrl()}/api/admin/config/${key}`, 
         { value: newValue },
         { headers: { Authorization: `Bearer ${token}` }}
       );

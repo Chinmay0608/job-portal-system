@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
-import { setStoredUser } from "../../Services/authUtils";
+import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
@@ -91,7 +91,7 @@ function Login() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const idToken = await user.getIdToken();
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/auth/google-login`, {
         method: "POST",
         headers: { 

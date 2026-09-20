@@ -1,6 +1,7 @@
 import axios from "axios";
+import { getApiBaseUrl } from "./authUtils";
 
-const API = `${import.meta.env.VITE_API_BASE_URL}/api`;
+const getApi = () => `${getApiBaseUrl()}/api`;
 
 // Resume Upload Engine: Packs a physical file binary and streams it to the backend cloud pipeline
 export const uploadResume = async (file) => {
@@ -8,7 +9,7 @@ export const uploadResume = async (file) => {
   formData.append("resume", file);
 
   const token = localStorage.getItem("token");
-  const response = await axios.post(`${API}/auth/upload-resume`, formData, {
+  const response = await axios.post(`${getApi()}/auth/upload-resume`, formData, {
     withCredentials: true,
     headers: {
       "Content-Type": "multipart/form-data",

@@ -13,6 +13,7 @@ import {
   Compass,
 } from "lucide-react";
 import CustomSelect from "./CustomSelect";
+import { getApiBaseUrl } from "../Services/authUtils";
 import { completeOnboardingAPI } from "../Services/jobService";
 
 const QUALIFICATION_OPTIONS = [
@@ -117,7 +118,7 @@ export default function OnboardingWizard({ user, onComplete }) {
     setActiveLocationIndex(-1);
   };
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = getApiBaseUrl();
 
   // Debounced skill suggestion search from backend API
   const fetchSkillSuggestions = async (query) => {

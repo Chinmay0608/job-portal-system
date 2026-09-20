@@ -14,8 +14,9 @@ import AdminMessagesView from './AdminMessagesView';
 import NotificationsDrawer from '../../Components/NotificationsDrawer';
 import { getUnreadNotificationsCountAPI } from '../../Services/notificationService';
 import { TableRowSkeleton } from '../../Components/common/SkeletonLoader';
+import { getApiBaseUrl } from '../../Services/authUtils';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   const headers = {};

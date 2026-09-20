@@ -3,6 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { HiOutlineSearch, HiOutlineDocumentText, HiOutlineClock, HiOutlineXCircle, HiOutlineBadgeCheck, HiOutlineExternalLink } from "react-icons/hi";
 import CustomSelect from "../../Components/CustomSelect";
+import { getApiBaseUrl } from "../../Services/authUtils";
 
 function ApplicationsView() {
   const [applications, setApplications] = useState([]);
@@ -19,7 +20,7 @@ function ApplicationsView() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/applications/admin/all`, {
+      const res = await axios.get(`${getApiBaseUrl()}/api/applications/admin/all`, {
         params: { page, limit: 20, status: statusFilter, search },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -56,7 +57,7 @@ function ApplicationsView() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/upload/signed-url`,
+        `${getApiBaseUrl()}/api/upload/signed-url`,
         { fileUrl: resumeUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
