@@ -13,11 +13,13 @@ jobs:
     steps:
       - name: Wake up backend (Warmup)
         run: |
-          echo "Pinging backend server to wake from sleep if inactive..."
+          RAW_URL="${{ secrets.BACKEND_URL }}"
+          BACKEND_URL="${RAW_URL%/}"
+          echo "Pinging backend server at $BACKEND_URL/api/health..."
           for i in 1 2 3; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 "${{ secrets.BACKEND_URL }}/api/health" || echo "000")
+            code=$(curl -s -L -o /dev/null -w "%{http_code}" --max-time 45 "$BACKEND_URL/api/health" || echo "000")
             echo "Warmup attempt $i: HTTP $code"
-            if [ "$code" = "200" ] || [ "$code" = "301" ] || [ "$code" = "302" ]; then
+            if [ "$code" = "200" ]; then
               echo "Backend is active and responding."
               break
             fi
@@ -26,16 +28,26 @@ jobs:
 
       - name: Call backend sync endpoint
         run: |
-          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+          RAW_URL="${{ secrets.BACKEND_URL }}"
+          BACKEND_URL="${RAW_URL%/}"
+          echo "Triggering scheduled sync at $BACKEND_URL/api/jobs/internal-sync..."
+          response=$(curl -s -L -o /tmp/response.json -w "%{http_code}" \
             --max-time 300 \
-            -X POST "${{ secrets.BACKEND_URL }}/api/jobs/internal-sync" \
+            -X POST "$BACKEND_URL/api/jobs/internal-sync" \
             -H "x-requested-with: XMLHttpRequest" \
             -H "x-sync-secret: ${{ secrets.SYNC_SECRET_KEY }}")
 
           echo "HTTP status: $response"
           cat /tmp/response.json
+          echo ""
 
           if [ "$response" -ge 400 ] || [ "$response" = "000" ]; then
-            echo "Sync request failed with status $response"
+            echo "❌ Sync request failed with HTTP $response"
+            if [ "$response" = "401" ]; then
+              echo "🔑 Unauthorized: Check that SYNC_SECRET_KEY in GitHub Repository Secrets matches SYNC_SECRET_KEY in Render Environment Variables."
+            fi
+            if [ "$response" = "000" ]; then
+              echo "🌐 Network Timeout/Unreachable: Check that BACKEND_URL in GitHub Repository Secrets is reachable."
+            fi
             exit 1
           fi

@@ -934,7 +934,11 @@ const triggerScheduledSync = async (req, res, next) => {
   const providedSecret = req.headers["x-sync-secret"];
 
   if (!process.env.SYNC_SECRET_KEY || providedSecret !== process.env.SYNC_SECRET_KEY) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
+    console.warn("[Scheduled Sync] Unauthorized attempt: x-sync-secret header missing or mismatched with SYNC_SECRET_KEY.");
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: Invalid or missing x-sync-secret header.",
+    });
   }
 
   try {
