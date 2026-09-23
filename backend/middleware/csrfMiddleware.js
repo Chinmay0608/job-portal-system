@@ -1,5 +1,5 @@
 const csrfProtection = (req, res, next) => {
-  // Exempt auth endpoints that cannot carry a Bearer token yet
+  // Exempt auth endpoints & system sync routes that cannot carry a Bearer token yet
   const exemptPaths = [
     "/api/auth/login",
     "/api/auth/register",
@@ -8,6 +8,8 @@ const csrfProtection = (req, res, next) => {
     "/api/auth/google/callback",
     "/api/auth/google-login",
     "/api/auth/refresh",
+    "/api/jobs/internal-sync",
+    "/api/health",
   ];
   if (exemptPaths.some((p) => req.path === p || req.path.startsWith(p + "/"))) {
     return next();
@@ -23,7 +25,8 @@ const csrfProtection = (req, res, next) => {
     // Standard cross-origin requests cannot easily set custom headers
     const hasCustomHeader =
       req.headers["x-requested-with"] === "XMLHttpRequest" ||
-      req.headers["x-csrf-token"];
+      req.headers["x-csrf-token"] ||
+      req.headers["x-sync-secret"];
 
     if (!hasBearer && !hasCustomHeader) {
       return res.status(403).json({
