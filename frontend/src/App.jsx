@@ -31,10 +31,7 @@ const CandidateProfile = lazy(() => import("./pages/candidate/CandidateProfile")
 const RecruiterDashboard = lazy(() => import("./pages/recruiter/RecruiterDashboard"));
 const RecruiterApplications = lazy(() => import("./pages/recruiter/RecruiterApplications"));
 const RecruiterProfile = lazy(() => import("./pages/recruiter/RecruiterProfile"));
-const RecruiterComingSoon = lazy(() => import("./pages/recruiter/RecruiterComingSoon"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-
-import { isLocalEnvironment } from "./utils/envUtils";
 
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
@@ -61,8 +58,6 @@ import NotFound from "./pages/NotFound";
 function AppContent() {
   const location = useLocation();
 
-  const isRecruiterPath = location.pathname.toLowerCase().startsWith("/recruiter");
-
   // Integrated layout toggle rule parameters
   const hideLayout = [
     "/login",
@@ -72,8 +67,7 @@ function AppContent() {
     "/admin/dashboard",
     "/admin-dashboard",
   ].includes(location.pathname.toLowerCase()) || 
-  location.pathname.toLowerCase().startsWith("/reset-password") ||
-  (!isLocalEnvironment() && isRecruiterPath);
+  location.pathname.toLowerCase().startsWith("/reset-password");
 
   return (
     <>
@@ -102,9 +96,9 @@ function AppContent() {
 
               {/* ========================================== */}
               {/* ============== RECRUITER ================= */}
-              <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter">{isLocalEnvironment() ? <RecruiterDashboard /> : <RecruiterComingSoon />}</ProtectedRoute>} />
-              <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter">{isLocalEnvironment() ? <RecruiterApplications /> : <RecruiterComingSoon />}</ProtectedRoute>} />
-              <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter">{isLocalEnvironment() ? <RecruiterProfile /> : <RecruiterComingSoon />}</ProtectedRoute>} />
+              <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
+              <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
+              <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
 
               {/* Informational Marketing & Legal Layout Trees */}
               <Route path="/about" element={<About />} />
