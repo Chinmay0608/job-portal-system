@@ -1884,24 +1884,67 @@ function CandidateDashboard() {
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 mb-3">Full Job Description</h4>
                     
-                    <div className={`relative overflow-hidden transition-all duration-300 ${isDescriptionExpanded ? "max-h-none" : "max-h-96"}`}>
-                      <div className="text-sm text-slate-700 leading-relaxed space-y-3">
-                        {selectedJob.description
-                          ? renderExternalDescription(selectedJob.description)
-                          : <p className="text-slate-400 italic">No description available.</p>
-                        }
-                      </div>
-                      {!isDescriptionExpanded && (
-                        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-                      )}
-                    </div>
+                    {(() => {
+                      const descText = selectedJob.description || "";
+                      const isLongDescription = descText.length > 450;
+                      const isTruncatedSnippet = descText.trim().endsWith("...") || descText.trim().endsWith("…");
 
-                    <button 
-                      className="mt-3 text-brand-600 hover:text-brand-700 font-bold text-xs flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
-                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    >
-                      {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
-                    </button>
+                      return (
+                        <>
+                          <div className={`relative overflow-hidden transition-all duration-300 ${
+                            !isLongDescription || isDescriptionExpanded ? "max-h-none" : "max-h-96"
+                          }`}>
+                            <div className="text-sm text-slate-700 leading-relaxed space-y-3">
+                              {selectedJob.description
+                                ? renderExternalDescription(selectedJob.description)
+                                : <p className="text-slate-400 italic">No description available.</p>
+                              }
+                            </div>
+                            {isLongDescription && !isDescriptionExpanded && (
+                              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                            )}
+                          </div>
+
+                          {isLongDescription && (
+                            <button 
+                              className="mt-3 text-brand-600 hover:text-brand-700 font-bold text-xs flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+                              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                            >
+                              {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                            </button>
+                          )}
+
+                          {(selectedJob.isExternal || isTruncatedSnippet) && (
+                            <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                              <div className="flex items-start gap-2.5">
+                                <span className="text-base shrink-0 mt-0.5">ℹ️</span>
+                                <div>
+                                  <p className="font-bold text-slate-800 m-0 mb-0.5">
+                                    {isTruncatedSnippet ? "External Job Summary Preview" : "External Career Portal Requisition"}
+                                  </p>
+                                  <p className="text-slate-600 m-0 leading-relaxed">
+                                    {isTruncatedSnippet 
+                                      ? `This aggregated summary from ${selectedJob.company || "the employer"} is a preview snippet. Read the full requisition & apply directly on their career portal.`
+                                      : `This job is hosted externally on ${selectedJob.company || "the company's site"}.`}
+                                  </p>
+                                </div>
+                              </div>
+                              {selectedJob.applyUrl && (
+                                <a
+                                  href={selectedJob.applyUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg shrink-0 text-xs transition-colors no-underline inline-flex items-center gap-1.5 shadow-xs"
+                                >
+                                  <span>Read Full Posting</span>
+                                  <FiExternalLink size={13} />
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
