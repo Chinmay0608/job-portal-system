@@ -308,13 +308,26 @@ const getRecommendedJobs = asyncHandler(async (req, res) => {
     query._id = { $nin: user.hiddenJobs };
   }
 
-  const jobs = await Job.find(query);
+  const jobs = await Job.find(query).lean();
 
-  // Scores jobs against candidate's field & skills, filtering out domain mismatches (like Marketing)
+  const { calculateRelevanceScore } = require("../services/relevanceEngine");
+
+  // Scores jobs against candidate's field & skills, filtering out domain mismatches
   const recommendedJobs = await calculateJobMatches(jobs, user);
 
+  // Attach gcc-job-radar match scores & sort
+  const scoredJobs = recommendedJobs.map((job) => {
+    const radarScore = calculateRelevanceScore(job, user);
+    return {
+      ...job,
+      matchScore: radarScore,
+    };
+  });
+
+  scoredJobs.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
   res.status(200).json({
-    jobs: recommendedJobs,
+    jobs: scoredJobs,
   });
 });
 

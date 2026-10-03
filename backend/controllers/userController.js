@@ -493,6 +493,10 @@ const completeOnboarding = asyncHandler(async (req, res) => {
     user.education = trimmedHQ;
   }
   if (experienceLevel !== undefined) user.experienceLevel = experienceLevel;
+  if (req.body.field !== undefined) user.field = String(req.body.field).trim();
+  if (Array.isArray(req.body.targetSeniority)) {
+    user.targetSeniority = req.body.targetSeniority.map((s) => String(s).trim()).filter(Boolean);
+  }
   if (Array.isArray(skills)) {
     const cleanSkills = skills.map((s) => String(s).trim()).filter(Boolean);
     user.skills = cleanSkills;
