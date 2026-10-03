@@ -106,6 +106,11 @@ const userSchema = new mongoose.Schema(
       default: "Software Engineering",
     },
 
+    targetSeniority: {
+      type: [String],
+      default: ["Entry Level", "Mid Level"],
+    },
+
     emailNotificationsEnabled: {
       type: Boolean,
       default: true,
