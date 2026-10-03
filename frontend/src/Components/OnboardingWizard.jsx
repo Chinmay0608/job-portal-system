@@ -145,19 +145,7 @@ const DOMAIN_SENIORITIES = {
   ],
 };
 
-const QUALIFICATION_OPTIONS = [
-  { value: "", label: "Select Degree" },
-  { value: "B.Tech / B.E.", label: "B.Tech / B.E." },
-  { value: "M.Tech / M.E.", label: "M.Tech / M.E." },
-  { value: "BCA / MCA", label: "BCA / MCA" },
-  { value: "MBBS / MD / MS", label: "MBBS / MD / MS (Healthcare)" },
-  { value: "B.Des / M.Des", label: "B.Des / M.Des (Design)" },
-  { value: "BBA / MBA", label: "BBA / MBA (Management)" },
-  { value: "B.Com / M.Com", label: "B.Com / M.Com (Finance)" },
-  { value: "Bachelor's Degree (Other)", label: "Bachelor's Degree (Other)" },
-  { value: "Master's Degree (Other)", label: "Master's Degree (Other)" },
-  { value: "High School / Diploma", label: "High School / Diploma" },
-];
+import { QUALIFICATION_OPTIONS } from "../utils/qualificationOptions";
 
 const EXPERIENCE_OPTIONS = [
   { value: "Fresher", label: "Fresher / Student" },
