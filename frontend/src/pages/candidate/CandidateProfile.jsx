@@ -38,6 +38,7 @@ const COMMON_SKILLS = [
 ];
 
 import { getApiBaseUrl } from "../../Services/authUtils";
+import { QUALIFICATION_OPTIONS } from "../../utils/qualificationOptions";
 
 function CandidateProfile() {
   const API_URL = getApiBaseUrl();
@@ -670,15 +671,7 @@ function CandidateProfile() {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Highest Qualification</label>
                 <CustomSelect
-                  options={[
-                    { value: "", label: "Select Degree" }, 
-                    { value: "B.Tech", label: "B.Tech / B.E." }, 
-                    { value: "M.Tech", label: "M.Tech / M.E." }, 
-                    { value: "BCA", label: "BCA" }, 
-                    { value: "MCA", label: "MCA" },
-                    { value: "B.Sc", label: "B.Sc Computer Science" },
-                    { value: "Other", label: "Other Graduate / Diploma" }
-                  ]}
+                  options={QUALIFICATION_OPTIONS}
                   value={education}
                   onChange={(e) => setEducation(e.target.value)}
                   className="w-full text-sm"
