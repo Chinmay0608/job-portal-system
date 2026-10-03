@@ -83,6 +83,10 @@ const jobSchema = new mongoose.Schema(
     salaryCurrency: { type: String, default: "USD" },
     keywords: [{ type: String, default: [] }],
     providerMetadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+    // --- Universal Domain & Seniority Classification Fields ---
+    domain: { type: String, default: "Software Engineering" },
+    seniorityLevel: { type: String, default: "Entry Level" },
   },
   {
     timestamps: true,
