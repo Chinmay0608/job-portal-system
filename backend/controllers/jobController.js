@@ -70,17 +70,10 @@ const createJob = asyncHandler(async (req, res) => {
     throw new Error("All fields are required");
   }
 
-  let assignedDomain = domain || category;
-  if (!assignedDomain || assignedDomain.toLowerCase() === "other" || assignedDomain.toLowerCase() === "uncategorized") {
-    try {
-      const classification = await classifyJob(title, description);
-      if (classification && classification.confidence > 0.65) {
-        assignedDomain = classification.primaryDomain;
-      }
-    } catch (err) {
-      console.warn("[Job Classification Warning]:", err.message);
-    }
-  }
+  const classification = classifyJob({ title, description });
+
+  let assignedDomain = domain || category || classification.domain;
+  let assignedSeniority = req.body.seniorityLevel || classification.seniorityLevel;
 
   const jobData = {
     title,
@@ -90,12 +83,10 @@ const createJob = asyncHandler(async (req, res) => {
     salary,
     description,
     recruiter: req.user.id,
+    domain: assignedDomain,
+    category: assignedDomain,
+    seniorityLevel: assignedSeniority,
   };
-
-  if (assignedDomain) {
-    jobData.domain = assignedDomain;
-    jobData.category = assignedDomain;
-  }
 
   const job = await Job.create(jobData);
 

@@ -1,159 +1,104 @@
 /**
  * jobClassifierService.js
- * High-precision, zero-memory Job Domain Classifier.
- * Uses weighted contextual keyword mapping across titles & descriptions for 0MB RAM consumption on Render.
+ * Automatically classifies job postings into domain and seniority level categories
+ * based on title, description, department, and experience strings.
  */
 
-const CANDIDATE_LABELS = [
-  'Frontend Development',
-  'Backend Engineering',
-  'Full Stack Development',
-  'DevOps & Cloud',
-  'Data Science & Machine Learning',
-  'Mobile Development',
-  'Quality Assurance & SDET',
-  'Cybersecurity',
-  'Product & Project Management',
-  'UI/UX & Design',
-  'Core Engineering'
-];
+function classifyJob(job) {
+  const title = (job?.title || "").toLowerCase();
+  const desc = (job?.description || "").toLowerCase();
+  const dept = (job?.department || "").toLowerCase();
+  const text = `${title} ${dept} ${desc}`;
 
-const KEYWORD_DOMAIN_MAP = [
-  { 
-    domain: 'Frontend Development', 
-    titleKeywords: ['frontend', 'front-end', 'react', 'vue', 'angular', 'ui developer', 'web developer', 'next.js', 'svelte', 'javascript developer'],
-    descKeywords: ['css', 'html', 'tailwind', 'sass', 'redux', 'typescript', 'dom', 'browser', 'responsive design'] 
-  },
-  { 
-    domain: 'Backend Engineering', 
-    titleKeywords: ['backend', 'back-end', 'node', 'express', 'django', 'fastapi', 'spring', 'golang', 'java developer', 'golang developer', 'python backend', 'c#', '.net'],
-    descKeywords: ['microservices', 'postgresql', 'mongodb', 'mysql', 'redis', 'rest api', 'graphql', 'grpc', 'kafka', 'rabbit'] 
-  },
-  { 
-    domain: 'Full Stack Development', 
-    titleKeywords: ['full stack', 'fullstack', 'full-stack', 'mern', 'mean'],
-    descKeywords: ['full lifecycle', 'frontend and backend', 'client and server'] 
-  },
-  { 
-    domain: 'DevOps & Cloud', 
-    titleKeywords: ['devops', 'cloud', 'sre', 'site reliability', 'infrastructure', 'platform engineer', 'aws engineer', 'kubernetes engineer'],
-    descKeywords: ['docker', 'kubernetes', 'terraform', 'ci/cd', 'ansible', 'helm', 'jenkins', 'github actions', 'cloudformation', 'linux'] 
-  },
-  { 
-    domain: 'Data Science & Machine Learning', 
-    titleKeywords: ['data scientist', 'machine learning', 'ml engineer', 'ai engineer', 'data engineer', 'deep learning', 'nlp engineer', 'computer vision'],
-    descKeywords: ['pytorch', 'tensorflow', 'pandas', 'numpy', 'spark', 'hadoop', 'llm', 'genai', 'scikit-learn', 'data pipeline', 'etl'] 
-  },
-  { 
-    domain: 'Mobile Development', 
-    titleKeywords: ['android', 'ios', 'flutter', 'react native', 'mobile developer', 'mobile engineer', 'swift developer', 'kotlin developer'],
-    descKeywords: ['swiftui', 'jetpack compose', 'app store', 'play store', 'xcode', 'mobile app'] 
-  },
-  { 
-    domain: 'Quality Assurance & SDET', 
-    titleKeywords: ['qa', 'sdet', 'test engineer', 'automation engineer', 'quality assurance', 'tester'],
-    descKeywords: ['cypress', 'selenium', 'playwright', 'testng', 'junit', 'manual testing', 'api testing', 'postman', 'regression testing'] 
-  },
-  { 
-    domain: 'Cybersecurity', 
-    titleKeywords: ['security', 'cyber', 'soc analyst', 'penetration tester', 'infosec', 'security engineer', 'vapt'],
-    descKeywords: ['siem', 'threat', 'vulnerability', 'owasp', 'firewall', 'encryption', 'pci-dss', 'iso 27001', 'zero trust'] 
-  },
-  {
-    domain: 'Product & Project Management',
-    titleKeywords: ['product manager', 'project manager', 'scrum master', 'product owner', 'program manager', 'technical product manager'],
-    descKeywords: ['roadmap', 'agile', 'sprint', 'user stories', 'kpis', 'stakeholder management', 'jira']
-  },
-  {
-    domain: 'UI/UX & Design',
-    titleKeywords: ['ui/ux', 'ux designer', 'product designer', 'graphic designer', 'visual designer', 'ui designer'],
-    descKeywords: ['figma', 'wireframes', 'prototyping', 'design system', 'user research', 'usability testing']
-  },
-  {
-    domain: 'Core Engineering',
-    titleKeywords: ['mechanical', 'electrical', 'embedded', 'firmware', 'hardware', 'vlsi', 'iot', 'robotics'],
-    descKeywords: ['microcontroller', 'pcb', 'cad', 'circuit', 'c/c++', 'arm', 'rtos']
-  }
-];
+  // 1. DOMAIN CLASSIFICATION
+  let domain = "Software Engineering"; // Default domain
 
-function classifyWithKeywords(title = '', description = '') {
-  const titleLower = title.toLowerCase();
-  const descLower = description.toLowerCase();
-
-  let bestDomain = 'Uncategorized';
-  let highestScore = 0;
-
-  for (const item of KEYWORD_DOMAIN_MAP) {
-    let score = 0;
-
-    // Title matches (weight = 3.0)
-    for (const kw of item.titleKeywords) {
-      const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (regex.test(titleLower)) {
-        score += 3.0;
-      }
-    }
-
-    // Description matches (weight = 1.0)
-    for (const kw of item.descKeywords) {
-      const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (regex.test(descLower)) {
-        score += 1.0;
-      }
-    }
-
-    if (score > highestScore) {
-      highestScore = score;
-      bestDomain = item.domain;
-    }
+  if (
+    /\b(data\s+scientist|data\s+analyst|data\s+engineer|machine\s+learning|ml\s+engineer|ai\s+engineer|nlp|deep\s+learning|business\s+intelligence|power\s+bi|tableau)\b/.test(
+      text
+    )
+  ) {
+    domain = "Data & Analytics";
+  } else if (
+    /\b(doctor|physician|nurse|nursing|clinical|medical|pharmacist|pharmacy|healthcare|surgeon|radiologist|mbbs|medical\s+officer)\b/.test(
+      text
+    )
+  ) {
+    domain = "Healthcare & Medical";
+  } else if (
+    /\b(video\s+creator|video\s+editor|video\s+producer|content\s+creator|animator|motion\s+graphics?|videographer|cinematographer|youtube|film\s+editor)\b/.test(
+      text
+    )
+  ) {
+    domain = "Media & Video Creation";
+  } else if (
+    /\b(ui\/ux|user\s+experience|graphic\s+designer|product\s+designer|visual\s+designer|art\s+director|illustrator|figma)\b/.test(
+      text
+    )
+  ) {
+    domain = "Design & Creative";
+  } else if (
+    /\b(product\s+manager|program\s+manager|project\s+manager|operations\s+manager|general\s+manager|scrum\s+master|agile\s+coach)\b/.test(
+      text
+    )
+  ) {
+    domain = "Management & Operations";
+  } else if (
+    /\b(digital\s+marketing|seo|sem|growth\s+marketer|sales\s+executive|account\s+executive|business\s+development|bdr|sdr|content\s+marketing)\b/.test(
+      text
+    )
+  ) {
+    domain = "Marketing & Sales";
+  } else if (
+    /\b(accountant|finance|auditor|financial\s+analyst|taxation|payroll|treasury|chartered\s+accountant)\b/.test(
+      text
+    )
+  ) {
+    domain = "Finance & Accounting";
+  } else if (
+    /\b(customer\s+support|helpdesk|client\s+support|technical\s+support|call\s+center|customer\s+success)\b/.test(
+      text
+    )
+  ) {
+    domain = "Customer Support / Operations";
+  } else if (
+    /\b(software|sde|swe|developer|programmer|full\s*stack|backend|frontend|devops|sre|cloud|qa\s+engineer|sdet|code)\b/.test(
+      text
+    )
+  ) {
+    domain = "Software Engineering";
   }
 
-  const confidence = highestScore > 0 ? Math.min(0.98, 0.65 + (highestScore * 0.08)) : 0.4;
-  return {
-    primaryDomain: bestDomain,
-    confidence: Number(confidence.toFixed(2))
-  };
-}
+  // 2. SENIORITY CLASSIFICATION
+  let seniorityLevel = "Mid Level"; // Default mid level
 
-/**
- * Classifies a job's title and description into standard technical domains.
- * @param {string} title 
- * @param {string} description 
- * @returns {Promise<{ primaryDomain: string, confidence: number }>}
- */
-async function classifyJob(title = '', description = '') {
-  const text = `${title || ''} ${(description || '').slice(0, 400)}`.trim();
-  if (!text) {
-    return { primaryDomain: 'Uncategorized', confidence: 0 };
+  if (/\b(intern|internship|trainee|apprentice|co-op|residency|resident)\b/.test(text)) {
+    seniorityLevel = "Intern";
+  } else if (
+    /\b(entry\s+level|junior|jr\b|sde[- ]?1|swe[- ]?1|associate|fresher|graduate\s+engineer|0-1\s+years?|0-2\s+years?)\b/.test(
+      text
+    )
+  ) {
+    seniorityLevel = "Entry Level";
+  } else if (
+    /\b(staff|principal|architect|distinguished|fellow)\b/.test(text)
+  ) {
+    seniorityLevel = "Staff / Principal";
+  } else if (
+    /\b(manager|head\s+of|director|vice\s+president|vp\b|chief|cmo|cto|cfo|ceo)\b/.test(
+      text
+    )
+  ) {
+    seniorityLevel = "Executive / Manager";
+  } else if (
+    /\b(senior|sr\b|lead|sde[- ]?3|swe[- ]?3|team\s+lead)\b/.test(text)
+  ) {
+    seniorityLevel = "Senior Level";
   }
 
-  if (process.env.USE_LOCAL_ONNX === 'true') {
-    try {
-      const { pipeline } = require('@xenova/transformers');
-      if (!global.__zeroShotPipeline) {
-        global.__zeroShotPipeline = await pipeline('zero-shot-classification', 'Xenova/nli-deberta-v3-small', { quantized: true });
-      }
-      const result = await global.__zeroShotPipeline(text, CANDIDATE_LABELS);
-      return {
-        primaryDomain: result.labels[0],
-        confidence: result.scores[0]
-      };
-    } catch (err) {
-      console.warn('[JobClassifier Warning] Local ONNX failed, using keyword fallback:', err.message);
-    }
-  }
-
-  return classifyWithKeywords(title, description);
-}
-
-class ZeroShotPipeline {
-  static async getInstance() {
-    return null;
-  }
+  return { domain, seniorityLevel };
 }
 
 module.exports = {
-  ZeroShotPipeline,
-  CANDIDATE_LABELS,
-  classifyJob
+  classifyJob,
 };
