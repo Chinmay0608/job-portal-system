@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
-import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile } from "../../Services/jobService";
+import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI } from "../../Services/jobService";
 import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
@@ -30,11 +30,16 @@ import {
   Info as InfoIcon,
   X as CloseIcon,
   ChevronRight as ChevronRightIcon,
-  Compass as CompassIcon,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
 const PROFILE_NUDGE_THRESHOLD = 30;
+const HIDE_JOB_REASONS = [
+  { value: "seniority", label: "Seniority doesn't match" },
+  { value: "salary", label: "Salary isn't suitable" },
+  { value: "tech_stack_mismatch", label: "Tech stack mismatch" },
+  { value: "other", label: "Other" },
+];
 
 const getRelativeTime = (dateString) => {
   if (!dateString) return "";
@@ -48,6 +53,21 @@ const getRelativeTime = (dateString) => {
   const renderExternalDescription = (text) => {
     if (!text) return null;
     const decoded = decodeHTMLEntities(text);
+
+    // ── If text contains rich HTML tags, render directly with sanitized DOMPurify ──
+    if (/<[a-z][\s\S]*>/i.test(decoded)) {
+      return (
+        <div
+          className="prose prose-slate prose-sm max-w-none space-y-3 leading-relaxed
+            prose-headings:font-bold prose-headings:text-slate-900 prose-headings:mt-4 prose-headings:mb-2
+            prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-2
+            prose-li:text-slate-700 prose-li:leading-relaxed
+            prose-ul:list-disc prose-ul:pl-5 prose-ul:my-2
+            prose-strong:text-slate-900"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decoded) }}
+        />
+      );
+    }
 
     // ── If text already has markdown headings, parse it directly ──────────
     if (decoded.includes("##") || decoded.includes("**")) {
@@ -205,6 +225,7 @@ const calculateCompletion = (profileUser) => {
     profileUser?.location,
     profileUser?.linkedin,
     profileUser?.github,
+    profileUser?.portfolio,
     profileUser?.about,
     profileUser?.education,
     profileUser?.experienceLevel,
@@ -294,7 +315,7 @@ function CandidateDashboard() {
   const [applying, setApplying] = useState(false);
   const [jobLoadError, setJobLoadError] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
@@ -312,9 +333,14 @@ function CandidateDashboard() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [showApplyPanel, setShowApplyPanel] = useState(false);
+  const [isExpandingDescription, setIsExpandingDescription] = useState(false);
   
   // Consolidate list tabs (All Jobs, Recommended, Saved)
   const [activeTab, setActiveTab] = useState("All Jobs");
+  const [pendingHideJob, setPendingHideJob] = useState(null);
+  const [hideJobReason, setHideJobReason] = useState("");
+  const [hideJobDetails, setHideJobDetails] = useState("");
+  const [isHidingJob, setIsHidingJob] = useState(false);
 
   // Mobile-specific UI states
   const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
@@ -329,6 +355,7 @@ function CandidateDashboard() {
   // if the candidate's profile is below the completion threshold.
   const [showProfileNudge, setShowProfileNudge] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [showWelcomeHeader, setShowWelcomeHeader] = useState(true);
 
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
@@ -361,6 +388,11 @@ function CandidateDashboard() {
   });
 
   const API_URL = getApiBaseUrl();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcomeHeader(false), 25_000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Define all functions before useEffect hooks
   const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, field, page }) => {
@@ -516,12 +548,68 @@ function CandidateDashboard() {
   }, []);
 
   useEffect(() => {
+    if (location.state?.openGuidedTour) setIsTourOpen(true);
+  }, [location.state]);
+
+  useEffect(() => {
     if (location.state?.roleType === "remote") {
       setLocationFilter("Remote");
     } else if (location.state?.roleType === "all") {
       setLocationFilter("");
     }
   }, [location.state]);
+
+  // Auto-expand snippet descriptions onsite so candidates never have to leave SkillBridge
+  useEffect(() => {
+    if (!selectedJob?._id) return;
+
+    const desc = selectedJob.description || "";
+    const isTruncatedSnippet =
+      desc.trim().endsWith("...") ||
+      desc.trim().endsWith("…") ||
+      desc.includes("and...") ||
+      (selectedJob.isExternal && desc.length < 400);
+
+    if (isTruncatedSnippet && !selectedJob.isFullDescription) {
+      let isCancelled = false;
+      setIsExpandingDescription(true);
+
+      getFullJobDescriptionAPI(selectedJob._id)
+        .then((res) => {
+          if (!isCancelled && res?.description) {
+            setSelectedJob((prev) =>
+              prev && prev._id === res.jobId
+                ? { ...prev, description: res.description, isFullDescription: true }
+                : prev
+            );
+            setJobs((prevJobs) =>
+              prevJobs.map((j) =>
+                j._id === res.jobId
+                  ? { ...j, description: res.description, isFullDescription: true }
+                  : j
+              )
+            );
+            setRecommendedJobsList((prevRec) =>
+              prevRec.map((j) =>
+                j._id === res.jobId
+                  ? { ...j, description: res.description, isFullDescription: true }
+                  : j
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not expand full job description:", err?.message);
+        })
+        .finally(() => {
+          if (!isCancelled) setIsExpandingDescription(false);
+        });
+
+      return () => {
+        isCancelled = true;
+      };
+    }
+  }, [selectedJob?._id]);
 
   // Post-Apply Visibility Listener
   useEffect(() => {
@@ -650,19 +738,34 @@ function CandidateDashboard() {
     }
   };
 
-  const handleHideCurrentJob = async (jobId) => {
-    if (!jobId) return;
+  const openHideJobFeedback = (job) => {
+    if (!job) return;
+    setPendingHideJob(job);
+    setHideJobReason("");
+    setHideJobDetails("");
+  };
+
+  const handleConfirmHideJob = async () => {
+    if (!pendingHideJob || !hideJobReason || (hideJobReason === "other" && !hideJobDetails.trim())) return;
     try {
-      await hideJob(jobId);
+      setIsHidingJob(true);
+      await hideJob(pendingHideJob._id, {
+        reason: hideJobReason,
+        details: hideJobDetails.trim(),
+      });
       toast.success("Job hidden from your feed");
-      setJobs((prev) => prev.filter((j) => j._id !== jobId));
-      setRecommendedJobsList((prev) => prev.filter((j) => j._id !== jobId));
-      if (selectedJob?._id === jobId) {
-        const remaining = jobs.filter((j) => j._id !== jobId);
+      setJobs((prev) => prev.filter((job) => job._id !== pendingHideJob._id));
+      setRecommendedJobsList((prev) => prev.filter((job) => job._id !== pendingHideJob._id));
+      if (selectedJob?._id === pendingHideJob._id) {
+        const remaining = jobs.filter((job) => job._id !== pendingHideJob._id);
         setSelectedJob(remaining.length > 0 ? remaining[0] : null);
       }
-    } catch {
-      toast.error("Could not hide job");
+      setPendingHideJob(null);
+    } catch (error) {
+      console.error("Could not hide job:", error);
+      toast.error(error?.response?.data?.message || "Could not hide job");
+    } finally {
+      setIsHidingJob(false);
     }
   };
 
@@ -1015,31 +1118,14 @@ function CandidateDashboard() {
       
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
         {/* DASHBOARD TOP HEADER & TOUR BAR */}
-        <div className="mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
-          </div>
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
-            <button
-              type="button"
-              onClick={() => setIsTourOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 border-0 cursor-pointer"
-              title="Launch interactive dashboard walkthrough"
-            >
-              <CompassIcon size={15} />
-              <span>Guided Tour 🧭</span>
-            </button>
-            <div 
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer transition-colors"
-              onClick={() => navigate("/candidate-profile")}
-              title="Click to complete candidate profile"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Profile {profileCompletion}%</span>
+        {showWelcomeHeader && (
+          <div className="mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
             </div>
           </div>
-        </div>
+        )}
 
         {/* TOP SUMMARY BANNER FOR URGENT / UNREAD OFFICIAL COMMUNICATIONS */}
         {unreadOfficialCount > 0 && showUrgentBanner && (
@@ -1130,7 +1216,6 @@ function CandidateDashboard() {
                   borderless
                   options={[
                     { value: "", label: "All Experience" },
-                    { value: "Fresher", label: "Fresher" },
                     { value: "0-2 Years", label: "0-2 Years" },
                     { value: "2-5 Years", label: "2-5 Years" },
                     { value: "5+ Years", label: "5+ Years" }
@@ -1223,7 +1308,6 @@ function CandidateDashboard() {
                     <CustomSelect
                       options={[
                         { value: "", label: "All Experience" },
-                        { value: "Fresher", label: "Fresher (0 yrs)" },
                         { value: "0-2 Years", label: "0-2 Years" },
                         { value: "2-5 Years", label: "2-5 Years" },
                         { value: "5+ Years", label: "5+ Years" }
@@ -1347,7 +1431,6 @@ function CandidateDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
-            
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4" data-tour="recommended-toggle">
               <div className="relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
@@ -1483,7 +1566,7 @@ function CandidateDashboard() {
                               title="Not interested"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleHideCurrentJob(job._id);
+                                openHideJobFeedback(job);
                               }}
                             >
                               <FiThumbsDown size={15} />
@@ -1783,7 +1866,7 @@ function CandidateDashboard() {
                         <button
                           type="button"
                           className="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
-                          onClick={() => handleHideCurrentJob(selectedJob._id)}
+                          onClick={() => openHideJobFeedback(selectedJob)}
                           title="Not interested / Hide job"
                         >
                           <FiThumbsDown size={17} />
@@ -2002,6 +2085,86 @@ function CandidateDashboard() {
         </div>
       )}
 
+      {pendingHideJob && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+          onClick={() => !isHidingJob && setPendingHideJob(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hide-job-feedback-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="hide-job-feedback-title" className="m-0 text-lg font-bold text-slate-900">
+              Why isn’t this job a fit?
+            </h3>
+            <p className="mb-4 mt-1 text-sm text-slate-600">
+              Your feedback helps us improve your job recommendations.
+            </p>
+
+            <div className="space-y-2">
+              {HIDE_JOB_REASONS.map((reason) => (
+                <label
+                  key={reason.value}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                    hideJobReason === reason.value
+                      ? "border-brand-500 bg-brand-50 text-slate-900"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="hide-job-reason"
+                    value={reason.value}
+                    checked={hideJobReason === reason.value}
+                    onChange={() => setHideJobReason(reason.value)}
+                    className="h-4 w-4 accent-brand-600"
+                  />
+                  {reason.label}
+                </label>
+              ))}
+            </div>
+
+            {hideJobReason === "other" && (
+              <textarea
+                value={hideJobDetails}
+                onChange={(event) => setHideJobDetails(event.target.value)}
+                placeholder="Tell us what didn’t match (required)"
+                aria-label="Describe why this job is not a fit"
+                maxLength={500}
+                rows={3}
+                className="mt-3 w-full resize-y rounded-xl border border-slate-300 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingHideJob(null)}
+                disabled={isHidingJob}
+                className="rounded-xl border-0 bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmHideJob}
+                disabled={
+                  isHidingJob ||
+                  !hideJobReason ||
+                  (hideJobReason === "other" && !hideJobDetails.trim())
+                }
+                className="rounded-xl border-0 bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isHidingJob ? "Saving..." : "Not interested"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* POST-APPLY FEEDBACK MODAL */}
       {showFeedbackModal && pendingFeedbackJob && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[1000] flex items-center justify-center p-4 animate-fade-in" onClick={closeFeedbackModal}>
@@ -2043,10 +2206,9 @@ function CandidateDashboard() {
           onComplete={handleOnboardingComplete}
         />
       )}
+
     </div>
   );
 }
 
 export default CandidateDashboard;
-
-
