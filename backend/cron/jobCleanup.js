@@ -39,7 +39,7 @@ cron.schedule("0 0 * * *", async () => {
       {
         isExternal: true,
         isActive: { $ne: false },
-        createdAt: { $lt: thirtyDaysAgo },
+        updatedAt: { $lt: thirtyDaysAgo },
       },
       {
         $set: { isActive: false },

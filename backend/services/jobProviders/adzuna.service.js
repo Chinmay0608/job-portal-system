@@ -209,7 +209,6 @@ class AdzunaProvider extends BaseProvider {
       externalId: rawJob.id ? String(rawJob.id) : null,
       employmentType: rawJob.contract_type === "contract" ? "Contract" : "Full-time",
       createdAt: rawJob.created ? new Date(rawJob.created) : new Date(),
-      updatedAt: rawJob.created ? new Date(rawJob.created) : new Date(),
       isActive: true,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       keywords: skillsRequired,

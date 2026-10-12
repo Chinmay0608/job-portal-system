@@ -31,6 +31,7 @@ jest.mock("../../controllers/jobController", () => ({
   searchMasterSkills: jest.fn(),
   aiCareerCoach: jest.fn(),
   generateJobDescription: jest.fn(),
+  getFullJobDescription: jest.fn(),
   getJobsAdmin: jest.fn(),
   semanticSearchJobs: jest.fn(),
   triggerScheduledSync: jest.fn(),

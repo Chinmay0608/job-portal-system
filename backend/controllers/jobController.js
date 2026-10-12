@@ -208,8 +208,8 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (experience && experience !== "All Experience" && experience !== "All") {
-    if (experience === "Fresher") {
-      query.experienceRequired = { $in: ["Fresher", "0-2 Years", "Entry Level", "Not Specified"] };
+    if (experience === "Fresher" || experience === "0-2 Years") {
+      query.experienceRequired = { $in: ["Fresher", "0-2 Years", "Entry Level"] };
     } else {
       query.experienceRequired = experience;
     }
@@ -820,17 +820,42 @@ const deleteJob = asyncHandler(async (req, res) => {
 ========================== */
 const hideJob = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
+  const { reason, details = "" } = req.body || {};
   const user = await User.findById(req.user.id);
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const jobExists = await Job.exists({ _id: jobId });
   if (!jobExists) return res.status(404).json({ message: "Job not found" });
 
-  if (!user.hiddenJobs.includes(jobId)) {
-    user.hiddenJobs.push(jobId);
-    await user.save();
+  const validReasons = ["seniority", "salary", "tech_stack_mismatch", "other"];
+  if (reason !== undefined && !validReasons.includes(reason)) {
+    return res.status(400).json({ message: "Please select a valid reason for hiding this job" });
+  }
+  if (typeof details !== "string" || details.length > 500) {
+    return res.status(400).json({ message: "Additional feedback must be 500 characters or fewer" });
+  }
+  if (reason === "other" && !details.trim()) {
+    return res.status(400).json({ message: "Please describe why this job is not a fit" });
   }
 
+  if (!user.hiddenJobs.some((hiddenJobId) => hiddenJobId.toString() === jobId)) {
+    user.hiddenJobs.push(jobId);
+  }
+
+  if (reason) {
+    const previousFeedback = user.hiddenJobFeedback.find(
+      (feedback) => feedback.jobId.toString() === jobId
+    );
+    if (previousFeedback) {
+      previousFeedback.reason = reason;
+      previousFeedback.details = details.trim();
+      previousFeedback.createdAt = new Date();
+    } else {
+      user.hiddenJobFeedback.push({ jobId, reason, details: details.trim() });
+    }
+  }
+
+  await user.save();
   res.status(200).json({ message: "Job hidden successfully" });
 });
 
@@ -1084,10 +1109,35 @@ const getPublicStats = asyncHandler(async (req, res) => {
   });
 });
 
+/* ==========================================================================
+   GET FULL JOB DESCRIPTION (AUTO-EXPAND SNIPPETS ONSITE)
+   ========================================================================== */
+const getFullJobDescription = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const job = await Job.findById(id);
+  if (!job) {
+    res.status(404);
+    throw new Error("Job not found");
+  }
+
+  const {
+    ensureFullJobDescription,
+    isDescriptionSnippet,
+  } = require("../services/fullDescriptionService");
+  const fullDescription = await ensureFullJobDescription(job);
+
+  res.status(200).json({
+    jobId: job._id,
+    description: fullDescription || job.description,
+    isFullDescription: !isDescriptionSnippet(fullDescription),
+  });
+});
+
 module.exports = {
   getJobsAdmin,
   createJob,
   generateJobDescription,
+  getFullJobDescription,
   aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,

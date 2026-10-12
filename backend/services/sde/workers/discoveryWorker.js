@@ -30,18 +30,12 @@ class DiscoveryWorker {
     return name.toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
-    wakeUp() {
-    if (this.worker && (this.worker.isPaused() || !this.worker.isRunning())) {
-      console.log('[SDE DiscoveryWorker] Waking up to process scheduled jobs...');
-      this.worker.resume();
-    }
-  }
-
   start() {
     if (!queueManager.isOnline) {
       console.log('[SDE DiscoveryWorker] Skipped startup because SDE Queues are offline.');
       return;
     }
+    if (this.worker) return;
 
     this.worker = new Worker('DiscoveryQueue', async (job) => {
       const { companyName, careersUrl, source = 'API' } = job.data;
@@ -111,12 +105,7 @@ class DiscoveryWorker {
       console.log(`[SDE DiscoveryWorker] Successfully registered ${companyName} (${signature.platform})`);
       return { action: 'registered', companyId: newCompany._id };
 
-    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 }, autorun: false });
-
-        this.worker.on('drained', () => {
-      console.log('[SDE DiscoveryWorker] Queue empty. Going to sleep to save Redis commands.');
-      this.worker.pause();
-    });
+    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
 
     this.worker.on('failed', (job, err) => {
       console.error(`[SDE DiscoveryWorker] Job ${job.id} failed:`, err.message);
@@ -124,8 +113,13 @@ class DiscoveryWorker {
 
     console.log('[SDE DiscoveryWorker] Started.');
   }
+
+  async stop() {
+    if (!this.worker) return;
+    await this.worker.close();
+    this.worker = null;
+  }
 }
 
 module.exports = new DiscoveryWorker();
-
 

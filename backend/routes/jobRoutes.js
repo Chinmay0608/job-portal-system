@@ -9,6 +9,7 @@ const {
   getJobsAdmin,
   createJob,
   generateJobDescription,
+  getFullJobDescription,
   aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,
@@ -39,6 +40,7 @@ router.get("/", optionalAuth, getAllJobs);
 router.get("/public-stats", cacheMiddleware(300), getPublicStats);
 router.get("/semantic-search", optionalAuth, semanticSearchJobs);
 router.get("/skills/search", cacheMiddleware(3600), searchMasterSkills);
+router.get("/:id/full-description", optionalAuth, getFullJobDescription);
 
 /* ==========================
    CANDIDATE ROUTES

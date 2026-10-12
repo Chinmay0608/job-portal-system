@@ -43,12 +43,31 @@ export const setStoredUser = (user, token) => {
 };
 
 export const getApiBaseUrl = () => {
-  const envUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
-  // Prevent Mixed Content errors on HTTPS deployment (e.g., Vercel) if env variable is set to insecure http://
-  if (typeof window !== "undefined" && window.location.protocol === "https:" && envUrl.startsWith("http://")) {
+  const rawUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
+  const fallbackBase = typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "";
+
+  let envUrl = rawUrl;
+
+  if (envUrl) {
+    envUrl = envUrl.replace(/\/+$/, "");
+
+    // Accept either a raw backend origin or a value already ending with /api.
+    // All API callers append /api/..., so normalize both shapes to the origin.
+    if (/\/api$/i.test(envUrl)) {
+      envUrl = envUrl.slice(0, -4);
+    }
+  }
+
+  const normalizedUrl = envUrl || fallbackBase;
+
+  // Prevent Mixed Content errors on HTTPS deployments when an insecure localhost URL is configured.
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && normalizedUrl.startsWith("http://")) {
     return "";
   }
-  return envUrl;
+
+  return normalizedUrl;
 };
 
 export const getStoredUser = () => {

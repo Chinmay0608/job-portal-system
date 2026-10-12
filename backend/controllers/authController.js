@@ -18,6 +18,7 @@ const formatUserDTO = (user, applicationsCount = 0) => ({
   location: user.location || "",
   linkedin: user.linkedin || "",
   github: user.github || "",
+  portfolio: user.portfolio || "",
   about: user.about || "",
   skills: user.skills || [],
   education: user.education || "",

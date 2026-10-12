@@ -205,8 +205,15 @@ export default function DashboardTour({ isOpen, onClose }) {
               <Compass size={14} className="text-brand-600" />
               Step {currentStep + 1} of {TOUR_STEPS.length}
             </span>
-            <span className="text-[11px] text-slate-400">
-              Use <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px]">←</kbd> <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px]">→</kbd> to navigate
+            <span className="text-[11px] text-slate-400 inline-flex items-center gap-1.5">
+              Use
+              <kbd className="inline-flex items-center justify-center w-5 h-5 bg-white border border-slate-200 rounded text-slate-600">
+                <ChevronLeft size={10} strokeWidth={2.5} />
+              </kbd>
+              <kbd className="inline-flex items-center justify-center w-5 h-5 bg-white border border-slate-200 rounded text-slate-600">
+                <ChevronRight size={10} strokeWidth={2.5} />
+              </kbd>
+              to navigate
             </span>
           </div>
 

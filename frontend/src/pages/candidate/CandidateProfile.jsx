@@ -63,6 +63,7 @@ function CandidateProfile() {
   const [location, setLocation] = useState(user?.location || "");
   const [linkedin, setLinkedin] = useState(user?.linkedin || "");
   const [github, setGithub] = useState(user?.github || "");
+  const [portfolio, setPortfolio] = useState(user?.portfolio || "");
   const [about, setAbout] = useState(user?.about || "");
   const [education, setEducation] = useState(user?.education || "");
   const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
@@ -131,6 +132,7 @@ function CandidateProfile() {
       profileUser?.location,
       profileUser?.linkedin,
       profileUser?.github,
+      profileUser?.portfolio,
       profileUser?.about,
       profileUser?.education,
       profileUser?.experienceLevel,
@@ -184,6 +186,7 @@ function CandidateProfile() {
       setLocation(user.location || "");
       setLinkedin(user.linkedin || "");
       setGithub(user.github || "");
+      setPortfolio(user.portfolio || "");
       setAbout(user.about || "");
       setSkills(sanitizeSkills(user.skills));
       setEducation(user.education || "");
@@ -203,6 +206,7 @@ function CandidateProfile() {
       formData.append("location", location);
       formData.append("linkedin", linkedin);
       formData.append("github", github);
+      formData.append("portfolio", portfolio);
       formData.append("about", about);
       formData.append("skills", JSON.stringify(skills));
       formData.append("education", education);
@@ -465,7 +469,7 @@ function CandidateProfile() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50/70 text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
+    <div className="w-full min-h-screen bg-[#faf6ef] text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* LEFT COLUMN: SIDEBAR */}
@@ -645,7 +649,7 @@ function CandidateProfile() {
 
               {/* Phone */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone Number</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Phone Number <span className="font-medium text-slate-500">(Optional)</span></label>
                 <input 
                   type="text" 
                   placeholder="e.g., +91 98765 43210" 
@@ -718,7 +722,7 @@ function CandidateProfile() {
 
               {/* LinkedIn */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">LinkedIn Profile</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">LinkedIn Profile <span className="font-medium text-slate-500">(Recommended)</span></label>
                 <input 
                   type="text" 
                   placeholder="linkedin.com/in/username" 
@@ -730,12 +734,24 @@ function CandidateProfile() {
 
               {/* GitHub */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">GitHub / Portfolio</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">GitHub <span className="font-medium text-slate-500">(Recommended)</span></label>
                 <input 
                   type="text" 
                   placeholder="github.com/username" 
                   value={github} 
                   onChange={(e) => setGithub(e.target.value)} 
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                />
+              </div>
+
+              {/* Portfolio */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Portfolio <span className="font-medium text-slate-500">(Recommended)</span></label>
+                <input
+                  type="url"
+                  placeholder="yourportfolio.com"
+                  value={portfolio}
+                  onChange={(e) => setPortfolio(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 />
               </div>
