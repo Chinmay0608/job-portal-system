@@ -16,10 +16,6 @@ const { logSecurityEvent } = require('../middleware/securityAuditMiddleware');
 const isAdminUser = (user, decodedUser) => {
   if (user && user.role === 'admin') return true;
   if (decodedUser && decodedUser.role === 'admin') return true;
-  const seedEmail = process.env.SEED_ADMIN_EMAIL?.toLowerCase();
-  const userEmail = (user?.email || decodedUser?.email)?.toLowerCase();
-  if (seedEmail && userEmail === seedEmail) return true;
-  if (userEmail === 'admin@gmail.com') return true;
   return false;
 };
 

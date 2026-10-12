@@ -244,6 +244,20 @@ const formatSalary = (salaryText, min, max, currency) => {
   return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
 };
 
+const inferExperienceFromDescription = (description = "") => {
+  const text = decodeHTMLEntities(description).replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ");
+  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|–|to)\s*(\d+)\+?)?\s*years?\b/gi)]
+    .filter((match) => /experience/i.test(text.slice(Math.max(0, match.index - 50), match.index + match[0].length + 80)));
+  const buckets = new Set(matches.map((match) => {
+    const minimum = Number(match[1]);
+    const maximum = Number(match[3]);
+    if (minimum >= 5) return "5+ Years";
+    if (minimum >= 3 || (minimum === 2 && maximum >= 3)) return "2-5 Years";
+    return "0-2 Years";
+  }));
+  return buckets.size === 1 ? [...buckets][0] : "Not Specified";
+};
+
 
 // Same field list used in Profile.jsx's calculateCompletion, kept identical
 // so the percentage shown here always matches the Profile page exactly.
@@ -346,6 +360,7 @@ function CandidateDashboard() {
   const [jobLoadError, setJobLoadError] = useState("");
 
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
+  const [submittedSearch, setSubmittedSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
@@ -455,7 +470,7 @@ function CandidateDashboard() {
 
   useEffect(() => {
     if (!isWelcomeHeaderClosing) return;
-    const removeTimer = setTimeout(() => setShowWelcomeHeader(false), 700);
+    const removeTimer = setTimeout(() => setShowWelcomeHeader(false), 1200);
     return () => clearTimeout(removeTimer);
   }, [isWelcomeHeaderClosing]);
 
@@ -531,7 +546,7 @@ function CandidateDashboard() {
       console.error("Failed to refresh recommended jobs after onboarding:", err);
     }
     fetchJobs({
-      searchTerm: search,
+      searchTerm: submittedSearch,
       locationTerm: locationFilter,
       experienceTerm: experienceFilter,
       salaryTerm: salaryFilter,
@@ -563,7 +578,7 @@ function CandidateDashboard() {
       
       // Fetch normal jobs
       await fetchJobs({
-        searchTerm: search,
+        searchTerm: submittedSearch,
         locationTerm: locationFilter,
         experienceTerm: experienceFilter,
         salaryTerm: salaryFilter,
@@ -692,7 +707,7 @@ function CandidateDashboard() {
   useEffect(() => {
     setCurrentPage(1);
     debouncedFetchJobs({
-      searchTerm: search,
+      searchTerm: submittedSearch,
       locationTerm: locationFilter,
       experienceTerm: experienceFilter,
       salaryTerm: salaryFilter,
@@ -703,7 +718,7 @@ function CandidateDashboard() {
       field: user?.field,
       page: 1,
     });
-  }, [search, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, user?.field, debouncedFetchJobs]);
+  }, [submittedSearch, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, user?.field, debouncedFetchJobs]);
 
   const submitApplication = async (fileToSubmit) => {
     const resumeToSend = fileToSubmit || resumeFile;
@@ -958,8 +973,8 @@ function CandidateDashboard() {
     }
 
     // 2. Keyword Search
-    if (search && search.trim()) {
-      const sTerm = search.trim().toLowerCase();
+    if (submittedSearch && submittedSearch.trim()) {
+      const sTerm = submittedSearch.trim().toLowerCase();
       const titleLower = (job.title || "").toLowerCase();
       const companyLower = (job.company || "").toLowerCase();
       const descLower = (job.description || "").toLowerCase();
@@ -1027,7 +1042,7 @@ function CandidateDashboard() {
   // so a new search always starts back at the first 20 results.
   useEffect(() => {
     setVisibleCount(JOBS_PER_PAGE);
-  }, [search, locationFilter, salaryFilter, companyFilter, activeTab]);
+  }, [submittedSearch, locationFilter, salaryFilter, companyFilter, activeTab]);
 
   // Auto-sync selectedJob to the top item of the active tab if current selection is not present
   useEffect(() => {
@@ -1042,7 +1057,7 @@ function CandidateDashboard() {
 
   const retryFetchJobs = () => {
     fetchJobs({
-      searchTerm: search,
+      searchTerm: submittedSearch,
       locationTerm: locationFilter,
       salaryTerm: salaryFilter,
       companyTerm: companyFilter,
@@ -1294,23 +1309,12 @@ function CandidateDashboard() {
                   className="w-full text-sm"
                 />
               </div>
-
               <button 
-                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-full cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 onClick={(e) => {
                   e.stopPropagation();
+                  setSubmittedSearch(search.trim());
                   setCurrentPage(1);
-                  fetchJobs({
-                    searchTerm: search,
-                    locationTerm: locationFilter,
-                    experienceTerm: experienceFilter,
-                    salaryTerm: salaryFilter,
-                    companyTerm: companyFilter,
-                    sourceTerm: sourceFilter,
-                    employmentTerm: employmentTypeFilter,
-                    remoteTerm: isRemoteFilter,
-                    page: 1,
-                  });
                 }}
               >
                 Find jobs
@@ -1445,6 +1449,7 @@ function CandidateDashboard() {
                     className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-colors border-0"
                     onClick={() => {
                       setSearch("");
+                      setSubmittedSearch("");
                       setLocationFilter("");
                       setExperienceFilter("");
                       setSalaryFilter("");
@@ -1474,18 +1479,8 @@ function CandidateDashboard() {
                     className="flex-2 py-2.5 px-5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-md shadow-brand-600/20 border-0"
                     onClick={() => {
                       setIsMobileSearchExpanded(false);
+                      setSubmittedSearch(search.trim());
                       setCurrentPage(1);
-                      fetchJobs({
-                        searchTerm: search,
-                        locationTerm: locationFilter,
-                        experienceTerm: experienceFilter,
-                        salaryTerm: salaryFilter,
-                        companyTerm: companyFilter,
-                        sourceTerm: sourceFilter,
-                        employmentTerm: employmentTypeFilter,
-                        remoteTerm: isRemoteFilter,
-                        page: 1,
-                      });
                     }}
                   >
                     Apply Filters
@@ -1578,6 +1573,7 @@ function CandidateDashboard() {
                     ? () => setActiveTab("All Jobs")
                     : () => {
                         setSearch("");
+                        setSubmittedSearch("");
                         setLocationFilter("");
                         setExperienceFilter("");
                         setSalaryFilter("");
@@ -1598,7 +1594,9 @@ function CandidateDashboard() {
                     const experienceLabel =
                       job.experienceRequired === "Fresher"
                         ? "Entry Level"
-                        : job.experienceRequired;
+                        : job.experienceRequired && job.experienceRequired !== "Not Specified"
+                          ? job.experienceRequired
+                          : inferExperienceFromDescription(job.description);
 
                     return (
                       <div
@@ -1714,7 +1712,7 @@ function CandidateDashboard() {
                       const nextPage = Math.max(1, currentPage - 1);
                       setCurrentPage(nextPage);
                       fetchJobs({
-                        searchTerm: search,
+                        searchTerm: submittedSearch,
                         locationTerm: locationFilter,
                         experienceTerm: experienceFilter,
                         salaryTerm: salaryFilter,
@@ -1735,7 +1733,7 @@ function CandidateDashboard() {
                       const nextPage = Math.min(totalPages, currentPage + 1);
                       setCurrentPage(nextPage);
                       fetchJobs({
-                        searchTerm: search,
+                        searchTerm: submittedSearch,
                         locationTerm: locationFilter,
                         salaryTerm: salaryFilter,
                         companyTerm: companyFilter,

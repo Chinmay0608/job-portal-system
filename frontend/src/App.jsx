@@ -91,7 +91,7 @@ function AppContent() {
               {/* ========================================== */}
               {/* ================= ADMIN ================== */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="/admin/dashboard" element={<ProtectedRoute role={["admin", "recruiter"]}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin-dashboard" element={<ProtectedRoute role={["admin", "recruiter"]}><AdminDashboard /></ProtectedRoute>} />
 
               {/* ========================================== */}

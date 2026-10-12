@@ -2,6 +2,23 @@ const axios = require("axios");
 const BaseProvider = require("./baseProvider");
 const jobAggConfig = require("../../config/jobAggregation");
 
+const getExperienceFromDescription = (description) => {
+  const text = String(description || "")
+    .replace(/&#(?:43|x2b);/gi, "+")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ");
+  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|–|to)\s*(\d+)\+?)?\s*years?\b/gi)]
+    .filter((match) => /experience/i.test(text.slice(Math.max(0, match.index - 50), match.index + match[0].length + 80)));
+  const buckets = new Set(matches.map((match) => {
+    const minimum = Number(match[1]);
+    const maximum = Number(match[3]);
+    if (minimum >= 5) return "5+ Years";
+    if (minimum >= 3 || (minimum === 2 && maximum >= 3)) return "2-5 Years";
+    return "0-2 Years";
+  }));
+  return buckets.size === 1 ? [...buckets][0] : "Not Specified";
+};
+
 class AdzunaProvider extends BaseProvider {
   constructor(config) {
     super("ADZUNA", config);
@@ -201,7 +218,7 @@ class AdzunaProvider extends BaseProvider {
       description: rawJob.description || "Exciting career opportunity to join a dynamic professional team.",
       skillsRequired: skillsRequired.length > 0 ? skillsRequired : [rawJob.category?.label || "General", "Communication"],
       educationRequired: "Bachelor's Degree",
-      experienceRequired: "Not Specified",
+      experienceRequired: getExperienceFromDescription(rawJob.description),
       applyUrl: rawJob.redirect_url,
       isExternal: true,
       isRemote: (rawJob.location && rawJob.location.display_name && rawJob.location.display_name.toLowerCase().includes("remote")) ? true : false,

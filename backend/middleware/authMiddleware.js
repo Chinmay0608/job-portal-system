@@ -68,10 +68,7 @@ const authorizeRoles = (...roles) => {
     if (!req.user) {
       return res.status(403).json({ message: "Access denied" });
     }
-    if (roles.includes(req.user.role)) {
-      return next();
-    }
-    if (req.user.email === 'admin@gmail.com' || (process.env.SEED_ADMIN_EMAIL && req.user.email?.toLowerCase() === process.env.SEED_ADMIN_EMAIL.toLowerCase())) {
+    if (roles.includes(req.user.role) || (req.user.role === "admin" && roles.includes("recruiter"))) {
       return next();
     }
     return res.status(403).json({ message: "Access denied" });

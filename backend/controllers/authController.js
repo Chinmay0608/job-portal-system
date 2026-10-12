@@ -43,6 +43,7 @@ const formatUserDTO = (user, applicationsCount = 0) => ({
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
+  const accountRole = role === "recruiter" ? "recruiter" : "candidate";
 
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
@@ -55,7 +56,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email: normalizedEmail,
     password: hashedPassword,
-    role,
+    role: accountRole,
   });
 
   const token = jwt.sign(

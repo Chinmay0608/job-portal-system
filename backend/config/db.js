@@ -3,8 +3,12 @@ const bcrypt = require("bcryptjs");
 
 const seedAdminUser = async () => {
   try {
-    const adminEmail = (process.env.SEED_ADMIN_EMAIL || "admin@gmail.com").trim().toLowerCase();
-    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123";
+    const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) {
+      console.warn("[Admin Seed] Skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to provision an admin account.");
+      return;
+    }
 
     const User = require("../models/user");
     const existingAdmin = await User.findOne({ email: adminEmail }).select("+password");
@@ -14,15 +18,16 @@ const seedAdminUser = async () => {
         name: "System Admin",
         email: adminEmail,
         password: hashedPassword,
-        role: "recruiter",
+        role: "admin",
       });
-      console.log(`[Admin Seed] Created admin user (${adminEmail}).`);
+      console.log("[Admin Seed] Created configured admin user.");
     } else {
       const isMatch = await bcrypt.compare(adminPassword, existingAdmin.password || "");
-      if (!isMatch) {
+      if (!isMatch || existingAdmin.role !== "admin") {
         existingAdmin.password = await bcrypt.hash(adminPassword, 12);
+        existingAdmin.role = "admin";
         await existingAdmin.save();
-        console.log(`[Admin Seed] Synchronized admin credentials for (${adminEmail}).`);
+        console.log("[Admin Seed] Synchronized configured admin account.");
       }
     }
   } catch (err) {
