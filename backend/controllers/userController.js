@@ -56,6 +56,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     location,
     linkedin,
     github,
+    portfolio,
     about,
     skills,
     education,
@@ -79,6 +80,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.location = location !== undefined ? location : (user.location || "");
   user.linkedin = linkedin !== undefined ? linkedin : (user.linkedin || "");
   user.github = github !== undefined ? github : (user.github || "");
+  user.portfolio = portfolio !== undefined ? portfolio : (user.portfolio || "");
   user.about = about !== undefined ? about : (user.about || "");
   user.education = education !== undefined ? education : (user.education || "");
   user.experienceLevel = experienceLevel || user.experienceLevel || "Fresher";
@@ -194,6 +196,7 @@ const updateProfile = asyncHandler(async (req, res) => {
       location: user.location,
       linkedin: user.linkedin,
       github: user.github,
+      portfolio: user.portfolio,
       about: user.about,
       skills: user.skills,
       education: user.education,
@@ -454,6 +457,7 @@ const getProfile = asyncHandler(async (req, res) => {
       location: user.location || "",
       linkedin: user.linkedin || "",
       github: user.github || "",
+      portfolio: user.portfolio || "",
       about: user.about || "",
       skills: user.skills || [],
       education: user.education || "",
@@ -519,6 +523,7 @@ const completeOnboarding = asyncHandler(async (req, res) => {
       location: user.location || "",
       linkedin: user.linkedin || "",
       github: user.github || "",
+      portfolio: user.portfolio || "",
       about: user.about || "",
       skills: user.skills || [],
       education: user.education || "",

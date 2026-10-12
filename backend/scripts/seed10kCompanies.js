@@ -1,18 +1,17 @@
 /**
  * seed10kCompanies.js
  * 
- * Seeds 10,000+ verified company profiles into the SkillBridge MongoDB database.
+ * Seeds curated companies and companies observed in real job listings.
  * 
  * Sources:
- * 1. 4,354+ live hiring companies already existing in the Jobs collection
- * 2. Curated Fortune 500, Indian Tech Giants, Unicorns, and Top Global Tech Enterprises
- * 3. High-tier specialized technology innovators across AI, Cloud, FinTech, Cyber, HealthTech, and SaaS
+ * 1. Curated Fortune 500, Indian Tech Giants, Unicorns, and Top Global Tech Enterprises
+ * 2. Company names observed in the Jobs collection
  * 
  * Guarantees:
  * - Unique, case-normalized company names (avoids index duplicate errors)
- * - Unique normalizedDomain across all records (satisfies unique sparse index)
+ * - Only assign domains for companies with a known real domain
  * - Safe idempotent upsert using MongoDB bulkWrite
- * - Verified ATS platformRef and metadata
+ * - Do not mark unverified companies as ATS crawl targets
  */
 
 const mongoose = require('mongoose');
@@ -22,34 +21,6 @@ const dotenv = require('dotenv');
 dotenv.config({ path: resolve(__dirname, '../.env') });
 const connectDB = require('../config/db');
 const Company = require('../models/Company');
-
-// Industry classifications
-const INDUSTRIES = [
-  'Information Technology & Services',
-  'Software Development & SaaS',
-  'Financial Technology & Banking',
-  'Artificial Intelligence & Machine Learning',
-  'Cybersecurity & Network Defense',
-  'Healthcare & Biotechnology',
-  'E-Commerce & Digital Marketplaces',
-  'Cloud Infrastructure & DevOps',
-  'CleanTech & Renewable Energy',
-  'Aerospace & Robotics',
-  'Media & Interactive Entertainment',
-  'Supply Chain & Smart Logistics'
-];
-
-const COMPANY_SIZES = [
-  '11-50 employees',
-  '51-200 employees',
-  '201-500 employees',
-  '501-1000 employees',
-  '1001-5000 employees',
-  '5000-10000 employees',
-  '10000+ employees'
-];
-
-const ATS_PLATFORMS = ['GREENHOUSE', 'LEVER', 'WORKDAY', 'ASHBY', 'SMARTRECRUITERS', 'DIRECT'];
 
 // Curated Top Global & Indian Enterprises (Marquee leaders)
 const MARQUEE_COMPANIES = [
@@ -186,49 +157,6 @@ const MARQUEE_COMPANIES = [
   { name: 'Mistral AI', domain: 'mistral.ai', industry: 'Artificial Intelligence & Machine Learning', size: '51-200 employees' }
 ];
 
-// Structural vocabulary for high-quality enterprise generation
-const PREFIXES = [
-  'Apex', 'Cognitive', 'Deep', 'Neural', 'Quantum', 'Synthetix', 'Tensor', 'Vector', 'Cortex',
-  'Autonomous', 'Perceptive', 'Latent', 'Semantic', 'Reasoning', 'Aether', 'Stratos', 'CloudScale',
-  'Orbit', 'Infra', 'Kubernetix', 'Micro', 'Elastic', 'Telemetry', 'Fin', 'Capital', 'Ledger',
-  'Vault', 'Trust', 'Mint', 'Alpha', 'Prime', 'Swift', 'Horizon', 'Sentinel', 'Aegis', 'Cypher',
-  'Shield', 'Bastion', 'Fortress', 'Secure', 'Vigil', 'ZeroTrust', 'Overwatch', 'Bio', 'Gene',
-  'Med', 'Pulse', 'Cura', 'Vital', 'Synapse', 'Helix', 'Longevity', 'Cellular', 'Veloce', 'Kinetic',
-  'Volt', 'Solar', 'Aero', 'Terra', 'Hyperion', 'Metric', 'Insight', 'Nexus', 'Omni', 'Prism',
-  'Sync', 'Logic', 'Agile', 'Workflow', 'Atlas', 'Nova', 'Sol', 'Starlight', 'Beacon', 'Chronos',
-  'Titan', 'Zenith', 'Vortex', 'Echo', 'Helios', 'Cobalt', 'Silicon', 'Aura', 'Foundry', 'Luminary',
-  'Axiom', 'Catalyst', 'Vertex', 'Synergy', 'Meridian', 'Vanguard', 'Pinnacle', 'Vantage',
-  'Tessera', 'Cipher', 'Kinetics', 'Element', 'Nucleus', 'Pragmatic', 'Dynamic', 'Spectra', 'Polaris',
-  'Enigma', 'Integra', 'Omniscient', 'Elevate', 'Paragon', 'Optima', 'Adept', 'Frontier', 'Sovereign',
-  'Elysium', 'Astra', 'Novus', 'Ascend', 'AuraTech', 'Centric', 'Infiniti', 'Prodigy',
-  'Altius', 'TrueScale', 'Metis', 'Quanta', 'Krypton', 'Argon', 'Flux', 'Gravitas', 'IronClad',
-  'HyperScale', 'ByteCraft', 'CodeForge', 'DevScale', 'MindCraft', 'Archon', 'TuringTech', 'Keystone'
-];
-
-const CORES = [
-  'Data', 'Systems', 'Networks', 'Intelligence', 'Dynamics', 'Platform', 'Labs', 'Analytics',
-  'Technologies', 'Solutions', 'Robotics', 'Securities', 'Finance', 'Capital', 'Health',
-  'Therapeutics', 'Mobility', 'Energy', 'Software', 'Cloud', 'Cyber', 'Media', 'Commerce',
-  'Logistics', 'BioTech', 'Studio', 'Workspace', 'Ventures', 'Digital', 'Engines', 'Infra',
-  'Interactive', 'Research', 'Automation', 'Matrix', 'Cognition', 'Consulting', 'Innovations'
-];
-
-const SUFFIXES = [
-  'Corp', 'Technologies', 'Labs', 'Systems', 'Solutions', 'Global', 'Group', 'Networks',
-  'Innovations', 'Software', 'Platforms', 'Holdings', 'AI', 'Enterprises', 'Ventures', 'Digital',
-  'Services', 'Hub', 'Dynamics', 'Works', 'Logic', 'Foundry', 'Scale', 'Nexus'
-];
-
-/**
- * Normalizes a company name into a clean, lowercased domain slug.
- */
-function toCleanSlug(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-    .substring(0, 30);
-}
-
 /**
  * Main seeding execution
  */
@@ -250,13 +178,13 @@ async function run() {
     jobCompanies = await Job.distinct('company');
     console.log(`🔍 Extracted ${jobCompanies.length} distinct hiring companies from Jobs collection.`);
   } catch (err) {
-    console.warn('⚠️ Could not extract from Jobs collection, relying on synthesis:', err.message);
+    console.warn('⚠️ Could not extract company names from Jobs collection:', err.message);
   }
 
   const companiesToInsert = [];
 
-  // Helper to safely register a company
-  const registerCompany = (name, customDomain, industry, size, platformRef, priority = 5, verificationLevel = 'Seed Database') => {
+  // Helper to safely register a company without inventing crawl metadata.
+  const registerCompany = (name, customDomain, industry, size) => {
     const cleanName = (name || '').trim();
     if (!cleanName || cleanName.length < 2 || cleanName.length > 80) return;
     
@@ -265,115 +193,45 @@ async function run() {
     if (seenNames.has(lowerName)) return;
     seenNames.add(lowerName);
 
-    // Generate unique domain
-    let baseSlug = customDomain ? customDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '') : `${toCleanSlug(cleanName)}.com`;
-    if (!baseSlug || baseSlug.length < 4) {
-      baseSlug = `company-${Math.random().toString(36).substring(2, 8)}.com`;
-    }
-
-    let domain = baseSlug.toLowerCase();
-    if (seenDomains.has(domain)) {
-      // Collision resolution
-      let counter = 1;
-      while (seenDomains.has(`${toCleanSlug(cleanName)}${counter}.com`)) {
-        counter++;
-      }
-      domain = `${toCleanSlug(cleanName)}${counter}.com`;
-    }
-    seenDomains.add(domain);
+    const domain = customDomain
+      ?.replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '')
+      .toLowerCase();
+    const uniqueDomain = domain && !seenDomains.has(domain) ? domain : '';
+    if (uniqueDomain) seenDomains.add(uniqueDomain);
 
     companiesToInsert.push({
       name: cleanName,
-      website: `https://www.${domain}`,
-      normalizedDomain: domain,
-      careerPage: `https://www.${domain}/careers`,
-      industry: industry || INDUSTRIES[Math.floor(Math.random() * INDUSTRIES.length)],
-      size: size || COMPANY_SIZES[Math.floor(Math.random() * COMPANY_SIZES.length)],
-      platformRef: platformRef || ATS_PLATFORMS[Math.floor(Math.random() * ATS_PLATFORMS.length)],
-      providerIdentifier: toCleanSlug(cleanName),
-      status: 'VERIFIED',
-      priority: priority,
-      verificationLevel: verificationLevel
+      website: uniqueDomain ? `https://${uniqueDomain}` : '',
+      ...(uniqueDomain ? { normalizedDomain: uniqueDomain } : {}),
+      careerPage: uniqueDomain ? `https://${uniqueDomain}/careers` : '',
+      industry: industry || '',
+      size: size || '',
+      platformRef: 'UNKNOWN',
+      providerIdentifier: '',
+      status: 'DISCOVERED',
+      priority: 2,
+      verificationLevel: 'Seed Database'
     });
   };
 
-  // Phase A: Seed Marquee Enterprises
+  // Register curated companies without claiming their ATS is verified.
   for (const m of MARQUEE_COMPANIES) {
-    registerCompany(m.name, m.domain, m.industry, m.size, 'DIRECT', 9, 'Seed Database');
+    registerCompany(m.name, m.domain, m.industry, m.size);
   }
 
-  // Phase B: Seed Existing Job Hiring Companies
+  // Register companies observed in jobs without inventing websites or ATS tokens.
   for (const jobComp of jobCompanies) {
     if (!jobComp) continue;
-    registerCompany(
-      jobComp,
-      null,
-      INDUSTRIES[Math.floor(Math.random() * INDUSTRIES.length)],
-      COMPANY_SIZES[Math.floor(Math.random() * COMPANY_SIZES.length)],
-      'ATS Verified',
-      6,
-      'ATS Verified'
-    );
+    registerCompany(jobComp);
   }
 
-  console.log(`📦 Registered ${companiesToInsert.length} companies after Marquee + Job import.`);
+  console.log(`📦 Registered ${companiesToInsert.length} curated/observed companies.`);
 
-  // Phase C: Synthesize High-Caliber Technology Enterprises to reach 10,200+
-  const targetTotal = 10500;
-  const needed = targetTotal - (existingDocs.length + companiesToInsert.length);
-  console.log(`🎯 Need ~${Math.max(0, needed)} additional companies to surpass target of 10,000.`);
+  console.log(`✨ Total curated/observed companies ready for insertion: ${companiesToInsert.length}`);
 
-  if (needed > 0) {
-    let pIdx = 0;
-    let cIdx = 0;
-    let sIdx = 0;
-
-    while (companiesToInsert.length + existingDocs.length < targetTotal) {
-      const p = PREFIXES[pIdx % PREFIXES.length];
-      const c = CORES[cIdx % CORES.length];
-      const s = SUFFIXES[sIdx % SUFFIXES.length];
-
-      // Formations: "Prefix Core", "Prefix Core Suffix", "Prefix Suffix"
-      let candidateName = '';
-      const mode = (pIdx + cIdx + sIdx) % 3;
-      if (mode === 0) {
-        candidateName = `${p} ${c}`;
-      } else if (mode === 1) {
-        candidateName = `${p} ${c} ${s}`;
-      } else {
-        candidateName = `${p} ${s}`;
-      }
-
-      // Map industry logically based on core keyword
-      let ind = INDUSTRIES[0];
-      if (c.includes('AI') || c.includes('Intelligence') || c.includes('Cognition')) ind = 'Artificial Intelligence & Machine Learning';
-      else if (c.includes('Finance') || c.includes('Securities') || c.includes('Capital')) ind = 'Financial Technology & Banking';
-      else if (c.includes('Cyber') || c.includes('Secur')) ind = 'Cybersecurity & Network Defense';
-      else if (c.includes('Cloud') || c.includes('Infra') || c.includes('Networks')) ind = 'Cloud Infrastructure & DevOps';
-      else if (c.includes('Health') || c.includes('Bio') || c.includes('Therapeutics')) ind = 'Healthcare & Biotechnology';
-      else if (c.includes('Robotics') || c.includes('Mobility') || c.includes('Energy')) ind = 'Aerospace & Robotics';
-      else if (c.includes('Commerce') || c.includes('Logistics')) ind = 'Supply Chain & Smart Logistics';
-      else ind = 'Software Development & SaaS';
-
-      registerCompany(
-        candidateName,
-        null,
-        ind,
-        COMPANY_SIZES[(pIdx + cIdx) % COMPANY_SIZES.length],
-        ATS_PLATFORMS[(cIdx + sIdx) % ATS_PLATFORMS.length],
-        5,
-        'Seed Database'
-      );
-
-      pIdx++;
-      if (pIdx % PREFIXES.length === 0) cIdx++;
-      if (cIdx % CORES.length === 0) sIdx++;
-    }
-  }
-
-  console.log(`✨ Total new companies ready for insertion: ${companiesToInsert.length}`);
-
-  // Phase D: Insert in Batches using bulkWrite
+  // Insert in batches using bulkWrite.
   const BATCH_SIZE = 1000;
   let totalInserted = 0;
 
@@ -393,7 +251,7 @@ async function run() {
   }
 
   const finalCount = await Company.countDocuments();
-  console.log(`\n🎉 SUCCESS! MongoDB Company Collection now has ${finalCount} total companies!`);
+  console.log(`\n🎉 Company registry now has ${finalCount} records.`);
   
   await mongoose.disconnect();
   process.exit(0);

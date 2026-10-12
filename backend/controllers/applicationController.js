@@ -131,7 +131,7 @@ const getMyApplications = asyncHandler(async (req, res) => {
   const applications = await Application.find(query)
     .populate({
       path: "job",
-      select: "title company location description salary salaryMin salaryMax salaryCurrency isExternal source companyLogo applyUrl",
+      select: "title company location description salary salaryMin salaryMax salaryCurrency isExternal source companyLogo applyUrl domain skillsRequired experienceRequired",
     })
     .skip((currentPage - 1) * perPage)
     .limit(perPage);

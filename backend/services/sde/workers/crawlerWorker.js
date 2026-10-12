@@ -4,6 +4,8 @@ const RawJobPayload = require('../../../models/RawJobPayload');
 const HashOptimizer = require('../HashOptimizer');
 const queueManager = require('../queues');
 const LifecycleManager = require('../LifecycleManager');
+const Job = require('../../../models/job');
+const { classifyJob } = require('../../jobClassifierService');
 const { performance } = require('perf_hooks');
 
 class CrawlerWorker {
@@ -11,20 +13,14 @@ class CrawlerWorker {
     this.worker = null;
   }
 
-    wakeUp() {
-    if (this.worker && (this.worker.isPaused() || !this.worker.isRunning())) {
-      console.log('[SDE CrawlerWorker] Waking up to process scheduled jobs...');
-      this.worker.resume();
-    }
-  }
-
-  start() {
+  start(queueName = 'CrawlerQueue') {
     if (!queueManager.isOnline) {
       console.log('[SDE CrawlerWorker] Skipped startup because SDE Queues are offline.');
       return;
     }
+    if (this.worker) return;
 
-    this.worker = new Worker('CrawlerQueue', async (job) => {
+    this.worker = new Worker(queueName, async (job) => {
       console.log(`[SDE CrawlerWorker] Processing crawl job for company: ${job.data.companyId}`);
       const { providerName, identifier, companyId } = job.data;
 
@@ -43,8 +39,10 @@ class CrawlerWorker {
         
         // 1. Extract raw jobs using the provider plugin
         rawJobs = await plugin.extractJobs(identifier);
-        // Inject companyName for sync adapter
-        rawJobs.forEach(j => j.companyName = companyName);
+        rawJobs.forEach((rawJob) => {
+          rawJob.companyName = companyName;
+          rawJob.companyId = companyId;
+        });
       } catch (err) {
         await LifecycleManager.recordFailure(job.data.companyId, `Extraction error: ${err.message}`);
         throw err;
@@ -60,20 +58,20 @@ class CrawlerWorker {
       const deltas = { newJobs: 0, updatedJobs: 0, expiredJobs: 0, unchangedJobs: 0, failedJobs: 0 };
       const freshness = { fresh24h: 0, recent1to7d: 0, aging7to30d: 0, staleOver30d: 0 };
       
-      const newOrUpdatedJobs = [];
+      const jobsToSync = [];
       const incomingExternalIds = new Set(rawJobs.map(j => j.externalId));
+      const hasCompleteExternalIds = rawJobs.every((rawJob) => Boolean(rawJob.externalId));
       const now = new Date();
-
-      const { classifyJob } = require('../../../jobClassifierService');
 
       for (const rawJob of rawJobs) {
         // Auto-classify domain if missing or "other"
         if (!rawJob.domain && (!rawJob.category || rawJob.category.toLowerCase() === 'other' || rawJob.category.toLowerCase() === 'uncategorized')) {
           try {
-            const classification = await classifyJob(rawJob.title, rawJob.description);
-            if (classification && classification.confidence > 0.65) {
-              rawJob.domain = classification.primaryDomain;
-              rawJob.category = classification.primaryDomain;
+            const classification = classifyJob(rawJob);
+            rawJob.domain = classification.domain;
+            rawJob.category = classification.domain;
+            if (classification.seniorityLevel !== 'Mid Level') {
+              rawJob.seniorityLevel = classification.seniorityLevel;
             }
           } catch (err) {
             console.warn(`[CrawlerWorker] Domain classification failed for ${rawJob.title}:`, err.message);
@@ -105,9 +103,9 @@ class CrawlerWorker {
         if (existingRaw) {
           if (!HashOptimizer.hasChanged(hash, existingRaw.hash)) {
             deltas.unchangedJobs++;
-            continue;
+          } else {
+            deltas.updatedJobs++;
           }
-          deltas.updatedJobs++;
         } else {
           deltas.newJobs++;
         }
@@ -119,6 +117,7 @@ class CrawlerWorker {
           companyId: companyId
         });
 
+        rawModel.companyId = companyId;
         rawModel.setPayload(rawJob.rawPayload);
         rawModel.hash = hash;
         rawModel.version = (rawModel.version || 0) + 1;
@@ -126,50 +125,66 @@ class CrawlerWorker {
         rawModel.isActive = true;
         await rawModel.save();
 
-        // 4. Pass changed job to next queue (Sync Adapter / AI)
-        newOrUpdatedJobs.push(rawJob);
+        // Re-sync unchanged jobs too so live listings are refreshed and reactivated.
+        jobsToSync.push(rawJob);
       }
 
-      // 5. Detect Expired Jobs
-      // Find jobs in DB for this company that are currently active, but were not in the incoming batch
-      const expiredDocs = await RawJobPayload.updateMany(
-        { 
-          companyId: companyId,
-          isActive: true,
-          externalId: { $nin: Array.from(incomingExternalIds) }
-        },
-        { $set: { isActive: false } }
-      );
-      
-      deltas.expiredJobs = expiredDocs.modifiedCount || 0;
+      console.log(`[SDE CrawlerWorker] Extracted ${rawJobs.length} jobs. ${deltas.newJobs} new, ${deltas.updatedJobs} updated, ${deltas.unchangedJobs} unchanged.`);
+
+      let syncMetrics;
+      if (jobsToSync.length > 0) {
+        const syncAdapter = require('../SyncAdapter');
+        syncMetrics = await syncAdapter.processJobs(providerName, jobsToSync);
+      }
+
+      if (
+        hasCompleteExternalIds &&
+        syncMetrics &&
+        syncMetrics.failed === 0 &&
+        syncMetrics.invalid === 0 &&
+        syncMetrics.inserted + syncMetrics.updated + syncMetrics.skipped > 0
+      ) {
+        const externalIds = Array.from(incomingExternalIds);
+        const expiredDocs = await RawJobPayload.updateMany(
+          {
+            companyId,
+            isActive: true,
+            externalId: { $nin: externalIds },
+          },
+          { $set: { isActive: false } },
+        );
+        deltas.expiredJobs = expiredDocs.modifiedCount || 0;
+
+        await Job.updateMany(
+          {
+            companyId,
+            source: `SDE_${providerName}`,
+            externalId: { $nin: externalIds },
+            isActive: { $ne: false },
+          },
+          { $set: { isActive: false } },
+        );
+      } else {
+        console.warn(`[SDE CrawlerWorker] Skipping stale-job expiry for ${companyId}: sync was incomplete or unsuccessful.`);
+      }
 
       await LifecycleManager.recordSuccess(job.data.companyId, deltas, durationMs, freshness);
 
-      console.log(`[SDE CrawlerWorker] Extracted ${rawJobs.length} jobs. ${newOrUpdatedJobs.length} have changes.`);
-
-      // For MVP: Pass directly to SyncAdapter (Simulating SyncQueue)
-      // In a full implementation, this goes to AIQueue
-      if (newOrUpdatedJobs.length > 0) {
-        const syncAdapter = require('../SyncAdapter');
-        await syncAdapter.processJobs(providerName, newOrUpdatedJobs);
-      }
-
-      return { processed: rawJobs.length, changed: newOrUpdatedJobs.length };
-    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 }, autorun: false });
-
-        this.worker.on('drained', () => {
-      console.log('[SDE CrawlerWorker] Queue empty. Going to sleep to save Redis commands.');
-      this.worker.pause();
-    });
+      return { processed: rawJobs.length, changed: deltas.newJobs + deltas.updatedJobs };
+    }, { connection: queueManager.connection, stalledInterval: 300000, metrics: { maxDataPoints: 0 } });
 
     this.worker.on('failed', (job, err) => {
       console.error(`[SDE CrawlerWorker] Job ${job.id} failed:`, err.message);
     });
 
-    console.log('[SDE CrawlerWorker] Started.');
+    console.log(`[SDE CrawlerWorker] Started on ${queueName}.`);
+  }
+
+  async stop() {
+    if (!this.worker) return;
+    await this.worker.close();
+    this.worker = null;
   }
 }
 
 module.exports = new CrawlerWorker();
-
-

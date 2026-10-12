@@ -217,7 +217,7 @@ function RecruiterDashboard() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 font-sans pb-28 text-slate-900">
+    <div className="w-full min-h-screen bg-[#faf6ef] font-sans pb-28 text-slate-900">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* SUB-HEADER CONTEXT ROW (Mobile only) */}

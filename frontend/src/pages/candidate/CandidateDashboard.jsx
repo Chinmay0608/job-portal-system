@@ -50,143 +50,173 @@ const getRelativeTime = (dateString) => {
   return `Posted ${days} days ago`;
 };
 
-  const renderExternalDescription = (text) => {
-    if (!text) return null;
-    const decoded = decodeHTMLEntities(text);
+const isDescriptionSnippet = (description) => {
+  const text = (description || "").trim();
+  return (
+    isMisstructuredDescription(text) ||
+    text.length < 350 ||
+    text.endsWith("...") ||
+    text.endsWith("…") ||
+    /\band\s*\.\.\.$/i.test(text) ||
+    text.includes("read more on career portal") ||
+    text.includes("preview snippet")
+  );
+};
 
-    // ── If text contains rich HTML tags, render directly with sanitized DOMPurify ──
-    if (/<[a-z][\s\S]*>/i.test(decoded)) {
+const isMisstructuredDescription = (description) => {
+  const text = description || "";
+  return (
+    /<h3[^>]*>\s*Role Summary\s*<\/h3>\s*<p[^>]*>\s*(?:Required|undefined|null)\s*<\/p>/i.test(
+      text,
+    ) ||
+    /<h3[^>]*>\s*(?:Key Responsibilities|Required Qualifications)\s*<\/h3>\s*<p[^>]*>\s*(?:undefined|null|Not specified in the employer posting\.)/i.test(
+      text,
+    ) ||
+    (/<h3[^>]*>\s*Role Summary\s*<\/h3>[\s\S]{0,1200}?(?:Job Description|Required Experience and Skills)/i.test(
+      text,
+    ) &&
+      /<h3[^>]*>\s*(?:Key Responsibilities|Required Qualifications)\s*<\/h3>\s*<p[^>]*>\s*Not specified in the employer posting\./i.test(
+        text,
+      ))
+  );
+};
+
+const alignWhoWeAreHeading = (html) => {
+  const doc = new DOMParser().parseFromString(DOMPurify.sanitize(html), "text/html");
+  doc.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
+    if (/^who\s+we\s+are\s*:?\s*$/i.test(heading.textContent.trim())) {
+      heading.classList.add("job-description-who-we-are");
+    }
+  });
+  return doc.body.innerHTML;
+};
+
+  const renderExternalDescription = (text, job) => {
+    if (!text) return null;
+
+    const hasHtmlMarkup = /<[a-z][\s\S]*>/i.test(text);
+    const decodedText = hasHtmlMarkup ? text : decodeHTMLEntities(text);
+    if (hasHtmlMarkup || /<[a-z][\s\S]*>/i.test(decodedText)) {
       return (
         <div
-          className="prose prose-slate prose-sm max-w-none space-y-3 leading-relaxed
+          className="job-description-content prose prose-slate max-w-none space-y-3 leading-relaxed
             prose-headings:font-bold prose-headings:text-slate-900 prose-headings:mt-4 prose-headings:mb-2
             prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-2
             prose-li:text-slate-700 prose-li:leading-relaxed
             prose-ul:list-disc prose-ul:pl-5 prose-ul:my-2
             prose-strong:text-slate-900"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decoded) }}
+          dangerouslySetInnerHTML={{ __html: alignWhoWeAreHeading(decodedText) }}
         />
       );
     }
 
-    // ── If text already has markdown headings, parse it directly ──────────
-    if (decoded.includes("##") || decoded.includes("**")) {
-      let md = decoded;
-      // Collapse 3+ spaces into paragraph breaks
-      md = md.replace(/[ \t]{3,}/g, '\n\n');
-      // Ensure headings get a blank line before them
-      md = md.replace(/(?<!\n)(#{1,6}\s)/g, '\n\n$1');
-      // Ensure list items get a newline before them
-      md = md.replace(/(?<!\n)([-*]\s)/g, '\n$1');
+    let body = decodedText
+      .replace(/\bSalary comparison\b[\s\S]*$/i, "")
+      .replace(/\b(?:Receive similar jobs by email|Similar jobs)\b[\s\S]*$/i, "")
+      .replace(/\b(?:Back to last search|Stats for this job)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const leadingJobDetails = [job?.title, job?.company]
+      .filter(Boolean)
+      .some((value) => body.slice(0, 300).toLowerCase().includes(value.toLowerCase()));
+    const applyActionIndex = body.toLowerCase().indexOf("apply for this job");
+    if (leadingJobDetails && applyActionIndex >= 0 && applyActionIndex < 400) {
+      body = body.slice(applyActionIndex + "apply for this job".length).trim();
+    }
+    body = body.replace(/\bApply for this job\b/gi, " ").replace(/\s+/g, " ").trim();
+
+    if (body.includes("##") || body.includes("**")) {
+      const md = body
+        .replace(/[ \t]{3,}/g, "\n\n")
+        .replace(/(?<!\n)(#{1,6}\s)/g, "\n\n$1")
+        .replace(/(?<!\n)([-*]\s)/g, "\n$1");
       const html = marked.parse(md);
       return (
         <div
-          className="prose prose-slate prose-sm max-w-none
+          className="job-description-content prose prose-slate max-w-none
             prose-headings:font-semibold prose-headings:text-slate-800
             prose-p:text-slate-700 prose-p:leading-relaxed
             prose-li:text-slate-700 prose-li:leading-relaxed
             prose-ul:list-disc prose-ul:pl-5
             prose-strong:text-slate-800"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+          dangerouslySetInnerHTML={{ __html: alignWhoWeAreHeading(html) }}
         />
       );
     }
 
-    // ── Known section header keywords ─────────────────────────────────────
-    const SECTION_HEADERS = [
-      "About the role", "About the Role",
-      "About the company", "About the Company", "About Us", "About us",
-      "The Role", "The role",
-      "Job Description", "Job description",
-      "Responsibilities", "Key Responsibilities", "Your Responsibilities",
-      "Requirements", "Key Requirements", "What You'll Need", "What you'll need",
-      "Skills Required", "Skills & Experience", "Required Skills",
-      "Qualifications", "Minimum Qualifications", "Required Qualifications",
-      "What We Offer", "What we offer", "Benefits", "Perks & Benefits",
-      "Nice to Have", "Nice-to-Have", "Preferred Qualifications",
-      "How to Apply", "Application Process", "Next Steps",
-      "Location", "Working Hours", "Compensation",
+    const sectionHeaders = [
+      "About the role", "About the company", "About us", "Who We Are", "The role",
+      "Job description", "Key responsibilities", "Your responsibilities",
+      "Responsibilities", "Key requirements", "What you'll need",
+      "Skills required", "Skills & experience", "Required skills",
+      "Required qualifications", "Minimum qualifications", "Qualifications",
+      "Preferred qualifications", "Nice-to-have", "Nice to have",
+      "Perks & benefits", "What we offer", "Benefits", "How to apply",
+      "Application process", "Next steps", "Working hours", "Compensation",
+      "Location", "Skills",
     ];
 
-    // Build a regex that splits on these headers (keeping the delimiter)
-    const escapedHeaders = SECTION_HEADERS.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const splitRegex = new RegExp(`(?=${escapedHeaders.join('|')})`, 'g');
+    const escapedHeaders = sectionHeaders
+      .sort((a, b) => b.length - a.length)
+      .map((header) => header.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const headerPattern = new RegExp(
+      `(^|\\s)(${escapedHeaders.join("|")})\\s*:?\\s*`,
+      "gi",
+    );
+    const sections = [];
+    let currentHeading = "Overview";
+    let cursor = 0;
 
-    // ── Step 1: Strip pipe-separated metadata line at the very start ──────
-    // e.g. "Technical Support Engineer | Bengaluru | Hybrid • Full-time | up to 5 LPA"
-    // Detect if first ~200 chars are mostly pipe-delimited metadata
-    let body = decoded;
-    const metaMatch = decoded.match(/^([^\n]{0,300}?\|[^\n]{0,300})(?:\s{2,}|\n)([\s\S]*)/);
-    if (metaMatch) {
-      // The first match group is the metadata line, second is the real body
-      // Only strip it if it doesn't look like a prose sentence (few words between pipes)
-      const segments = metaMatch[1].split('|').map(s => s.trim());
-      const looksLikeMeta = segments.every(s => s.split(' ').length <= 8);
-      if (looksLikeMeta) {
-        body = metaMatch[2].trim();
-      }
+    for (const match of body.matchAll(headerPattern)) {
+      const content = body.slice(cursor, match.index).trim();
+      if (content) sections.push({ heading: currentHeading, content });
+      currentHeading = match[2]
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      cursor = match.index + match[0].length;
     }
 
-    // ── Step 2: Try to split into sections ────────────────────────────────
-    const rawSections = body.split(splitRegex).map(s => s.trim()).filter(Boolean);
-
-    if (rawSections.length <= 1) {
-      // No section headers found — just render as flowing paragraphs
-      // Split on double-space, pipe, or newline to get pseudo-paragraphs
-      const paras = body
-        .split(/\n{2,}|(?<=\w)  +(?=[A-Z])|\|/)
-        .map(p => p.trim())
-        .filter(p => p.length > 2);
-
-      return (
-        <div className="space-y-3 text-sm text-slate-700 leading-relaxed">
-          {paras.map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
-        </div>
-      );
+    const finalContent = body.slice(cursor).trim();
+    if (finalContent) sections.push({ heading: currentHeading, content: finalContent });
+    if (sections.length === 0 && body) {
+      sections.push({ heading: "Overview", content: body });
     }
 
-    // ── Step 3: Render each section with heading + body ───────────────────
     return (
-      <div className="space-y-5 text-sm text-slate-700 leading-relaxed">
-        {rawSections.map((section, idx) => {
-          // Find which header starts this section
-          const matchedHeader = SECTION_HEADERS.find(h => section.startsWith(h));
-          let heading = matchedHeader || null;
-          let content = heading ? section.slice(heading.length).replace(/^[:.\s]+/, '').trim() : section;
-
-          // Split content into lines/bullets
-          const lines = content
-            .split(/\n+|(?<=\w)  +(?=[A-Z•\-*])/)
-            .map(l => l.replace(/^[•\-*]\s*/, '').trim())
-            .filter(l => l.length > 1);
-
-          // Heuristic: if most lines are short (≤12 words), render as a list
-          const avgWords = lines.reduce((acc, l) => acc + l.split(' ').length, 0) / (lines.length || 1);
-          const isList = lines.length > 2 && avgWords <= 12;
-
+      <div className="job-description-content space-y-5 text-slate-700">
+        {sections.map(({ heading, content }, idx) => {
+          const items = content
+            .split(/\s*[•●▪]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
+            .map((item) => item.replace(/^[-*]\s*/, "").trim())
+            .filter(Boolean);
+          const isWhoWeAreSection = /^who\s+we\s+are$/i.test(heading);
+          const isSkillSection = /skills/i.test(heading);
+          const listItems = isSkillSection
+            ? content.split(/\s*,\s*/).map((item) => item.trim()).filter(Boolean)
+            : items;
+          const paragraphs = content
+            .split(/(?<=[.!?])\s+(?=[A-Z])/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean);
           return (
-            <div key={idx}>
-              {heading && (
-                <h4 className="font-semibold text-slate-800 text-sm mb-2 border-b border-slate-100 pb-1">
-                  {heading}
-                </h4>
-              )}
-              {isList ? (
-                <ul className="list-disc pl-4 space-y-1">
-                  {lines.map((line, i) => (
-                    <li key={i} className="text-slate-700">{line}</li>
+            <section key={idx} className="border-b border-slate-100 pb-5 last:border-0 last:pb-0">
+              <h5 className={`mb-2 ${isWhoWeAreSection ? "job-description-who-we-are" : ""} text-sm font-bold tracking-tight text-slate-900`}>
+                {heading}
+              </h5>
+              {!isWhoWeAreSection ? (
+                <ul className="m-0 ml-12 list-disc space-y-1.5 pl-5">
+                  {listItems.map((item, i) => (
+                    <li key={i} className="text-slate-700">{item}</li>
                   ))}
                 </ul>
               ) : (
-                <div className="space-y-2">
-                  {lines.map((line, i) => (
-                    <p key={i} className="text-slate-700">{line}</p>
+                <div className="ml-12 space-y-2">
+                  {paragraphs.map((paragraph, i) => (
+                    <p key={i} className="m-0 text-slate-700">{paragraph}</p>
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           );
         })}
       </div>
@@ -542,7 +572,10 @@ function CandidateDashboard() {
   useEffect(() => {
     const hasSeen = localStorage.getItem("has_seen_dashboard_tour_v1");
     if (!hasSeen) {
-      const timer = setTimeout(() => setIsTourOpen(true), 800);
+      const timer = setTimeout(() => {
+        localStorage.setItem("has_seen_dashboard_tour_v1", "true");
+        setIsTourOpen(true);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -563,14 +596,9 @@ function CandidateDashboard() {
   useEffect(() => {
     if (!selectedJob?._id) return;
 
-    const desc = selectedJob.description || "";
-    const isTruncatedSnippet =
-      desc.trim().endsWith("...") ||
-      desc.trim().endsWith("…") ||
-      desc.includes("and...") ||
-      (selectedJob.isExternal && desc.length < 400);
+    const isTruncatedSnippet = isDescriptionSnippet(selectedJob.description);
 
-    if (isTruncatedSnippet && !selectedJob.isFullDescription) {
+    if (isTruncatedSnippet && (!selectedJob.isFullDescription || isMisstructuredDescription(selectedJob.description))) {
       let isCancelled = false;
       setIsExpandingDescription(true);
 
@@ -579,20 +607,20 @@ function CandidateDashboard() {
           if (!isCancelled && res?.description) {
             setSelectedJob((prev) =>
               prev && prev._id === res.jobId
-                ? { ...prev, description: res.description, isFullDescription: true }
+                ? { ...prev, description: res.description, isFullDescription: res.isFullDescription === true }
                 : prev
             );
             setJobs((prevJobs) =>
               prevJobs.map((j) =>
                 j._id === res.jobId
-                  ? { ...j, description: res.description, isFullDescription: true }
+                  ? { ...j, description: res.description, isFullDescription: res.isFullDescription === true }
                   : j
               )
             );
             setRecommendedJobsList((prevRec) =>
               prevRec.map((j) =>
                 j._id === res.jobId
-                  ? { ...j, description: res.description, isFullDescription: true }
+                  ? { ...j, description: res.description, isFullDescription: res.isFullDescription === true }
                   : j
               )
             );
@@ -906,7 +934,10 @@ function CandidateDashboard() {
 
     // 3. Experience Level Filter
     if (experienceFilter && experienceFilter !== "All Experience") {
-      if (job.experienceRequired && job.experienceRequired.toLowerCase() !== experienceFilter.toLowerCase()) {
+      const jobExperience = job.experienceRequired?.toLowerCase();
+      const isFresherMatch =
+        experienceFilter.toLowerCase() === "0-2 years" && jobExperience === "fresher";
+      if (jobExperience && jobExperience !== experienceFilter.toLowerCase() && !isFresherMatch) {
         return false;
       }
     }
@@ -1107,7 +1138,7 @@ function CandidateDashboard() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 font-sans pb-3">
+    <div className="candidate-dashboard-surface w-full min-h-screen font-sans pb-3">
       <DashboardTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
       {jobLoadError && (
@@ -1119,7 +1150,7 @@ function CandidateDashboard() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
         {/* DASHBOARD TOP HEADER & TOUR BAR */}
         {showWelcomeHeader && (
-          <div className="mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="candidate-welcome-header mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
               <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
@@ -1185,7 +1216,7 @@ function CandidateDashboard() {
         {/* SEARCH CONSOLE BAR */}
         <div className="mb-3.5" data-tour="search-filters">
             <div 
-              className="flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default" 
+              className="candidate-search-bar flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default"
               onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
             >
               <div className="flex-1 flex items-center px-3 py-2 gap-2.5 min-w-0">
@@ -1204,7 +1235,7 @@ function CandidateDashboard() {
                 <FiMapPin className="text-slate-400 text-lg shrink-0" />
                 <input
                   type="text"
-                  placeholder="India"
+                  placeholder="e.g. India, USA, or Bangalore..."
                   value={locationFilter}
                   onChange={(e) => setLocationFilter(e.target.value)}
                   className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
@@ -1228,7 +1259,7 @@ function CandidateDashboard() {
               </div>
 
               <button 
-                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shrink-0 shadow-sm"
+                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-xl cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentPage(1);
@@ -1433,7 +1464,7 @@ function CandidateDashboard() {
           <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4" data-tour="recommended-toggle">
-              <div className="relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
+              <div className="candidate-job-tabs relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
                 {/* Sliding Active Pill Indicator */}
                 <div
                   className="absolute top-1 bottom-1 left-1 w-[calc((100%-8px)/3)] bg-brand-600 rounded-full shadow-xs transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
@@ -1527,13 +1558,17 @@ function CandidateDashboard() {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
                     const matchInfo = calculateJobMatchScore(job, user);
+                    const experienceLabel =
+                      job.experienceRequired === "Fresher"
+                        ? "Entry Level"
+                        : job.experienceRequired;
 
                     return (
                       <div
                         key={job._id}
-                        className={`bg-white border rounded-2xl p-4 sm:p-5 cursor-pointer transition-all ${
+                        className={`candidate-job-card bg-white border rounded-2xl p-4 sm:p-5 cursor-pointer transition-all ${
                           isSelected
-                            ? "border-brand-600 ring-2 ring-brand-500/20 bg-blue-50/20 shadow-md"
+                            ? "is-selected border-brand-600 ring-2 ring-brand-500/20 bg-blue-50/20 shadow-md"
                             : "border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
                         }`}
                         onClick={() => handleJobSelect(job)}
@@ -1617,15 +1652,11 @@ function CandidateDashboard() {
                             </span>
                           )}
 
-                          {job.experience && job.experience !== "Fresher" ? (
-                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
-                              {job.experience}
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
-                              Entry Level
-                            </span>
-                          )}
+                          <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-sky-50 text-sky-700 border border-sky-200">
+                            {experienceLabel && experienceLabel !== "Not Specified"
+                              ? experienceLabel
+                              : "Experience not specified"}
+                          </span>
                           
                           {hasApplied && <StatusBadge status="applied" size="sm" />}
                         </div>
@@ -1638,9 +1669,9 @@ function CandidateDashboard() {
                   })}
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl shadow-xs mt-4">
+                <div className="candidate-pagination-bar flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-2xl shadow-xs mt-4">
                   <button
-                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
+                    className="candidate-pagination-button px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
                     disabled={currentPage <= 1}
                     onClick={() => {
                       const nextPage = Math.max(1, currentPage - 1);
@@ -1655,13 +1686,13 @@ function CandidateDashboard() {
                       });
                     }}
                   >
-                    Previous
+                    &larr; Previous
                   </button>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-600">
+                  <span className="candidate-pagination-current text-xs sm:text-sm font-semibold text-slate-600">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
+                    className="candidate-pagination-button px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-600 disabled:active:scale-100 cursor-pointer shadow-xs border-0"
                     disabled={currentPage >= totalPages}
                     onClick={() => {
                       const nextPage = Math.min(totalPages, currentPage + 1);
@@ -1675,7 +1706,7 @@ function CandidateDashboard() {
                       });
                     }}
                   >
-                    Next
+                    Next &rarr;
                   </button>
                 </div>
               </>
@@ -1683,11 +1714,11 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div data-tour="job-details" className={`${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
+          <div data-tour="job-details" className={`candidate-job-detail ${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
             {selectedJob ? (
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Header section */}
-                <div className="p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
+                <div className="candidate-job-detail-header p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
                   <button 
                     className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
                     onClick={() => setIsMobileDetailView(false)}
@@ -1743,6 +1774,17 @@ function CandidateDashboard() {
                     {selectedJob.isExternal && (
                       <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                         External
+                      </span>
+                    )}
+                    {[
+                      selectedJob.educationRequired,
+                      selectedJob.experienceRequired,
+                    ].some((value) => value && value.toLowerCase() !== "not specified") && (
+                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                        Qualifications: {[
+                          selectedJob.educationRequired,
+                          selectedJob.experienceRequired,
+                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" · ")}
                       </span>
                     )}
 
@@ -1887,143 +1929,103 @@ function CandidateDashboard() {
                 </div>
 
                 {/* Scroll body */}
-                <div className="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
-                  {/* Indeed-Style Job Details Summary Section */}
-                  <div className="p-5 bg-slate-50/80 border border-slate-200/80 rounded-2xl space-y-4">
-                    <div>
-                      <h4 className="text-base font-extrabold text-slate-900 m-0">Job details</h4>
-                      <p className="text-xs text-slate-500 m-0 mt-0.5">Here's how the job details align with your profile</p>
-                    </div>
-
-                    <div className="space-y-3.5 pt-1">
-                      {/* Pay Highlight */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-black text-sm">
-                          ₹
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 m-0 mb-1">Pay</p>
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100/70 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200">
-                            <span className="text-emerald-600 font-black">✓</span>
-                            <span>{formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}</span>
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Job Type Highlight */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100/80 text-brand-700 flex items-center justify-center shrink-0 mt-0.5 font-black text-sm">
-                          💼
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 m-0 mb-1">Job type</p>
-                          <span className="inline-block px-3 py-1 bg-slate-200/70 text-slate-800 text-xs font-bold rounded-lg border border-slate-300">
-                            {selectedJob.employmentType || selectedJob.role || "Full-time"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Qualifications & Profile Alignment */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-100/80 text-purple-700 flex items-center justify-center shrink-0 mt-0.5 font-black text-sm">
-                          🎯
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-bold text-slate-700 m-0 mb-1.5">Qualifications</p>
-                          <div className="space-y-2">
-                            {selectedJob.educationRequired && (
-                              <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                                <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
-                                <span>{selectedJob.educationRequired}</span>
-                              </div>
-                            )}
-                            
-                            {selectedJob.skillsRequired && selectedJob.skillsRequired.length > 0 ? (
-                               selectedJob.skillsRequired.map((skill, idx) => {
-                                  const isMatch = user?.skills?.map(s => s.toLowerCase()).includes(skill.toLowerCase());
-                                  return (
-                                      <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                                          isMatch ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"
-                                        }`}>
-                                          {isMatch ? "✓" : "○"}
-                                        </span>
-                                        <span>{skill}</span>
-                                      </div>
-                                  );
-                               })
-                            ) : (
-                               <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                                 <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
-                                 <span>{selectedJob.experienceRequired || "Entry Level"}</span>
-                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="candidate-job-description-area p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 mb-3">Full Job Description</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
+                      {((selectedJob.isFullDescription || !isDescriptionSnippet(selectedJob.description)) && !isMisstructuredDescription(selectedJob.description)) && (
+                        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                          ✓ Complete Requisition
+                        </span>
+                      )}
+                    </div>
+
+                    {isExpandingDescription && (
+                      <div className="mb-3.5 p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl text-blue-700 text-xs font-semibold flex items-center gap-2.5 animate-pulse">
+                        <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
+                        <span>Loading complete in-depth job description for {selectedJob.company}...</span>
+                      </div>
+                    )}
                     
                     {(() => {
                       const descText = selectedJob.description || "";
-                      const isLongDescription = descText.length > 450;
-                      const isTruncatedSnippet = descText.trim().endsWith("...") || descText.trim().endsWith("…");
+                      const canExpandDescription =
+                        selectedJob.isExternal &&
+                        (isMisstructuredDescription(descText) ||
+                          (!selectedJob.isFullDescription && isDescriptionSnippet(descText)));
 
                       return (
                         <>
                           <div className={`relative overflow-hidden transition-all duration-300 ${
-                            !isLongDescription || isDescriptionExpanded ? "max-h-none" : "max-h-96"
+                            !canExpandDescription || isDescriptionExpanded ? "max-h-none" : "max-h-96"
                           }`}>
-                            <div className="text-sm text-slate-700 leading-relaxed space-y-3">
+                    <div className="job-description-content text-slate-700 space-y-4">
                               {selectedJob.description
-                                ? renderExternalDescription(selectedJob.description)
+                                ? renderExternalDescription(selectedJob.description, selectedJob)
                                 : <p className="text-slate-400 italic">No description available.</p>
                               }
                             </div>
-                            {isLongDescription && !isDescriptionExpanded && (
+                            {canExpandDescription && !isDescriptionExpanded && (
                               <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                             )}
                           </div>
 
-                          {isLongDescription && (
+                          {canExpandDescription && (
                             <button 
-                              className="mt-3 text-brand-600 hover:text-brand-700 font-bold text-xs flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
-                              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                              className="mt-3 text-brand-600 hover:text-brand-700 font-bold text-xs flex items-center gap-1 bg-transparent border-0 cursor-pointer disabled:opacity-60 disabled:cursor-wait p-0"
+                              disabled={isExpandingDescription}
+                              onClick={async () => {
+                                if (
+                                  !isDescriptionExpanded &&
+                                  selectedJob.isExternal &&
+                                  (isMisstructuredDescription(selectedJob.description) ||
+                                    (!selectedJob.isFullDescription && isDescriptionSnippet(selectedJob.description)))
+                                ) {
+                                  setIsExpandingDescription(true);
+                                  try {
+                                    const res = await getFullJobDescriptionAPI(selectedJob._id);
+                                    if (res?.description) {
+                                      const isFullDescription = res.isFullDescription === true;
+                                      setSelectedJob((prev) =>
+                                        prev?._id === res.jobId
+                                          ? { ...prev, description: res.description, isFullDescription }
+                                          : prev
+                                      );
+                                      setJobs((prevJobs) =>
+                                        prevJobs.map((job) =>
+                                          job._id === res.jobId
+                                            ? { ...job, description: res.description, isFullDescription }
+                                            : job
+                                        )
+                                      );
+                                      setRecommendedJobsList((prevJobs) =>
+                                        prevJobs.map((job) =>
+                                          job._id === res.jobId
+                                            ? { ...job, description: res.description, isFullDescription }
+                                            : job
+                                        )
+                                      );
+                                      setIsDescriptionExpanded(true);
+                                      if (!isFullDescription) {
+                                        toast("The employer’s full details could not be retrieved. Please try again later.");
+                                      }
+                                    } else {
+                                      setIsDescriptionExpanded(true);
+                                      toast.error("Could not load the full job description.");
+                                    }
+                                  } catch {
+                                    setIsDescriptionExpanded(true);
+                                    toast.error("Could not retrieve the full job details. Please try again later.");
+                                  } finally {
+                                    setIsExpandingDescription(false);
+                                  }
+                                  return;
+                                }
+                                setIsDescriptionExpanded(!isDescriptionExpanded);
+                              }}
                             >
-                              {isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
                             </button>
-                          )}
-
-                          {(selectedJob.isExternal || isTruncatedSnippet) && (
-                            <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                              <div className="flex items-start gap-2.5">
-                                <span className="text-base shrink-0 mt-0.5">ℹ️</span>
-                                <div>
-                                  <p className="font-bold text-slate-800 m-0 mb-0.5">
-                                    {isTruncatedSnippet ? "External Job Summary Preview" : "External Career Portal Requisition"}
-                                  </p>
-                                  <p className="text-slate-600 m-0 leading-relaxed">
-                                    {isTruncatedSnippet 
-                                      ? `This aggregated summary from ${selectedJob.company || "the employer"} is a preview snippet. Read the full requisition & apply directly on their career portal.`
-                                      : `This job is hosted externally on ${selectedJob.company || "the company's site"}.`}
-                                  </p>
-                                </div>
-                              </div>
-                              {selectedJob.applyUrl && (
-                                <a
-                                  href={selectedJob.applyUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg shrink-0 text-xs transition-colors no-underline inline-flex items-center gap-1.5 shadow-xs"
-                                >
-                                  <span>Read Full Posting</span>
-                                  <FiExternalLink size={13} />
-                                </a>
-                              )}
-                            </div>
                           )}
                         </>
                       );

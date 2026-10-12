@@ -7,8 +7,9 @@ import StatusBadge from "../../Components/common/StatusBadge";
 import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawResumeSvg from "../../assets/undraw_resume_jrgi.svg";
-
-import { getApiBaseUrl } from "../../Services/authUtils";
+import AiInterviewAssistant from "../../Components/AiInterviewAssistant";
+import { getApiBaseUrl, getStoredUser } from "../../Services/authUtils";
+import { Sparkles } from "lucide-react";
 
 function MyApplications() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ function MyApplications() {
   const [deletingId, setDeletingId] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [filter, setFilter] = useState("All");
+  const [prepJob, setPrepJob] = useState(null);
 
   const API_URL = getApiBaseUrl();
 
@@ -205,7 +207,16 @@ function MyApplications() {
                     {/* READ-ONLY status badge */}
                     <StatusBadge status={application.status || "pending"} size="md" />
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPrepJob(application.job)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-colors border-0 cursor-pointer"
+                        aria-label={`Create interview prep kit for ${application.job.title} at ${application.job.company}`}
+                      >
+                        <Sparkles size={16} />
+                        Prepare with TRAO AI
+                      </button>
                       {application.resume && (
                         <a
                           href={`${API_URL}/api/applications/${application._id}/resume?token=${localStorage.getItem("token") || ""}`}
@@ -255,6 +266,15 @@ function MyApplications() {
             </Link>
           </div>
         </div>
+      )}
+      {prepJob && (
+        <AiInterviewAssistant
+          key={prepJob._id}
+          user={getStoredUser()}
+          job={prepJob}
+          autoGenerate
+          onClose={() => setPrepJob(null)}
+        />
       )}
     </div>
   );

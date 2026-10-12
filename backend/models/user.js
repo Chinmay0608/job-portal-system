@@ -54,6 +54,11 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    portfolio: {
+      type: String,
+      default: "",
+    },
+
     about: {
       type: String,
       default: "",
@@ -75,6 +80,30 @@ const userSchema = new mongoose.Schema(
       ref: "Job",
       default: [],
     },
+    hiddenJobFeedback: [
+      {
+        jobId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Job",
+          required: true,
+        },
+        reason: {
+          type: String,
+          enum: ["seniority", "salary", "tech_stack_mismatch", "other"],
+          required: true,
+        },
+        details: {
+          type: String,
+          trim: true,
+          maxlength: 500,
+          default: "",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 
     profileImage: {
       type: String,

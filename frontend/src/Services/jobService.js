@@ -43,7 +43,8 @@ export const applyExternal = async (jobId) => (await api.post("/api/applications
 export const createJob = async (jobData) => (await api.post("/api/jobs/create", jobData)).data;
 export const updateJob = async (jobId, jobData) => (await api.put(`/api/jobs/update/${jobId}`, jobData)).data;
 export const deleteJob = async (jobId) => (await api.delete(`/api/jobs/delete/${jobId}`)).data;
-export const hideJob = async (jobId) => (await api.post(`/api/jobs/hide/${jobId}`)).data;
+export const hideJob = async (jobId, feedback) =>
+  (await api.post(`/api/jobs/hide/${jobId}`, feedback)).data;
 
 export const postAIChatMessage = async (messages) => {
   const response = await api.post("/api/jobs/ai/chat", { messages });
@@ -59,6 +60,9 @@ export const generateJobDescriptionAPI = async ({ title, company, role }) => {
   const res = await api.post("/api/jobs/generate-description", { title, company, role });
   return res.data;
 };
+
+export const getFullJobDescriptionAPI = async (jobId) =>
+  (await api.get(`/api/jobs/${jobId}/full-description`)).data;
 
 
 

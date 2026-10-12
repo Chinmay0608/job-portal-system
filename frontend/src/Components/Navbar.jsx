@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
+import { MoreVertical, MessageSquare, Bell, Compass, UserRound } from "lucide-react";
 import { 
   BsBookmarkFill, 
   BsChatSquareTextFill, 
@@ -31,6 +32,23 @@ function Navbar() {
 
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const profileCompletion = user
+    ? Math.round(([
+        user.name,
+        user.email,
+        user.phone,
+        user.location,
+        user.linkedin,
+        user.github,
+        user.portfolio,
+        user.about,
+        user.education,
+        user.experienceLevel,
+        user.skills?.length > 0,
+        user.resume,
+        user.profileImage,
+      ].filter(Boolean).length / 13) * 100)
+    : 0;
 
   const voiceRec = useVoiceRecognition();
   const { 
@@ -71,10 +89,27 @@ function Navbar() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMobileMenuOpen(false);
+    setIsCandidateMenuOpen(false);
     setIsDhruvOpen(false);
     setIsMessagesOpen(false);
     setIsNotificationsOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isCandidateMenuOpen) return;
+    const closeOnOutsideClick = (event) => {
+      if (!candidateMenuRef.current?.contains(event.target)) setIsCandidateMenuOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsCandidateMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isCandidateMenuOpen]);
 
   useEffect(() => {
     if (!user) {
@@ -139,12 +174,15 @@ function Navbar() {
     };
 
     window.addEventListener("skillbridge_notifications_updated", handleNotificationsSync);
+    const handleOpenNotifications = () => setIsNotificationsOpen(true);
+    window.addEventListener("skillbridge_open_notifications", handleOpenNotifications);
 
     const pollInterval = setInterval(fetchNotificationsUnread, 45000);
 
     return () => {
       isMounted = false;
       window.removeEventListener("skillbridge_notifications_updated", handleNotificationsSync);
+      window.removeEventListener("skillbridge_open_notifications", handleOpenNotifications);
       clearInterval(pollInterval);
     };
   }, [user]);
@@ -263,7 +301,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardWavePage ? " dashboard-nav" : ""}`}>
+    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardWavePage ? " dashboard-nav" : ""}${isCandidateDashboard ? " candidate-dashboard-nav" : ""}`}>
       <div className="navbar-container">
         {/* Left Section: Back Button + Logo + Main Text Links */}
         <div className="nav-left">
@@ -402,53 +440,13 @@ function Navbar() {
                     </Link>
                   </div>
 
-                  {/* Bookmark Icon (My Jobs) */}
+                  {/* Bookmark Icon (My Applications) */}
                   <div className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}>
-                    <Link to="/my-applications" className="icon-btn-link" aria-label="My jobs">
+                    <Link to="/my-applications" className="icon-btn-link" aria-label="My applications">
                       <BsBookmarkFill className="header-icon" />
-                      <span className="mobile-only-label">My jobs</span>
+                      <span className="mobile-only-label">My applications</span>
                     </Link>
-                    <div className="tooltip-bubble">My jobs</div>
-                  </div>
-
-                  {/* Message Icon */}
-                  <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleMessageClick} aria-label="Messages">
-                      <span className="icon-with-badge">
-                        <BsChatSquareTextFill className="header-icon" />
-                        {unreadMessagesCount > 0 && (
-                          <span className="nav-unread-dot" title={`${unreadMessagesCount} unread`} />
-                        )}
-                      </span>
-                      <span className="mobile-only-label">
-                        Messages
-                        {unreadMessagesCount > 0 && (
-                          <span className="nav-unread-badge">{unreadMessagesCount}</span>
-                        )}
-                      </span>
-                    </button>
-                    <div className="tooltip-bubble">Messages</div>
-                  </div>
-
-                  {/* Bell Icon */}
-                  <div className="icon-tab-wrapper">
-                    <button type="button" className="icon-btn-link" onClick={handleNotificationClick} aria-label="Official Notifications">
-                      <span className="icon-with-badge">
-                        <BsBellFill className="header-icon" />
-                        {unreadNotificationsCount > 0 && (
-                          <span className="nav-unread-count-pill" title={`${unreadNotificationsCount} unread official alerts`}>
-                            {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
-                          </span>
-                        )}
-                      </span>
-                      <span className="mobile-only-label">
-                        Notifications
-                        {unreadNotificationsCount > 0 && (
-                          <span className="nav-unread-badge">{unreadNotificationsCount}</span>
-                        )}
-                      </span>
-                    </button>
-                    <div className="tooltip-bubble">Notifications</div>
+                    <div className="tooltip-bubble">My applications</div>
                   </div>
 
                   {/* Profile User Icon */}
@@ -534,6 +532,85 @@ function Navbar() {
                     Employers / Post Job
                   </Link>
                 </>
+              )}
+
+              {user?.role === "candidate" && (
+                <div className="icon-tab-wrapper" ref={candidateMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCandidateMenuOpen((open) => !open)}
+                    aria-label={`Open account menu${unreadMessagesCount > 0 || unreadNotificationsCount > 0 ? ", unread messages or notifications" : ""}`}
+                    aria-haspopup="menu"
+                    aria-expanded={isCandidateMenuOpen}
+                    title="Account menu"
+                    className="icon-btn-link candidate-menu-trigger"
+                  >
+                    <MoreVertical size={20} className="header-icon" />
+                    <span className="mobile-only-label">Account menu</span>
+                    {(unreadMessagesCount > 0 || unreadNotificationsCount > 0) && (
+                      <span className="candidate-menu-unread-dot" aria-hidden="true" />
+                    )}
+                  </button>
+                  <div className="tooltip-bubble">Account menu</div>
+                  {isCandidateMenuOpen && (
+                    <div
+                      role="menu"
+                      aria-label="Account options"
+                      className="nav-account-menu"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsCandidateMenuOpen(false);
+                          handleMessageClick();
+                        }}
+                        className="nav-account-menu-item"
+                      >
+                        <span className="nav-account-menu-icon"><MessageSquare size={16} /></span>
+                        Messages
+                        {unreadMessagesCount > 0 && <span className="nav-account-menu-count">{unreadMessagesCount}</span>}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsCandidateMenuOpen(false);
+                          handleNotificationClick();
+                        }}
+                        className="nav-account-menu-item"
+                      >
+                        <span className="nav-account-menu-icon"><Bell size={16} /></span>
+                        Notifications
+                        {unreadNotificationsCount > 0 && <span className="nav-account-menu-count">{unreadNotificationsCount}</span>}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsCandidateMenuOpen(false);
+                          navigate("/candidate-dashboard", { state: { openGuidedTour: true } });
+                        }}
+                        className="nav-account-menu-item"
+                      >
+                        <span className="nav-account-menu-icon"><Compass size={16} /></span>
+                        Guided Tour
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsCandidateMenuOpen(false);
+                          navigate("/candidate-profile");
+                        }}
+                        className="nav-account-menu-item"
+                      >
+                        <span className="nav-account-menu-icon"><UserRound size={16} /></span>
+                        Profile {profileCompletion}%
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Logout Button */}

@@ -166,9 +166,11 @@ ALLOWED_ORIGINS=https://job-portal-system-alpha.vercel.app
 #### Frontend `.env`
 
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=http://localhost:5000
 VITE_FIREBASE_API_KEY=your_firebase_api_key
 ```
+
+`VITE_API_BASE_URL` can be provided either as the backend origin (`http://localhost:5000`) or with an `/api` suffix; the client normalizes both forms automatically.
 
 ---
 

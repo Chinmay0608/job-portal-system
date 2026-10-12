@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { LifeBuoy, X, Camera, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { LifeBuoy, X, Camera, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw, ChevronRight } from "lucide-react";
 import { getStoredUser, getApiBaseUrl } from "../Services/authUtils";
 
 const API_BASE_URL = getApiBaseUrl();
@@ -205,14 +205,14 @@ export default function HelpWidget() {
           id="help-widget-button"
           type="button"
           onClick={handleOpen}
-          className="fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001] flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm shadow-2xl transition-all duration-200 ease-out hover:scale-105 active:scale-95 border border-slate-700/60 cursor-pointer select-none"
+          className="report-issue-button fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001]"
           title="Report an Issue"
           aria-label="Report an Issue"
         >
-          <LifeBuoy size={18} className="text-emerald-400 shrink-0" />
-          <span className="text-white whitespace-nowrap font-semibold">
-            Report Issue
-          </span>
+          <LifeBuoy size={22} className="report-issue-icon" aria-hidden="true" />
+          <span className="report-issue-divider" aria-hidden="true" />
+          <span className="report-issue-text">Report Issue</span>
+          <ChevronRight size={17} className="report-issue-chevron" aria-hidden="true" />
         </button>
       )}
 

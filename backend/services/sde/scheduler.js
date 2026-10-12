@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const Company = require('../../models/Company');
 const CompanyRegistryMetadata = require('../../models/CompanyRegistryMetadata');
 const queueManager = require('./queues');
-const crawlerWorker = require('./workers/crawlerWorker');
+const PluginRegistry = require('./PluginRegistry');
 
 // Configurable Priority Table mapping Priority Weight to Hours between crawls
 // In a real production system, this could be loaded from an Admin DB table or env vars.
@@ -48,14 +48,17 @@ class PriorityScheduler {
   async sweep() {
     // Only fetch companies that are VERIFIED, ACTIVE, STALE, or DORMANT
     const eligibleCompanies = await Company.find({
-      status: { $in: ['VERIFIED', 'ACTIVE', 'STALE', 'DORMANT'] }
+      status: { $in: ['VERIFIED', 'ACTIVE', 'STALE', 'DORMANT'] },
+      platformRef: { $in: PluginRegistry.getAllPlugins().map((plugin) => plugin.name) },
+      providerIdentifier: { $nin: ['', null] },
     });
 
     const now = new Date();
     let queuedCount = 0;
 
     for (const company of eligibleCompanies) {
-      const priorityConfig = PRIORITY_SCHEDULE_CONFIG[company.priority];
+      const priorityConfig = PRIORITY_SCHEDULE_CONFIG[company.priority] ||
+        (company.priority > 0 ? PRIORITY_SCHEDULE_CONFIG[5] : null);
       if (!priorityConfig) continue; // Safety fallback
 
       const meta = await CompanyRegistryMetadata.findOne({ companyId: company._id });
@@ -92,5 +95,3 @@ class PriorityScheduler {
 }
 
 module.exports = new PriorityScheduler();
-
-

@@ -46,6 +46,10 @@ const jobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    isFullDescription: {
+      type: Boolean,
+      default: false,
+    },
 
     skillsRequired: {
       type: [String],
@@ -59,8 +63,8 @@ const jobSchema = new mongoose.Schema(
 
     experienceRequired: {
       type: String,
-      enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years"],
-      default: "Fresher",
+      enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years", "Not Specified"],
+      default: "Not Specified",
     },
 
     recruiter: {
@@ -86,7 +90,7 @@ const jobSchema = new mongoose.Schema(
 
     // --- Universal Domain & Seniority Classification Fields ---
     domain: { type: String, default: "Software Engineering" },
-    seniorityLevel: { type: String, default: "Entry Level" },
+    seniorityLevel: { type: String, default: "Not Specified" },
   },
   {
     timestamps: true,
@@ -109,4 +113,3 @@ jobSchema.index({ employmentType: 1 });
 jobSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.models.Job || mongoose.model("Job", jobSchema);
-

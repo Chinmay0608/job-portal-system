@@ -11,6 +11,7 @@ class QueueManager {
   }
 
   async initialize() {
+    if (this.isOnline) return;
     try {
       // Setup ioredis with maxRetriesPerRequest: null as required by BullMQ
       this.connection = new Redis(REDIS_URL, {
@@ -65,6 +66,14 @@ class QueueManager {
   getQueue(name) {
     if (!this.isOnline) return null;
     return this.queues[name];
+  }
+
+  async close() {
+    await Promise.all(Object.values(this.queues).map((queue) => queue.close()));
+    this.queues = {};
+    if (this.connection) await this.connection.quit();
+    this.connection = null;
+    this.isOnline = false;
   }
 }
 

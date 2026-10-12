@@ -215,7 +215,9 @@ connectDB().then(() => {
       try {
         await queueManager.initialize();
         if (queueManager.isOnline) {
+          const discoveryWorker = require('./services/sde/workers/discoveryWorker');
           const crawlerWorker = require('./services/sde/workers/crawlerWorker');
+          discoveryWorker.start();
           crawlerWorker.start();
 
           const scheduler = require('./services/sde/scheduler');
@@ -224,13 +226,8 @@ connectDB().then(() => {
           // Schedule automatic window close in 2 hours (7,200,000 ms)
           setTimeout(async () => {
             console.log("[SDE Daily Window] 🛑 Closing BullMQ SDE crawler window after 2 hours. Pausing workers to save Redis tokens.");
-            if (crawlerWorker.worker) {
-              await crawlerWorker.worker.pause();
-            }
-            if (queueManager.connection) {
-              await queueManager.connection.quit();
-              queueManager.isOnline = false;
-            }
+            await Promise.all([discoveryWorker.stop(), crawlerWorker.stop()]);
+            await queueManager.close();
           }, 2 * 60 * 60 * 1000);
         }
       } catch (err) {
@@ -250,4 +247,3 @@ connectDB().then(() => {
     });
   });
 });
-
