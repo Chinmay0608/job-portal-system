@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../../firebase";
@@ -21,27 +21,12 @@ function Login() {
     redirectDestination.includes("/admin") || 
     searchParams.get("role") === "admin";
 
-  const [email, setEmail] = useState(isAdminTarget ? "admin@gmail.com" : "");
-  const [password, setPassword] = useState(isAdminTarget ? "admin123" : "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [loginRole, setLoginRole] = useState(isAdminTarget ? "recruiter" : "candidate");
-
-  useEffect(() => {
-    if (isAdminTarget) {
-      setEmail("admin@gmail.com");
-      setPassword("admin123");
-      setLoginRole("recruiter");
-    }
-  }, [location.search, location.state, isAdminTarget]);
-
-  const fillAdminCredentials = () => {
-    setEmail("admin@gmail.com");
-    setPassword("admin123");
-    setLoginRole("recruiter");
-    toast.success("Admin credentials autofilled");
-  };
 
   const redirectUser = (user) => {
     const params = new URLSearchParams(location.search);
@@ -62,7 +47,7 @@ function Login() {
           roleType: location.state?.roleType
         }
       });
-    } else if (user?.role === "admin" || user?.email?.toLowerCase() === "admin@gmail.com") {
+    } else if (user?.role === "admin") {
       navigate("/admin/dashboard");
     } else {
       navigate("/recruiter-dashboard");
@@ -121,23 +106,36 @@ function Login() {
   };
 
   return (
-    <div className="h-screen max-h-screen w-full bg-[#faf6ef] flex items-center justify-center p-3 sm:p-4 overflow-hidden font-sans">
-      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4 -translate-y-1 sm:-translate-y-2 animate-scale-up">
+    <div className="app-canvas-surface min-h-screen w-full flex items-center justify-center px-4 py-8 font-sans">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] lg:gap-10">
+        <aside className="hidden lg:block">
+          <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
+          <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">Find work that fits the life you want.</h2>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">A more thoughtful way to find a role, meet a team, and move your career forward.</p>
+          <div className="mt-8 space-y-4 text-sm font-semibold text-[#554737]">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaChessRook size={15} /></span>{loginRole === "candidate" ? "Roles matched to your skills" : "Reach candidates suited to your roles"}</div>
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaShieldAlt size={15} /></span>{loginRole === "candidate" ? "Your applications, all in one place" : "Review applicants in one place"}</div>
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaBuilding size={15} /></span>A clearer path to your next team</div>
+          </div>
+        </aside>
+
+        <div className="mx-auto w-full max-w-sm animate-scale-up sm:max-w-md">
+        <div className="w-full bg-gradient-to-br from-[#fffdf9] via-[#fffaf2] to-[#f8f0e4] rounded-2xl sm:rounded-3xl border border-[#e9dfd1] shadow-[0_20px_60px_rgba(110,80,45,0.14)] p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4">
         <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
           <SkillBridgeLogo width={210} center />
         </div>
 
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">Welcome Back</h1>
-          <p className="text-xs text-slate-500 mt-1 m-0">Find the job made for you!</p>
+          <h1 className="text-xl sm:text-2xl font-black text-[#30271f] tracking-tight m-0">Welcome Back</h1>
+          <p className="text-xs text-[#827361] mt-1 m-0">Find the job made for you!</p>
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-2 p-1 bg-[#f5ead9] rounded-xl border border-[#e9dfd1]">
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+              loginRole === "candidate" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
             }`}
             onClick={() => setLoginRole("candidate")}
           >
@@ -146,7 +144,7 @@ function Login() {
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+              loginRole === "recruiter" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
             }`}
             onClick={() => setLoginRole("recruiter")}
           >
@@ -156,7 +154,7 @@ function Login() {
 
         <button
           type="button"
-          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
+          className="w-full py-2.5 px-3 bg-[#fffdf9] hover:bg-[#fff7eb] border border-[#e9dfd1] text-[#554737] font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
@@ -165,59 +163,26 @@ function Login() {
         </button>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-200"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-slate-200"></div>
+          <div className="flex-grow border-t border-[#e9dfd1]"></div>
+          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-[#a18d74] uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-[#e9dfd1]"></div>
         </div>
-
-        {isAdminTarget && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 sm:p-3 text-amber-900 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 relative flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
-              <span className="text-[11px] sm:text-xs font-medium">
-                Admin Support Desk access: credentials pre-filled. Click <strong>Sign In</strong> to proceed.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={fillAdminCredentials}
-              className="text-[10px] sm:text-[11px] font-bold text-amber-800 hover:text-amber-950 underline ml-2 cursor-pointer bg-transparent border-0 whitespace-nowrap"
-            >
-              Reset
-            </button>
-          </div>
-        )}
-
-        {loginRole === "recruiter" && !isAdminTarget && (
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={fillAdminCredentials}
-              className="text-[11px] text-slate-500 hover:text-brand-600 font-semibold bg-transparent border-0 cursor-pointer underline transition-colors"
-            >
-              Fill Admin Demo Credentials
-            </button>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Email Address</label>
             <input
               type="email"
               placeholder="mail@website.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -225,7 +190,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
               />
               <button
                 type="button"
@@ -240,7 +205,7 @@ function Login() {
 
           <div className="text-right">
             <span 
-              className="text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer"
+              className="text-xs font-bold text-[#a3612b] hover:text-[#814a24] cursor-pointer"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot password?
@@ -249,23 +214,42 @@ function Login() {
 
           <button 
             type="submit" 
-            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-1.5" 
+            className="w-full py-3 bg-[#b96d3c] hover:bg-[#a45c31] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-[0_5px_14px_rgba(164,92,49,0.22)] border-0 disabled:opacity-50 mt-1.5"
             disabled={loading} 
             aria-label="Log in"
           >
             {loading ? "Logging in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1.5 sm:pt-2">
+          <p className="text-center text-xs font-medium text-[#827361] m-0 pt-1.5 sm:pt-2">
             Not registered?{" "}
             <span 
-              className="font-bold text-brand-600 hover:underline cursor-pointer" 
+              className="font-bold text-[#a3612b] hover:text-[#814a24] hover:underline cursor-pointer"
               onClick={() => navigate("/register", { state: { role: loginRole } })}
             >
               Sign up
             </span>
           </p>
         </form>
+        </div>
+        </div>
+
+        <aside aria-hidden="true" className="relative hidden h-[420px] lg:block">
+          <div className="absolute right-4 top-10 h-64 w-64 rounded-full bg-[#f1ddc2]/60 blur-3xl" />
+          <div className="absolute right-0 top-12 w-[250px] rotate-2 rounded-2xl border border-[#e9dfd1] bg-[#fffdf9] p-4 shadow-[0_16px_40px_rgba(110,80,45,0.12)]">
+            <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3612b]">Example match</p>
+            <h3 className="m-0 text-base font-extrabold text-[#30271f]">Data Engineer</h3>
+            <p className="mt-1 text-xs text-[#827361]">Cloud data team / Flexible</p>
+            <div className="mt-4 flex gap-2"><span className="rounded-full bg-[#f5ead9] px-2.5 py-1 text-[10px] font-bold text-[#795431]">GCP</span><span className="rounded-full bg-[#f5ead9] px-2.5 py-1 text-[10px] font-bold text-[#795431]">2-5 years</span></div>
+          </div>
+          <div className="absolute bottom-14 left-0 w-[235px] -rotate-2 rounded-2xl border border-[#e9dfd1] bg-[#fffaf2] p-4 shadow-[0_16px_40px_rgba(110,80,45,0.12)]">
+            <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3612b]">Another possibility</p>
+            <h3 className="m-0 text-base font-extrabold text-[#30271f]">Product Analyst</h3>
+            <p className="mt-1 text-xs text-[#827361]">Product &amp; insights / Hybrid</p>
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[#eadfce]"><div className="h-full w-4/5 rounded-full bg-[#c58b50]" /></div>
+          </div>
+          <div className="absolute bottom-4 right-1 rounded-full border border-[#e9dfd1] bg-[#fffdf9]/90 px-3 py-2 text-[10px] font-bold text-[#795431] shadow-sm">A good next step starts here</div>
+        </aside>
       </div>
     </div>
   );

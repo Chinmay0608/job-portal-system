@@ -469,7 +469,7 @@ function CandidateProfile() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#faf6ef] text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
+    <div className="app-canvas-surface w-full min-h-screen text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* LEFT COLUMN: SIDEBAR */}

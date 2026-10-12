@@ -322,7 +322,7 @@ const UsersView = ({ users, loading, onRefresh, onToggleRole, onDeleteUser }) =>
                 </>
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map(u => {
-                  const isAdmin = u.role === 'admin' || u.email?.toLowerCase() === 'admin@gmail.com';
+                  const isAdmin = u.role === 'admin';
                   return (
                     <tr key={u._id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-6 py-4">
@@ -1491,7 +1491,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#faf6ef] font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900 fixed inset-0 z-50">
+    <div className="app-canvas-surface flex h-screen w-full font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900 fixed inset-0 z-50">
       
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm z-20">
@@ -1546,7 +1546,7 @@ const AdminDashboard = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#faf6ef]">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-transparent">
         
         {/* TOP HEADER UTILITY BAR */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10 shrink-0">

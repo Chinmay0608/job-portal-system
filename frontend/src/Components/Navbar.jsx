@@ -330,15 +330,15 @@ function Navbar() {
                   >
                     Applicants
                   </Link>
-                  {user?.email?.toLowerCase() === "admin@gmail.com" && (
-                    <Link 
-                      to="/admin/dashboard" 
-                      className={`nav-tab-link ${location.pathname.includes("/admin") ? "active" : ""}`}
-                    >
-                      Admin System
-                    </Link>
-                  )}
                 </>
+              )}
+              {user?.role === "admin" && (
+                <Link
+                  to="/admin/dashboard"
+                  className={`nav-tab-link ${location.pathname.includes("/admin") ? "active" : ""}`}
+                >
+                  Admin System
+                </Link>
               )}
             </div>
           )}

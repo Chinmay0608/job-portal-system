@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { DHRUV_MIC_ACCESS_NOTICE_KEY } from "../Services/authUtils";
 import {
   createSpeakerEmbedding,
   getVoiceProfile,
@@ -350,7 +351,18 @@ export default function useVoiceRecognition() {
         if (activeWakeRef.current) {
           activeWakeRef.current = false;
           setIsWakeListening(false);
-          toast.error("DHRUV needs microphone access to match your enrolled voice.");
+          let shouldShowNotice = true;
+          try {
+            shouldShowNotice = localStorage.getItem(DHRUV_MIC_ACCESS_NOTICE_KEY) !== "true";
+            if (shouldShowNotice) localStorage.setItem(DHRUV_MIC_ACCESS_NOTICE_KEY, "true");
+          } catch {
+            // Keep the notice de-duplicated by toast ID when storage is unavailable.
+          }
+          if (shouldShowNotice) {
+            toast.error("DHRUV needs microphone access to match your enrolled voice.", {
+              id: DHRUV_MIC_ACCESS_NOTICE_KEY,
+            });
+          }
         }
       });
     },

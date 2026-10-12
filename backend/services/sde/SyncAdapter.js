@@ -4,6 +4,7 @@ const getExplicitExperienceBuckets = (description) => {
   const text = String(description || '')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
+    .replace(/&#(?:43|x2b);/gi, '+')
     .replace(/<br\s*\/?>|<\/(?:p|li|h[1-6]|div|tr|section)>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/gi, ' ');
@@ -22,10 +23,15 @@ const getExplicitExperienceBuckets = (description) => {
     else if (/\b(required|minimum qualifications|basic qualifications|what you(?:'|’)ll need)\b/i.test(clause)) preferredSection = false;
     if (preferredSection || !/experience/i.test(clause)) continue;
 
+    const matchedSpans = [];
     for (const pattern of patterns) {
       for (const match of clause.matchAll(pattern)) {
+        const start = match.index;
+        const end = start + match[0].length;
+        if (matchedSpans.some(([matchedStart, matchedEnd]) => start < matchedEnd && end > matchedStart)) continue;
         const minimum = Number(match[1] || match[2]);
         const maximum = Number(match[3]);
+        matchedSpans.push([start, end]);
         buckets.add(minimum >= 5 ? '5+ Years' : minimum >= 3 || (minimum === 2 && maximum >= 3) ? '2-5 Years' : '0-2 Years');
       }
     }
