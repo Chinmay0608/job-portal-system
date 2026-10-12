@@ -15,7 +15,6 @@ import {
   Send,
   Mic, 
   MicOff, 
-  Radio, 
   Square,
   ThumbsUp,
   ThumbsDown,
@@ -27,6 +26,14 @@ import { uploadResume } from "../Services/userService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
 import dhruvAvatar from "../assets/dhruv_avatar.png";
+import {
+  clearVoiceProfile,
+  createSpeakerEmbedding,
+  getVoiceProfile,
+  prepareSpeakerModel,
+  recordVoiceSample,
+  saveVoiceProfile,
+} from "../Services/voiceIdentity";
 
 const createUniqueMsgId = (prefix = "msg") =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -57,10 +64,22 @@ const renderFormattedContent = (content) => {
   if (!content) return null;
   const lines = content.split("\n");
   return lines.map((line, lineIndex) => {
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
     const formattedParts = parts.map((part, partIndex) => {
       if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
         return <strong key={partIndex} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+      }
+      const link = part.match(/^\[([^\]]+)\]\((\/(?!\/)[^)]+)\)$/);
+      if (link) {
+        return (
+          <Link
+            key={partIndex}
+            to={link[2]}
+            style={{ color: "#0369a1", fontWeight: 600, textDecoration: "underline" }}
+          >
+            {link[1]}
+          </Link>
+        );
       }
       return part;
     });
@@ -88,23 +107,34 @@ export default function AIChatWidget({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [isVoiceSetupOpen, setIsVoiceSetupOpen] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceProfileSaved, setVoiceProfileSaved] = useState(() => Boolean(getVoiceProfile()));
+  const [voiceSetupMessage, setVoiceSetupMessage] = useState("");
+  const [voiceSampleNumber, setVoiceSampleNumber] = useState(0);
   const fileInputRef = useRef(null);
   const quickMenuRef = useRef(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const cardRef = useRef(null);
+  const wakeWordCallbackRef = useRef(null);
 
-  const [isHandsFree, setIsHandsFree] = useState(() => {
-    try {
-      return localStorage.getItem("dhruv_wake_word_enabled") !== "false";
-    } catch {
-      return true;
-    }
-  });
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [messageFeedback, setMessageFeedback] = useState({});
+  const [pendingNegativeFeedbackId, setPendingNegativeFeedbackId] = useState(null);
+  const [selectedNegativeFeedbackReason, setSelectedNegativeFeedbackReason] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   const voiceRec = useVoiceRecognition();
+  const autoVoiceStartedRef = useRef(false);
+  const {
+    isSupported: isVoiceRecognitionSupported,
+    isListening: isVoiceListening,
+    startListening,
+    stopListening,
+    listenForWakeWord,
+    stopWakeWord,
+  } = voiceRec;
   const tts = useTextToSpeech();
 
   // Close quick menu when clicking outside
@@ -340,89 +370,159 @@ export default function AIChatWidget({
   }, [input, isLoading, messages, tts, user]);
 
   // Handle Speech-to-Text Microphone toggle
-  const handleMicClick = useCallback(() => {
-    if (!voiceRec.isSupported) {
+  const handleMicClick = useCallback((sendOnResult = false) => {
+    if (!isVoiceRecognitionSupported) {
       toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
       return;
     }
 
-    if (voiceRec.isListening) {
-      voiceRec.stopListening();
+    if (isVoiceListening) {
+      stopListening();
     } else {
       tts.stop();
-      voiceRec.startListening({
+      startListening({
         onResult: (finalText) => {
           if (finalText && finalText.trim()) {
             const cleanFinal = finalText.trim();
             setInput(cleanFinal);
-            sendMessage(cleanFinal);
+            if (sendOnResult) sendMessage(cleanFinal);
           }
         },
       });
     }
-  }, [voiceRec, tts, sendMessage]);
+  }, [isVoiceRecognitionSupported, isVoiceListening, startListening, stopListening, tts, sendMessage]);
 
-  // Handle auto-start voice or initial query when opened via wake word
-  useEffect(() => {
-    if (isOpen && initialQuery && initialQuery.trim()) {
-      sendMessage(initialQuery.trim());
-    } else if (isOpen && autoStartVoice && !voiceRec.isListening) {
-      const timer = setTimeout(() => {
-        handleMicClick();
-      }, 350);
-      return () => clearTimeout(timer);
+  const handleVoiceEnrollment = useCallback(async () => {
+    if (isRecordingVoice) return;
+    setIsRecordingVoice(true);
+    setVoiceSampleNumber(0);
+    setVoiceSetupMessage("First setup downloads about 130 MB of model and runtime files.");
+    const embeddings = [];
+
+    try {
+      await prepareSpeakerModel((progress) => {
+        if (progress.status === "progress" && Number.isFinite(progress.progress)) {
+          setVoiceSetupMessage(`Loading local voice model: ${Math.round(progress.progress)}%`);
+        }
+      });
+
+      for (let sampleNumber = 1; sampleNumber <= 3; sampleNumber += 1) {
+        setVoiceSampleNumber(sampleNumber);
+        setVoiceSetupMessage(`Sample ${sampleNumber} of 3: say “Hey Dhruv” clearly.`);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const sample = await recordVoiceSample(3000);
+        embeddings.push(await createSpeakerEmbedding(sample.audio, sample.sampleRate));
+      }
+
+      saveVoiceProfile(embeddings);
+      setVoiceProfileSaved(true);
+      setVoiceSetupMessage("Voice match is ready on this browser.");
+      toast.success("Your local DHRUV voice profile is ready.");
+    } catch (error) {
+      console.error("[DHRUV] Voice enrollment failed:", error);
+      setVoiceSetupMessage(error.message || "Voice enrollment failed. Please try again.");
+      toast.error(error.message || "Voice enrollment failed. Please try again.");
+    } finally {
+      setIsRecordingVoice(false);
+      setVoiceSampleNumber(0);
     }
-  }, [isOpen, initialQuery, autoStartVoice, handleMicClick, sendMessage, voiceRec.isListening]);
+  }, [isRecordingVoice]);
 
-  // Continuous wake word listening when DHRUV drawer is open and hands-free is enabled
-  useEffect(() => {
-    if (!isOpen || !isHandsFree || !voiceRec.isSupported || voiceRec.isListening) {
-      voiceRec.stopWakeWord();
+  const greetAndListen = useCallback(() => {
+    stopWakeWord();
+    const firstName = user?.name?.split(" ")[0] || "there";
+    const greeting = `Hi ${firstName}, how can I help you?`;
+    const greetingId = createUniqueMsgId("wake_greeting");
+
+    setMessages((prev) => [...prev, {
+      id: greetingId,
+      role: "assistant",
+      content: greeting,
+    }]);
+
+    if (tts.isMuted) {
+      handleMicClick(true);
       return;
     }
 
-    voiceRec.listenForWakeWord((promptAfterWake) => {
-      toast("Dhruv detected wake word! Listening...", { icon: "⚡" });
+    setSpeakingMessageId(greetingId);
+    tts.speak(greeting, () => {
+      setSpeakingMessageId(null);
+      handleMicClick(true);
+    });
+  }, [user, tts, handleMicClick, stopWakeWord]);
+
+  const openVoiceSetup = () => {
+    stopWakeWord();
+    stopListening();
+    setIsVoiceSetupOpen(true);
+  };
+
+  useEffect(() => {
+    wakeWordCallbackRef.current = (promptAfterWake) => {
+      toast("Dhruv detected your voice.", { icon: "⚡" });
       if (promptAfterWake && promptAfterWake.length > 2) {
         sendMessage(promptAfterWake);
       } else {
-        handleMicClick();
+        greetAndListen();
+      }
+    };
+  }, [greetAndListen, sendMessage]);
+
+  // Handle auto-start voice or initial query when opened via wake word
+  useEffect(() => {
+    if (!autoStartVoice) {
+      autoVoiceStartedRef.current = false;
+    }
+
+    if (isOpen && initialQuery && initialQuery.trim()) {
+      sendMessage(initialQuery.trim());
+    } else if (isOpen && autoStartVoice && !voiceRec.isListening && !autoVoiceStartedRef.current) {
+      autoVoiceStartedRef.current = true;
+      const timer = setTimeout(() => {
+        greetAndListen();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, initialQuery, autoStartVoice, greetAndListen, sendMessage, voiceRec.isListening]);
+
+  // Keep wake-word listening active while the DHRUV drawer is open.
+  useEffect(() => {
+    if (!isOpen || !isVoiceRecognitionSupported || isVoiceListening || isVoiceSetupOpen) {
+      stopWakeWord();
+      return;
+    }
+
+    listenForWakeWord((promptAfterWake) => {
+      wakeWordCallbackRef.current?.(promptAfterWake);
+    }, (status) => {
+      const messagesByStatus = {
+        checking: "I heard “Hey Dhruv.” Checking your voice…",
+        "profile-missing": "I heard “Hey Dhruv,” but voice match isn’t set up in this browser. Tap the microphone icon above to enroll your voice.",
+        "capture-unavailable": "I heard “Hey Dhruv,” but couldn’t access microphone audio to verify your voice.",
+        "speaker-mismatch": "I couldn’t match that voice to your enrolled profile. Try again or re-enroll using the microphone button above.",
+        "verification-error": "I heard “Hey Dhruv,” but couldn’t verify your voice. Please try again.",
+      };
+      const content = messagesByStatus[status];
+      if (content) {
+        setMessages((prev) => [
+          ...prev,
+          { id: createUniqueMsgId("wake_status"), role: "assistant", content },
+        ]);
       }
     });
 
     return () => {
-      voiceRec.stopWakeWord();
+      stopWakeWord();
     };
-  }, [isOpen, isHandsFree, voiceRec, handleMicClick, sendMessage]);
-
-  // Toggle Hands-Free Wake Word Mode ("Hey Dhruv")
-  const toggleHandsFree = () => {
-    if (!voiceRec.isSupported) {
-      toast.error("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    if (isHandsFree) {
-      setIsHandsFree(false);
-      try {
-        localStorage.setItem("dhruv_wake_word_enabled", "false");
-        window.dispatchEvent(new Event("dhruv_wake_word_toggled"));
-      } catch (e) {
-        console.warn(e);
-      }
-      voiceRec.stopWakeWord();
-      toast("Hands-free mode disabled.", { icon: "🎙️" });
-    } else {
-      setIsHandsFree(true);
-      try {
-        localStorage.setItem("dhruv_wake_word_enabled", "true");
-        window.dispatchEvent(new Event("dhruv_wake_word_toggled"));
-      } catch (e) {
-        console.warn(e);
-      }
-      toast.success("Hands-free active! Say 'Hey Dhruv' anytime to ask a question.");
-    }
-  };
+  }, [
+    isOpen,
+    isVoiceRecognitionSupported,
+    isVoiceListening,
+    isVoiceSetupOpen,
+    listenForWakeWord,
+    stopWakeWord,
+  ]);
 
   // Play/Stop individual message TTS
   const handleToggleSpeakMessage = (msgId, text) => {
@@ -498,7 +598,7 @@ export default function AIChatWidget({
 
       if (jobs.length > 0) {
         const jobListings = jobs.slice(0, 3).map((j, i) => 
-          `${i + 1}. **${j.title}** at **${j.company || "Leading Company"}**\n   📍 ${j.location || "Remote"} • 💼 ${j.type || "Full-time"}\n   🔗 [View & Apply on SkillBridge](/candidate/dashboard?search=${encodeURIComponent(j.title)})`
+          `${i + 1}. **${j.title}** at **${j.company || "Leading Company"}**\n   📍 ${j.location || "Remote"} • 💼 ${j.type || "Full-time"}\n   🔗 [View & Apply on SkillBridge](/candidate-dashboard?${new URLSearchParams({ search: j.title })})`
         ).join("\n\n");
 
         const replyContent = `🎯 Found top live positions for **${roleName}**:\n\n${jobListings}\n\nWould you like me to analyze interview questions for these roles or explore other skills?`;
@@ -608,21 +708,38 @@ export default function AIChatWidget({
     ]);
   };
 
-  // Submit thumbs-up / thumbs-down feedback for an assistant message
-  const handleFeedback = useCallback(async (msg, rating) => {
+  const saveMessageFeedback = useCallback(async (msg, rating, feedbackReason) => {
     const msgIndex = messages.findIndex((m) => m.id === msg.id);
     const precedingUser = msgIndex > 0 ? messages.slice(0, msgIndex).reverse().find((m) => m.role === "user") : null;
     const prompt = precedingUser?.content || "Candidate query";
 
-    setMessageFeedback((prev) => ({ ...prev, [msg.id]: rating }));
-
     try {
-      await postAIFeedback({ prompt, response: msg.content, rating });
-      toast.success(rating === "positive" ? "Feedback submitted!" : "Thanks for your feedback", { duration: 1500 });
+      await postAIFeedback({ prompt, response: msg.content, rating, feedbackReason });
+      setMessageFeedback((prev) => ({ ...prev, [msg.id]: rating }));
+      setPendingNegativeFeedbackId(null);
+      setSelectedNegativeFeedbackReason("");
+      toast.success("Thanks for your feedback!", { duration: 1500 });
     } catch {
-      setMessageFeedback((prev) => ({ ...prev, [msg.id]: null }));
+      toast.error("We couldn't save your feedback. Please try again.");
     }
   }, [messages]);
+
+  // Ask why before saving a thumbs-down; thumbs-up saves immediately.
+  const handleFeedback = useCallback((msg, rating) => {
+    if (rating === "negative") {
+      setPendingNegativeFeedbackId(msg.id);
+      setSelectedNegativeFeedbackReason("");
+      return;
+    }
+    saveMessageFeedback(msg, rating);
+  }, [saveMessageFeedback]);
+
+  const submitNegativeFeedback = useCallback(async (msg) => {
+    if (!selectedNegativeFeedbackReason || isSubmittingFeedback) return;
+    setIsSubmittingFeedback(true);
+    await saveMessageFeedback(msg, "negative", selectedNegativeFeedbackReason);
+    setIsSubmittingFeedback(false);
+  }, [isSubmittingFeedback, saveMessageFeedback, selectedNegativeFeedbackReason]);
 
   // Close widget & clean up voice
   const handleClose = () => {
@@ -672,13 +789,13 @@ export default function AIChatWidget({
             zIndex: 900,
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "7.2px",
             backgroundColor: "#2563eb",
             color: "#ffffff",
-            padding: "12px 20px",
+            padding: "8.64px 14.4px",
             borderRadius: "9999px",
             fontWeight: "700",
-            fontSize: "0.92rem",
+            fontSize: "0.6624rem",
             border: "none",
             boxShadow: "0 10px 25px rgba(37, 99, 235, 0.4)",
             cursor: "pointer",
@@ -688,7 +805,7 @@ export default function AIChatWidget({
           onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
           <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <HiSparkles size={20} />
+            <HiSparkles size={14.4} />
           </div>
           <span>Ask Dhruv</span>
         </button>
@@ -698,6 +815,7 @@ export default function AIChatWidget({
       {isOpen && (
         <div
           ref={cardRef}
+          className="dhruv-drawer-opening"
           style={{
             position: "fixed",
             left: position.x !== null ? `${position.x}px` : "auto",
@@ -777,26 +895,24 @@ export default function AIChatWidget({
               onTouchStart={(e) => e.stopPropagation()}
               style={{ display: "flex", alignItems: "center", gap: "4px" }}
             >
-              {/* Hands-Free Wake Word Toggle */}
               {voiceRec.isSupported && (
                 <button
                   type="button"
-                  onClick={toggleHandsFree}
-                  aria-label={isHandsFree ? "Disable hands-free wake word" : "Enable hands-free wake word"}
-                  title={isHandsFree ? "Hands-Free Mode: ON (Say 'Hey Dhruv')" : "Enable Hands-Free Wake Word ('Hey Dhruv')"}
+                  onClick={openVoiceSetup}
+                  aria-label={voiceProfileSaved ? "Manage enrolled voice" : "Enroll your voice for Hey Dhruv"}
+                  title={voiceProfileSaved ? "Manage voice match" : "Set up owner voice match"}
                   style={{
-                    background: isHandsFree ? "#ecfdf5" : "transparent",
-                    border: isHandsFree ? "1px solid #a7f3d0" : "1px solid transparent",
+                    background: voiceProfileSaved ? "#eff6ff" : "transparent",
+                    border: "1px solid transparent",
                     padding: "6px",
                     cursor: "pointer",
-                    color: isHandsFree ? "#059669" : "#64748b",
+                    color: voiceProfileSaved ? "#2563eb" : "#64748b",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
-                    transition: "all 0.15s ease",
                   }}
                 >
-                  <Radio size={16} className={isHandsFree ? "animate-pulse text-emerald-600" : ""} />
+                  <Mic size={16} />
                 </button>
               )}
 
@@ -1051,6 +1167,83 @@ export default function AIChatWidget({
                             </button>
                           );
                         })}
+                      </div>
+                    </div>
+                  )}
+                  {m.role === "assistant" && pendingNegativeFeedbackId === m.id && (
+                    <div
+                      role="group"
+                      aria-label="Reason for disliking this answer"
+                      style={{
+                        marginTop: "9px",
+                        padding: "10px",
+                        borderRadius: "12px",
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    >
+                      <p style={{ margin: "0 0 8px", fontSize: "0.75rem", color: "#334155" }}>
+                        Sorry this answer missed the mark. What could be better?
+                      </p>
+                      {[
+                        ["inaccurate", "It was inaccurate"],
+                        ["irrelevant", "It wasn't relevant"],
+                        ["unclear", "It was hard to understand"],
+                        ["too_detailed", "It was too detailed"],
+                        ["other", "Something else"],
+                      ].map(([reason, label]) => (
+                        <label
+                          key={reason}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "7px",
+                            padding: "4px 0",
+                            fontSize: "0.74rem",
+                            color: "#475569",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name={`dhruv-feedback-${m.id}`}
+                            value={reason}
+                            checked={selectedNegativeFeedbackReason === reason}
+                            onChange={() => setSelectedNegativeFeedbackReason(reason)}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                      <div style={{ display: "flex", justifyContent: "flex-end", gap: "7px", marginTop: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingNegativeFeedbackId(null);
+                            setSelectedNegativeFeedbackReason("");
+                          }}
+                          disabled={isSubmittingFeedback}
+                          style={{ border: "none", background: "transparent", color: "#64748b", fontSize: "0.72rem", cursor: "pointer" }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => submitNegativeFeedback(m)}
+                          disabled={!selectedNegativeFeedbackReason || isSubmittingFeedback}
+                          style={{
+                            border: "none",
+                            borderRadius: "8px",
+                            background: "#2563eb",
+                            color: "#ffffff",
+                            padding: "5px 9px",
+                            fontSize: "0.72rem",
+                            fontWeight: 600,
+                            cursor: !selectedNegativeFeedbackReason || isSubmittingFeedback ? "not-allowed" : "pointer",
+                            opacity: !selectedNegativeFeedbackReason || isSubmittingFeedback ? 0.55 : 1,
+                          }}
+                        >
+                          {isSubmittingFeedback ? "Sending..." : "Send feedback"}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -1456,31 +1649,41 @@ export default function AIChatWidget({
                 }}
               />
 
-              {/* Voice Mic Button */}
-              {voiceRec.isSupported && (
-                <button
-                  type="button"
-                  onClick={handleMicClick}
-                  disabled={isLoading}
-                  aria-label={voiceRec.isListening ? "Stop voice listening" : "Start voice speech recognition"}
-                  title={voiceRec.isListening ? "Listening... Click to stop" : "Speak to Dhruv"}
-                  style={{
-                    background: voiceRec.isListening ? "#ef4444" : "transparent",
-                    color: voiceRec.isListening ? "#ffffff" : "#64748b",
-                    border: "none",
-                    padding: "6px",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    animation: voiceRec.isListening ? "dhruvMicPulse 1.5s infinite" : "none",
-                    flexShrink: 0,
-                  }}
-                >
-                  {voiceRec.isListening ? <MicOff size={18} /> : <Mic size={18} />}
-                </button>
-              )}
+              {/* Dictate into the composer; wake-word listening still sends automatically. */}
+              <button
+                type="button"
+                onClick={() => handleMicClick()}
+                disabled={isLoading}
+                aria-label={
+                  !voiceRec.isSupported
+                    ? "Speech recognition unavailable"
+                    : voiceRec.isListening
+                      ? "Stop dictation"
+                      : "Dictate a message"
+                }
+                title={
+                  !voiceRec.isSupported
+                    ? "Speech recognition is unavailable in this browser"
+                    : voiceRec.isListening
+                      ? "Listening... Click to stop"
+                      : "Speak to dictate a message"
+                }
+                style={{
+                  background: voiceRec.isListening ? "#ef4444" : "transparent",
+                  color: voiceRec.isListening ? "#ffffff" : voiceRec.isSupported ? "#64748b" : "#cbd5e1",
+                  border: "none",
+                  padding: "6px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  animation: voiceRec.isListening ? "dhruvMicPulse 1.5s infinite" : "none",
+                  flexShrink: 0,
+                }}
+              >
+                {voiceRec.isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
 
               {/* Send Button (Paper Airplane) */}
               <button
@@ -1506,6 +1709,117 @@ export default function AIChatWidget({
               </button>
             </form>
           </div>
+        </div>
+      )}
+
+      {isVoiceSetupOpen && (
+        <div
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isRecordingVoice) {
+              setIsVoiceSetupOpen(false);
+            }
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10001,
+            display: "grid",
+            placeItems: "center",
+            padding: "20px",
+            background: "rgba(15, 23, 42, 0.48)",
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dhruv-voice-setup-title"
+            style={{
+              width: "min(440px, 100%)",
+              padding: "24px",
+              background: "#ffffff",
+              border: "1px solid #dbe4f0",
+              borderRadius: "18px",
+              boxShadow: "0 24px 60px rgba(15, 23, 42, 0.28)",
+              fontFamily: "Inter, system-ui, sans-serif",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+              <h2 id="dhruv-voice-setup-title" style={{ margin: 0, color: "#0f172a", fontSize: "1.1rem" }}>
+                Hey Dhruv voice match
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsVoiceSetupOpen(false)}
+                disabled={isRecordingVoice}
+                aria-label="Close voice setup"
+                style={{ border: 0, background: "transparent", color: "#64748b", cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ margin: "14px 0", color: "#475569", fontSize: "0.9rem", lineHeight: 1.55 }}>
+              Enroll three short samples. DHRUV compares future wake phrases to your voice profile before responding.
+            </p>
+            <p style={{ margin: "0 0 18px", padding: "12px", color: "#475569", background: "#f8fafc", borderRadius: "10px", fontSize: "0.78rem", lineHeight: 1.5 }}>
+              The quantized model downloads once (about 102 MB). Enrollment audio is processed locally and discarded; your voice profile stays in this browser. Wake-word transcription uses your browser’s speech service and may follow its audio-processing policy. This experimental match is not account security and may accept similar voices or recordings.
+            </p>
+
+            {voiceSetupMessage && (
+              <p role="status" aria-live="polite" style={{ margin: "0 0 14px", color: isRecordingVoice ? "#1d4ed8" : "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
+                {voiceSetupMessage}
+              </p>
+            )}
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={handleVoiceEnrollment}
+                disabled={isRecordingVoice}
+                style={{
+                  minHeight: "40px",
+                  padding: "0 14px",
+                  color: "#ffffff",
+                  background: isRecordingVoice ? "#64748b" : "#2563eb",
+                  border: 0,
+                  borderRadius: "9px",
+                  fontWeight: 700,
+                  cursor: isRecordingVoice ? "wait" : "pointer",
+                }}
+              >
+                {isRecordingVoice ? `Recording ${voiceSampleNumber}/3...` : voiceProfileSaved ? "Re-enroll voice" : "Enroll my voice"}
+              </button>
+              {voiceProfileSaved && (
+                <button
+                  type="button"
+                  disabled={isRecordingVoice}
+                  onClick={() => {
+                    try {
+                      clearVoiceProfile();
+                      setVoiceProfileSaved(false);
+                      setVoiceSetupMessage("Voice profile removed from this browser.");
+                    } catch (error) {
+                      console.error("[DHRUV] Could not remove voice profile:", error);
+                      toast.error("Could not remove the voice profile.");
+                    }
+                  }}
+                  style={{
+                    minHeight: "40px",
+                    padding: "0 12px",
+                    color: "#b91c1c",
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "9px",
+                    fontWeight: 600,
+                    cursor: isRecordingVoice ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Remove profile
+                </button>
+              )}
+            </div>
+          </section>
         </div>
       )}
     </>

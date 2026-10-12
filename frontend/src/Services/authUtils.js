@@ -1,5 +1,7 @@
 import { logoutUserAPI } from "./authService";
 
+export const CANDIDATE_WELCOME_DISMISSED_KEY = "candidate_welcome_dismissed";
+
 export const notifyAuthChanged = () => {
   try {
     window.dispatchEvent(new Event("skillbridge_auth_changed"));
@@ -17,6 +19,7 @@ export const logoutUser = async () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("last_google_email");
+    localStorage.removeItem(CANDIDATE_WELCOME_DISMISSED_KEY);
     notifyAuthChanged();
   }
 };
@@ -31,6 +34,7 @@ export const setStoredUser = (user, token) => {
     if (token !== undefined) {
       if (token) {
         localStorage.setItem("token", token);
+        localStorage.removeItem(CANDIDATE_WELCOME_DISMISSED_KEY);
       } else {
         localStorage.removeItem("token");
       }
