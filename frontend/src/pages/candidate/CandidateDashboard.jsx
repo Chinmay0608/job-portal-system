@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI } from "../../Services/jobService";
-import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
+import { CANDIDATE_WELCOME_DISMISSED_KEY, setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import RetryBanner from "../../Components/RetryBanner";
@@ -385,7 +385,15 @@ function CandidateDashboard() {
   // if the candidate's profile is below the completion threshold.
   const [showProfileNudge, setShowProfileNudge] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [showWelcomeHeader, setShowWelcomeHeader] = useState(true);
+  const [showWelcomeHeader, setShowWelcomeHeader] = useState(() => {
+    try {
+      return localStorage.getItem(CANDIDATE_WELCOME_DISMISSED_KEY) !== "true";
+    } catch {
+      return true;
+    }
+  });
+  const [isWelcomeHeaderClosing, setIsWelcomeHeaderClosing] = useState(false);
+  const welcomeHeaderRef = useRef(null);
 
   const [visibleCount, setVisibleCount] = useState(JOBS_PER_PAGE);
 
@@ -420,9 +428,36 @@ function CandidateDashboard() {
   const API_URL = getApiBaseUrl();
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowWelcomeHeader(false), 25_000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!showWelcomeHeader) return;
+    let closeFrame;
+    const closeTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(CANDIDATE_WELCOME_DISMISSED_KEY, "true");
+      } catch {
+        // Keep the banner dismissal scoped to this render if storage is unavailable.
+      }
+      const header = welcomeHeaderRef.current;
+      if (header) {
+        header.style.height = `${header.getBoundingClientRect().height}px`;
+        closeFrame = requestAnimationFrame(() => {
+          header.style.height = "0px";
+          setIsWelcomeHeaderClosing(true);
+        });
+      } else {
+        setIsWelcomeHeaderClosing(true);
+      }
+    }, 25_000);
+    return () => {
+      clearTimeout(closeTimer);
+      if (closeFrame) cancelAnimationFrame(closeFrame);
+    };
+  }, [showWelcomeHeader]);
+
+  useEffect(() => {
+    if (!isWelcomeHeaderClosing) return;
+    const removeTimer = setTimeout(() => setShowWelcomeHeader(false), 700);
+    return () => clearTimeout(removeTimer);
+  }, [isWelcomeHeaderClosing]);
 
   // Define all functions before useEffect hooks
   const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, field, page }) => {
@@ -1150,10 +1185,12 @@ function CandidateDashboard() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
         {/* DASHBOARD TOP HEADER & TOUR BAR */}
         {showWelcomeHeader && (
-          <div className="candidate-welcome-header mb-4 bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
+          <div ref={welcomeHeaderRef} className={`candidate-welcome-collapse${isWelcomeHeaderClosing ? " is-closing" : ""}`}>
+            <div className="candidate-welcome-header bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
               <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
+              </div>
             </div>
           </div>
         )}

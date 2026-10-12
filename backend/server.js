@@ -36,6 +36,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const supportRoutes = require("./routes/supportRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const interviewRoutes = require("./routes/interviewRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const csrfProtection = require("./middleware/csrfMiddleware");
 const { securityAudit } = require("./middleware/securityAuditMiddleware");
@@ -152,6 +153,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/interview", interviewRoutes);
 
 /* ==========================
    HEALTH CHECK

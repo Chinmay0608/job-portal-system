@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import {
+  createSpeakerEmbedding,
+  getVoiceProfile,
+  matchesVoiceProfile,
+  startSpeakerAudioCapture,
+} from "../Services/voiceIdentity";
 
 const getSpeechRecognitionClass = () => {
   if (typeof window === "undefined") return null;
@@ -55,6 +61,7 @@ export default function useVoiceRecognition() {
   const wakeRecognitionRef = useRef(null);
   const onResultCallbackRef = useRef(null);
   const onWakeDetectedCallbackRef = useRef(null);
+  const onWakeStatusCallbackRef = useRef(null);
 
   // Stop regular listening
   const stopListening = useCallback(() => {
@@ -74,6 +81,9 @@ export default function useVoiceRecognition() {
 
   const wakeRestartTimerRef = useRef(null);
   const activeWakeRef = useRef(false);
+  const wakeAudioCaptureRef = useRef(null);
+  const wakeVerificationRef = useRef(false);
+  const lastVoicePromptRef = useRef(0);
 
   // Stop wake word listening
   const stopWakeWord = useCallback(() => {
@@ -92,6 +102,14 @@ export default function useVoiceRecognition() {
       }
       wakeRecognitionRef.current = null;
     }
+    const audioCapture = wakeAudioCaptureRef.current;
+    wakeAudioCaptureRef.current = null;
+    if (audioCapture) {
+      audioCapture.stop().catch((err) => {
+        console.warn("[VoiceRecognition] Audio capture stop error:", err);
+      });
+    }
+    wakeVerificationRef.current = false;
     setIsWakeListening(false);
   }, []);
 
@@ -188,13 +206,14 @@ export default function useVoiceRecognition() {
 
   // Background Wake Word Detection ("Hey Dhruv", "Dhruv", "OK Dhruv")
   const listenForWakeWord = useCallback(
-    (onWakeWordDetected) => {
+    (onWakeWordDetected, onWakeStatus) => {
       if (!isSupported) return;
 
       stopWakeWord();
       stopListening();
       activeWakeRef.current = true;
       onWakeDetectedCallbackRef.current = onWakeWordDetected;
+      onWakeStatusCallbackRef.current = onWakeStatus;
 
       const startWakeSession = () => {
         if (!activeWakeRef.current || !SpeechRecognitionClass) return;
@@ -218,28 +237,62 @@ export default function useVoiceRecognition() {
           };
 
           wakeRec.onresult = (event) => {
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              const rawText = (event.results[i][0]?.transcript || "").trim();
-              if (!rawText) continue;
+            const rawText = Array.from(event.results, (result) => result[0]?.transcript || "").join(" ").trim();
+            if (!rawText) return;
 
-              // Clean text: strip punctuation and collapse whitespace so 'Hey, Dhruv!' becomes 'hey dhruv'
-              const cleanText = rawText.toLowerCase().replace(/[^a-z0-9\s]/gi, " ").replace(/\s+/g, " ").trim();
+            const cleanText = rawText.toLowerCase().replace(/[^a-z0-9\s]/gi, " ").replace(/\s+/g, " ").trim();
+            const wakePattern = /\b(hey|hi|hello|ok|okay|ask)?\s*(dhruv|druv|dhruva|drew|droov|dhrub|dhru|dhroov)\b/i;
 
-              // Flexible regex: matches 'hey dhruv', 'hi dhruv', 'hello dhruv', 'ok dhruv', 'dhruv',
-              // as well as common speech engine phonetics for 'Dhruv' ('druv', 'dhruva', 'drew', 'droov', 'dhrub', 'dhru', 'dhroov')
-              const WAKE_PATTERN = /\b(hey|hi|hello|ok|okay|ask)?\s*(dhruv|druv|dhruva|drew|droov|dhrub|dhru|dhroov)\b/i;
-
-              if (WAKE_PATTERN.test(cleanText)) {
-                console.log("[VoiceRecognition] Wake word recognized:", rawText);
-                playWakeChime();
-                stopWakeWord();
-                if (onWakeDetectedCallbackRef.current) {
-                  // Extract any question/query spoken after the wake word
-                  const cleanQuery = cleanText.replace(WAKE_PATTERN, "").trim();
-                  onWakeDetectedCallbackRef.current(cleanQuery);
+            if (wakePattern.test(cleanText) && !wakeVerificationRef.current) {
+              const profile = getVoiceProfile();
+              if (!profile) {
+                if (Date.now() - lastVoicePromptRef.current > 8000) {
+                  lastVoicePromptRef.current = Date.now();
+                  onWakeStatusCallbackRef.current?.("profile-missing");
+                  toast("Set up voice match in DHRUV before using the wake phrase.", {
+                    id: "dhruv-voice-enrollment-needed",
+                  });
                 }
-                break;
+                return;
               }
+
+              const audioCapture = wakeAudioCaptureRef.current;
+              if (!audioCapture) {
+                onWakeStatusCallbackRef.current?.("capture-unavailable");
+                return;
+              }
+              wakeVerificationRef.current = true;
+              const audio = audioCapture.getRecentAudio();
+              const promptAfterWake = cleanText.replace(wakePattern, "").trim();
+              const verificationToastId = "dhruv-voice-verification";
+              onWakeStatusCallbackRef.current?.("checking");
+              toast.loading("Checking your voice on this device...", { id: verificationToastId });
+
+              void (async () => {
+                try {
+                  const embedding = await createSpeakerEmbedding(audio, audioCapture.sampleRate);
+                  if (!activeWakeRef.current) return;
+                  if (!matchesVoiceProfile(embedding, profile)) {
+                    if (Date.now() - lastVoicePromptRef.current > 5000) {
+                      lastVoicePromptRef.current = Date.now();
+                      onWakeStatusCallbackRef.current?.("speaker-mismatch");
+                      toast("I couldn't match that voice to your enrolled profile.");
+                    }
+                    return;
+                  }
+                  console.log("[VoiceRecognition] Enrolled speaker matched.");
+                  playWakeChime();
+                  stopWakeWord();
+                  onWakeDetectedCallbackRef.current?.(promptAfterWake);
+                } catch (err) {
+                  console.error("[VoiceRecognition] Speaker verification failed:", err);
+                  onWakeStatusCallbackRef.current?.("verification-error");
+                  toast.error("DHRUV couldn't verify your voice. Please try again.");
+                } finally {
+                  toast.dismiss(verificationToastId);
+                  wakeVerificationRef.current = false;
+                }
+              })();
             }
           };
 
@@ -285,7 +338,21 @@ export default function useVoiceRecognition() {
         }
       };
 
-      startWakeSession();
+      void startSpeakerAudioCapture().then((capture) => {
+        if (!activeWakeRef.current) {
+          void capture.stop();
+          return;
+        }
+        wakeAudioCaptureRef.current = capture;
+        startWakeSession();
+      }).catch((err) => {
+        console.error("[VoiceRecognition] Could not capture audio for voice match:", err);
+        if (activeWakeRef.current) {
+          activeWakeRef.current = false;
+          setIsWakeListening(false);
+          toast.error("DHRUV needs microphone access to match your enrolled voice.");
+        }
+      });
     },
     [isSupported, SpeechRecognitionClass, stopWakeWord, stopListening]
   );

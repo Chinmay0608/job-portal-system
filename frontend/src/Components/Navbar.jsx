@@ -10,7 +10,6 @@ import {
   BsBoxArrowRight 
 } from "react-icons/bs";
 import { FiMenu, FiX, FiArrowLeft, FiHome } from "react-icons/fi";
-import { HiSparkles } from "react-icons/hi2";
 import { logoutUser, getStoredUser, notifyAuthChanged } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
 import AIChatWidget from "./AIChatWidget";
@@ -24,6 +23,8 @@ function Navbar() {
   const [user, setUser] = useState(getStoredUser);
   const isLoggedIn = Boolean(user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCandidateMenuOpen, setIsCandidateMenuOpen] = useState(false);
+  const candidateMenuRef = useRef(null);
   const [isDhruvOpen, setIsDhruvOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -60,15 +61,6 @@ function Navbar() {
 
   const [dhruvAutoVoice, setDhruvAutoVoice] = useState(false);
   const [dhruvInitialQuery, setDhruvInitialQuery] = useState("");
-
-  const [isWakeWordActive, setIsWakeWordActive] = useState(() => {
-    try {
-      // Hands-free "Hey Dhruv" is active by default unless explicitly disabled
-      return localStorage.getItem("dhruv_wake_word_enabled") !== "false";
-    } catch {
-      return true;
-    }
-  });
 
   useEffect(() => {
     const checkAuth = () => {
@@ -198,21 +190,6 @@ function Navbar() {
     };
   }, [isMobileMenuOpen]);
 
-  // Sync wake word preference with events from AIChatWidget
-  useEffect(() => {
-    const handleWakeSync = () => {
-      try {
-        setIsWakeWordActive(localStorage.getItem("dhruv_wake_word_enabled") !== "false");
-      } catch (e) {
-        console.warn(e);
-      }
-    };
-    window.addEventListener("dhruv_wake_word_toggled", handleWakeSync);
-    return () => {
-      window.removeEventListener("dhruv_wake_word_toggled", handleWakeSync);
-    };
-  }, []);
-
   const isHome = location.pathname === "/";
   const isCandidateDashboard = location.pathname === "/candidate-dashboard";
   const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
@@ -224,11 +201,10 @@ function Navbar() {
   const isDhruvEnabled = import.meta.env.VITE_DHRUV_ENABLED === "true";
   const canAccessAI = Boolean(isDhruvEnabled && isLoggedIn && user && user.role === "candidate" && !isHome);
 
-  // Background wake word detection when hands-free is enabled
   // Global background wake word detection ("Hey Dhruv" - like Siri / Alexa)
   // Strict rule: ONLY start microphone if user is logged in to their candidate dashboard
   useEffect(() => {
-    if (!canAccessAI || !isWakeWordActive || isDhruvOpen || !isVoiceSupported) {
+    if (!canAccessAI || isDhruvOpen || !isVoiceSupported) {
       stopWakeWord();
       return;
     }
@@ -248,7 +224,7 @@ function Navbar() {
     return () => {
       stopWakeWord();
     };
-  }, [canAccessAI, isWakeWordActive, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
+  }, [canAccessAI, isDhruvOpen, isVoiceSupported, listenForWakeWord, stopWakeWord]);
 
   const getDashboardUrl = () => {
     if (!isLoggedIn) return "/";
@@ -268,9 +244,6 @@ function Navbar() {
       navigate(dashboardUrl);
     }
   };
-
-  // All inner candidate, recruiter, admin & app pages feature the cohesive theme header background (#e8f1ff)
-  const isDashboardWavePage = !isHome;
 
   const logout = async (e) => {
     if (e) e.preventDefault();
@@ -301,7 +274,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`indeed-navbar${isHome ? " navbar-dark" : ""}${isDashboardWavePage ? " dashboard-nav" : ""}${isCandidateDashboard ? " candidate-dashboard-nav" : ""}`}>
+    <nav className="indeed-navbar">
       <div className="navbar-container">
         {/* Left Section: Back Button + Logo + Main Text Links */}
         <div className="nav-left">
@@ -374,25 +347,45 @@ function Navbar() {
         {/* Middle Section: DHRUV AI Assistant (Logged-in candidates only) */}
         {canAccessAI && (
           <div className="nav-center">
-            <button
-              type="button"
-              className={`header-dhruv-btn ${isWakeListening ? "wake-listening" : ""}`}
-              onClick={() => {
-                setDhruvAutoVoice(false);
-                setDhruvInitialQuery("");
-                setIsDhruvOpen((prev) => !prev);
-              }}
-              aria-label="Ask DHRUV AI Career Coach"
-              title={
-                isWakeListening
-                  ? "DHRUV is listening for 'Hey Dhruv' (Click to open)"
-                  : "Ask DHRUV - AI Career Coach (Voice & 'Hey Dhruv' Enabled)"
-              }
-            >
-              <HiSparkles className="dhruv-sparkles-icon" />
-              <span className="dhruv-btn-text">Ask DHRUV</span>
-              {isWakeListening && <span className="dhruv-listening-indicator" title="Microphone listening for 'Hey Dhruv'" />}
-            </button>
+            {canAccessAI && (
+              <button
+                type="button"
+                className={`header-dhruv-btn ${isWakeListening ? "wake-listening" : ""}`}
+                onClick={() => {
+                  setDhruvAutoVoice(false);
+                  setDhruvInitialQuery("");
+                  setIsDhruvOpen((prev) => !prev);
+                }}
+                aria-label="Ask DHRUV AI Career Coach"
+                title={
+                  isWakeListening
+                    ? "DHRUV is listening for 'Hey Dhruv' (Click to open)"
+                    : "Ask DHRUV - AI Career Coach (Voice & 'Hey Dhruv' Enabled)"
+                }
+              >
+                <svg className="dhruv-sparkles-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                  <path d="m23 15-3-9m21 10 4-9" stroke="#9be5ff" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="45" cy="6" r="4" fill="#8bdcff" />
+                  <path d="m11 21-6-2m9-6-4-5m-2 19-6-1" stroke="#8bdcff" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d="M48 13c8 0 13 5 13 12s-5 12-13 12h-1l-6 6v-8c-4-2-6-6-6-10 0-7 5-12 13-12Z" fill="#67c9ff" />
+                  <circle cx="48" cy="25" r="1.7" fill="#fff" />
+                  <circle cx="54" cy="25" r="1.7" fill="#fff" />
+                  <circle cx="60" cy="25" r="1.7" fill="#fff" />
+                  <path d="M15 43c-7-2-10 5-5 10l8 7 9-5m13-12c7-2 10 5 5 10l-8 7-9-5" fill="#a4e1ff" stroke="#f5faff" strokeWidth="2.5" strokeLinejoin="round" />
+                  <path d="M25 17 21 9m18 8 4-8" stroke="#d8f3ff" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="12" y="17" width="40" height="37" rx="18" fill="#172c9c" stroke="#f7fbff" strokeWidth="4" />
+                  <rect x="10" y="29" width="6" height="13" rx="3" fill="#72ceff" />
+                  <rect x="48" y="29" width="6" height="13" rx="3" fill="#72ceff" />
+                  <path d="M25 35v2m14-2v2" stroke="#8be5ff" strokeWidth="4.5" strokeLinecap="round" />
+                </svg>
+                <span className="dhruv-divider" aria-hidden="true" />
+                <span className="dhruv-btn-text">ASK</span>
+                <svg className="dhruv-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="m9 5 7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {isWakeListening && <span className="dhruv-listening-indicator" title="Microphone listening for 'Hey Dhruv'" />}
+              </button>
+            )}
           </div>
         )}
 
@@ -639,7 +632,6 @@ function Navbar() {
           initialQuery={dhruvInitialQuery}
         />
       )}
-
       {/* Messages Drawer */}
       <MessagesDrawer
         isOpen={isMessagesOpen}

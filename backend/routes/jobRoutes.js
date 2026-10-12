@@ -26,9 +26,18 @@ const {
 } = require("../controllers/jobController");
 
 const { submitAiFeedback } = require("../controllers/feedbackController");
+const { synthesizeDhruvSpeech } = require("../controllers/speechController");
+const rateLimit = require("express-rate-limit");
 
 
 const router = express.Router();
+const speechLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many voice requests. Please try again shortly." },
+});
 
 /* ==========================
    PUBLIC ROUTES
@@ -56,6 +65,13 @@ router.post(
   protect,
   authorizeRoles("candidate"),
   aiCareerCoach,
+);
+router.post(
+  "/ai/speech",
+  protect,
+  authorizeRoles("candidate"),
+  speechLimiter,
+  synthesizeDhruvSpeech,
 );
 router.post(
   "/ai/feedback",

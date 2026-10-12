@@ -1,60 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import toast from "react-hot-toast";
+import { synthesizeDhruvSpeech } from "../Services/jobService";
 
 const STORAGE_KEY_MUTED = "dhruv_tts_muted";
-const STORAGE_KEY_VOICE  = "dhruv_voice_key"; // "male" | "female" | "neural"
+const STORAGE_KEY_VOICE  = "dhruv_voice_key";
 
-// ── Voice preset definitions ──────────────────────────────────────────────────
-// Each preset is tried in priority order against available browser voices.
 export const VOICE_PRESETS = [
-  {
-    key: "female",
-    label: "Female",
-    emoji: "👩",
-    // Ordered preference list – first match wins
-    nameHints: ["Google US English", "Samantha", "Victoria", "Karen", "Moira", "Fiona",
-                 "Google UK English Female", "Microsoft Zira", "Microsoft Eva"],
-    genderHint: "female",
-    pitch: 1.1,
-    rate: 1.0,
-  },
-  {
-    key: "male",
-    label: "Male",
-    emoji: "👨",
-    nameHints: ["Google UK English Male", "David", "Daniel", "Alex", "Fred",
-                 "Microsoft David", "Microsoft Mark", "Google US English Male"],
-    genderHint: "male",
-    pitch: 0.95,
-    rate: 1.0,
-  },
-  {
-    key: "neural",
-    label: "Neural",
-    emoji: "🤖",
-    nameHints: ["Natural", "Neural", "Wavenet", "Premium", "Enhanced",
-                 "Google US English", "Samantha"],
-    genderHint: null,   // any gender – pick highest quality
-    pitch: 1.0,
-    rate: 1.0,
-  },
+  { key: "female", label: "Female" },
+  { key: "male", label: "Male" },
 ];
-
-/** Pick the best matching SpeechSynthesisVoice for a preset. */
-function pickVoice(preset, voices) {
-  const englishVoices = voices.filter(v => v.lang.startsWith("en"));
-  if (!englishVoices.length) return null;
-
-  // Try name hints in priority order
-  for (const hint of preset.nameHints) {
-    const match = englishVoices.find(v =>
-      v.name.toLowerCase().includes(hint.toLowerCase())
-    );
-    if (match) return match;
-  }
-
-  // Fall back to any English voice
-  return englishVoices[0] || null;
-}
 
 // Sanitizes markdown and technical artifacts for clean voice reading
 export function sanitizeForSpeech(text) {
@@ -66,7 +20,7 @@ export function sanitizeForSpeech(text) {
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^[•\-\*]\s+/gm, "")
+    .replace(/^[•*-]\s+/gm, "")
     .replace(/<[^>]+>/g, "")
     .replace(/\n{2,}/g, ". ")
     .replace(/\n/g, ", ")
@@ -81,31 +35,31 @@ export default function useTextToSpeech() {
     catch { return false; }
   });
   const [voiceKey, setVoiceKeyState]  = useState(() => {
-    try { return localStorage.getItem(STORAGE_KEY_VOICE) || "female"; }
+    try { return localStorage.getItem(STORAGE_KEY_VOICE) === "male" ? "male" : "female"; }
     catch { return "female"; }
   });
-  // Actual loaded browser voices (async on some browsers)
-  const [voices, setVoices]           = useState([]);
-
-  const utteranceRef = useRef(null);
-  const isSupported  = typeof window !== "undefined" && "speechSynthesis" in window;
-
-  // Load voices (they arrive asynchronously on Chrome)
-  useEffect(() => {
-    if (!isSupported) return;
-    const load = () => setVoices(window.speechSynthesis.getVoices());
-    load();
-    window.speechSynthesis.addEventListener("voiceschanged", load);
-    return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
-  }, [isSupported]);
+  const audioRef = useRef(null);
+  const playbackRequestRef = useRef(0);
+  const isSupported = typeof window !== "undefined" && "Audio" in window;
 
   const stop = useCallback(() => {
-    if (isSupported) {
+    playbackRequestRef.current += 1;
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try { window.speechSynthesis.cancel(); }
       catch (err) { console.warn("[TextToSpeech] Cancel error:", err); }
     }
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+      if (audio.src.startsWith("blob:")) URL.revokeObjectURL(audio.src);
+      audio.removeAttribute("src");
+      audio.load();
+      audioRef.current = null;
+    }
     setIsSpeaking(false);
-  }, [isSupported]);
+  }, []);
 
   const toggleMute = useCallback(() => {
     setIsMuted(prev => {
@@ -126,45 +80,57 @@ export default function useTextToSpeech() {
   }, []);
 
   const speak = useCallback(
-    (text, onFinished) => {
+    async (text, onFinished) => {
       if (!isSupported || isMuted || !text) return;
       const cleanedText = sanitizeForSpeech(text);
       if (!cleanedText) return;
 
       stop();
+      const playbackRequest = playbackRequestRef.current;
+      setIsSpeaking(true);
 
       try {
-        const utterance = new SpeechSynthesisUtterance(cleanedText);
-        utterance.lang = "en-US";
+        const audioBlob = await synthesizeDhruvSpeech({
+          text: cleanedText,
+          voice: voiceKey === "male" ? "male" : "female",
+        });
+        if (isMuted || playbackRequest !== playbackRequestRef.current) return;
 
-        const preset = VOICE_PRESETS.find(p => p.key === voiceKey) || VOICE_PRESETS[0];
-        utterance.pitch = preset.pitch;
-        utterance.rate  = preset.rate;
-
-        const selectedVoice = pickVoice(preset, voices);
-        if (selectedVoice) utterance.voice = selectedVoice;
-
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend   = () => {
+        const audio = new Audio(URL.createObjectURL(audioBlob));
+        audioRef.current = audio;
+        audio.onended = () => {
+          audioRef.current = null;
+          URL.revokeObjectURL(audio.src);
           setIsSpeaking(false);
           if (onFinished) onFinished();
         };
-        utterance.onerror = (event) => {
-          if (event.error !== "canceled" && event.error !== "interrupted") {
-            console.warn("[TextToSpeech] Utterance error:", event.error);
-          }
+        audio.onerror = () => {
+          audioRef.current = null;
+          URL.revokeObjectURL(audio.src);
           setIsSpeaking(false);
+          toast.error("DHRUV audio playback failed. Please try again.");
           if (onFinished) onFinished();
         };
 
-        utteranceRef.current = utterance;
-        window.speechSynthesis.speak(utterance);
+        await audio.play();
       } catch (err) {
         console.warn("[TextToSpeech] Synthesis failed:", err);
+        if (playbackRequest !== playbackRequestRef.current) return;
         setIsSpeaking(false);
+        let errorMessage = "DHRUV could not speak right now. Please try again.";
+        if (err.response?.data instanceof Blob) {
+          try {
+            const response = JSON.parse(await err.response.data.text());
+            if (typeof response.message === "string") errorMessage = response.message;
+          } catch (parseError) {
+            console.warn("[TextToSpeech] Could not read speech service error:", parseError);
+          }
+        }
+        toast.error(errorMessage);
+        if (onFinished) onFinished();
       }
     },
-    [isSupported, isMuted, stop, voiceKey, voices]
+    [isSupported, isMuted, stop, voiceKey]
   );
 
   useEffect(() => () => stop(), [stop]);

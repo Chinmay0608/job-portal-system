@@ -22,6 +22,11 @@ const aiFeedbackSchema = new mongoose.Schema(
       enum: ["positive", "negative"],
       required: true,
     },
+    feedbackReason: {
+      type: String,
+      enum: ["inaccurate", "irrelevant", "unclear", "too_detailed", "other"],
+      default: null,
+    },
     candidateSkills: {
       type: [String],
       default: [],

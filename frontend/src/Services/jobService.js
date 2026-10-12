@@ -51,8 +51,11 @@ export const postAIChatMessage = async (messages) => {
   return response.data;
 };
 
-export const postAIFeedback = async ({ prompt, response, rating }) => {
-  const res = await api.post("/api/jobs/ai-chat/feedback", { prompt, response, rating });
+export const synthesizeDhruvSpeech = async ({ text, voice }) =>
+  (await api.post("/api/jobs/ai/speech", { text, voice }, { responseType: "blob" })).data;
+
+export const postAIFeedback = async ({ prompt, response, rating, feedbackReason }) => {
+  const res = await api.post("/api/jobs/ai-chat/feedback", { prompt, response, rating, feedbackReason });
   return res.data;
 };
 
