@@ -1,10 +1,27 @@
 jest.mock("node:dns/promises", () => ({
   lookup: jest.fn().mockResolvedValue([{ address: "8.8.8.8", family: 4 }]),
 }));
-jest.mock("axios", () => ({ get: jest.fn() }));
+jest.mock("axios", () => ({ get: jest.fn(), post: jest.fn() }));
 jest.mock("../models/job", () => ({
   findById: jest.fn(),
   findByIdAndUpdate: jest.fn(),
+}));
+jest.mock("@google/genai", () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({
+    models: {
+      generateContent: jest.fn().mockResolvedValue({
+        text: JSON.stringify({
+          roleSummary: "Comprehensive expanded description from AI.",
+          responsibilities: ["Design embedded DSP software", "Optimize audio algorithms"],
+          qualifications: ["C/C++ proficiency", "3+ years DSP experience"],
+          preferredQualifications: ["Audio processing expertise"],
+          workArrangement: "Yerwada, Pune",
+          culture: "Collaborative and innovative.",
+          eeoStatement: "Equal opportunity employer.",
+        }),
+      }),
+    },
+  })),
 }));
 
 const Job = require("../models/job");
@@ -19,6 +36,8 @@ const { getFullJobDescription } = require("../controllers/jobController");
 describe("fullDescriptionService & getFullJobDescription controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
     axios.get.mockResolvedValue({
       status: 200,
       headers: { "content-type": "text/html" },
@@ -98,6 +117,31 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
       );
       expect(Job.findByIdAndUpdate).toHaveBeenCalledWith("job-102", {
         description: expect.stringContaining("Standard Job Title"),
+        isFullDescription: true,
+      });
+    });
+
+    it("falls back to AI expansion when external career posting is blocked (e.g. 403)", async () => {
+      process.env.GEMINI_API_KEY = "dummy-gemini-key";
+      axios.get.mockRejectedValue(new Error("Request failed with status code 403"));
+
+      const snippet = "Level 3 DSP Engineer - Platforming Experience: 3-8 years... Tra…";
+      const job = {
+        _id: "job-dsp-103",
+        title: "DSP Engineer",
+        company: "Trigent Software Private Limited",
+        location: "Yerwada, Pune",
+        description: snippet,
+        applyUrl: "https://www.adzuna.in/details/5924576092",
+      };
+
+      const result = await ensureFullJobDescription(job);
+      expect(result).toContain("<h3>Standard Job Title</h3>");
+      expect(result).toContain("<h3>Key Responsibilities</h3>");
+      expect(result).toContain("Design embedded DSP software");
+      expect(result).toContain("C/C++ proficiency");
+      expect(Job.findByIdAndUpdate).toHaveBeenCalledWith("job-dsp-103", {
+        description: expect.stringContaining("DSP Engineer"),
         isFullDescription: true,
       });
     });
