@@ -547,53 +547,59 @@ Return ONLY valid JSON matching this schema:
 }`;
 
   if (hasApiKey("GEMINI")) {
-    try {
-      const jsonText = await withApiKey("GEMINI", async (apiKey) => {
-        const ai = new GoogleGenAI({ apiKey });
-        const resp = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-          },
+    const geminiModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+    for (const model of geminiModels) {
+      try {
+        const jsonText = await withApiKey("GEMINI", async (apiKey) => {
+          const ai = new GoogleGenAI({ apiKey });
+          const resp = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              temperature: 0.2,
+            },
+          });
+          return resp.text || resp.candidates?.[0]?.content?.parts?.[0]?.text;
         });
-        return resp.text || resp.candidates?.[0]?.content?.parts?.[0]?.text;
-      });
-      if (jsonText) {
-        const parsed = JSON.parse(jsonText.trim());
-        if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
-          return parsed;
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText.trim());
+          if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
+            return parsed;
+          }
         }
+      } catch (err) {
+        console.warn(`[FullDescriptionService] Gemini (${model}) failed:`, err.message);
       }
-    } catch (err) {
-      console.warn("[FullDescriptionService] Gemini AI expansion failed:", err.message);
     }
   }
 
   if (hasApiKey("GROQ")) {
-    try {
-      const jsonText = await withApiKey("GROQ", async (apiKey) => {
-        const resp = await axios.post(
-          "https://api.groq.com/openai/v1/chat/completions",
-          {
-            model: "llama-3.3-70b-versatile",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.2,
-          },
-          { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, timeout: 10000 }
-        );
-        return resp.data?.choices?.[0]?.message?.content;
-      });
-      if (jsonText) {
-        const parsed = JSON.parse(jsonText.trim());
-        if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
-          return parsed;
+    const groqModels = ["openai/gpt-oss-120b", "groq/compound", "llama-3.3-70b-versatile"];
+    for (const model of groqModels) {
+      try {
+        const jsonText = await withApiKey("GROQ", async (apiKey) => {
+          const resp = await axios.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+              model,
+              messages: [{ role: "user", content: prompt }],
+              response_format: { type: "json_object" },
+              temperature: 0.2,
+            },
+            { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, timeout: 10000 }
+          );
+          return resp.data?.choices?.[0]?.message?.content;
+        });
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText.trim());
+          if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
+            return parsed;
+          }
         }
+      } catch (err) {
+        console.warn(`[FullDescriptionService] Groq (${model}) failed:`, err.message);
       }
-    } catch (err) {
-      console.warn("[FullDescriptionService] Groq AI expansion failed:", err.message);
     }
   }
 
