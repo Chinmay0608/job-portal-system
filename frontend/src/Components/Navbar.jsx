@@ -25,6 +25,10 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCandidateMenuOpen, setIsCandidateMenuOpen] = useState(false);
   const candidateMenuRef = useRef(null);
+  const navLinksRef = useRef(null);
+  const homeTabRef = useRef(null);
+  const jobsTabRef = useRef(null);
+  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
   const [isDhruvOpen, setIsDhruvOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -197,6 +201,19 @@ function Navbar() {
   const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
   const isMyApplications = location.pathname === "/my-applications";
 
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeTab = isJobsTab ? jobsTabRef.current : homeTabRef.current;
+      const nav = navLinksRef.current;
+      if (!activeTab || !nav) return;
+      setTabIndicator({ left: activeTab.offsetLeft, width: activeTab.offsetWidth });
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [isJobsTab, location.pathname, user?.role]);
+
   // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
   // Also gated behind VITE_DHRUV_ENABLED=true so it never loads on production until fully trained
   const isDhruvEnabled = import.meta.env.VITE_DHRUV_ENABLED === "true";
@@ -307,9 +324,10 @@ function Navbar() {
 
           {/* Left Text Navigation Links (Only on inner app pages, not landing page) */}
           {!isHome && (
-            <div className="nav-links-left desktop-only">
+            <div ref={navLinksRef} className={`nav-links-left desktop-only ${user?.role === "candidate" ? "has-moving-indicator" : ""}`}>
               {(!isLoggedIn || user?.role === "candidate") && (
                 <Link 
+                  ref={user?.role === "candidate" ? homeTabRef : undefined}
                   to={isLoggedIn ? "/candidate-dashboard" : "/"} 
                   className={`nav-tab-link ${isCandidateDashboard && !isJobsTab ? "active" : ""}`}
                 >
@@ -317,9 +335,16 @@ function Navbar() {
                 </Link>
               )}
               {user?.role === "candidate" && (
-                <Link to="/candidate-dashboard?tab=jobs" className={`nav-tab-link ${isJobsTab ? "active" : ""}`}>
+                <Link ref={jobsTabRef} to="/candidate-dashboard?tab=jobs" className={`nav-tab-link ${isJobsTab ? "active" : ""}`}>
                   Jobs
                 </Link>
+              )}
+              {user?.role === "candidate" && (
+                <span
+                  className="nav-tab-indicator"
+                  aria-hidden="true"
+                  style={{ width: `${tabIndicator.width}px`, transform: `translateX(${tabIndicator.left}px)` }}
+                />
               )}
 
               {user?.role === "recruiter" && (
