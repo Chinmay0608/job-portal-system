@@ -112,12 +112,12 @@ function Navbar() {
     let isMounted = true;
     const updateUnread = async (e) => {
       if (e?.detail && typeof e.detail.unreadCount === "number") {
-        if (isMounted) setUnreadMessagesCount(e.detail.unreadCount);
+        if (isMounted) setUnreadMessagesCount(e.detail.unreadCount + getUnreadMessagesCount(user));
         return;
       }
       try {
         const count = await getUnreadCount();
-        if (isMounted) setUnreadMessagesCount(count);
+        if (isMounted) setUnreadMessagesCount(count + getUnreadMessagesCount(user));
       } catch (err) {
         console.warn("Error fetching unread message count:", err);
       }
@@ -210,7 +210,7 @@ function Navbar() {
     }
 
     listenForWakeWord((promptAfterWake) => {
-      toast.success("Hey Dhruv! I'm listening...", { icon: "🎙️", duration: 3000 });
+      toast.success("Hey Dhruv! I'm listening...", { icon: "ðŸŽ™ï¸", duration: 3000 });
       if (promptAfterWake && promptAfterWake.length > 2) {
         setDhruvInitialQuery(promptAfterWake);
         setDhruvAutoVoice(false);
@@ -313,6 +313,11 @@ function Navbar() {
                   className={`nav-tab-link ${isCandidateDashboard ? "active" : ""}`}
                 >
                   Home
+                </Link>
+              )}
+              {user?.role === "candidate" && (
+                <Link to="/candidate-dashboard" className="nav-tab-link">
+                  Jobs
                 </Link>
               )}
 
@@ -651,3 +656,4 @@ function Navbar() {
 }
 
 export default Navbar;
+

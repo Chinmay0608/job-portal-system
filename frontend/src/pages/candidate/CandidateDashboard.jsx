@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 26079)
+Total output lines: 2252
+
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../Components/CustomSelect";
@@ -56,7 +59,7 @@ const isDescriptionSnippet = (description) => {
     isMisstructuredDescription(text) ||
     text.length < 350 ||
     text.endsWith("...") ||
-    text.endsWith("…") ||
+    text.endsWith("â€¦") ||
     /\band\s*\.\.\.$/i.test(text) ||
     text.includes("read more on career portal") ||
     text.includes("preview snippet")
@@ -186,7 +189,7 @@ const alignWhoWeAreHeading = (html) => {
       <div className="job-description-content space-y-5 text-slate-700">
         {sections.map(({ heading, content }, idx) => {
           const items = content
-            .split(/\s*[•●▪]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
+            .split(/\s*[â€¢â—â–ª]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
             .map((item) => item.replace(/^[-*]\s*/, "").trim())
             .filter(Boolean);
           const isWhoWeAreSection = /^who\s+we\s+are$/i.test(heading);
@@ -232,21 +235,21 @@ const alignWhoWeAreHeading = (html) => {
 const formatSalary = (salaryText, min, max, currency) => {
   if (min && max) {
     const formatShorthand = (num) => {
-      if (num >= 100000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 100000}L`;
-      if (num >= 1000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 1000}k`;
-      return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num}`;
+      if (num >= 100000) return `${currency === 'INR' || currency === 'â‚¹' ? 'â‚¹' : '$'}${Number((num / 100000).toFixed(1))}L`;
+      if (num >= 1000) return `${currency === 'INR' || currency === 'â‚¹' ? 'â‚¹' : '$'}${Number((num / 1000).toFixed(1))}k`;
+      return `${currency === 'INR' || currency === 'â‚¹' ? 'â‚¹' : '$'}${num}`;
     };
-    return `${formatShorthand(min)}–${formatShorthand(max)}`;
+    return `${formatShorthand(min)}â€“${formatShorthand(max)}`;
   }
   
   if (typeof salaryText === 'string' && isNaN(Number(salaryText))) return salaryText;
   if (!salaryText || Number(salaryText) === 0) return "Competitive";
-  return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
+  return `â‚¹${Number(salaryText).toLocaleString("en-IN")} a year`;
 };
 
 const inferExperienceFromDescription = (description = "") => {
   const text = decodeHTMLEntities(description).replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ");
-  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|–|to)\s*(\d+)\+?)?\s*years?\b/gi)]
+  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|â€“|to)\s*(\d+)\+?)?\s*years?\b/gi)]
     .filter((match) => /experience/i.test(text.slice(Math.max(0, match.index - 50), match.index + match[0].length + 80)));
   const buckets = new Set(matches.map((match) => {
     const minimum = Number(match[1]);
@@ -602,7 +605,7 @@ function CandidateDashboard() {
     fetchAllInitialData();
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  // Profile completion nudge — runs once per account, ever, unless they
+  // Profile completion nudge â€” runs once per account, ever, unless they
   // complete enough of their profile that it would no longer trigger.
   // We only show this after onboarding has been completed.
   useEffect(() => {
@@ -1021,7 +1024,7 @@ function CandidateDashboard() {
     ? availableJobs.filter((job) => user?.savedJobs?.includes(job._id))
     : availableJobs;
 
-  // Final deduplication guard — ensures no duplicate _id regardless of source
+  // Final deduplication guard â€” ensures no duplicate _id regardless of source
   const seen = new Set();
   const displayedJobs = rawDisplayed.filter((job) => {
     if (!job._id || seen.has(job._id)) return false;
@@ -1038,502 +1041,7 @@ function CandidateDashboard() {
     setIsDescriptionExpanded(false);
   };
 
-  // Reset pagination whenever the filters or the All/Recommended toggle change,
-  // so a new search always starts back at the first 20 results.
-  useEffect(() => {
-    setVisibleCount(JOBS_PER_PAGE);
-  }, [submittedSearch, locationFilter, salaryFilter, companyFilter, activeTab]);
-
-  // Auto-sync selectedJob to the top item of the active tab if current selection is not present
-  useEffect(() => {
-    if (!loading && displayedJobs.length > 0) {
-      if (!selectedJob || !displayedJobs.some((j) => j._id === selectedJob._id)) {
-        setSelectedJob(displayedJobs[0]);
-      }
-    }
-  }, [activeTab, loading]);
-
-  const profileCompletion = user ? calculateCompletion(user) : 0;
-
-  const retryFetchJobs = () => {
-    fetchJobs({
-      searchTerm: submittedSearch,
-      locationTerm: locationFilter,
-      salaryTerm: salaryFilter,
-      companyTerm: companyFilter,
-      page: currentPage,
-    });
-  };
-
-  // Fetch official messages from backend
-  const fetchOfficialMessages = useCallback(async () => {
-    setLoadingOfficialMessages(true);
-    try {
-      const res = await getMyMessages({ page: 1, limit: 50 });
-      if (res?.success) {
-        const msgs = res.messages || [];
-        setOfficialMessages(msgs);
-        const unread = typeof res.unreadCount === "number"
-          ? res.unreadCount
-          : msgs.filter((m) => !m.isRead).length;
-        setUnreadOfficialCount(unread);
-        if (msgs.length > 0) {
-          setSelectedOfficialMessage((prev) => {
-            if (prev) {
-              return msgs.find((m) => m._id === prev._id) || msgs[0];
-            }
-            return msgs[0];
-          });
-        }
-      }
-    } catch (err) {
-      console.warn("Failed fetching official communications:", err);
-    } finally {
-      setLoadingOfficialMessages(false);
-    }
-  }, []);
-
-  // Listen to URL ?tab=messages or ?tab=alerts
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tabParam = params.get("tab");
-    if (tabParam === "messages" || tabParam === "alerts") {
-      window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
-    }
-  }, [location.search]);
-
-  // Initial fetch and global event listeners for official messages
-  useEffect(() => {
-    fetchOfficialMessages();
-
-    const handleSync = (e) => {
-      if (typeof e.detail?.unreadCount === "number") {
-        setUnreadOfficialCount(e.detail.unreadCount);
-      } else {
-        fetchOfficialMessages();
-      }
-    };
-
-    window.addEventListener("skillbridge_official_messages_updated", handleSync);
-    return () => {
-      window.removeEventListener("skillbridge_official_messages_updated", handleSync);
-    };
-  }, [fetchOfficialMessages]);
-
-  const handleSelectOfficialMessage = (msg) => {
-    setSelectedOfficialMessage(msg);
-    setIsMobileDetailView(true);
-    if (!msg.isRead) {
-      // Optimistic update
-      setOfficialMessages((prev) =>
-        prev.map((m) => (m._id === msg._id ? { ...m, isRead: true } : m))
-      );
-      setUnreadOfficialCount((prev) => {
-        const next = Math.max(0, prev - 1);
-        notifyMessagesUpdated(next);
-        return next;
-      });
-      markMessageAsRead(msg._id).catch((err) => {
-        console.error("Failed marking official message as read:", err);
-      });
-    }
-  };
-
-  const handleMarkAllOfficialRead = async () => {
-    setOfficialMessages((prev) => prev.map((m) => ({ ...m, isRead: true })));
-    setUnreadOfficialCount(0);
-    notifyMessagesUpdated(0);
-    try {
-      await markAllMessagesAsRead();
-      toast.success("All messages marked as read");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to mark all as read");
-    }
-  };
-
-  const renderPriorityBadge = (priority) => {
-    switch (priority) {
-      case "urgent":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertTriangleIcon size={11} />
-            Urgent Action Required
-          </span>
-        );
-      case "announcement":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-            <MegaphoneIcon size={11} />
-            Platform Update
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-brand-700 border border-blue-200">
-            <InfoIcon size={11} />
-            Notice
-          </span>
-        );
-    }
-  };
-
-  const filteredOfficialMessages = officialMessages.filter((m) => {
-    if (officialFilter === "unread") return !m.isRead;
-    return true;
-  });
-
-  const urgentOfficialMessage = officialMessages.find(
-    (m) => !m.isRead && (m.priority === "urgent" || m.priority === "announcement")
-  );
-
-  return (
-    <div className="candidate-dashboard-surface w-full min-h-screen font-sans pb-3">
-      <DashboardTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
-      <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Candidate Dashboard</h1>
-      {jobLoadError && (
-        <div className="flex justify-end px-6 w-full mb-4">
-          <RetryBanner message={jobLoadError} onRetry={retryFetchJobs} />
-        </div>
-      )}
-      
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
-        {/* DASHBOARD TOP HEADER & TOUR BAR */}
-        {showWelcomeHeader && (
-          <div ref={welcomeHeaderRef} className={`candidate-welcome-collapse${isWelcomeHeaderClosing ? " is-closing" : ""}`}>
-            <div className="candidate-welcome-header bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TOP SUMMARY BANNER FOR URGENT / UNREAD OFFICIAL COMMUNICATIONS */}
-        {unreadOfficialCount > 0 && showUrgentBanner && (
-          <div className={`mb-5 p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm ${
-            urgentOfficialMessage?.priority === "announcement"
-              ? "bg-purple-50 border-purple-200 text-purple-900"
-              : urgentOfficialMessage?.priority === "urgent"
-              ? "bg-rose-50 border-rose-200 text-rose-900"
-              : "bg-blue-50 border-blue-200 text-blue-900"
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center shrink-0 shadow-xs">
-                {urgentOfficialMessage?.priority === "urgent" ? (
-                  <AlertTriangleIcon size={18} className="text-rose-600" />
-                ) : urgentOfficialMessage?.priority === "announcement" ? (
-                  <MegaphoneIcon size={18} className="text-purple-600" />
-                ) : (
-                  <ShieldIcon size={18} className="text-blue-600" />
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-bold m-0 leading-tight">
-                  {urgentOfficialMessage?.priority === "urgent"
-                    ? `You have ${unreadOfficialCount} unread urgent notification${unreadOfficialCount > 1 ? "s" : ""} from administration`
-                    : `You have ${unreadOfficialCount} unread official announcement${unreadOfficialCount > 1 ? "s" : ""}`}
-                </h4>
-                <p className="text-xs text-slate-600 m-0 mt-0.5">
-                  {urgentOfficialMessage ? urgentOfficialMessage.title : "Check your official communications hub for critical platform updates."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
-                }}
-              >
-                <span>View Messages</span>
-                <ChevronRightIcon size={14} />
-              </button>
-              <button
-                type="button"
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-white/60 transition-colors border-0 bg-transparent cursor-pointer"
-                onClick={() => setShowUrgentBanner(false)}
-                title="Dismiss alert banner"
-                aria-label="Dismiss banner"
-              >
-                <CloseIcon size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* SEARCH CONSOLE BAR */}
-        <div className="mb-3.5" data-tour="search-filters">
-            <div 
-              className="candidate-search-bar flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default"
-              onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
-            >
-              <div className="flex-1 flex items-center px-3 py-2 gap-2.5 min-w-0">
-                <FiSearch className="text-slate-400 text-lg shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Job title, keywords, or company"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  readOnly={window.innerWidth <= 768}
-                  className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
-                />
-              </div>
-              <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
-              <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
-                <FiMapPin className="text-slate-400 text-lg shrink-0" />
-                <input
-                  type="text"
-                  placeholder="e.g. India, USA, or Bangalore..."
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
-                />
-              </div>
-              <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
-              <div className="hidden md:flex flex-1 items-center px-2 min-w-0">
-                <CustomSelect
-                  borderless
-                  options={[
-                    { value: "", label: "All Experience" },
-                    { value: "0-2 Years", label: "0-2 Years" },
-                    { value: "2-5 Years", label: "2-5 Years" },
-                    { value: "5+ Years", label: "5+ Years" }
-                  ]}
-                  value={experienceFilter}
-                  onChange={(e) => setExperienceFilter(e.target.value)}
-                  placeholder="All Experience"
-                  className="w-full text-sm"
-                />
-              </div>
-              <button 
-                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-full cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSubmittedSearch(search.trim());
-                  setCurrentPage(1);
-                }}
-              >
-                Find jobs
-              </button>
-            </div>
-          </div>
-
-        {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
-        {isMobileSearchExpanded && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
-            <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 pb-8 shadow-2xl flex flex-col gap-3.5 max-h-[88vh] overflow-y-auto overscroll-contain animate-slide-in-right" onClick={e => e.stopPropagation()}>
-              
-              {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 m-0">Search & Filters</h3>
-                  <p className="text-xs text-slate-500 m-0 mt-0.5">Filter by role, location, pay, experience, and mode</p>
-                </div>
-                <button 
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center border-0 cursor-pointer font-bold transition-colors" 
-                  onClick={() => setIsMobileSearchExpanded(false)}
-                  aria-label="Close filters"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {/* 1. Keyword / Title Search */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Keywords / Title</label>
-                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
-                    <FiSearch className="text-slate-400 text-base shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Job title, skills, or company"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400"
-                    />
-                  </div>
-                </div>
-
-                {/* 2. Location */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Location</label>
-                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
-                    <FiMapPin className="text-slate-400 text-base shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="City, State, or India"
-                      value={locationFilter}
-                      onChange={(e) => setLocationFilter(e.target.value)}
-                      className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400"
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Experience & Pay in 2-col grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Experience</label>
-                    <CustomSelect
-                      options={[
-                        { value: "", label: "All Experience" },
-                        { value: "0-2 Years", label: "0-2 Years" },
-                        { value: "2-5 Years", label: "2-5 Years" },
-                        { value: "5+ Years", label: "5+ Years" }
-                      ]}
-                      value={experienceFilter}
-                      onChange={(e) => setExperienceFilter(e.target.value)}
-                      placeholder="All Experience"
-                      className="w-full text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Pay / Salary</label>
-                    <CustomSelect
-                      options={[
-                        { value: "", label: "Any Pay / Salary" },
-                        { value: "300000", label: "₹3 LPA+ ($40k+)" },
-                        { value: "600000", label: "₹6 LPA+ ($75k+)" },
-                        { value: "1000000", label: "₹10 LPA+ ($120k+)" },
-                        { value: "1800000", label: "₹18 LPA+ ($200k+)" },
-                        { value: "2500000", label: "₹25 LPA+ ($300k+)" }
-                      ]}
-                      value={salaryFilter}
-                      onChange={(e) => setSalaryFilter(e.target.value)}
-                      placeholder="Any Pay"
-                      className="w-full text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Job Type & Remote Option */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Job Type</label>
-                    <CustomSelect
-                      options={[
-                        { value: "All", label: "All Types" },
-                        { value: "Full-time", label: "Full-time" },
-                        { value: "Internship", label: "Internship" },
-                        { value: "Contract", label: "Contract" },
-                        { value: "Part-time", label: "Part-time" }
-                      ]}
-                      value={employmentTypeFilter}
-                      onChange={(e) => setEmploymentTypeFilter(e.target.value)}
-                      placeholder="All Types"
-                      className="w-full text-sm"
-                    />
-                  </div>
-
-                  <div className="pt-2 sm:pt-4">
-                    <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isRemoteFilter === "true"}
-                        onChange={(e) => setIsRemoteFilter(e.target.checked ? "true" : "All")}
-                        className="w-4 h-4 cursor-pointer accent-brand-600 rounded"
-                      />
-                      <span className="text-xs font-bold text-slate-800">Remote roles only</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 pt-3 border-t border-slate-100 mt-1">
-                  <button 
-                    type="button"
-                    className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-colors border-0"
-                    onClick={() => {
-                      setSearch("");
-                      setSubmittedSearch("");
-                      setLocationFilter("");
-                      setExperienceFilter("");
-                      setSalaryFilter("");
-                      setCompanyFilter("");
-                      setSourceFilter("");
-                      setEmploymentTypeFilter("All");
-                      setIsRemoteFilter("All");
-                      setIsMobileSearchExpanded(false);
-                      setCurrentPage(1);
-                      fetchJobs({
-                        searchTerm: "",
-                        locationTerm: "",
-                        experienceTerm: "",
-                        salaryTerm: "",
-                        companyTerm: "",
-                        sourceTerm: "",
-                        employmentTerm: "All",
-                        remoteTerm: "All",
-                        page: 1,
-                      });
-                    }}
-                  >
-                    Reset All
-                  </button>
-                  <button 
-                    type="button"
-                    className="flex-2 py-2.5 px-5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-md shadow-brand-600/20 border-0"
-                    onClick={() => {
-                      setIsMobileSearchExpanded(false);
-                      setSubmittedSearch(search.trim());
-                      setCurrentPage(1);
-                    }}
-                  >
-                    Apply Filters
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
-            {/* SEGMENTED CONTROL ROW */}
-            <div className="mb-4" data-tour="recommended-toggle">
-              <div className="candidate-job-tabs relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
-                {/* Sliding Active Pill Indicator */}
-                <div
-                  className="absolute top-1 bottom-1 left-1 w-[calc((100%-8px)/3)] bg-brand-600 rounded-full shadow-xs transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
-                  style={{
-                    transform: `translateX(${
-                      activeTab === "Recommended" ? "100%" : activeTab === "Saved" ? "200%" : "0%"
-                    })`,
-                  }}
-                />
-
-                {[
-                  { id: "All Jobs", label: "All Jobs" },
-                  { id: "Recommended", label: "Recommended" },
-                  { id: "Saved", label: "Saved" },
-                ].map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`relative z-10 py-2 px-1 text-xs font-bold rounded-full transition-colors duration-200 cursor-pointer flex items-center justify-center gap-1 border-0 bg-transparent outline-none focus:outline-none ${
-                        isActive
-                          ? "text-white"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        setIsMobileDetailView(false);
-                      }}
-                    >
-                      <span className="truncate">{tab.label}</span>
-                      {tab.badge > 0 && (
-                        <span
-                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold transition-colors duration-200 ${
-                            isActive ? "bg-white text-brand-600" : "bg-rose-500 text-white"
-                          }`}
-                        >
+ …6079 tokens truncated…        >
                           {tab.badge}
                         </span>
                       )}
@@ -1664,7 +1172,7 @@ function CandidateDashboard() {
                         {job.salary || job.salaryMin ? (
                           <div className="mb-2.5">
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                              <span className="text-emerald-600 font-black">✓</span>
+                              <span className="text-emerald-600 font-black">âœ“</span>
                               <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span>
                             </span>
                           </div>
@@ -1795,7 +1303,7 @@ function CandidateDashboard() {
                               <span className="text-xs font-bold text-slate-600">Matched Skills:</span>
                               {matchInfo.matchedSkills.map((sk) => (
                                 <span key={sk} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-brand-700 border border-blue-200">
-                                  ✓ {sk}
+                                  âœ“ {sk}
                                 </span>
                               ))}
                             </div>
@@ -1804,7 +1312,7 @@ function CandidateDashboard() {
                       );
                     })()}
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                      💼 <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
+                      ðŸ’¼ <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
                     </span>
                     {selectedJob.isExternal && (
                       <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
@@ -1819,7 +1327,7 @@ function CandidateDashboard() {
                         Qualifications: {[
                           selectedJob.educationRequired,
                           selectedJob.experienceRequired,
-                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" · ")}
+                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" Â· ")}
                       </span>
                     )}
 
@@ -1880,7 +1388,7 @@ function CandidateDashboard() {
                             className="p-2 text-slate-400 hover:text-rose-600 bg-transparent border-0 cursor-pointer font-bold"
                             onClick={resetApplyState}
                           >
-                            ✕
+                            âœ•
                           </button>
                         </div>
                       </div>
@@ -1970,7 +1478,7 @@ function CandidateDashboard() {
                       <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
                       {((selectedJob.isFullDescription || !isDescriptionSnippet(selectedJob.description)) && !isMisstructuredDescription(selectedJob.description)) && (
                         <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                          ✓ Complete Requisition
+                          âœ“ Complete Requisition
                         </span>
                       )}
                     </div>
@@ -2042,7 +1550,7 @@ function CandidateDashboard() {
                                       );
                                       setIsDescriptionExpanded(true);
                                       if (!isFullDescription) {
-                                        toast("The employer’s full details could not be retrieved. Please try again later.");
+                                        toast("The employerâ€™s full details could not be retrieved. Please try again later.");
                                       }
                                     } else {
                                       setIsDescriptionExpanded(true);
@@ -2059,7 +1567,7 @@ function CandidateDashboard() {
                                 setIsDescriptionExpanded(!isDescriptionExpanded);
                               }}
                             >
-                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less âˆ§" : "Show more âˆ¨"}
                             </button>
                           )}
                         </>
@@ -2086,10 +1594,10 @@ function CandidateDashboard() {
               onClick={() => setShowProfileNudge(false)}
               aria-label="Close"
             >
-              ✕
+              âœ•
             </button>
 
-            <span className="text-4xl mb-3 block">📋</span>
+            <span className="text-4xl mb-3 block">ðŸ“‹</span>
             <h3 className="text-xl font-black text-slate-900 mb-2">Complete your profile to get matched</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
               Your profile is only <strong className="text-slate-900">{profileCompletion}% complete</strong>.
@@ -2135,7 +1643,7 @@ function CandidateDashboard() {
             onClick={(event) => event.stopPropagation()}
           >
             <h3 id="hide-job-feedback-title" className="m-0 text-lg font-bold text-slate-900">
-              Why isn’t this job a fit?
+              Why isnâ€™t this job a fit?
             </h3>
             <p className="mb-4 mt-1 text-sm text-slate-600">
               Your feedback helps us improve your job recommendations.
@@ -2168,7 +1676,7 @@ function CandidateDashboard() {
               <textarea
                 value={hideJobDetails}
                 onChange={(event) => setHideJobDetails(event.target.value)}
-                placeholder="Tell us what didn’t match (required)"
+                placeholder="Tell us what didnâ€™t match (required)"
                 aria-label="Describe why this job is not a fit"
                 maxLength={500}
                 rows={3}
@@ -2206,7 +1714,7 @@ function CandidateDashboard() {
       {showFeedbackModal && pendingFeedbackJob && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[1000] flex items-center justify-center p-4 animate-fade-in" onClick={closeFeedbackModal}>
           <div className="w-full max-w-md bg-white rounded-3xl p-7 text-center relative shadow-2xl border border-slate-100 animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-            <span className="text-4xl mb-3 block">👋</span>
+            <span className="text-4xl mb-3 block">ðŸ‘‹</span>
             <h3 className="text-xl font-black text-slate-900 mb-2">Welcome back!</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
               Did you apply for the <strong className="text-slate-900">{pendingFeedbackJob.title}</strong> role at {pendingFeedbackJob.company}?
@@ -2249,3 +1757,4 @@ function CandidateDashboard() {
 }
 
 export default CandidateDashboard;
+
