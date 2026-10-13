@@ -3,6 +3,7 @@ const axios = require("axios");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
 const { runGeminiScraper } = require("./geminiScraper");
+const { hasApiKey } = require("../utils/apiKeyRotation");
 
 // Helper to auto-add skills
 const addSkillsToMaster = async (skills) => {
@@ -211,7 +212,7 @@ const importAllExternalJobs = async () => {
   total += await importJobsFromTheMuse();
   total += await importJobsFromArbeitnow();
 
-  if (process.env.GEMINI_API_KEY) {
+  if (hasApiKey("GEMINI")) {
     total += await runGeminiScraper();
   } else {
     console.log("[Job Fetcher] Skipping Gemini scraper (No GEMINI_API_KEY).");

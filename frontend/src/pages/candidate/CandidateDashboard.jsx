@@ -88,6 +88,12 @@ const alignWhoWeAreHeading = (html) => {
       heading.classList.add("job-description-who-we-are");
     }
   });
+  doc.querySelectorAll("ul > li").forEach((item) => {
+    const firstText = item.firstChild;
+    if (firstText?.nodeType === 3) {
+      firstText.textContent = firstText.textContent.replace(/^\s*(?:\([a-z]\)|[a-z][).])\s+/i, "");
+    }
+  });
   return doc.body.innerHTML;
 };
 
@@ -187,7 +193,7 @@ const alignWhoWeAreHeading = (html) => {
         {sections.map(({ heading, content }, idx) => {
           const items = content
             .split(/\s*[•●▪]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
-            .map((item) => item.replace(/^[-*]\s*/, "").trim())
+            .map((item) => item.replace(/^[-*]\s*/, "").replace(/^(?:\([a-z]\)|[a-z][).])\s+/i, "").trim())
             .filter(Boolean);
           const isWhoWeAreSection = /^who\s+we\s+are$/i.test(heading);
           const isSkillSection = /skills/i.test(heading);

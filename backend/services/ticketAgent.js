@@ -25,6 +25,7 @@
  */
 
 const { GoogleGenAI } = require("@google/genai");
+const { withApiKey } = require("../utils/apiKeyRotation");
 const SupportTicket = require("../models/SupportTicket");
 const User = require("../models/user");
 const { resolve } = require("./ticketResolver");
@@ -103,7 +104,6 @@ Classification guide:
 - If uncertain, default category=other, severity=medium, canAutoResolve=false, action=none`;
 
 async function classifyWithGemini(description, pageUrl, userAgent) {
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   const userMessage = [
     `Description: ${sanitize(description)}`,
@@ -113,16 +113,18 @@ async function classifyWithGemini(description, pageUrl, userAgent) {
     .filter(Boolean)
     .join("\n");
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.6-flash",
-    contents: [{ role: "user", parts: [{ text: userMessage }] }],
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      responseMimeType: "application/json",
-      temperature: 0.1,
-      maxOutputTokens: 256,
-    },
-  });
+  const response = await withApiKey("GEMINI", (apiKey) =>
+    new GoogleGenAI({ apiKey }).models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: [{ role: "user", parts: [{ text: userMessage }] }],
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
+        responseMimeType: "application/json",
+        temperature: 0.1,
+        maxOutputTokens: 256,
+      },
+    }),
+  );
 
   const raw = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
   let parsed;

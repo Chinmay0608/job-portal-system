@@ -20,3 +20,4 @@ graphify-out/
 preview_job_alert_email.html
 __pycache__/
 *.pyc
+scratch/

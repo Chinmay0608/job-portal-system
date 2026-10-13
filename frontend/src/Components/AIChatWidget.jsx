@@ -789,13 +789,13 @@ export default function AIChatWidget({
             zIndex: 900,
             display: "flex",
             alignItems: "center",
-            gap: "7.2px",
+            gap: "5.76px",
             backgroundColor: "#2563eb",
             color: "#ffffff",
-            padding: "8.64px 14.4px",
+            padding: "6.912px 11.52px",
             borderRadius: "9999px",
             fontWeight: "700",
-            fontSize: "0.6624rem",
+            fontSize: "0.52992rem",
             border: "none",
             boxShadow: "0 10px 25px rgba(37, 99, 235, 0.4)",
             cursor: "pointer",
@@ -805,7 +805,7 @@ export default function AIChatWidget({
           onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
           <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <HiSparkles size={14.4} />
+            <HiSparkles size={11.52} />
           </div>
           <span>Ask Dhruv</span>
         </button>

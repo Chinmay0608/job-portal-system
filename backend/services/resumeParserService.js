@@ -2,6 +2,7 @@ const fs = require("fs");
 const { PDFParse } = require("pdf-parse");
 const logger = require("../utils/logger");
 const MasterSkill = require("../models/MasterSkill");
+const { withApiKey, hasApiKey } = require("../utils/apiKeyRotation");
 
 /**
  * Fast regex & pattern-based entity extraction for candidate name and basics.
@@ -129,8 +130,6 @@ const parseFullResumeText = async (resumeText, currentUser = {}) => {
   }
 
   // 2. AI Intelligence (Groq / Gemini)
-  const groqApiKey = process.env.GROQ_API_KEY;
-  const geminiApiKey = process.env.GEMINI_API_KEY;
 
   const prompt = `Act as an expert HR resume parser. Extract candidate profile information from the following resume text.
 Return ONLY a raw valid JSON object (with no markdown wrappers or extra text) containing these exact keys:
@@ -151,10 +150,10 @@ ${resumeText.slice(0, 4500)}`;
 
   let aiJson = null;
 
-  if (groqApiKey && groqApiKey.startsWith("gsk_")) {
+  if (hasApiKey("GROQ")) {
     try {
       const axios = require("axios");
-      const groqRes = await axios.post(
+      const groqRes = await withApiKey("GROQ", (apiKey) => axios.post(
         "https://api.groq.com/openai/v1/chat/completions",
         {
           model: "openai/gpt-oss-120b",
@@ -162,8 +161,8 @@ ${resumeText.slice(0, 4500)}`;
           temperature: 0.2,
           max_tokens: 1000,
         },
-        { headers: { Authorization: `Bearer ${groqApiKey}`, "Content-Type": "application/json" }, timeout: 8000 }
-      );
+        { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, timeout: 8000 },
+      ));
       const text = groqRes.data?.choices?.[0]?.message?.content?.trim() || "";
       const jsonStart = text.indexOf("{");
       const jsonEnd = text.lastIndexOf("}");
@@ -175,14 +174,15 @@ ${resumeText.slice(0, 4500)}`;
     }
   }
 
-  if (!aiJson && geminiApiKey) {
+  if (!aiJson && hasApiKey("GEMINI")) {
     try {
       const { GoogleGenAI } = require("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-      const gemRes = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-      });
+      const gemRes = await withApiKey("GEMINI", (apiKey) =>
+        new GoogleGenAI({ apiKey }).models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: prompt,
+        }),
+      );
       const text = gemRes.text ? gemRes.text.trim() : "";
       const jsonStart = text.indexOf("{");
       const jsonEnd = text.lastIndexOf("}");
