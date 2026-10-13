@@ -862,10 +862,26 @@ input[type="submit"]:active:not(:disabled),
 
 /* Text Navigation Links (Home, Company reviews, Salary guide) */
 .nav-links-left {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 24px;
   height: 100%;
+}
+
+.nav-tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background-color: #2563eb;
+  pointer-events: none;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), width 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-links-left.has-moving-indicator .nav-tab-link.active::after {
+  display: none;
 }
 
 .nav-tab-link {
