@@ -108,7 +108,7 @@ function Login() {
   return (
     <div className="app-canvas-surface min-h-screen w-full flex items-center justify-center px-4 py-8 font-sans">
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] lg:gap-12">
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:block lg:translate-x-20">
           <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
           <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">Find work that fits the life you want.</h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">A more thoughtful way to find a role, meet a team, and move your career forward.</p>

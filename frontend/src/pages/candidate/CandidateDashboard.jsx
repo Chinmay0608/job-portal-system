@@ -232,8 +232,8 @@ const alignWhoWeAreHeading = (html) => {
 const formatSalary = (salaryText, min, max, currency) => {
   if (min && max) {
     const formatShorthand = (num) => {
-      if (num >= 100000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 100000}L`;
-      if (num >= 1000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num / 1000}k`;
+      if (num >= 100000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${Number((num / 100000).toFixed(1))}L`;
+      if (num >= 1000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${Number((num / 1000).toFixed(1))}k`;
       return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num}`;
     };
     return `${formatShorthand(min)}–${formatShorthand(max)}`;
@@ -1310,7 +1310,7 @@ function CandidateDashboard() {
                 />
               </div>
               <button 
-                className="hidden md:block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-full cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="hidden md:block md:-translate-x-1 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-sm rounded-full cursor-pointer transition-all shrink-0 shadow-sm border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   setSubmittedSearch(search.trim());
