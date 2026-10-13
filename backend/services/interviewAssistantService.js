@@ -3,14 +3,10 @@
  * TRAO AI Engine for generating interview questions and evaluating candidate responses.
  */
 const { GoogleGenAI } = require("@google/genai");
+const { withApiKey } = require("../utils/apiKeyRotation");
 
-function getAiClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured in environment.");
-  }
-  return new GoogleGenAI({ apiKey });
-}
+const generateWithGemini = (request) =>
+  withApiKey("GEMINI", (apiKey) => request(new GoogleGenAI({ apiKey })));
 
 /**
  * Clean JSON output from LLM response (strip markdown wrappers)
@@ -39,7 +35,6 @@ async function generateInterviewQuestions({
   jobSkills = [],
 }) {
   try {
-    const ai = getAiClient();
     const postingText = String(jobDescription)
       .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
       .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
@@ -72,10 +67,9 @@ Return output strictly as a JSON array of objects with keys:
 
 Do not include any conversational intro or extra text outside the JSON array.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: prompt,
-    });
+    const response = await generateWithGemini((ai) =>
+      ai.models.generateContent({ model: "gemini-1.5-flash", contents: prompt }),
+    );
 
     const parsed = parseJsonFromText(response.text);
     if (Array.isArray(parsed) && parsed.length > 0) {
@@ -199,7 +193,6 @@ async function evaluateCandidateAnswer({
   }
 
   try {
-    const ai = getAiClient();
     const prompt = `Act as TRAO AI Senior Interview Assessor evaluating a candidate response.
 
 Question: "${questionText}"
@@ -225,10 +218,9 @@ Return output strictly as a JSON object with keys:
 
 Do not include any conversational intro or text outside the JSON object.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: prompt,
-    });
+    const response = await generateWithGemini((ai) =>
+      ai.models.generateContent({ model: "gemini-1.5-flash", contents: prompt }),
+    );
 
     const parsed = parseJsonFromText(response.text);
     return {

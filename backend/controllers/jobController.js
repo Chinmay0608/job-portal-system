@@ -17,6 +17,7 @@ const escapeRegex = (string) => {
    GENERATE AI JOB DESCRIPTION
 ========================== */
 const { GoogleGenAI } = require('@google/genai');
+const { withApiKey, hasApiKey } = require('../utils/apiKeyRotation');
 
 const generateJobDescription = asyncHandler(async (req, res) => {
   const { title, company, role } = req.body;
@@ -25,7 +26,6 @@ const generateJobDescription = asyncHandler(async (req, res) => {
     throw new Error('Title and Company are required to generate a description');
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
   const prompt = `Act as an expert technical recruiter. Write a professional, comprehensive, and engaging job description for the following position:
   
@@ -42,10 +42,12 @@ const generateJobDescription = asyncHandler(async (req, res) => {
   Return ONLY the HTML output. Do not include markdown codeblocks or any conversational wrapper text.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt,
-    });
+    const response = await withApiKey('GEMINI', (apiKey) =>
+      new GoogleGenAI({ apiKey }).models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+      }),
+    );
     
     let description = response.text.trim();
     if (description.startsWith('```html')) description = description.slice(7);
@@ -596,8 +598,7 @@ User: "I'm tired of rejections"
 DHRUV: "I hear you, and it's completely valid to feel exhausted. The hiring process can feel like a black box, and rejections often reflect timing or internal shifts more than your abilities. Let's take a breath and zoom in on one small, high-leverage step: do you want to review your recent application focus, or look at how your top projects are presented?"`;
 
   // ── 8. Try Groq (openai/gpt-oss-120b) first ──────────────────────────────────
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (groqApiKey && groqApiKey.startsWith("gsk_")) {
+  if (hasApiKey("GROQ")) {
     try {
       const axios = require("axios");
       const modelsToTry = ["openai/gpt-oss-120b", "groq/compound", "qwen/qwen3.6-27b"];
@@ -605,7 +606,7 @@ DHRUV: "I hear you, and it's completely valid to feel exhausted. The hiring proc
 
       for (const model of modelsToTry) {
         try {
-          const groqRes = await axios.post(
+          const groqRes = await withApiKey("GROQ", (apiKey) => axios.post(
             "https://api.groq.com/openai/v1/chat/completions",
             {
               model,
@@ -617,13 +618,10 @@ DHRUV: "I hear you, and it's completely valid to feel exhausted. The hiring proc
               max_tokens: 1024,
             },
             {
-              headers: {
-                Authorization: `Bearer ${groqApiKey}`,
-                "Content-Type": "application/json",
-              },
+              headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
               timeout: 12000,
-            }
-          );
+            },
+          ));
           reply = groqRes.data?.choices?.[0]?.message?.content?.trim();
           if (reply) {
             reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
@@ -641,29 +639,22 @@ DHRUV: "I hear you, and it's completely valid to feel exhausted. The hiring proc
   }
 
   // ── 9. Gemini 3.6 Flash fallback (with 20-second timeout) ────────────────
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey) {
+  if (hasApiKey("GEMINI")) {
     try {
-      const ai = new GoogleGenAI({ apiKey });
-
-      const geminiCall = ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: messages.slice(-6).map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-        config: {
-          systemInstruction,
-          temperature: 0.65,
-          maxOutputTokens: 1024,
-        },
+      const response = await withApiKey("GEMINI", (apiKey) => {
+        const request = new GoogleGenAI({ apiKey }).models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: messages.slice(-6).map((m) => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          })),
+          config: { systemInstruction, temperature: 0.65, maxOutputTokens: 1024 },
+        });
+        return Promise.race([
+          request,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini timed out after 20s")), 20000)),
+        ]);
       });
-
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Gemini timed out after 20s")), 20000)
-      );
-
-      const response = await Promise.race([geminiCall, timeout]);
       let reply = response.text?.trim() || response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (reply) {
         reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();

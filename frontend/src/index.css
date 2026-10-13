@@ -6960,6 +6960,7 @@ input[type="submit"]:active:not(:disabled),
 
 .job-description-content.prose h1 {
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
   margin: 0 0 0.6em;
   color: #172033;
   font-size: 14px;
@@ -6968,6 +6969,7 @@ input[type="submit"]:active:not(:disabled),
 
 .job-description-content.prose h2 {
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
   margin: 1.15em 0 0.45em;
   color: #172033;
   font-size: 14px;
@@ -6977,6 +6979,7 @@ input[type="submit"]:active:not(:disabled),
 .job-description-content.prose h3,
 .job-description-content.prose h4 {
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
   margin: 1em 0 0.4em;
   color: #243047;
   font-size: 14px;
@@ -6986,6 +6989,7 @@ input[type="submit"]:active:not(:disabled),
 .job-description-content.prose h5,
 .job-description-content.prose h6 {
   font-size: 14px;
+  font-weight: 700;
 }
 
 .job-description-content.prose ul,
@@ -7591,4 +7595,49 @@ input[type="submit"]:active:not(:disabled),
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+.login-job-ticker {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 82%, transparent);
+}
+
+.login-job-ticker-track {
+  display: flex;
+  flex-direction: column;
+  animation: login-job-ticker-scroll var(--ticker-duration, 30s) linear var(--ticker-delay, 0s) infinite;
+  will-change: transform;
+}
+
+.login-job-ticker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.login-job-ticker-card {
+  min-height: 144px;
+  padding: 18px;
+  border: 1px solid #e9dfd1;
+  border-radius: 16px;
+  background: #fffdf9;
+  box-shadow: none;
+  transform: rotate(1deg);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.login-job-ticker-card:hover {
+  z-index: 1;
+  transform: scale(1.04) rotate(1deg);
+  box-shadow: none;
+}
+
+@keyframes login-job-ticker-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-job-ticker-track { animation: none; }
 }

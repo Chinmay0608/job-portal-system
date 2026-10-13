@@ -112,12 +112,12 @@ function Navbar() {
     let isMounted = true;
     const updateUnread = async (e) => {
       if (e?.detail && typeof e.detail.unreadCount === "number") {
-        if (isMounted) setUnreadMessagesCount(e.detail.unreadCount);
+        if (isMounted) setUnreadMessagesCount(e.detail.unreadCount + getUnreadMessagesCount(user));
         return;
       }
       try {
         const count = await getUnreadCount();
-        if (isMounted) setUnreadMessagesCount(count);
+        if (isMounted) setUnreadMessagesCount(count + getUnreadMessagesCount(user));
       } catch (err) {
         console.warn("Error fetching unread message count:", err);
       }
@@ -192,6 +192,7 @@ function Navbar() {
 
   const isHome = location.pathname === "/";
   const isCandidateDashboard = location.pathname === "/candidate-dashboard";
+  const isJobsTab = isCandidateDashboard && new URLSearchParams(location.search).get("tab") === "jobs";
   const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
   const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
   const isMyApplications = location.pathname === "/my-applications";
@@ -310,9 +311,14 @@ function Navbar() {
               {(!isLoggedIn || user?.role === "candidate") && (
                 <Link 
                   to={isLoggedIn ? "/candidate-dashboard" : "/"} 
-                  className={`nav-tab-link ${isCandidateDashboard ? "active" : ""}`}
+                  className={`nav-tab-link ${isCandidateDashboard && !isJobsTab ? "active" : ""}`}
                 >
                   Home
+                </Link>
+              )}
+              {user?.role === "candidate" && (
+                <Link to="/candidate-dashboard?tab=jobs" className={`nav-tab-link ${isJobsTab ? "active" : ""}`}>
+                  Jobs
                 </Link>
               )}
 

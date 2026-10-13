@@ -3,6 +3,7 @@ const cheerio = require("cheerio");
 const { GoogleGenAI } = require("@google/genai");
 const Job = require("../models/job");
 const MasterSkill = require("../models/MasterSkill");
+const { withApiKey, hasApiKey } = require("../utils/apiKeyRotation");
 
 // We will initialize it lazily inside the function
 
@@ -61,20 +62,8 @@ const addSkillsToMaster = async (skills) => {
 };
 
 const scrapeCareersPage = async (company) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!hasApiKey("GEMINI")) {
     console.log("[Gemini Scraper] GEMINI_API_KEY missing. Skipping.");
-    return 0;
-  }
-
-  // Lazy Initialization
-  let ai;
-  try {
-    ai = new GoogleGenAI({ apiKey: apiKey });
-  } catch (e) {
-    console.log(
-      "[Gemini Scraper] Gemini SDK failed to initialize with the provided key.",
-    );
     return 0;
   }
 
@@ -129,14 +118,13 @@ const scrapeCareersPage = async (company) => {
       `[Gemini Scraper] Sending data to Gemini 2.5 Flash for ${company.name}...`,
     );
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
-      },
-    });
+    const response = await withApiKey("GEMINI", (apiKey) =>
+      new GoogleGenAI({ apiKey }).models.generateContent({
+        model: "gemini-3.5-flash-lite",
+        contents: prompt,
+        config: { responseMimeType: "application/json", responseSchema },
+      }),
+    );
 
     const jobsJson = JSON.parse(response.text);
 
