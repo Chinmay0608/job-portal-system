@@ -2,6 +2,8 @@ const dns = require("node:dns/promises");
 const net = require("node:net");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { GoogleGenAI } = require("@google/genai");
+const { withApiKey, hasApiKey } = require("../utils/apiKeyRotation");
 
 const NOT_PROVIDED = "Not specified in the employer posting.";
 const SECTIONS = [
@@ -521,6 +523,83 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+async function generateDetailsWithAI(job) {
+  if (!hasApiKey("GEMINI") && !hasApiKey("GROQ")) return null;
+
+  const prompt = `Act as an expert enterprise technical recruiter. A job posting snippet from ${job.company || "the hiring employer"} was truncated by an aggregator:
+Job Title: ${job.title}
+Company: ${job.company || "Hiring Employer"}
+Location: ${job.location || "Hybrid / Remote"}
+Skills: ${(job.skillsRequired || []).join(", ") || "Technical and analytical skills"}
+Salary: ${job.salary || "Competitive Market Rate"}
+Available Snippet: "${(job.description || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1200)}"
+
+Reconstruct and expand this snippet into a full, detailed, professional enterprise job requisition.
+Return ONLY valid JSON matching this schema:
+{
+  "roleSummary": "2-3 comprehensive paragraphs describing the mission, scope, team impact, and day-to-day focus of the role",
+  "responsibilities": ["6 to 8 clear, actionable, and detailed bullet points for key responsibilities and deliverables"],
+  "qualifications": ["6 to 8 bullet points covering required qualifications, hands-on technical skills, tools, and experience"],
+  "preferredQualifications": ["3 to 4 bullet points covering preferred or nice-to-have qualifications"],
+  "workArrangement": "${job.isRemote ? "Remote" : (job.location || "Hybrid / On-site")}",
+  "culture": "Collaborative, innovation-driven culture committed to professional growth and continuous learning.",
+  "eeoStatement": "${job.company || "The employer"} is an equal opportunity employer committed to diversity, equity, and inclusion."
+}`;
+
+  if (hasApiKey("GEMINI")) {
+    try {
+      const jsonText = await withApiKey("GEMINI", async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        const resp = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            temperature: 0.2,
+          },
+        });
+        return resp.text || resp.candidates?.[0]?.content?.parts?.[0]?.text;
+      });
+      if (jsonText) {
+        const parsed = JSON.parse(jsonText.trim());
+        if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn("[FullDescriptionService] Gemini AI expansion failed:", err.message);
+    }
+  }
+
+  if (hasApiKey("GROQ")) {
+    try {
+      const jsonText = await withApiKey("GROQ", async (apiKey) => {
+        const resp = await axios.post(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" },
+            temperature: 0.2,
+          },
+          { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, timeout: 10000 }
+        );
+        return resp.data?.choices?.[0]?.message?.content;
+      });
+      if (jsonText) {
+        const parsed = JSON.parse(jsonText.trim());
+        if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn("[FullDescriptionService] Groq AI expansion failed:", err.message);
+    }
+  }
+
+  return null;
+}
+
 async function ensureFullJobDescription(job) {
   if (!job) return null;
   const needsRepair = isMisstructuredDescription(job.description);
@@ -553,12 +632,26 @@ async function ensureFullJobDescription(job) {
     );
   }
 
-  const hasEmployerContent =
+  let hasEmployerContent =
     details &&
     ((details.description || "").length > 120 ||
       details.responsibilities ||
       details.qualifications ||
       details.skills);
+
+  // If scraping fails (403/captcha/no career posting), expand using AI
+  if (!hasEmployerContent) {
+    try {
+      const aiDetails = await generateDetailsWithAI(job);
+      if (aiDetails) {
+        details = aiDetails;
+        hasEmployerContent = true;
+      }
+    } catch (aiErr) {
+      console.warn("[FullDescriptionService] AI fallback failed:", aiErr.message);
+    }
+  }
+
   if (!hasEmployerContent) return job.description;
 
   const description = buildStructuredDescription(job, details);
@@ -579,4 +672,5 @@ module.exports = {
   scrapeExternalPosting,
   buildStructuredDescription,
   isMisstructuredDescription,
+  generateDetailsWithAI,
 };
