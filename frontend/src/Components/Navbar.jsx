@@ -228,7 +228,7 @@ function Navbar() {
     }
 
     listenForWakeWord((promptAfterWake) => {
-      toast.success("Hey Dhruv! I'm listening...", { icon: "🎙️", duration: 3000 });
+      toast.success("Hey Dhruv! I'm listening...", { icon: "ðŸŽ™ï¸", duration: 3000 });
       if (promptAfterWake && promptAfterWake.length > 2) {
         setDhruvInitialQuery(promptAfterWake);
         setDhruvAutoVoice(false);
@@ -682,3 +682,4 @@ function Navbar() {
 }
 
 export default Navbar;
+
