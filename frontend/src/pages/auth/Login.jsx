@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
 import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
+import { getJobs } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
@@ -27,6 +28,35 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [loginRole, setLoginRole] = useState(isAdminTarget ? "recruiter" : "candidate");
+  const [previewJobs, setPreviewJobs] = useState([]);
+  const [isPreviewHovered, setIsPreviewHovered] = useState(false);
+  const [tickerPhase] = useState(Math.random);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPreviewJobs = async () => {
+      try {
+        const result = await getJobs({ page: 1, limit: 60 });
+        const seenJobs = new Set();
+        const jobs = (result?.jobs || []).filter((job) => {
+          const title = job.title?.trim().toLowerCase();
+          const company = job.company?.trim().toLowerCase();
+          const key = `${title}|${company}`;
+          if (!title || !job._id || seenJobs.has(key)) return false;
+          seenJobs.add(key);
+          return true;
+        }).slice(0, 15);
+        if (!cancelled && jobs.length >= 2) {
+          setPreviewJobs(jobs);
+        }
+      } catch {
+        // Leave the ticker hidden when the live jobs feed is unavailable.
+      }
+    };
+
+    fetchPreviewJobs();
+    return () => { cancelled = true; };
+  }, []);
 
   const redirectUser = (user) => {
     const params = new URLSearchParams(location.search);
@@ -105,10 +135,12 @@ function Login() {
     }
   };
 
+  const tickerDuration = Math.max(previewJobs.length * 3.5, 10);
+
   return (
     <div className="app-canvas-surface min-h-screen w-full flex items-center justify-center px-4 py-8 font-sans">
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] lg:gap-12">
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:block lg:translate-x-20">
           <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
           <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">Find work that fits the life you want.</h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">A more thoughtful way to find a role, meet a team, and move your career forward.</p>
@@ -234,21 +266,42 @@ function Login() {
         </div>
         </div>
 
-        <aside aria-hidden="true" className="relative hidden h-[440px] lg:block">
+        <aside aria-hidden="true" className="relative hidden h-[440px] lg:block lg:-translate-x-20">
           <div className="absolute right-4 top-10 h-64 w-64 rounded-full bg-[#f1ddc2]/60 blur-3xl" />
-          <div className="absolute right-0 top-8 w-[270px] rotate-2 rounded-2xl border border-[#e9dfd1] bg-[#fffdf9] p-4 shadow-[0_16px_40px_rgba(110,80,45,0.12)]">
-            <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3612b]">Example match</p>
-            <h3 className="m-0 text-base font-extrabold text-[#30271f]">Data Engineer</h3>
-            <p className="mt-1 text-xs text-[#827361]">Cloud data team / Flexible</p>
-            <div className="mt-4 flex gap-2"><span className="rounded-full bg-[#f5ead9] px-2.5 py-1 text-[10px] font-bold text-[#795431]">GCP</span><span className="rounded-full bg-[#f5ead9] px-2.5 py-1 text-[10px] font-bold text-[#795431]">2-5 years</span></div>
-          </div>
-          <div className="absolute bottom-14 left-0 w-[255px] -rotate-2 rounded-2xl border border-[#e9dfd1] bg-[#fffaf2] p-4 shadow-[0_16px_40px_rgba(110,80,45,0.12)]">
-            <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3612b]">Another possibility</p>
-            <h3 className="m-0 text-base font-extrabold text-[#30271f]">Product Analyst</h3>
-            <p className="mt-1 text-xs text-[#827361]">Product &amp; insights / Hybrid</p>
-            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[#eadfce]"><div className="h-full w-4/5 rounded-full bg-[#c58b50]" /></div>
-          </div>
-          <div className="absolute bottom-4 right-1 rounded-full border border-[#e9dfd1] bg-[#fffdf9]/90 px-3 py-2 text-[10px] font-bold text-[#795431] shadow-sm">A good next step starts here</div>
+          {previewJobs.length >= 2 ? (
+            <div className="login-job-ticker absolute right-0 top-8 h-[420px] w-[330px]" style={{ "--ticker-duration": `${tickerDuration}s`, "--ticker-delay": `${-tickerDuration * tickerPhase}s` }}>
+              <div className="login-job-ticker-track" style={{ animationPlayState: isPreviewHovered ? "paused" : "running" }}>
+                {[0, 1].map((copy) => (
+                  <div className="login-job-ticker-group" key={copy}>
+                    {previewJobs.map((job, index) => {
+                      const detail = [job.company, job.location].filter(Boolean).join(" / ");
+                      const tags = [job.skillsRequired?.[0] || job.employmentType, job.experienceRequired]
+                        .filter((tag) => tag && tag !== "Not Specified");
+                      return (
+                        <article
+                          className="login-job-ticker-card"
+                          key={`${job._id}-${index}`}
+                          onPointerEnter={() => setIsPreviewHovered(true)}
+                          onPointerLeave={() => setIsPreviewHovered(false)}
+                        >
+                          <p className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3612b]">Live opportunity</p>
+                          <h3 className="m-0 truncate text-base font-extrabold text-[#30271f]">{job.title}</h3>
+                          <p className="mt-1 truncate text-xs text-[#827361]">{detail || job.domain || "Explore this opportunity"}</p>
+                          <div className="mt-4 flex gap-2 overflow-hidden">
+                            {tags.slice(0, 2).map((tag) => <span key={tag} className="truncate rounded-full bg-[#f5ead9] px-2.5 py-1 text-[10px] font-bold text-[#795431]">{tag}</span>)}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="absolute right-0 top-24 w-[270px] rounded-2xl border border-[#e9dfd1] bg-[#fffdf9]/90 p-4 text-sm font-semibold text-[#827361] shadow-[0_16px_40px_rgba(110,80,45,0.08)]">
+              New opportunities are updated daily.
+            </div>
+          )}
         </aside>
       </div>
     </div>
@@ -256,3 +309,4 @@ function Login() {
 }
 
 export default Login;
+
