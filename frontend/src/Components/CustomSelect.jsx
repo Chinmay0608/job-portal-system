@@ -1,7 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 
-const getCustomStyles = (borderless) => ({
+const getCustomStyles = (borderless, mutedValue) => ({
   control: (provided, state) => ({
     ...provided,
     backgroundColor: borderless ? 'transparent' : '#ffffff',
@@ -72,7 +72,7 @@ const getCustomStyles = (borderless) => ({
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: '#0f172a',
+    color: mutedValue ? '#64748b' : '#0f172a',
     fontWeight: 500,
     fontSize: '0.875rem',
   }),
@@ -107,6 +107,7 @@ const CustomSelect = ({
   isDisabled = false, 
   name,
   borderless = false,
+  mutedValue = false,
   "aria-label": ariaLabel,
   menuPlacement = "auto",
   maxMenuHeight = 220,
@@ -119,7 +120,7 @@ const CustomSelect = ({
         aria-label={ariaLabel || placeholder}
         className="focus:ring-2 focus:ring-brand-500 rounded-xl"
         classNamePrefix="custom-select"
-        styles={getCustomStyles(borderless)}
+        styles={getCustomStyles(borderless, mutedValue)}
         options={options}
         value={selectedOption}
         onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
