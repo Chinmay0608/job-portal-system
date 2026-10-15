@@ -186,6 +186,18 @@ connectDB().then(() => {
     // Import Config and new Sync Engine
     const jobAggConfig = require("./config/jobAggregation");
     const syncService = require("./services/sync.service");
+    const runJobSync = async () => {
+      if (jobAggConfig.useNewSyncEngine) {
+        console.log("[Sync] Running Job Aggregation Sync Engine...");
+        await syncService.runAllSync();
+      }
+      console.log("[Sync] Running external job feeds...");
+      await importAllExternalJobs();
+    };
+
+    runJobSync().catch((err) =>
+      console.error("[Sync] Job sync failed:", err.message),
+    );
 
     // Start Telegram Operations & Ticket Bot Poller
     const { startTelegramBot } = require("./services/telegramBot");
@@ -238,14 +250,10 @@ connectDB().then(() => {
     });
 
     // unified cron interval from config
-    cron.schedule(jobAggConfig.syncInterval, async () => {
-      if (jobAggConfig.useNewSyncEngine) {
-        console.log("[Cron] Running NEW Job Aggregation Sync Engine...");
-        await syncService.runAllSync();
-      } else {
-        console.log("[Cron] Running LEGACY Job Fetcher...");
-        importAllExternalJobs();
-      }
+    cron.schedule(jobAggConfig.syncInterval, () => {
+      runJobSync().catch((err) =>
+        console.error("[Cron] Job sync failed:", err.message),
+      );
     });
   });
 });

@@ -1,17 +1,13 @@
-function SplashScreen({ isExiting }) {
+import SkillBridgeLogo from "./SkillBridgeLogo";
+
+function SplashScreen() {
   return (
-    <div className={`splash-screen ${isExiting ? "splash-exit" : ""}`}>
+    <div className="splash-screen" role="status" aria-label="Loading SkillBridge">
       <div className="splash-content">
-        <h1 className="splash-logo">
-          <span className="splash-skill">Skill</span>
-          <span className="splash-bridge">Bridge</span>
-        </h1>
-        <p className="splash-tagline">Find your next opportunity</p>
-        <div className="splash-loader">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+        <SkillBridgeLogo width={196} className="splash-logo" />
+        <p className="splash-tagline">Find work that works for you.</p>
+        <p className="splash-industries">Care <i /> Retail <i /> Education <i /> Hospitality <i /> Technology</p>
+        <span className="splash-loader" aria-hidden="true"><span /></span>
       </div>
     </div>
   );

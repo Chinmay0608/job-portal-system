@@ -30,6 +30,12 @@ import {
   Info as InfoIcon,
   X as CloseIcon,
   ChevronRight as ChevronRightIcon,
+  ArrowUpRight,
+  BriefcaseBusiness,
+  Bookmark,
+  FileText,
+  UserRound,
+  Sparkles,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
@@ -361,13 +367,14 @@ function CandidateDashboard() {
   const [jobs, setJobs] = useState([]);
   const [recommendedJobsList, setRecommendedJobsList] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [applicationRecords, setApplicationRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [jobLoadError, setJobLoadError] = useState("");
 
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [submittedSearch, setSubmittedSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
-  const [locationFilter, setLocationFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState(() => new URLSearchParams(window.location.search).get("location") || "");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
@@ -436,6 +443,7 @@ function CandidateDashboard() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const isJobsView = new URLSearchParams(location.search).get("tab") === "jobs";
 
   const [user, setUser] = useState(() => {
     try {
@@ -526,7 +534,9 @@ function CandidateDashboard() {
   const fetchAppliedJobs = async () => {
     try {
       const response = await getMyApplications();
-      const appliedIds = response?.applications?.map((app) => app?.job?._id) || [];
+      const records = (response?.applications || []).filter((app) => app?.job);
+      setApplicationRecords(records);
+      const appliedIds = records.map((app) => app.job._id);
       setAppliedJobs(appliedIds);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -1193,6 +1203,19 @@ function CandidateDashboard() {
     (m) => !m.isRead && (m.priority === "urgent" || m.priority === "announcement")
   );
 
+  const openRecommendedJob = (job) => {
+    setSelectedJob(job);
+    setIsMobileDetailView(true);
+    setIsDescriptionExpanded(false);
+    navigate("/candidate-dashboard?tab=jobs");
+  };
+
+  const homeJobPool = [...new Map([...recommendedJobsList, ...jobs].filter((job) => job?._id).map((job) => [job._id, job])).values()];
+  const homeCompanies = [...new Map(homeJobPool.filter((job) => job.company).map((job) => [job.company, job])).values()].slice(0, 6);
+  const recommendedIds = new Set(recommendedJobsList.map((job) => job._id));
+  const homeLatestJobs = jobs.filter((job) => !recommendedIds.has(job._id)).slice(0, 4);
+  if (!homeLatestJobs.length) homeLatestJobs.push(...jobs.slice(0, 4));
+
   return (
     <div className="candidate-dashboard-surface w-full min-h-screen font-sans pb-3">
       <DashboardTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
@@ -1205,7 +1228,7 @@ function CandidateDashboard() {
       
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
         {/* DASHBOARD TOP HEADER & TOUR BAR */}
-        {showWelcomeHeader && (
+        {isJobsView && showWelcomeHeader && (
           <div ref={welcomeHeaderRef} className={`candidate-welcome-collapse${isWelcomeHeaderClosing ? " is-closing" : ""}`}>
             <div className="candidate-welcome-header bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
@@ -1271,15 +1294,34 @@ function CandidateDashboard() {
           </div>
         )}
 
-        {/* SEARCH CONSOLE BAR */}
-        <div className="mb-3.5" data-tour="search-filters">
+        {isJobsView ? (
+        <>
+        {/* JOB DISCOVERY SEARCH */}
+        <section className="candidate-home-search mb-5" data-tour="search-filters">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+            <div>
+              <p className="candidate-home-eyebrow">YOUR NEXT MOVE</p>
+              <h2 className="candidate-home-title">Find work that fits your life</h2>
+              <p className="candidate-home-subtitle">Search roles by title, skills, company, or location.</p>
+            </div>
+            {!loading && (
+              <div className="candidate-results-summary" aria-live="polite">
+                <strong>{totalJobs.toLocaleString()}</strong>
+                <span>open roles</span>
+              </div>
+            )}
+          </div>
+
+          <div className="candidate-search-controls">
             <div 
               className="candidate-search-bar flex flex-col md:flex-row items-stretch md:items-center bg-white border border-slate-300 rounded-2xl shadow-sm p-1.5 gap-1 hover:border-slate-400 transition-colors cursor-pointer md:cursor-default"
               onClick={() => window.innerWidth <= 768 && setIsMobileSearchExpanded(true)}
             >
               <div className="flex-1 flex items-center px-3 py-2 gap-2.5 min-w-0">
                 <FiSearch className="text-slate-400 text-lg shrink-0" />
+                <label className="sr-only" htmlFor="candidate-job-search">Job title, skills, or company</label>
                 <input
+                  id="candidate-job-search"
                   type="text"
                   placeholder="Job title, keywords, or company"
                   value={search}
@@ -1291,7 +1333,9 @@ function CandidateDashboard() {
               <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
               <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
                 <FiMapPin className="text-slate-400 text-lg shrink-0" />
+                <label className="sr-only" htmlFor="candidate-location-search">Location</label>
                 <input
+                  id="candidate-location-search"
                   type="text"
                   placeholder="e.g. India, USA, or Bangalore..."
                   value={locationFilter}
@@ -1300,9 +1344,12 @@ function CandidateDashboard() {
                 />
               </div>
               <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
-              <div className="hidden md:flex flex-1 items-center px-2 min-w-0">
+              <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
+                <BriefcaseBusiness className="text-slate-400 shrink-0" size={18} aria-hidden="true" />
                 <CustomSelect
                   borderless
+                  mutedValue
+                  aria-label="Filter by experience"
                   options={[
                     { value: "", label: "All Experience" },
                     { value: "0-2 Years", label: "0-2 Years" },
@@ -1326,8 +1373,220 @@ function CandidateDashboard() {
                 Find jobs
               </button>
             </div>
-          </div>
 
+            <div className="candidate-desktop-filters hidden md:grid">
+              <CustomSelect
+                options={[
+                  { value: "", label: "Any salary" },
+                  { value: "300000", label: "₹3 LPA+" },
+                  { value: "600000", label: "₹6 LPA+" },
+                  { value: "1000000", label: "₹10 LPA+" },
+                  { value: "1800000", label: "₹18 LPA+" },
+                  { value: "2500000", label: "₹25 LPA+" },
+                ]}
+                value={salaryFilter}
+                onChange={(e) => setSalaryFilter(e.target.value)}
+                placeholder="Any salary"
+                aria-label="Filter by minimum salary"
+              />
+              <CustomSelect
+                options={[
+                  { value: "All", label: "Any job type" },
+                  { value: "Full-time", label: "Full-time" },
+                  { value: "Internship", label: "Internship" },
+                  { value: "Contract", label: "Contract" },
+                  { value: "Part-time", label: "Part-time" },
+                ]}
+                value={employmentTypeFilter}
+                onChange={(e) => setEmploymentTypeFilter(e.target.value)}
+                placeholder="Any job type"
+                aria-label="Filter by job type"
+              />
+              <label className={`candidate-remote-filter ${isRemoteFilter === "true" ? "is-active" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={isRemoteFilter === "true"}
+                  onChange={(e) => setIsRemoteFilter(e.target.checked ? "true" : "All")}
+                />
+                <span>Remote only</span>
+              </label>
+              {(submittedSearch || locationFilter || experienceFilter || salaryFilter || companyFilter || sourceFilter || employmentTypeFilter !== "All" || isRemoteFilter === "true") && (
+                <button
+                  type="button"
+                  className="candidate-clear-filters"
+                  onClick={() => {
+                    setSearch("");
+                    setSubmittedSearch("");
+                    setLocationFilter("");
+                    setExperienceFilter("");
+                    setSalaryFilter("");
+                    setCompanyFilter("");
+                    setSourceFilter("");
+                    setEmploymentTypeFilter("All");
+                    setIsRemoteFilter("All");
+                    setCurrentPage(1);
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+        </>
+        ) : (
+          <section className="space-y-6 pb-8" aria-labelledby="candidate-home-title">
+            <div className="rounded-3xl border border-[#e9dfd1] bg-gradient-to-br from-[#fffdf9] via-white to-[#f7eddf] p-6 shadow-sm sm:p-8">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-end">
+                <div>
+                <p className="candidate-home-eyebrow">YOUR CAREER, IN MOTION</p>
+                <h2 id="candidate-home-title" className="m-0 max-w-2xl text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl">
+                  Find your next opportunity, {user?.name?.split(" ")[0] || "Candidate"}.
+                </h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                  Explore roles that match your skills and move your career forward.
+                </p>
+                </div>
+                <div className="rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm">
+                  <div>
+                    <p className="m-0 text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">Your profile</p>
+                    <p className="mb-0 mt-1 text-2xl font-black text-slate-900">{profileCompletion}<span className="text-base text-slate-400">% complete</span></p>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Profile completion" aria-valuenow={profileCompletion} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500" style={{ width: `${profileCompletion}%` }} />
+                  </div>
+                  <button type="button" onClick={() => navigate("/candidate-profile")} className="mt-3 inline-flex items-center gap-1 border-0 bg-transparent p-0 text-sm font-bold text-brand-700 hover:text-brand-800">
+                    Complete your profile <ChevronRightIcon size={15} />
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={(event) => { event.preventDefault(); setSubmittedSearch(search.trim()); setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="mt-6 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm md:flex-row md:items-center">
+                <label className="sr-only" htmlFor="home-job-search">Job title, company, or skill</label>
+                <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2"><FiSearch className="shrink-0 text-slate-400" size={19} /><input id="home-job-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Job title, company, or skill" className="w-full border-0 bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400" /></div>
+                <span className="hidden h-8 w-px bg-slate-200 md:block" aria-hidden="true" />
+                <label className="sr-only" htmlFor="home-location-search">Location or remote</label>
+                <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2"><FiMapPin className="shrink-0 text-slate-400" size={19} /><input id="home-location-search" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value)} placeholder="Location or Remote" className="w-full border-0 bg-transparent text-sm font-medium text-slate-800 outline-none placeholder:text-slate-400" /></div>
+                <button type="submit" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border-0 bg-brand-600 px-5 text-sm font-bold text-white transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Find jobs <ArrowUpRight size={16} /></button>
+              </form>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="mr-1 font-semibold">Popular:</span>
+                {["Software Engineer", "Data Analyst", "Product Manager", "AI/ML", "Remote"].map((term) => (
+                  <button key={term} type="button" onClick={() => { if (term === "Remote") setLocationFilter("Remote"); else { setSearch(term); setSubmittedSearch(term); } setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-brand-700">{term}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { label: "Open opportunities", value: totalJobs.toLocaleString(), detail: "Across your job search", icon: BriefcaseBusiness, action: () => navigate("/candidate-dashboard?tab=jobs"), color: "bg-blue-50 text-blue-700" },
+                { label: "Applications", value: applicationRecords.length, detail: "Track your progress", icon: FileText, action: () => navigate("/my-applications"), color: "bg-amber-50 text-amber-700" },
+                { label: "Saved jobs", value: user?.savedJobs?.length || 0, detail: "Roles to revisit", icon: Bookmark, action: () => { setActiveTab("Saved"); navigate("/candidate-dashboard?tab=jobs"); }, color: "bg-violet-50 text-violet-700" },
+              ].map(({ label, value, detail, icon: Icon, action, color }) => (
+                <button key={label} type="button" onClick={action} className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${color}`}><Icon size={19} /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-slate-500">{label}</span><span className="mt-0.5 block text-2xl font-black leading-none text-slate-900">{value}</span><span className="mt-1 block text-xs text-slate-500">{detail}</span></span>
+                  <ArrowUpRight size={16} className="text-slate-400 transition group-hover:text-brand-600" />
+                </button>
+              ))}
+            </div>
+
+            {homeCompanies.length > 0 && (
+              <section aria-labelledby="home-companies-title" className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div><p className="candidate-home-eyebrow">EMPLOYERS ON SKILLBRIDGE</p><h3 id="home-companies-title" className="m-0 text-base font-extrabold text-slate-900">Companies hiring</h3></div>
+                  <button type="button" onClick={() => navigate("/candidate-dashboard?tab=jobs")} className="inline-flex shrink-0 items-center gap-1 border-0 bg-transparent p-0 text-sm font-bold text-brand-700 hover:text-brand-800">Browse jobs <ChevronRightIcon size={15} /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                  {homeCompanies.map((job) => (
+                    <button key={job.company} type="button" onClick={() => { setCompanyFilter(job.company); setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-100 bg-[#fffdfa] px-3 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40">
+                      {job.companyLogo ? <img src={job.companyLogo} alt="" className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-1" /> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-600">{job.company.slice(0, 1).toUpperCase()}</span>}
+                      <span className="truncate text-xs font-bold text-slate-700">{job.company}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {homeLatestJobs.length > 0 && (
+              <section aria-labelledby="home-latest-jobs-title">
+                <div className="mb-3 flex items-end justify-between gap-3">
+                  <div><p className="candidate-home-eyebrow">FRESH OPPORTUNITIES</p><h3 id="home-latest-jobs-title" className="m-0 text-xl font-extrabold text-slate-900">Latest jobs</h3><p className="mb-0 mt-1 text-sm text-slate-500">New roles from across your job search.</p></div>
+                  <button type="button" onClick={() => navigate("/candidate-dashboard?tab=jobs")} className="inline-flex shrink-0 items-center gap-1 border-0 bg-transparent p-0 text-sm font-bold text-brand-700 hover:text-brand-800">Show all <ArrowUpRight size={15} /></button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {homeLatestJobs.map((job) => (
+                    <button key={job._id} type="button" onClick={() => openRecommendedJob(job)} className="group flex min-h-[176px] flex-col rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                      <span className="flex min-w-0 items-center gap-2.5">{job.companyLogo ? <img src={job.companyLogo} alt="" className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 object-contain p-1" /> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 font-bold text-brand-700">{(job.company || "S").slice(0, 1).toUpperCase()}</span>}<span className="truncate text-xs font-semibold text-slate-600">{job.company || "SkillBridge employer"}</span></span>
+                      <span className="mt-3 line-clamp-2 text-sm font-extrabold leading-5 text-slate-900">{job.title}</span>
+                      <span className="mt-2 flex flex-wrap gap-1.5"><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{job.employmentType || "Full-time"}</span>{job.isRemote && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Remote</span>}</span>
+                      <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="recent-applications-title">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                  <div><p className="candidate-home-eyebrow">YOUR PROGRESS</p><h3 id="recent-applications-title" className="m-0 text-lg font-extrabold text-slate-900">Recent applications</h3></div>
+                  <button type="button" onClick={() => navigate("/my-applications")} className="inline-flex shrink-0 items-center gap-1 border-0 bg-transparent p-0 text-sm font-bold text-brand-700 hover:text-brand-800">View all <ChevronRightIcon size={15} /></button>
+                </div>
+                {applicationRecords.length ? (
+                  <div className="divide-y divide-slate-100">
+                    {applicationRecords.slice(0, 3).map((application) => (
+                      <div key={application._id} className="flex items-center gap-3 px-5 py-4">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-600"><BriefcaseBusiness size={18} /></span>
+                        <div className="min-w-0 flex-1"><p className="m-0 truncate text-sm font-bold text-slate-900">{application.job.title}</p><p className="mb-0 mt-1 truncate text-xs text-slate-500">{application.job.company || "Company"}{application.createdAt ? ` · Applied ${new Date(application.createdAt).toLocaleDateString()}` : ""}</p></div>
+                        <StatusBadge status={application.status || "pending"} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-5 py-8 text-center">
+                    <p className="m-0 text-sm font-semibold text-slate-700">Your application updates will appear here.</p>
+                    <p className="mb-4 mt-1 text-xs text-slate-500">Find a role that fits and keep track of every next step.</p>
+                    <button type="button" onClick={() => navigate("/candidate-dashboard?tab=jobs")} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50">Browse jobs</button>
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="recommended-home-title">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div><p className="candidate-home-eyebrow">MATCHED TO YOUR PROFILE</p><h3 id="recommended-home-title" className="m-0 text-lg font-extrabold text-slate-900">Recommended for you</h3></div>
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Sparkles size={17} /></span>
+                </div>
+                {recommendedJobsList.length ? (
+                  <div className="space-y-2.5">
+                    {recommendedJobsList.slice(0, 3).map((job) => {
+                      const match = calculateJobMatchScore(job, user);
+                      return (
+                        <button key={job._id} type="button" onClick={() => openRecommendedJob(job)} className="group flex w-full items-center gap-3 rounded-xl border border-slate-100 bg-[#fffdfa] p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-brand-700"><BriefcaseBusiness size={17} /></span>
+                          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-900">{job.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{job.company || "Company"} · {job.location || "Location flexible"}</span></span>
+                          <span className="shrink-0 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-brand-700">{match.score}% match</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-slate-50 px-4 py-5 text-sm text-slate-600">Complete your profile to get more relevant job recommendations.</div>
+                )}
+                <button type="button" onClick={() => { setActiveTab("Recommended"); navigate("/candidate-dashboard?tab=jobs"); }} className="mt-4 inline-flex items-center gap-1 border-0 bg-transparent p-0 text-sm font-bold text-brand-700 hover:text-brand-800">Explore all recommendations <ArrowUpRight size={15} /></button>
+              </section>
+            </div>
+
+            <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e9dfd1] bg-[#fffaf2] p-5 sm:flex-row sm:items-center sm:px-6">
+              <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-amber-700 shadow-sm"><FileText size={18} /></span><div><h3 className="m-0 text-sm font-extrabold text-slate-900">Make your next application count</h3><p className="mb-0 mt-1 text-sm text-slate-600">Keep your profile and resume up to date before you apply.</p></div></div>
+              <button type="button" onClick={() => navigate("/candidate-profile")} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#e7d9c6] bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50">Review profile <ArrowUpRight size={15} /></button>
+            </div>
+          </section>
+        )}
+
+        {isJobsView && (
+        <>
         {/* MOBILE SEARCH EXPANDED VIEW (Bottom Sheet) */}
         {isMobileSearchExpanded && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={() => setIsMobileSearchExpanded(false)}>
@@ -1500,6 +1759,13 @@ function CandidateDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
+            <div className="candidate-feed-heading">
+              <div>
+                <p className="candidate-home-eyebrow">CURATED FOR YOU</p>
+                <h2>Explore opportunities</h2>
+              </div>
+              <span>{displayedJobs.length} shown</span>
+            </div>
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4" data-tour="recommended-toggle">
               <div className="candidate-job-tabs relative grid grid-cols-3 p-1 bg-slate-100 rounded-full border border-slate-200 select-none">
@@ -1755,9 +2021,9 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div data-tour="job-details" className={`candidate-job-detail ${isMobileDetailView ? "fixed inset-0 z-[100] bg-white p-4 overflow-y-auto block" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm h-[calc(100vh-210px)] lg:h-[calc(100vh-88px)] overflow-hidden flex flex-col`}>
+          <div data-tour="job-details" className={`candidate-job-detail custom-scrollbar ${isMobileDetailView ? "fixed inset-0 z-[100] h-full bg-white p-4 overflow-y-auto" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm lg:h-[calc(100vh-88px)] overflow-y-auto flex flex-col`}>
             {selectedJob ? (
-              <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex flex-col min-h-full">
                 {/* Header section */}
                 <div className="candidate-job-detail-header p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
                   <button 
@@ -1970,7 +2236,7 @@ function CandidateDashboard() {
                 </div>
 
                 {/* Scroll body */}
-                <div className="candidate-job-description-area p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
+                <div className="candidate-job-description-area p-6 space-y-6">
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
@@ -2081,6 +2347,8 @@ function CandidateDashboard() {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* ONE-TIME PROFILE COMPLETION NUDGE MODAL */}

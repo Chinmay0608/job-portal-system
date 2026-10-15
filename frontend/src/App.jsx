@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
@@ -36,7 +36,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 // ==========================================================================
 // 4. MARKETING, BLOG, & INFORMATION SUBDIVISIONS IMPORT SEGMENT
 // ==========================================================================
-import Home from "./pages/marketing/Home";
+const Home = lazy(() => import("./pages/marketing/Home"));
 const About = lazy(() => import("./pages/marketing/About"));
 const Blog = lazy(() => import("./pages/marketing/Blog"));
 const Careers = lazy(() => import("./pages/marketing/Careers"));
@@ -74,7 +74,7 @@ function AppContent() {
       {!hideLayout && <Navbar />}
       <main className="main-content">
         <ChunkErrorBoundary>
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+          <Suspense fallback={<SplashScreen />}>
             <Routes>
               {/* Immersive Public & Access Routes */}
               <Route path="/" element={<Home />} />
@@ -125,43 +125,33 @@ function AppContent() {
 }
 
 function App() {
-  // Splash screen only appears on initial session entry.
-  const [showSplash, setShowSplash] = useState(() => {
+  const [showIntroSplash, setShowIntroSplash] = useState(() => {
     try {
       return !sessionStorage.getItem("hasSeenSplash");
     } catch {
       return true;
     }
   });
-  const [isSplashExiting, setIsSplashExiting] = useState(false);
 
   useEffect(() => {
-    if (!showSplash) return;
-
-    // Smooth exit trigger after 800ms
-    const exitTimer = setTimeout(() => setIsSplashExiting(true), 800);
-
-    // Unmount splash from DOM after exit animation completes
-    const removeTimer = setTimeout(() => {
-      setShowSplash(false);
+    if (!showIntroSplash) return;
+    const timer = setTimeout(() => {
+      setShowIntroSplash(false);
       try {
         sessionStorage.setItem("hasSeenSplash", "true");
       } catch {
-        // Ignore session storage errors
+        // Ignore storage errors; the splash still completes for this render.
       }
-    }, 1200);
+    }, 5000);
 
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(removeTimer);
-    };
-  }, [showSplash]);
+    return () => clearTimeout(timer);
+  }, [showIntroSplash]);
 
   return (
     <BrowserRouter>
       <ScrollToTop />
       <DesktopAdvisoryModal />
-      {showSplash && <SplashScreen isExiting={isSplashExiting} />}
+      {showIntroSplash && <SplashScreen />}
       <AppContent />
     </BrowserRouter>
   );
