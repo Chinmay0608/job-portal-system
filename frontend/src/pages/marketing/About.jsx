@@ -19,9 +19,9 @@ import { getPublicStatsAPI } from "../../Services/jobService";
 
 function About() {
   const [platformStats, setPlatformStats] = useState({
-    totalJobs: 18800,
-    activeJobs: 17500,
-    companiesCount: 4995,
+    totalJobs: 31949,
+    activeJobs: 12447,
+    companiesCount: 8775,
     matchPrecision: "98.4%",
     domainsCount: "30+",
   });
@@ -31,7 +31,8 @@ function About() {
     getPublicStatsAPI()
       .then((data) => {
         if (data && isMounted) {
-          setPlatformStats((prev) => ({ ...prev, ...data }));
+          const stats = data.stats || data;
+          setPlatformStats((prev) => ({ ...prev, ...stats }));
         }
       })
       .catch(() => {});
@@ -69,12 +70,12 @@ function About() {
 
   const stats = [
     {
-      number: `${platformStats.activeJobs ? platformStats.activeJobs.toLocaleString() + '+' : '17,500+'}`,
+      number: `${(platformStats.totalJobs || platformStats.activeJobs) ? (platformStats.totalJobs || platformStats.activeJobs).toLocaleString() + '+' : '31,000+'}`,
       label: "Active Indexed Jobs",
       icon: <Briefcase />,
     },
     {
-      number: `${platformStats.companiesCount ? platformStats.companiesCount.toLocaleString() + '+' : '5,000+'}`,
+      number: `${platformStats.companiesCount ? platformStats.companiesCount.toLocaleString() + '+' : '8,775+'}`,
       label: "Hiring Companies",
       icon: <Building2 />,
     },
