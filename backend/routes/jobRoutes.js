@@ -10,6 +10,7 @@ const {
   createJob,
   generateJobDescription,
   getFullJobDescription,
+  getEnglishJobDescription,
   aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,
@@ -38,6 +39,13 @@ const speechLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many voice requests. Please try again shortly." },
 });
+const translationLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many translation requests. Please try again shortly." },
+});
 
 /* ==========================
    PUBLIC ROUTES
@@ -50,6 +58,7 @@ router.get("/public-stats", cacheMiddleware(300), getPublicStats);
 router.get("/semantic-search", optionalAuth, semanticSearchJobs);
 router.get("/skills/search", cacheMiddleware(3600), searchMasterSkills);
 router.get("/:id/full-description", optionalAuth, getFullJobDescription);
+router.get("/:id/english-description", optionalAuth, translationLimiter, getEnglishJobDescription);
 
 /* ==========================
    CANDIDATE ROUTES

@@ -66,6 +66,8 @@ export const generateJobDescriptionAPI = async ({ title, company, role }) => {
 
 export const getFullJobDescriptionAPI = async (jobId) =>
   (await api.get(`/api/jobs/${jobId}/full-description`)).data;
+export const getEnglishJobDescriptionAPI = async (jobId) =>
+  (await api.get(`/api/jobs/${jobId}/english-description`)).data;
 
 
 

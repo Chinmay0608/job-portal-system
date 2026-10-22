@@ -1,5 +1,6 @@
 const dns = require("node:dns/promises");
 const net = require("node:net");
+const crypto = require("node:crypto");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { GoogleGenAI } = require("@google/genai");
@@ -606,6 +607,65 @@ Return ONLY valid JSON matching this schema:
   return null;
 }
 
+async function translateDescriptionToEnglish(description) {
+  if (!hasApiKey("GEMINI") && !hasApiKey("GROQ")) return null;
+  const prompt = `Translate the following job description into clear English. If it is already English, return it unchanged. Preserve all facts, names, numbers, links, HTML tags, and list structure. Do not summarize, add, or remove content. Return only the translated description.\n\n${description}`;
+
+  if (hasApiKey("GEMINI")) {
+    for (const model of ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"]) {
+      try {
+        const result = await withApiKey("GEMINI", async (apiKey) => {
+          const response = await new GoogleGenAI({ apiKey }).models.generateContent({
+            model,
+            contents: prompt,
+            config: { temperature: 0.1 },
+          });
+          return response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
+        });
+        if (result?.trim()) return result.trim();
+      } catch (error) {
+        console.warn(`[FullDescriptionService] Gemini translation (${model}) failed:`, error.message);
+      }
+    }
+  }
+
+  if (hasApiKey("GROQ")) {
+    for (const model of ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]) {
+      try {
+        const result = await withApiKey("GROQ", async (apiKey) => {
+          const response = await axios.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+              model,
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.1,
+            },
+            { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 20000 },
+          );
+          return response.data?.choices?.[0]?.message?.content?.trim() || null;
+        });
+        if (result) return result;
+      } catch (error) {
+        console.warn(`[FullDescriptionService] Groq translation (${model}) failed:`, error.message);
+      }
+    }
+  }
+  return null;
+}
+
+async function ensureEnglishDescription(job) {
+  const hash = crypto.createHash("sha256").update("translation-v2:").update(job.description).digest("hex");
+  if (job.descriptionEnglishSourceHash === hash && job.descriptionEnglish) {
+    return job.descriptionEnglish;
+  }
+  const translated = await translateDescriptionToEnglish(job.description);
+  if (!translated) return null;
+  job.descriptionEnglish = translated;
+  job.descriptionEnglishSourceHash = hash;
+  await job.save();
+  return translated;
+}
+
 async function ensureFullJobDescription(job) {
   if (!job) return null;
   const needsRepair = isMisstructuredDescription(job.description);
@@ -679,4 +739,5 @@ module.exports = {
   buildStructuredDescription,
   isMisstructuredDescription,
   generateDetailsWithAI,
+  ensureEnglishDescription,
 };

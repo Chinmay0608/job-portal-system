@@ -1124,11 +1124,27 @@ const getFullJobDescription = asyncHandler(async (req, res) => {
   });
 });
 
+const getEnglishJobDescription = asyncHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id);
+  if (!job) {
+    res.status(404);
+    throw new Error("Job not found");
+  }
+  const { ensureEnglishDescription } = require("../services/fullDescriptionService");
+  const description = await ensureEnglishDescription(job);
+  if (!description) {
+    res.status(503);
+    throw new Error("English translation is temporarily unavailable");
+  }
+  res.status(200).json({ description, isTranslated: description !== job.description });
+});
+
 module.exports = {
   getJobsAdmin,
   createJob,
   generateJobDescription,
   getFullJobDescription,
+  getEnglishJobDescription,
   aiCareerCoach,
   getAllJobs,
   getRecruiterJobs,

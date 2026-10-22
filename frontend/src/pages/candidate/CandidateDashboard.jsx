@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
-import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI } from "../../Services/jobService";
+import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI, getEnglishJobDescriptionAPI } from "../../Services/jobService";
 import { CANDIDATE_WELCOME_DISMISSED_KEY, setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
@@ -36,6 +37,7 @@ import {
   FileText,
   UserRound,
   Sparkles,
+  Flag,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
@@ -46,6 +48,15 @@ const HIDE_JOB_REASONS = [
   { value: "tech_stack_mismatch", label: "Tech stack mismatch" },
   { value: "other", label: "Other" },
 ];
+const JOB_CONCERN_REASONS = [
+  "Fake or scam job",
+  "Incorrect information",
+  "Job already closed / expired",
+  "Discriminatory or inappropriate",
+  "Duplicate posting",
+  "Other",
+];
+const PENDING_EXTERNAL_APPLICATION_KEY = "pending_external_application_confirmation";
 
 const getRelativeTime = (dateString) => {
   if (!dateString) return "";
@@ -382,13 +393,19 @@ function CandidateDashboard() {
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("All");
   const [isRemoteFilter, setIsRemoteFilter] = useState("All");
   
-  const [externalApplyActive, setExternalApplyActive] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
 
   const [selectedJob, setSelectedJob] = useState(null);
+  const [externalApplyToConfirm, setExternalApplyToConfirm] = useState(null);
+  const [isConfirmingExternalApplication, setIsConfirmingExternalApplication] = useState(false);
+  const pendingExternalApplyRef = useRef(null);
+  const externalSiteLeftRef = useRef(false);
+  const [isConcernModalOpen, setIsConcernModalOpen] = useState(false);
+  const [concernReason, setConcernReason] = useState("");
+  const [concernDetails, setConcernDetails] = useState("");
+  const [isSubmittingConcern, setIsSubmittingConcern] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [isExpandingDescription, setIsExpandingDescription] = useState(false);
@@ -428,6 +445,10 @@ function CandidateDashboard() {
   // Mobile detail view toggle
   const [isMobileDetailView, setIsMobileDetailView] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [englishDescription, setEnglishDescription] = useState(null);
+  const [isTranslatingDescription, setIsTranslatingDescription] = useState(false);
+  const [translationError, setTranslationError] = useState("");
+  const [showOriginalDescription, setShowOriginalDescription] = useState(false);
 
   // Post-Apply Feedback Loop State
   const [pendingFeedbackJob, setPendingFeedbackJob] = useState(null);
@@ -705,6 +726,35 @@ function CandidateDashboard() {
     }
   }, [selectedJob?._id]);
 
+  useEffect(() => {
+    if (!selectedJob?._id || !selectedJob.description) return;
+    let isCancelled = false;
+    const { _id, description } = selectedJob;
+    setEnglishDescription(null);
+    setTranslationError("");
+    setShowOriginalDescription(false);
+    setIsTranslatingDescription(true);
+
+    getEnglishJobDescriptionAPI(_id)
+      .then((result) => {
+        if (isCancelled) return;
+        if (result?.isTranslated && result.description) {
+          setEnglishDescription({ jobId: _id, source: description, text: result.description });
+        } else {
+          setTranslationError("We couldn't translate this description. Try again.");
+        }
+      })
+      .catch((error) => {
+        console.warn("Could not translate job description:", error?.message);
+        if (!isCancelled) setTranslationError(error?.response?.data?.message || "English translation is unavailable. Try again.");
+      })
+      .finally(() => {
+        if (!isCancelled) setIsTranslatingDescription(false);
+      });
+
+    return () => { isCancelled = true; };
+  }, [selectedJob?._id, selectedJob?.description]);
+
   // Post-Apply Visibility Listener
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -719,6 +769,43 @@ function CandidateDashboard() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [pendingFeedbackJob]);
+
+  useEffect(() => {
+    try {
+      const pending = JSON.parse(sessionStorage.getItem(PENDING_EXTERNAL_APPLICATION_KEY) || "null");
+      if (pending?.jobId) {
+        pendingExternalApplyRef.current = pending;
+        setExternalApplyToConfirm(pending);
+      }
+    } catch {
+      sessionStorage.removeItem(PENDING_EXTERNAL_APPLICATION_KEY);
+    }
+
+    const handleBlur = () => {
+      if (pendingExternalApplyRef.current) externalSiteLeftRef.current = true;
+    };
+    const handleReturn = () => {
+      if (document.visibilityState !== "visible" || !externalSiteLeftRef.current) return;
+      externalSiteLeftRef.current = false;
+      setExternalApplyToConfirm(pendingExternalApplyRef.current);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        if (pendingExternalApplyRef.current) externalSiteLeftRef.current = true;
+      } else {
+        handleReturn();
+      }
+    };
+
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleReturn);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleReturn);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -777,19 +864,19 @@ function CandidateDashboard() {
     setUseSavedResume(null);
   };
 
-  // Triggered by "Apply Now". If the job is external, redirect and auto-track in My Applications.
+  // External listings are only tracked after the candidate confirms they applied.
   const handleApplyNowClick = async () => {
     if (selectedJob?.isExternal) {
+      const pending = {
+        jobId: selectedJob._id,
+        title: selectedJob.title,
+        company: selectedJob.company,
+        companyLogo: selectedJob.companyLogo,
+      };
+      sessionStorage.setItem(PENDING_EXTERNAL_APPLICATION_KEY, JSON.stringify(pending));
+      pendingExternalApplyRef.current = pending;
+      externalSiteLeftRef.current = false;
       window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
-      try {
-        await applyExternal(selectedJob._id);
-        setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
-        toast.success("Application tracked in My Applications!");
-      } catch (error) {
-        console.error("Auto track external application notice:", error);
-        setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
-      }
-      setExternalApplyActive(true);
       return;
     }
 
@@ -800,15 +887,29 @@ function CandidateDashboard() {
     }
   };
   
-  const handleManualTrack = async () => {
-    if (!selectedJob) return;
+  const handleConfirmExternalApplication = async (applied) => {
+    const pending = externalApplyToConfirm;
+    if (!pending) return;
+    if (!applied) {
+      sessionStorage.removeItem(PENDING_EXTERNAL_APPLICATION_KEY);
+      pendingExternalApplyRef.current = null;
+      setExternalApplyToConfirm(null);
+      return;
+    }
+
+    setIsConfirmingExternalApplication(true);
     try {
-      await applyExternal(selectedJob._id);
-      setAppliedJobs((prev) => [...new Set([...prev, selectedJob._id])]);
-      toast.success("Application tracked in My Applications!");
-      setExternalApplyActive(false);
+      await applyExternal(pending.jobId);
+      setAppliedJobs((prev) => [...new Set([...prev, pending.jobId])]);
+      toast.success("Application added to My Applications.");
+      sessionStorage.removeItem(PENDING_EXTERNAL_APPLICATION_KEY);
+      pendingExternalApplyRef.current = null;
+      setExternalApplyToConfirm(null);
     } catch (error) {
-      console.error("Failed to track external application:", error);
+      console.error("Failed to track confirmed external application:", error);
+      toast.error(error?.response?.data?.message || "Could not update My Applications. Please try again.");
+    } finally {
+      setIsConfirmingExternalApplication(false);
     }
   };
 
@@ -872,6 +973,66 @@ function CandidateDashboard() {
     } else {
       toast.success("Job link ready to share!");
     }
+  };
+
+  const handleTranslateJobDescription = async () => {
+    if (!selectedJob?._id || isTranslatingDescription) return;
+    const { _id, description } = selectedJob;
+    setIsTranslatingDescription(true);
+    setTranslationError("");
+    try {
+      const result = await getEnglishJobDescriptionAPI(_id);
+      if (result?.isTranslated && result.description) {
+        setEnglishDescription({ jobId: _id, source: description, text: result.description });
+        setShowOriginalDescription(false);
+      } else {
+        setTranslationError("No English translation was returned. Please try again.");
+      }
+    } catch (error) {
+      setTranslationError(error?.response?.data?.message || "English translation is unavailable. Try again.");
+    } finally {
+      setIsTranslatingDescription(false);
+    }
+  };
+
+  const handleSubmitJobConcern = async (event) => {
+    event.preventDefault();
+    if (!selectedJob || !JOB_CONCERN_REASONS.includes(concernReason)) return;
+
+    setIsSubmittingConcern(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${getApiBaseUrl()}/api/support/report`, {
+        reportType: "job_concern",
+        concernReason,
+        details: concernDetails.trim(),
+        reportedJob: {
+          id: selectedJob._id,
+          title: selectedJob.title,
+          company: selectedJob.company,
+        },
+        pageUrl: `/candidate-dashboard?jobId=${selectedJob._id}`,
+      }, {
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        timeout: 45000,
+      });
+      toast.success("Thanks. Your concern has been submitted for review.");
+      setIsConcernModalOpen(false);
+      setConcernReason("");
+      setConcernDetails("");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not submit your concern. Please try again.");
+    } finally {
+      setIsSubmittingConcern(false);
+    }
+  };
+
+  const closeJobConcernModal = () => {
+    if (isSubmittingConcern) return;
+    setIsConcernModalOpen(false);
+    setConcernReason("");
+    setConcernDetails("");
   };
 
   // Candidate confirmed: reuse the saved profile resume for this application.
@@ -2158,30 +2319,13 @@ function CandidateDashboard() {
                       </div>
                     ) : (
                       <div className="flex flex-wrap items-center gap-2.5">
-                        {!externalApplyActive ? (
-                          <button 
-                            className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-extrabold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 inline-flex items-center gap-2"
-                            onClick={handleApplyNowClick}
-                          >
-                            <span>{selectedJob.isExternal ? "Apply on company site" : "Apply now"}</span>
-                            {selectedJob.isExternal && <FiExternalLink size={15} />}
-                          </button>
-                        ) : (
-                          <>
-                            <button 
-                              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0"
-                              onClick={handleManualTrack}
-                            >
-                              Mark as Applied
-                            </button>
-                            <button 
-                              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold text-sm rounded-xl cursor-pointer transition-all border border-slate-300"
-                              onClick={handleApplyNowClick}
-                            >
-                              Open Again
-                            </button>
-                          </>
-                        )}
+                        <button
+                          className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-extrabold text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 inline-flex items-center gap-2"
+                          onClick={handleApplyNowClick}
+                        >
+                          <span>Apply Now</span>
+                          {selectedJob.isExternal && <FiExternalLink size={15} />}
+                        </button>
 
                         {/* Save Button */}
                         <button
@@ -2230,6 +2374,15 @@ function CandidateDashboard() {
                         >
                           <FiShare2 size={17} />
                         </button>
+                        <button
+                          type="button"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
+                          onClick={() => setIsConcernModalOpen(true)}
+                          title="Raise concern"
+                          aria-label="Raise concern"
+                        >
+                          <Flag size={17} />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -2240,12 +2393,33 @@ function CandidateDashboard() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
+                      {englishDescription?.jobId !== selectedJob._id && (
+                        <button
+                          type="button"
+                          disabled={isTranslatingDescription}
+                          className="inline-flex items-center rounded-md border-0 bg-[#2563eb] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70 cursor-pointer"
+                          onClick={handleTranslateJobDescription}
+                        >
+                          {isTranslatingDescription ? "Translating to English…" : "Translate to English"}
+                        </button>
+                      )}
                       {((selectedJob.isFullDescription || !isDescriptionSnippet(selectedJob.description)) && !isMisstructuredDescription(selectedJob.description)) && (
                         <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                           ✓ Complete Requisition
                         </span>
                       )}
                     </div>
+
+                    {translationError && <p className="mb-3 text-xs text-rose-600" role="status">{translationError}</p>}
+                    {englishDescription?.jobId === selectedJob._id && englishDescription.source === selectedJob.description && (
+                      <button
+                        type="button"
+                        className="mb-3 border-0 bg-transparent p-0 text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer"
+                        onClick={() => setShowOriginalDescription((visible) => !visible)}
+                      >
+                        {showOriginalDescription ? "Show English translation" : "View original description"}
+                      </button>
+                    )}
 
                     {isExpandingDescription && (
                       <div className="mb-3.5 p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl text-blue-700 text-xs font-semibold flex items-center gap-2.5 animate-pulse">
@@ -2256,6 +2430,10 @@ function CandidateDashboard() {
                     
                     {(() => {
                       const descText = selectedJob.description || "";
+                      const hasEnglishTranslation = englishDescription?.jobId === selectedJob._id && englishDescription.source === descText;
+                      const descriptionToDisplay = hasEnglishTranslation && !showOriginalDescription
+                        ? englishDescription.text
+                        : descText;
                       const canExpandDescription =
                         selectedJob.isExternal &&
                         (isMisstructuredDescription(descText) ||
@@ -2267,8 +2445,8 @@ function CandidateDashboard() {
                             !canExpandDescription || isDescriptionExpanded ? "max-h-none" : "max-h-96"
                           }`}>
                     <div className="job-description-content text-slate-700 space-y-4">
-                              {selectedJob.description
-                                ? renderExternalDescription(selectedJob.description, selectedJob)
+                              {descriptionToDisplay
+                                ? renderExternalDescription(descriptionToDisplay, selectedJob)
                                 : <p className="text-slate-400 italic">No description available.</p>
                               }
                             </div>
@@ -2393,6 +2571,141 @@ function CandidateDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {externalApplyToConfirm && (
+        <div
+          className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          onClick={() => !isConfirmingExternalApplication && handleConfirmExternalApplication(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="external-apply-confirm-title"
+            onClick={(event) => event.stopPropagation()}
+            className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-2xl sm:p-8"
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              disabled={isConfirmingExternalApplication}
+              onClick={() => handleConfirmExternalApplication(false)}
+              className="absolute right-4 top-4 border-0 bg-transparent p-1 text-slate-500 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
+            >
+              <CloseIcon size={19} />
+            </button>
+            <div className="flex items-start gap-4 pr-5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+                {externalApplyToConfirm.companyLogo ? (
+                  <img src={externalApplyToConfirm.companyLogo} alt="" className="h-full w-full object-contain" />
+                ) : (
+                  <BriefcaseBusiness size={24} className="text-blue-600" />
+                )}
+              </div>
+              <div>
+                <h2 id="external-apply-confirm-title" className="mb-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                  Have you applied?
+                </h2>
+                <p className="mb-6 text-sm leading-6 text-slate-500 sm:text-base">
+                  You opened the application page for <span className="font-semibold text-slate-800">{externalApplyToConfirm.title}</span> at <span className="font-semibold text-slate-800">{externalApplyToConfirm.company}</span>. Did you submit your application?
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={isConfirmingExternalApplication}
+              onClick={() => handleConfirmExternalApplication(true)}
+              className="w-full rounded-xl border-0 bg-gradient-to-r from-blue-700 to-cyan-500 py-3 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+            >
+              {isConfirmingExternalApplication ? "Updating..." : "Yes, I applied"}
+            </button>
+            <button
+              type="button"
+              disabled={isConfirmingExternalApplication}
+              onClick={() => handleConfirmExternalApplication(false)}
+              className="mt-2.5 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-100 disabled:opacity-50 cursor-pointer"
+            >
+              Not yet
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isConcernModalOpen && selectedJob && (
+        <div
+          className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
+          onClick={closeJobConcernModal}
+        >
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="job-concern-title"
+            onSubmit={handleSubmitJobConcern}
+            onClick={(event) => event.stopPropagation()}
+            className="relative w-full max-w-xl rounded-2xl border border-[#eadcc7] bg-[#faf7f1] p-5 shadow-2xl sm:p-7"
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              disabled={isSubmittingConcern}
+              onClick={closeJobConcernModal}
+              className="absolute right-4 top-4 border-0 bg-transparent p-1 text-slate-500 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
+            >
+              <CloseIcon size={19} />
+            </button>
+            <h2 id="job-concern-title" className="mb-1 pr-8 text-xl font-semibold tracking-tight text-slate-900">
+              Raise a concern
+            </h2>
+            <p className="mb-6 text-sm leading-6 text-slate-500">
+              Report an issue with <span className="font-semibold text-slate-800">{selectedJob.title}</span> at <span className="font-semibold text-slate-800">{selectedJob.company}</span>. Our team will review it.
+            </p>
+
+            <label htmlFor="job-concern-reason" className="mb-2 block text-xs font-bold tracking-wider text-slate-500">
+              REASON
+            </label>
+            <select
+              id="job-concern-reason"
+              required
+              value={concernReason}
+              onChange={(event) => setConcernReason(event.target.value)}
+              disabled={isSubmittingConcern}
+              className="mb-5 h-14 w-full rounded-xl border-2 border-[#2563eb] bg-white px-4 text-sm text-[#0d1117] outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="" disabled>Select a reason</option>
+              {JOB_CONCERN_REASONS.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
+            </select>
+
+            <label htmlFor="job-concern-details" className="mb-2 block text-xs font-bold tracking-wider text-slate-500">
+              DETAILS (OPTIONAL)
+            </label>
+            <textarea
+              id="job-concern-details"
+              rows={4}
+              maxLength={1500}
+              value={concernDetails}
+              onChange={(event) => setConcernDetails(event.target.value)}
+              disabled={isSubmittingConcern}
+              placeholder="Share anything that helps us investigate..."
+              className="mb-5 w-full resize-y rounded-xl border border-[#eadcc7] bg-white p-4 text-sm text-[#0d1117] shadow-sm outline-none placeholder:text-slate-400 focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+
+            <button
+              type="submit"
+              disabled={!concernReason || isSubmittingConcern}
+              className="w-full rounded-xl border-0 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] py-3 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+            >
+              {isSubmittingConcern ? "Submitting..." : "Submit concern"}
+            </button>
+            <button
+              type="button"
+              disabled={isSubmittingConcern}
+              onClick={closeJobConcernModal}
+              className="mt-3 w-full border-0 bg-transparent py-2 text-sm font-semibold text-slate-800 hover:text-blue-700 disabled:opacity-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </form>
         </div>
       )}
 

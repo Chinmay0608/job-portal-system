@@ -17,6 +17,11 @@ const supportTicketSchema = new mongoose.Schema(
     screenshotUrl: { type: String, default: "" },
     pageUrl: { type: String, default: "" },
     userAgent: { type: String, default: "" },
+    reportType: { type: String, enum: ["general", "job_concern"], default: "general" },
+    concernReason: { type: String, default: "" },
+    reportedJobId: { type: String, default: "" },
+    reportedJobTitle: { type: String, default: "" },
+    reportedJobCompany: { type: String, default: "" },
 
     // Lifecycle status — "closed" added for spam/auto-dismissed tickets
     status: {

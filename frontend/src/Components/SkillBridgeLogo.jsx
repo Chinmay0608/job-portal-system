@@ -14,8 +14,9 @@ const SkillBridgeLogo = ({ width = 165, height, className = "", variant = "light
       style={{ display: "block", maxWidth: "100%", height: "auto", margin: center ? "0 auto" : undefined }}
     >
       <text
-        x="2"
+        x="98"
         y="35"
+        textAnchor="middle"
         fontFamily="'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif"
         fontSize="32"
         fontWeight="900"

@@ -524,6 +524,17 @@ export default function SupportTicketsView() {
                 </div>
               )}
 
+              {selectedTicket.reportType === "job_concern" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-800">Reported job</h4>
+                  <p className="m-0 text-sm font-semibold text-slate-900">
+                    {selectedTicket.reportedJobTitle || "Job listing"}
+                    {selectedTicket.reportedJobCompany && ` at ${selectedTicket.reportedJobCompany}`}
+                  </p>
+                  <p className="mb-0 mt-1 text-xs font-medium text-amber-800">Reason: {selectedTicket.concernReason}</p>
+                </div>
+              )}
+
               {/* Description */}
               <div>
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Issue Description</h4>

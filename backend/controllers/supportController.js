@@ -9,9 +9,30 @@ const { maskPII } = require("../utils/textSanitizer");
 
 // ─── POST /api/support/report — logged-in user or guest ───────────────────────
 const createTicket = asyncHandler(async (req, res) => {
-  const { description, pageUrl, email } = req.body;
+  const { description, pageUrl, email, reportType, concernReason, reportedJob } = req.body;
+  const isJobConcern = reportType === "job_concern";
+  const validConcernReasons = [
+    "Fake or scam job",
+    "Incorrect information",
+    "Job already closed / expired",
+    "Discriminatory or inappropriate",
+    "Duplicate posting",
+    "Other",
+  ];
+  if (isJobConcern && !validConcernReasons.includes(concernReason)) {
+    res.status(400);
+    throw new Error("Select a valid reason for reporting this job.");
+  }
+  const ticketDescription = isJobConcern
+    ? [
+        `Job concern: ${concernReason}`,
+        `Job: ${String(reportedJob?.title || "Unknown job").slice(0, 200)} at ${String(reportedJob?.company || "Unknown company").slice(0, 200)}`,
+        `Job ID: ${String(reportedJob?.id || "").slice(0, 100)}`,
+        `Details: ${String(req.body.details || "No additional details provided.").trim().slice(0, 1200)}`,
+      ].join("\n")
+    : description;
 
-  if (!description || description.trim().length < 5) {
+  if (!ticketDescription || ticketDescription.trim().length < 5) {
     res.status(400);
     throw new Error(
       "Please describe the issue in a bit more detail (at least 5 characters)."
@@ -52,10 +73,15 @@ const createTicket = asyncHandler(async (req, res) => {
   const ticket = await SupportTicket.create({
     user: userId,
     email: userEmail,
-    description: maskPII(description.trim()),
+    description: maskPII(ticketDescription.trim()),
     screenshotUrl,
     pageUrl: pageUrl || "",
     userAgent: req.headers["user-agent"] || "",
+    reportType: isJobConcern ? "job_concern" : "general",
+    concernReason: isJobConcern ? concernReason : "",
+    reportedJobId: isJobConcern ? String(reportedJob?.id || "").slice(0, 100) : "",
+    reportedJobTitle: isJobConcern ? String(reportedJob?.title || "").slice(0, 200) : "",
+    reportedJobCompany: isJobConcern ? String(reportedJob?.company || "").slice(0, 200) : "",
   });
 
   // Respond immediately — do NOT await the agent
