@@ -69,7 +69,7 @@ function Home() {
 
             <div className="home-popular-searches">
               <span>Popular:</span>
-              {["Remote", "Part-time", "Entry level"].map((term) => (
+              {["Remote", "Part-time", "Full time"].map((term) => (
                 <button key={term} type="button" onClick={() => searchJobs(term, "")}>{term}</button>
               ))}
             </div>

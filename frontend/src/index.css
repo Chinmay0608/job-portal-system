@@ -1151,9 +1151,9 @@ input[type="submit"]:active:not(:disabled),
   align-items: center;
   justify-content: center;
   width: auto;
-  height: 48px;
-  min-width: 48px;
-  max-width: 48px;
+  height: 40px;
+  min-width: 40px;
+  max-width: 40px;
   border-radius: 9999px;
   padding: 0;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
@@ -1312,8 +1312,8 @@ input[type="submit"]:active:not(:disabled),
 }
 
 .dhruv-sparkles-icon {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   overflow: visible;
   transition: width 0.35s ease, height 0.35s ease, transform 0.35s ease;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18));
@@ -1886,9 +1886,9 @@ input[type="submit"]:active:not(:disabled),
   }
 
   .header-dhruv-btn {
-    height: 44px;
-    min-width: 44px;
-    max-width: 44px;
+    height: 38px;
+    min-width: 38px;
+    max-width: 38px;
     font-size: 0.8rem;
   }
 

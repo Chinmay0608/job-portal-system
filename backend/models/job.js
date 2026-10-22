@@ -46,6 +46,8 @@ const jobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    descriptionEnglish: { type: String, default: "" },
+    descriptionEnglishSourceHash: { type: String, default: "" },
     isFullDescription: {
       type: Boolean,
       default: false,
