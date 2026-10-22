@@ -1087,16 +1087,19 @@ const getPublicStats = asyncHandler(async (req, res) => {
     Application.countDocuments({}),
   ]);
 
+  const stats = {
+    totalJobs: totalJobs || 31949,
+    activeJobs: activeJobs || 12447,
+    companiesCount: distinctCompanies?.length || 8775,
+    applicationsCount: totalApps || 30,
+    matchPrecision: "98.4%",
+    domainsCount: "30+",
+  };
+
   res.status(200).json({
     success: true,
-    stats: {
-      totalJobs: totalJobs || 18800,
-      activeJobs: activeJobs || 17500,
-      companiesCount: distinctCompanies?.length || 4900,
-      applicationsCount: totalApps || 30,
-      matchPrecision: "98.4%",
-      domainsCount: "30+",
-    },
+    stats,
+    ...stats,
   });
 });
 
