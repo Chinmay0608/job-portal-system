@@ -8,6 +8,7 @@ const {
   toggleSaveJob,
   getSavedJobs,
   extractSkills,
+  clearSkills,
   getSignedResumeUrl,
   completeOnboarding,
 } = require("../controllers/userController");
@@ -66,6 +67,8 @@ router.post(
   authorizeRoles("candidate"),
   extractSkills,
 );
+
+router.delete("/skills", protect, authorizeRoles("candidate"), clearSkills);
 
 router.post(
   "/saved-jobs/toggle",

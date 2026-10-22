@@ -6,6 +6,7 @@ import {
   changePassword, 
   updateProfile, 
   extractSkillsAPI, 
+  clearSkillsAPI,
   getUserProfile, 
   getMyApplications, 
   getResumeSignedUrlAPI 
@@ -17,6 +18,7 @@ import {
   Eye, 
   Download, 
   Upload, 
+  Trash2,
   X, 
   Check, 
   Lock, 
@@ -397,7 +399,7 @@ function CandidateProfile() {
       const data = await extractSkillsAPI();
       
       if (data.extractedSkills && data.extractedSkills.length > 0) {
-        toast.success(`Magically extracted ${data.extractedSkills.length} new skills!`);
+        toast.success(`Updated your skills with ${data.extractedSkills.length} skills from your resume.`);
         setSkills(data.user.skills);
         localStorage.setItem("user", JSON.stringify(data.user));
         setUser(data.user);
@@ -407,6 +409,22 @@ function CandidateProfile() {
     } catch (error) {
       console.error("Extraction error:", error);
       toast.error(error?.response?.data?.message || "Failed to extract skills.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearSkills = async () => {
+    try {
+      setLoading(true);
+      const response = await clearSkillsAPI();
+      const updatedUser = { ...user, skills: response.skills || [] };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setSkills(updatedUser.skills);
+      toast.success("Cleared all skills. You can now extract them from your resume.");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not clear skills.");
     } finally {
       setLoading(false);
     }
@@ -777,17 +795,30 @@ function CandidateProfile() {
                 <h2 className="text-base font-bold text-slate-900 m-0">Skills & Tech Stack</h2>
                 <p className="text-xs text-slate-500 m-0 mt-0.5">Add your key technical and professional skills for matching</p>
               </div>
-              {user?.resume && (
-                <button 
-                  type="button"
-                  onClick={handleExtractSkills}
-                  disabled={loading}
-                  className="self-start sm:self-auto py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Sparkles size={13} className="text-indigo-600" />
-                  Extract from Resume
-                </button>
-              )}
+              <div className="self-start sm:self-auto flex items-center gap-2">
+                {skills.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearSkills}
+                    disabled={loading}
+                    className="py-1.5 px-3 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Trash2 size={13} />
+                    Clear all
+                  </button>
+                )}
+                {user?.resume && (
+                  <button
+                    type="button"
+                    onClick={handleExtractSkills}
+                    disabled={loading}
+                    className="py-1.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles size={13} className="text-indigo-600" />
+                    Extract from Resume
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Input & Autocomplete Dropdown */}
@@ -1004,7 +1035,7 @@ function CandidateProfile() {
               type="button" 
               onClick={handleSave} 
               disabled={loading}
-              className="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 active:scale-98 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-brand-600/20 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 active:scale-98 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-brand-600/20 cursor-pointer outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {loading ? "Saving Profile..." : "Save Profile Changes"}
             </button>

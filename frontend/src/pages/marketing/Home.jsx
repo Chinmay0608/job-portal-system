@@ -78,14 +78,14 @@ function Home() {
           <div className="home-hero-visual" aria-label="Explore career opportunities across different fields">
             <div className="home-visual-orbit home-visual-orbit-one" />
             <div className="home-visual-orbit home-visual-orbit-two" />
-            <div className="home-visual-note"><span className="home-visual-note-icon"><BriefcaseBusiness size={18} /></span><span><strong>Every path is different.</strong><small>Find yours.</small></span><ArrowRight size={18} /></div>
+            <div className="home-visual-orbiting home-visual-orbiting-note"><div className="home-visual-orbit-counter"><div className="home-visual-note"><span className="home-visual-note-icon"><BriefcaseBusiness size={18} /></span><span><strong>Every path is different.</strong><small>Find yours.</small></span><ArrowRight size={18} /></div></div></div>
             <div className="home-visual-card home-visual-card-main">
               <span className="home-visual-kicker">A world of possibilities</span>
               <strong>Good work comes in many forms.</strong>
               <div className="home-visual-tags"><span>Full-time</span><span>Flexible</span><span>On-site</span></div>
             </div>
-            <div className="home-visual-card home-visual-card-small"><HeartPulse size={20} /><span>Care &amp; community</span></div>
-            <div className="home-visual-card home-visual-card-bottom"><GraduationCap size={20} /><span>Skills that grow with you</span></div>
+            <div className="home-visual-orbiting home-visual-orbiting-small"><div className="home-visual-orbit-counter"><div className="home-visual-card home-visual-card-small"><HeartPulse size={20} /><span>Care &amp; community</span></div></div></div>
+            <div className="home-visual-orbiting home-visual-orbiting-bottom"><div className="home-visual-orbit-counter"><div className="home-visual-card home-visual-card-bottom"><GraduationCap size={20} /><span>Grow your skills</span></div></div></div>
           </div>
         </div>
       </section>

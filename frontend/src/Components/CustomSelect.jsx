@@ -8,22 +8,22 @@ const getCustomStyles = (borderless, mutedValue) => ({
     borderColor: borderless 
       ? 'transparent' 
       : state.isFocused ? '#3b82f6' : '#e2e8f0',
-    boxShadow: borderless 
-      ? 'none' 
-      : state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none',
+    boxShadow: borderless
+      ? 'none'
+      : state.isFocused ? '0 0 0 3px rgba(37, 99, 235, 0.16)' : 'none',
     '&:hover': {
       borderColor: borderless 
         ? 'transparent' 
         : state.isFocused ? '#3b82f6' : '#cbd5e1',
     },
-    borderRadius: borderless ? '9999px' : '0.75rem',
-    minHeight: '44px',
+    borderRadius: borderless ? '9999px' : '1rem',
+    minHeight: borderless ? '44px' : '56px',
     cursor: 'pointer',
     transition: 'all 150ms ease-in-out',
   }),
   valueContainer: (provided) => ({
     ...provided,
-    padding: borderless ? '0 4px' : '0 12px',
+    padding: borderless ? '0 4px' : '0 16px',
   }),
   option: (provided, state) => ({
     ...provided,
@@ -38,9 +38,9 @@ const getCustomStyles = (borderless, mutedValue) => ({
         ? '#1d4ed8' 
         : '#0f172a',
     cursor: 'pointer',
-    padding: '10px 14px',
+    padding: '12px 16px',
     margin: '2px 0',
-    borderRadius: '8px',
+    borderRadius: '10px',
     fontSize: '0.875rem',
     fontWeight: state.isSelected ? '600' : '500',
     transition: 'background-color 150ms ease, color 150ms ease',
@@ -51,10 +51,10 @@ const getCustomStyles = (borderless, mutedValue) => ({
   }),
   menu: (provided, state) => ({
     ...provided,
-    borderRadius: '16px',
+    borderRadius: '20px',
     border: '1px solid #e2e8f0',
-    boxShadow: '0 12px 30px -4px rgba(15, 23, 42, 0.18), 0 6px 12px -4px rgba(15, 23, 42, 0.08)',
-    padding: '6px',
+    boxShadow: '0 20px 40px -16px rgba(15, 23, 42, 0.28), 0 6px 14px -8px rgba(15, 23, 42, 0.16)',
+    padding: '8px',
     overflow: 'hidden',
     marginTop: state?.placement === 'top' ? '0' : '6px',
     marginBottom: state?.placement === 'top' ? '6px' : '0',
