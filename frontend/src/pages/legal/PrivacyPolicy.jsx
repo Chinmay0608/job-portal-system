@@ -94,7 +94,7 @@ function PrivacyPolicy() {
         If you have questions, concerns, or requests regarding this Privacy Policy or our data handling practices, please contact our Data Protection Officer:
       </p>
       <p>
-        <strong>Data Protection Team:</strong> <a href="mailto:SkillBridge684@gmail.com" className="text-blue-600 hover:underline">SkillBridge684@gmail.com</a>
+        <strong>Data Protection Team:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">skillbridge684@gmail.com</a>
       </p>
     </LegalLayout>
   );

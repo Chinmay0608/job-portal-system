@@ -74,7 +74,7 @@ function Security() {
         We welcome reports from cybersecurity researchers and ethical hackers. If you discover a potential vulnerability within the SkillBridge platform, please report it responsibly to our security team.
       </p>
       <p>
-        <strong>Security Email:</strong> <a href="mailto:SkillBridge684@gmail.com" className="text-blue-600 hover:underline">SkillBridge684@gmail.com</a>
+        <strong>Security Email:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">skillbridge684@gmail.com</a>
       </p>
       <p>
         Please include a detailed description of the issue, steps to reproduce, and proof-of-concept code. We request that you provide reasonable time to investigate and resolve issues prior to public disclosure.

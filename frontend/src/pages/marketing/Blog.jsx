@@ -119,7 +119,7 @@ function Blog() {
                 </div>
                 <h3>{article.title}</h3>
                 <p>{article.excerpt}</p>
-                <Link to="/jobs" className="article-read-btn">
+                <Link to="/candidate-dashboard?tab=jobs" className="article-read-btn">
                   Read Article <ArrowRight size={16} />
                 </Link>
               </div>
