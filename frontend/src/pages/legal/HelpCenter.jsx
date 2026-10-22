@@ -122,13 +122,13 @@ function HelpCenter() {
         <div className="contact-box">
           <p>
             <strong>Email:</strong>{" "}
-            SkillBridge684@gmail.com
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">skillbridge684@gmail.com</a>
           </p>
         </div>
 
-        <button>
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="inline-block px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
           Contact Support
-        </button>
+        </a>
       </section>
 
     </div>

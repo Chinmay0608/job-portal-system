@@ -109,7 +109,7 @@ function TermsOfUse() {
           For legal inquiries, dispute notifications, or questions regarding these Terms of Use, please contact:
         </p>
         <p>
-          <strong>Legal Department:</strong> <a href="mailto:SkillBridge684@gmail.com" className="text-blue-600 hover:underline">SkillBridge684@gmail.com</a>
+          <strong>Legal Department:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">skillbridge684@gmail.com</a>
         </p>
       </section>
     </LegalLayout>

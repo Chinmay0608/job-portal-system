@@ -120,7 +120,7 @@ function CookiePolicy() {
         If you have questions regarding our use of cookies or local browser storage, please reach out to our technical team:
       </p>
       <p>
-        <strong>Privacy & Technical Support:</strong> <a href="mailto:SkillBridge684@gmail.com" className="text-blue-600 hover:underline">SkillBridge684@gmail.com</a>
+        <strong>Privacy & Technical Support:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">skillbridge684@gmail.com</a>
       </p>
     </LegalLayout>
   );
