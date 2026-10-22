@@ -84,6 +84,7 @@ function AppContent() {
               <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               {/* Role-Gated Candidate Spaces */}
+              <Route path="/jobs" element={<Navigate to="/candidate-dashboard?tab=jobs" replace />} />
               <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
               <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
               <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />

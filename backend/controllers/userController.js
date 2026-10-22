@@ -145,6 +145,10 @@ const updateProfile = asyncHandler(async (req, res) => {
       user.github = fullData.github;
       newlyFilledFields.push("GitHub");
     }
+    if ((!user.portfolio || !user.portfolio.trim()) && fullData.portfolio) {
+      user.portfolio = fullData.portfolio;
+      newlyFilledFields.push("Portfolio");
+    }
     if ((!user.about || !user.about.trim()) && fullData.about) {
       user.about = fullData.about;
       newlyFilledFields.push("About");
@@ -327,7 +331,7 @@ const extractSkills = asyncHandler(async (req, res) => {
 
   const arrayBuffer = await response.arrayBuffer();
   
-  const fullData = await parseFullResumeFromBuffer(arrayBuffer, user);
+  const fullData = await parseFullResumeFromBuffer(arrayBuffer);
   let newlyFilledFields = [];
   let newlyExtractedSkills = [];
 
@@ -351,6 +355,10 @@ const extractSkills = asyncHandler(async (req, res) => {
     user.github = fullData.github;
     newlyFilledFields.push("GitHub");
   }
+  if ((!user.portfolio || !user.portfolio.trim()) && fullData.portfolio) {
+    user.portfolio = fullData.portfolio;
+    newlyFilledFields.push("Portfolio");
+  }
   if ((!user.about || !user.about.trim()) && fullData.about) {
     user.about = fullData.about;
     newlyFilledFields.push("About");
@@ -369,16 +377,11 @@ const extractSkills = asyncHandler(async (req, res) => {
   }
 
   if (fullData.skills && fullData.skills.length > 0) {
-    // Auto-add newly extracted skills to MasterSkill collection
+    // Extract from Resume replaces stale parser-generated and generic tags.
     await saveSkillsToMaster(fullData.skills);
-
-    const existingLower = new Set((user.skills || []).map((s) => s.toLowerCase()));
-    const newSkills = fullData.skills.filter((s) => s && !existingLower.has(s.toLowerCase()));
-    if (newSkills.length > 0) {
-      user.skills = [...(user.skills || []), ...newSkills];
-      newlyExtractedSkills = newSkills;
-      newlyFilledFields.push(`${newSkills.length} new skills`);
-    }
+    user.skills = fullData.skills;
+    newlyExtractedSkills = fullData.skills;
+    newlyFilledFields.push(`${fullData.skills.length} resume skills`);
   }
 
   await user.save();
@@ -392,6 +395,18 @@ const extractSkills = asyncHandler(async (req, res) => {
     user,
     extractedSkills: newlyExtractedSkills,
   });
+});
+
+const clearSkills = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  user.skills = [];
+  await user.save();
+  res.status(200).json({ skills: user.skills });
 });
 
 /* ==========================
@@ -550,6 +565,7 @@ module.exports = {
   toggleSaveJob,
   getSavedJobs,
   extractSkills,
+  clearSkills,
   getSignedResumeUrl,
   completeOnboarding,
 };

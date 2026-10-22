@@ -80,6 +80,7 @@ export const getUserProfile = async () => (await api.get("/api/users/profile")).
 export const updateProfile = async (formData) => (await api.put("/api/users/update-profile", formData)).data;
 export const changePassword = async (passwordData) => (await api.put("/api/users/change-password", passwordData)).data;
 export const extractSkillsAPI = async () => (await api.post("/api/users/extract-skills")).data;
+export const clearSkillsAPI = async () => (await api.delete("/api/users/skills")).data;
 // APPLICATION TRACKING MODULES
 export const getMyApplications = async () => (await api.get("/api/applications/my-applications")).data;
 export const getRecruiterApplications = async () => (await api.get("/api/applications/recruiter-applications")).data;

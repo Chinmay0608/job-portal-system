@@ -57,6 +57,16 @@ const JOB_CONCERN_REASONS = [
   "Other",
 ];
 const PENDING_EXTERNAL_APPLICATION_KEY = "pending_external_application_confirmation";
+const getCompanyLogo = (company, logo) => {
+  const name = (company || "").trim().toLowerCase();
+  const knownLogos = {
+    spotify: "https://unavatar.io/spotify.com",
+    hcl: "https://unavatar.io/hcltech.com",
+    "hcl technologies": "https://unavatar.io/hcltech.com",
+    kyndryl: "https://unavatar.io/kyndryl.com",
+  };
+  return knownLogos[name] && (!logo || logo.includes("ui-avatars.com")) ? knownLogos[name] : logo;
+};
 
 const getRelativeTime = (dateString) => {
   if (!dateString) return "";
@@ -738,7 +748,7 @@ function CandidateDashboard() {
     getEnglishJobDescriptionAPI(_id)
       .then((result) => {
         if (isCancelled) return;
-        if (result?.isTranslated && result.description) {
+        if (result?.description) {
           setEnglishDescription({ jobId: _id, source: description, text: result.description });
         } else {
           setTranslationError("We couldn't translate this description. Try again.");
@@ -982,7 +992,7 @@ function CandidateDashboard() {
     setTranslationError("");
     try {
       const result = await getEnglishJobDescriptionAPI(_id);
-      if (result?.isTranslated && result.description) {
+      if (result?.description) {
         setEnglishDescription({ jobId: _id, source: description, text: result.description });
         setShowOriginalDescription(false);
       } else {
@@ -1662,9 +1672,9 @@ function CandidateDashboard() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                   {homeCompanies.map((job) => (
                     <button key={job.company} type="button" onClick={() => { setCompanyFilter(job.company); setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-100 bg-[#fffdfa] px-3 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40">
-                      {job.companyLogo ? (
+                      {getCompanyLogo(job.company, job.companyLogo) ? (
                         <img 
-                          src={job.companyLogo} 
+                          src={getCompanyLogo(job.company, job.companyLogo)}
                           alt="" 
                           className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-1" 
                           onError={(e) => {
@@ -1673,7 +1683,7 @@ function CandidateDashboard() {
                           }}
                         />
                       ) : null}
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-600 ${job.companyLogo ? 'hidden' : ''}`}>
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-600 ${getCompanyLogo(job.company, job.companyLogo) ? 'hidden' : ''}`}>
                         {(job.company || "S").slice(0, 1).toUpperCase()}
                       </span>
                       <span className="truncate text-xs font-bold text-slate-700">{job.company}</span>
@@ -1693,9 +1703,9 @@ function CandidateDashboard() {
                   {homeLatestJobs.map((job) => (
                     <button key={job._id} type="button" onClick={() => openRecommendedJob(job)} className="group flex min-h-[176px] flex-col rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
                       <span className="flex min-w-0 items-center gap-2.5">
-                        {job.companyLogo ? (
+                        {getCompanyLogo(job.company, job.companyLogo) ? (
                           <img 
-                            src={job.companyLogo} 
+                            src={getCompanyLogo(job.company, job.companyLogo)}
                             alt="" 
                             className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 object-contain p-1" 
                             onError={(e) => {
@@ -1704,7 +1714,7 @@ function CandidateDashboard() {
                             }}
                           />
                         ) : null}
-                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 font-bold text-brand-700 ${job.companyLogo ? 'hidden' : ''}`}>
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 font-bold text-brand-700 ${getCompanyLogo(job.company, job.companyLogo) ? 'hidden' : ''}`}>
                           {(job.company || "S").slice(0, 1).toUpperCase()}
                         </span>
                         <span className="truncate text-xs font-semibold text-slate-600">{job.company || "SkillBridge employer"}</span>
@@ -2226,9 +2236,9 @@ function CandidateDashboard() {
                     {selectedJob.title}
                   </h3>
                   <div className="flex items-center gap-2 mb-1">
-                    {selectedJob.companyLogo && (
+                    {getCompanyLogo(selectedJob.company, selectedJob.companyLogo) && (
                       <img 
-                        src={selectedJob.companyLogo} 
+                        src={getCompanyLogo(selectedJob.company, selectedJob.companyLogo)}
                         alt={selectedJob.company} 
                         className="w-[31px] h-[31px] object-contain rounded"
                         onError={(e) => { e.target.style.display = 'none'; }}
@@ -2440,7 +2450,7 @@ function CandidateDashboard() {
                     </div>
 
                     {translationError && <p className="mb-3 text-xs text-rose-600" role="status">{translationError}</p>}
-                    {englishDescription?.jobId === selectedJob._id && englishDescription.source === selectedJob.description && (
+                    {englishDescription?.jobId === selectedJob._id && englishDescription.source === selectedJob.description && englishDescription.text !== selectedJob.description && (
                       <button
                         type="button"
                         className="mb-3 border-0 bg-transparent p-0 text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer"
