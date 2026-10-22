@@ -1662,7 +1662,20 @@ function CandidateDashboard() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                   {homeCompanies.map((job) => (
                     <button key={job.company} type="button" onClick={() => { setCompanyFilter(job.company); setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-100 bg-[#fffdfa] px-3 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40">
-                      {job.companyLogo ? <img src={job.companyLogo} alt="" className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-1" /> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-600">{job.company.slice(0, 1).toUpperCase()}</span>}
+                      {job.companyLogo ? (
+                        <img 
+                          src={job.companyLogo} 
+                          alt="" 
+                          className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-1" 
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'grid';
+                          }}
+                        />
+                      ) : null}
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-sm font-black text-slate-600 ${job.companyLogo ? 'hidden' : ''}`}>
+                        {(job.company || "S").slice(0, 1).toUpperCase()}
+                      </span>
                       <span className="truncate text-xs font-bold text-slate-700">{job.company}</span>
                     </button>
                   ))}
@@ -1679,7 +1692,23 @@ function CandidateDashboard() {
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {homeLatestJobs.map((job) => (
                     <button key={job._id} type="button" onClick={() => openRecommendedJob(job)} className="group flex min-h-[176px] flex-col rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
-                      <span className="flex min-w-0 items-center gap-2.5">{job.companyLogo ? <img src={job.companyLogo} alt="" className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 object-contain p-1" /> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 font-bold text-brand-700">{(job.company || "S").slice(0, 1).toUpperCase()}</span>}<span className="truncate text-xs font-semibold text-slate-600">{job.company || "SkillBridge employer"}</span></span>
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        {job.companyLogo ? (
+                          <img 
+                            src={job.companyLogo} 
+                            alt="" 
+                            className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 object-contain p-1" 
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.style.display = 'grid';
+                            }}
+                          />
+                        ) : null}
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 font-bold text-brand-700 ${job.companyLogo ? 'hidden' : ''}`}>
+                          {(job.company || "S").slice(0, 1).toUpperCase()}
+                        </span>
+                        <span className="truncate text-xs font-semibold text-slate-600">{job.company || "SkillBridge employer"}</span>
+                      </span>
                       <span className="mt-3 line-clamp-2 text-sm font-extrabold leading-5 text-slate-900">{job.title}</span>
                       <span className="mt-2 flex flex-wrap gap-1.5"><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{job.employmentType || "Full-time"}</span>{job.isRemote && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Remote</span>}</span>
                       <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
