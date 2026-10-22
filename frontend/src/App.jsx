@@ -40,6 +40,7 @@ const Home = lazy(() => import("./pages/marketing/Home"));
 const About = lazy(() => import("./pages/marketing/About"));
 const Blog = lazy(() => import("./pages/marketing/Blog"));
 const Careers = lazy(() => import("./pages/marketing/Careers"));
+const TechStack = lazy(() => import("./pages/marketing/TechStack"));
 
 // ==========================================================================
 // 5. LEGAL COMPLIANCE & REGULATORY DECLARATIONS IMPORT SEGMENT
@@ -105,6 +106,7 @@ function AppContent() {
               <Route path="/about" element={<About />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/careers" element={<Careers />} />
+              <Route path="/tech-stack" element={<TechStack />} />
               <Route path="/help-center" element={<HelpCenter />} />
               <Route path="/help" element={<Navigate to="/help-center" replace />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
