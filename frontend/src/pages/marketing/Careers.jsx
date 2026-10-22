@@ -96,7 +96,7 @@ function Careers() {
               <a href="https://mail.google.com/mail/?view=cm&fs=1&to=skillbridge684@gmail.com" target="_blank" rel="noopener noreferrer" className="talent-pool-btn">
                 <Mail size={18} /> Join Our Talent Network
               </a>
-              <Link to="/about" className="learn-more-btn">
+              <Link to="/tech-stack" className="learn-more-btn">
                 Learn About Our Tech Stack <ArrowRight size={16} />
               </Link>
             </div>
