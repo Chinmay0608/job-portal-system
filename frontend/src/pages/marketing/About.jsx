@@ -128,7 +128,7 @@ function About() {
 
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link
-            to="/jobs"
+            to="/candidate-dashboard?tab=jobs"
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:-translate-y-0.5 no-underline"
           >
             Explore Open Roles <ArrowRight size={18} />
@@ -235,7 +235,7 @@ function About() {
               </ul>
             </div>
             <Link
-              to="/jobs"
+              to="/candidate-dashboard?tab=jobs"
               className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold text-sm group no-underline"
             >
               Browse All Jobs <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -295,7 +295,7 @@ function About() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/jobs"
+              to="/candidate-dashboard?tab=jobs"
               className="px-6 py-3.5 rounded-xl bg-white text-indigo-700 font-bold text-sm sm:text-base hover:bg-slate-50 transition-all duration-200 shadow-md hover:-translate-y-0.5 no-underline"
             >
               Explore Jobs Now
