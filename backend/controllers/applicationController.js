@@ -165,6 +165,24 @@ const withdrawApplication = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Application withdrawn successfully" });
 });
 
+const updateCandidateTrackingStatus = asyncHandler(async (req, res) => {
+  const validStatuses = ["applied", "shortlisted", "selected", "rejected"];
+  const { candidateStatus } = req.body;
+  if (!validStatuses.includes(candidateStatus)) {
+    return res.status(400).json({ message: "Invalid personal tracking status" });
+  }
+
+  const application = await Application.findOne({ _id: req.params.applicationId, candidate: req.user.id });
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
+  }
+
+  application.candidateStatus = candidateStatus;
+  await application.save();
+  res.status(200).json({ candidateStatus: application.candidateStatus });
+});
+
 const getRecruiterApplications = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20 } = req.query;
   const currentPage = Number(page) > 0 ? Number(page) : 1;
@@ -417,6 +435,7 @@ module.exports = {
   getRecruiterApplications,
   getRecruiterStats,
   updateApplicationStatus,
+  updateCandidateTrackingStatus,
   withdrawApplication,
   getApplicationResume,
 };

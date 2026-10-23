@@ -4,7 +4,7 @@ function TermsOfUse() {
   return (
     <LegalLayout title="Terms of Use">
       <p className="effective-date">
-        Effective Date: September 20, 2026 | Version 3.1
+        Last reviewed: October 23, 2026
       </p>
 
       <section>
@@ -53,7 +53,7 @@ function TermsOfUse() {
       <section>
         <h2>5. AI Features & Algorithmic Recommendation Disclaimer</h2>
         <p>
-          SkillBridge incorporates artificial intelligence (AI) models and machine learning algorithms to assist with candidate matching, job recommendations, and job description creation:
+          SkillBridge uses automated matching and recommendation features, and may use configured AI services for resume parsing or job description assistance. These features can produce incomplete or inaccurate results:
         </p>
         <ul>
           <li>AI-generated match scores, automated summaries, and job recommendations serve purely as decision-support tools and do not guarantee interview invitations or employment offers.</li>
@@ -76,10 +76,10 @@ function TermsOfUse() {
       <section>
         <h2>7. Intellectual Property Rights</h2>
         <p>
-          The Platform, including its underlying software code, database architecture, algorithms, branding, logos, graphics, and user interface designs, is the exclusive property of SkillBridge and protected by copyright, trademark, and intellectual property laws.
+          SkillBridge and its licensors retain rights they hold in the Platform's software, branding, graphics, and interface. These Terms do not transfer those rights to users. The service operator's legal identity should be provided in a formal publication of these Terms.
         </p>
         <p>
-          <strong>User Content License:</strong> You retain ownership of all resumes, profile photos, job descriptions, and content you upload to SkillBridge. By submitting content, you grant SkillBridge a worldwide, non-exclusive, royalty-free license to host, display, index, and process such content solely for the operation and optimization of the Platform.
+          <strong>User Content:</strong> You retain any rights you hold in resumes, profile information, job descriptions, and other content you submit. You authorize SkillBridge to host, display, and process that content as needed to provide the features you use, including showing an application to its relevant recruiter and processing a resume when you request parsing. This permission ends when the content is removed, subject to copies retained for operational or legal reasons.
         </p>
       </section>
 
@@ -103,7 +103,7 @@ function TermsOfUse() {
       <section>
         <h2>10. Governing Law & Legal Support</h2>
         <p>
-          These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which SkillBridge operates, without regard to conflict of law principles.
+          The service operator's legal entity, governing law, and dispute venue have not been specified in the application materials available for this review. Nothing in these Terms limits rights that cannot lawfully be limited. Contact the address below for legal inquiries.
         </p>
         <p>
           For legal inquiries, dispute notifications, or questions regarding these Terms of Use, please contact:

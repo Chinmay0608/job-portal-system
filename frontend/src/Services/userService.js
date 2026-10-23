@@ -45,6 +45,15 @@ export const withdrawApplication = async (applicationId) => {
   return response.data;
 };
 
+export const updateCandidateTrackingStatus = async (applicationId, candidateStatus) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.patch(`${getApi()}/applications/${applicationId}/tracking-status`, { candidateStatus }, {
+    withCredentials: true,
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  return response.data;
+};
+
 export const updateApplicationStatus = async (applicationId, status) => {
   const token = localStorage.getItem("token");
   const { data } = await axios.patch(

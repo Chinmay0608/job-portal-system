@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import RetryBanner from "../../Components/RetryBanner";
-import { getMyApplicationsAPI, withdrawApplication } from "../../Services/userService";
+import { getMyApplicationsAPI, withdrawApplication, updateCandidateTrackingStatus } from "../../Services/userService";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import StatusBadge from "../../Components/common/StatusBadge";
@@ -16,6 +16,7 @@ function MyApplications() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [updatingTrackerId, setUpdatingTrackerId] = useState(null);
   const [fetchError, setFetchError] = useState("");
   const [filter, setFilter] = useState("All");
   const [prepJob, setPrepJob] = useState(null);
@@ -76,6 +77,21 @@ function MyApplications() {
       toast.error(error?.response?.data?.message || "Failed to withdraw application");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleTrackerStatusChange = async (applicationId, candidateStatus) => {
+    try {
+      setUpdatingTrackerId(applicationId);
+      await updateCandidateTrackingStatus(applicationId, candidateStatus);
+      setApplications((prev) => prev.map((app) =>
+        app._id === applicationId ? { ...app, candidateStatus } : app
+      ));
+      toast.success("Your tracking status was updated.");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not update your tracking status.");
+    } finally {
+      setUpdatingTrackerId(null);
     }
   };
 
@@ -204,8 +220,27 @@ function MyApplications() {
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 flex-wrap">
-                    {/* READ-ONLY status badge */}
-                    <StatusBadge status={application.status || "pending"} size="md" />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="grid gap-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recruiter status</span>
+                        <StatusBadge status={application.status || "pending"} size="md" />
+                      </div>
+                      <label className="grid gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        My tracker
+                        <select
+                          value={["applied", "shortlisted", "selected", "rejected"].includes(application.candidateStatus) ? application.candidateStatus : "applied"}
+                          onChange={(event) => handleTrackerStatusChange(application._id, event.target.value)}
+                          disabled={updatingTrackerId === application._id}
+                          className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:cursor-wait disabled:opacity-60"
+                          aria-label={`Your tracking status for ${application.job.title}`}
+                        >
+                          <option value="applied">Applied</option>
+                          <option value="shortlisted">Shortlisted</option>
+                          <option value="selected">Selected</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </label>
+                    </div>
 
                     <div className="flex flex-wrap items-center gap-3">
                       <button

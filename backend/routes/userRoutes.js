@@ -43,8 +43,14 @@ router.put(
       .withMessage("Name must be at least 2 characters"),
     body("phone").optional({ checkFalsy: true })
       .trim()
-      .isNumeric()
-      .withMessage("Phone must be numeric"),
+      .matches(/^\+?[0-9\s().-]+$/)
+      .withMessage("Phone may only contain digits, spaces, and + ( ) -")
+      .bail()
+      .custom((value) => {
+        const digits = value.replace(/\D/g, "");
+        return digits.length >= 7 && digits.length <= 15;
+      })
+      .withMessage("Phone must contain between 7 and 15 digits"),
     body("companyWebsite").optional({ checkFalsy: true })
       .trim()
       .isURL()

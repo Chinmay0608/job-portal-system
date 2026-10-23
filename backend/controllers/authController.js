@@ -7,6 +7,7 @@ const { admin, initializeFirebase } = require("../config/firebase");
 initializeFirebase();
 const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("express-async-handler");
+const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 const Application = require("../models/Application");
 
 const formatUserDTO = (user, applicationsCount = 0) => ({
@@ -16,6 +17,7 @@ const formatUserDTO = (user, applicationsCount = 0) => ({
   role: user.role,
   phone: user.phone || "",
   location: user.location || "",
+  country: user.country || "India",
   linkedin: user.linkedin || "",
   github: user.github || "",
   portfolio: user.portfolio || "",
@@ -260,9 +262,9 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
-  if (!password || password.length < 6) {
+  if (!isStrongPassword(password)) {
     res.status(400);
-    throw new Error("Password must be at least 6 characters");
+    throw new Error(PASSWORD_POLICY_MESSAGE);
   }
 
   const resetPasswordToken = crypto

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import CustomSelect from "./CustomSelect";
 import { getApiBaseUrl } from "../Services/authUtils";
+import { COUNTRY_OPTIONS } from "../utils/countryCurrency";
 import { completeOnboardingAPI } from "../Services/jobService";
 
 const DOMAIN_OPTIONS = [
@@ -194,6 +195,7 @@ export default function OnboardingWizard({ user, onComplete }) {
       : ["Entry Level", "Mid Level"]
   );
   const [location, setLocation] = useState(user?.location || "");
+  const [country, setCountry] = useState(user?.country || "India");
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [activeLocationIndex, setActiveLocationIndex] = useState(-1);
@@ -332,6 +334,7 @@ export default function OnboardingWizard({ user, onComplete }) {
         field,
         targetSeniority,
         location: location.trim(),
+        country,
         highestQualification,
         experienceLevel,
         skills,
@@ -369,6 +372,10 @@ export default function OnboardingWizard({ user, onComplete }) {
     }
     if (step === 2 && targetSeniority.length === 0) {
       setErrorMsg("Please select at least one position level you wish to apply for.");
+      return;
+    }
+    if (step === 3 && !location.trim()) {
+      setErrorMsg("Please enter your city or preferred location to continue.");
       return;
     }
     if (step === 4 && skills.length < 3) {
@@ -777,7 +784,20 @@ export default function OnboardingWizard({ user, onComplete }) {
                       marginBottom: "6px",
                     }}
                   >
-                    City / Preferred Location
+                    Country
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    style={{ width: "100%", padding: "11px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "0.92rem", color: "#1e293b", marginBottom: "12px", background: "#fff" }}
+                    aria-label="Country"
+                  >
+                    {COUNTRY_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                  <label
+                    style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}
+                  >
+                    City / Preferred Location <span style={{ color: "#dc2626" }}>*</span>
                   </label>
                   <div style={{ position: "relative" }}>
                     <input
@@ -785,6 +805,7 @@ export default function OnboardingWizard({ user, onComplete }) {
                       value={location}
                       onChange={(e) => handleLocationChange(e.target.value)}
                       placeholder="e.g. Bengaluru, Mumbai, Delhi, Remote"
+                      required
                       autoFocus
                       onKeyDown={(e) => {
                         if (isLocationDropdownOpen && locationSuggestions.length > 0) {
@@ -1327,7 +1348,7 @@ export default function OnboardingWizard({ user, onComplete }) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {(step === 3 || step === 4) && (
+            {step === 4 && (
               <button
                 type="button"
                 onClick={() => handleSaveAndComplete(true)}

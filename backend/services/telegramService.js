@@ -100,27 +100,41 @@ async function sendTicketAlertToTelegram(ticket, outcome = {}) {
   const status = outcome.finalStatus ? outcome.finalStatus.toUpperCase() : (ticket.status || "OPEN").toUpperCase();
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
+  const isJobConcern = ticket.reportType === "job_concern";
   const headerText = outcome.finalStatus === "resolved"
-    ? "✅ SUPPORT TICKET RESOLVED (AI Auto-Action)"
+    ? "SUPPORT TICKET RESOLVED (AI Auto-Action)"
     : isHigh
-    ? "🔴 URGENT SUPPORT TICKET"
-    : "🎫 NEW SUPPORT TICKET RAISED";
+    ? "URGENT SUPPORT TICKET"
+    : isJobConcern
+    ? "NEW JOB CONCERN REPORT"
+    : "NEW SUPPORT TICKET RAISED";
 
-  const lines = [
+  const lines = isJobConcern ? [
     `<b>${headerText}</b>`,
     "",
     `<b>Ticket Ref:</b> <code>${ticketRef}</code>`,
     `<b>Status:</b> <b>${status}</b>`,
-    `<b>Reporter:</b> ${ticket.email || "Guest"}`,
-    `<b>Category:</b> ${ticket.category || "General"}`,
-    `<b>Severity:</b> ${ticket.severity ? ticket.severity.toUpperCase() : "NORMAL"}`,
-    `<b>Page URL:</b> <code>${ticket.pageUrl || "/"}</code>`,
+    `<b>Reporter:</b> ${escapeHtml(ticket.email || "Guest")}`,
+    `<b>Reason:</b> ${escapeHtml(ticket.concernReason || "Other")}`,
+    `<b>Job:</b> ${escapeHtml(ticket.reportedJobTitle || "Unknown job")} at ${escapeHtml(ticket.reportedJobCompany || "Unknown company")}`,
+    `<b>Job ID:</b> <code>${escapeHtml(ticket.reportedJobId || "N/A")}</code>`,
+    "",
+    `<b>Details:</b>\n<i>${escapeHtml(ticket.description || "No details provided")}</i>`,
+    ""
+  ] : [
+    `<b>${headerText}</b>`,
+    "",
+    `<b>Ticket Ref:</b> <code>${ticketRef}</code>`,
+    `<b>Status:</b> <b>${status}</b>`,
+    `<b>Reporter:</b> ${escapeHtml(ticket.email || "Guest")}`,
+    `<b>Category:</b> ${escapeHtml(ticket.category || "General")}`,
+    `<b>Severity:</b> ${ticket.severity ? escapeHtml(ticket.severity.toUpperCase()) : "NORMAL"}`,
+    `<b>Page URL:</b> <code>${escapeHtml(ticket.pageUrl || "/")}</code>`,
     "",
     "<b>Description:</b>",
     `<i>${escapeHtml(ticket.description || "No description")}</i>`,
     ""
   ];
-
   if (outcome.resolverMessage) {
     lines.push(`<b>Resolution Action:</b>\n<i>${escapeHtml(outcome.resolverMessage)}</i>`, "");
   } else if (ticket.aiSummary) {

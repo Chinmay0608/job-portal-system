@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    country: {
+      type: String,
+      default: "India",
+    },
 
     linkedin: {
       type: String,
@@ -89,7 +93,7 @@ const userSchema = new mongoose.Schema(
         },
         reason: {
           type: String,
-          enum: ["seniority", "salary", "tech_stack_mismatch", "other"],
+          enum: ["seniority", "salary", "tech_stack_mismatch", "other", "not_interested"],
           required: true,
         },
         details: {

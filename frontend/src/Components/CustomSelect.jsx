@@ -1,7 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 
-const getCustomStyles = (borderless, mutedValue) => ({
+const getCustomStyles = (borderless, mutedValue, maxMenuHeight) => ({
   control: (provided, state) => ({
     ...provided,
     backgroundColor: borderless ? 'transparent' : '#ffffff',
@@ -38,7 +38,7 @@ const getCustomStyles = (borderless, mutedValue) => ({
         ? '#1d4ed8' 
         : '#0f172a',
     cursor: 'pointer',
-    padding: '12px 16px',
+    padding: '10px 14px',
     margin: '2px 0',
     borderRadius: '10px',
     fontSize: '0.875rem',
@@ -51,11 +51,15 @@ const getCustomStyles = (borderless, mutedValue) => ({
   }),
   menu: (provided, state) => ({
     ...provided,
-    borderRadius: '20px',
+    borderRadius: '18px',
     border: '1px solid #e2e8f0',
-    boxShadow: '0 20px 40px -16px rgba(15, 23, 42, 0.28), 0 6px 14px -8px rgba(15, 23, 42, 0.16)',
-    padding: '8px',
+    boxShadow: '0 18px 34px -18px rgba(15, 23, 42, 0.3), 0 5px 12px -7px rgba(15, 23, 42, 0.16)',
+    padding: '6px',
     overflow: 'hidden',
+    animation: state?.placement === 'top'
+      ? 'custom-select-menu-up 850ms cubic-bezier(0.16, 1, 0.3, 1)'
+      : 'custom-select-menu-down 850ms cubic-bezier(0.16, 1, 0.3, 1)',
+    transformOrigin: state?.placement === 'top' ? 'bottom' : 'top',
     marginTop: state?.placement === 'top' ? '0' : '6px',
     marginBottom: state?.placement === 'top' ? '6px' : '0',
     backgroundColor: '#ffffff',
@@ -64,7 +68,7 @@ const getCustomStyles = (borderless, mutedValue) => ({
   menuList: (provided) => ({
     ...provided,
     padding: '0',
-    maxHeight: '220px',
+    maxHeight: `${maxMenuHeight}px`,
   }),
   menuPortal: (provided) => ({
     ...provided,
@@ -120,7 +124,7 @@ const CustomSelect = ({
         aria-label={ariaLabel || placeholder}
         className="focus:ring-2 focus:ring-brand-500 rounded-xl"
         classNamePrefix="custom-select"
-        styles={getCustomStyles(borderless, mutedValue)}
+        styles={getCustomStyles(borderless, mutedValue, maxMenuHeight)}
         options={options}
         value={selectedOption}
         onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
