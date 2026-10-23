@@ -1,117 +1,155 @@
 # SkillBridge 🚀
 
-**Bridging talent and opportunity in one intelligent job portal.**
+**Bridging talent and opportunity in one intelligent, full-stack career platform.**
 
-SkillBridge is a modern full-stack job portal built for candidates, recruiters, and administrators to connect, apply, manage applications, and aggregate global career opportunities. Powered by a high-performance MERN architecture, AI-assisted career coaching, automated job aggregation, and robust security middleware.
+[![SkillBridge CI Quality Gate](https://github.com/Chinmay0608/job-portal-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Chinmay0608/job-portal-system/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Demo-Vercel%20Live-brightgreen)](https://job-portal-system-alpha.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests: 20 passed](https://img.shields.io/badge/Tests-20%20Suites%20%7C%20108%20Passed-success)](backend/tests/)
 
----
-
-## 🌟 Live Demo & Preview
-
-- **Web App**: [https://job-portal-system-alpha.vercel.app](https://job-portal-system-alpha.vercel.app)
-- **Backend API**: Hosted on Oracle Cloud Infrastructure (OCI) with automated scheduled job sync crons and MongoDB Atlas.
+SkillBridge is a modern MERN-stack job portal connecting **Candidates**, **Recruiters**, and **Administrators**. It integrates AI-powered voice career coaching, automated real-time mock interviews, multi-source job aggregation (Adzuna, Workday, career boards), verified company branding, and enterprise-grade security middleware.
 
 ---
 
-## 🚀 Key Highlights
+## 🌟 Live Application
 
-- 🤖 **DHRUV AI Assistant**: Voice-enabled AI assistant supporting Speech-to-Text (STT) and Text-to-Speech (TTS) voice readback for interactive career guidance, resume suggestions, and job matching.
-- 🔄 **Unified Job Aggregation Sync**: Automated job aggregator engine (`sync.service.js`) fetching live job postings via Adzuna API with intelligent deduplication, stack-match scoring, and scheduled background sync.
-- 🔒 **Robust Security Middleware**: Strict CSRF protection middleware, security audit logging, signed Cloudinary resume delivery, and strict CORS policies.
-- 🎨 **Modern Responsive UI**: Clean Tailwind CSS design system with custom interactive job drawers, status badges, responsive advisory modals, and minimalist cookie consent management.
+- **Production App**: [https://job-portal-system-alpha.vercel.app](https://job-portal-system-alpha.vercel.app)
+- **Backend API**: Hosted on Oracle Cloud Infrastructure (OCI) with MongoDB Atlas, Redis caching, and automated cron syncs.
 
 ---
 
-## 🏗 System Architecture & Workflow
+## 🚀 Key Highlights & Capabilities
+
+- 🤖 **DHRUV Voice Coach**: Interactive career mentor supporting Speech-to-Text (STT) and Text-to-Speech (TTS) voice readback for job matching and resume coaching.
+- 🎙️ **AI Mock Interview Assistant**: Domain-tailored technical & behavioral interviews with real-time speech responses, scoring rubrics, and feedback powered by Gemini / Groq with heuristic fail-safes.
+- 🔄 **Unified Job Aggregator Engine**: Automated aggregator syncing live openings across Adzuna, Workday, and employer portals with intelligent deduplication and SDE lifecycle management (Active / Stale / Dormant).
+- 📝 **Structured Description & Translation Engine**: Auto-repairs scraped postings into 9 standardized sections (`Role Summary`, `Key Responsibilities`, `Required Qualifications`, etc.) and translates foreign-language listings into clear English.
+- 🎨 **Verified Brand Logos**: High-fidelity company branding system resolving verified logos from Clearbit, Brandfetch, SVGL, and custom vector SVGs with strict fallback guards.
+- 🔒 **Enterprise Security Architecture**: Custom CSRF protection middleware, security audit logging, time-expiring signed Cloudinary resume URLs, and resilient STARTTLS email dispatching.
+- 🧪 **Comprehensive CI Quality Gate**: Automated dual-stage CI pipeline running 20 test suites (108 unit tests) and frontend linting/compilation before deployment.
+
+---
+
+## 🏗 System Architecture
 
 ```mermaid
-graph LR
+graph TD
     %% Custom Styles
-    classDef client fill:#61DAFB,stroke:#333,stroke-width:2px,color:#000
-    classDef api fill:#404d59,stroke:#fff,stroke-width:2px,color:#fff
-    classDef mongo fill:#4ea94b,stroke:#fff,stroke-width:2px,color:#fff
-    classDef external fill:#f39c12,stroke:#fff,stroke-width:2px,color:#fff
-    classDef ai fill:#8e44ad,stroke:#fff,stroke-width:2px,color:#fff
+    classDef client fill:#38bdf8,stroke:#0284c7,stroke-width:2px,color:#0f172a
+    classDef api fill:#334155,stroke:#64748b,stroke-width:2px,color:#f8fafc
+    classDef ai fill:#a855f7,stroke:#9333ea,stroke-width:2px,color:#ffffff
+    classDef db fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#ffffff
+    classDef ext fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#ffffff
 
-    %% Client Layer
-    subgraph Frontend ["🖥️ Client Layer"]
-        UI(["React + Vite UI"]):::client
-        VoiceAI(["DHRUV Voice AI (STT/TTS)"]):::ai
+    subgraph ClientLayer ["🖥️ Frontend (React 19 + Vite)"]
+        UI["Candidate / Recruiter / Admin UI"]:::client
+        VoiceCoach["DHRUV Voice AI (Web Speech API)"]:::ai
+        InterviewUI["AI Mock Interview Console"]:::ai
     end
 
-    %% API Layer
-    subgraph Backend ["⚙️ Core API & Logic"]
-        Router["Express Routes & CSRF"]:::api
-        Auth{"Auth & Security Audit"}:::api
-        SyncEngine["Unified Sync Engine"]:::api
+    subgraph BackendLayer ["⚙️ Core API & Middleware"]
+        Gateway["Express Router & CSRF Middleware"]:::api
+        AuthGuard["JWT Auth & Security Audit Logger"]:::api
+        DescService["Full Description & Translation Service"]:::api
+        SyncEngine["Unified Sync & SDE Lifecycle Engine"]:::api
     end
 
-    %% Background Jobs & Actions
-    subgraph Jobs ["🔄 Background Workflows"]
-        GHActions["GitHub Actions Scheduled Sync"]:::api
-        EmailService["Nodemailer Email Transporter"]:::api
+    subgraph IntelligenceLayer ["🧠 AI & External Services"]
+        LLM["Google Gemini / Groq API"]:::ai
+        LogoResolver["Verified Brand Logo Resolver"]:::ext
+        Adzuna["Adzuna Career API"]:::ext
+        Workday["Workday Career Plugin"]:::ext
     end
 
-    %% Infrastructure & Data Layer
-    subgraph Infrastructure ["🗄️ Database & Cloud Services"]
-        MongoDB[("MongoDB Atlas")]:::mongo
-        OCI["Oracle Cloud Infrastructure"]:::external
-        Cloudinary["Cloudinary Storage"]:::external
-        AdzunaAPI["Adzuna Job API"]:::external
+    subgraph StorageLayer ["🗄️ Persistence & Cloud Storage"]
+        Atlas[("MongoDB Atlas")]:::db
+        Cloudinary["Cloudinary (Signed Resumes)"]:::ext
+        Mailer["Nodemailer (STARTTLS)"]:::ext
     end
 
-    %% Flow Connections
-    UI ==>|"HTTP Requests"| Router
-    VoiceAI -.->|"Voice Queries"| UI
-    Router ==> Auth
-    Auth ==> SyncEngine
-    
-    SyncEngine ==>|"Read / Write"| MongoDB
-    SyncEngine -.->|"Secure Uploads"| Cloudinary
-    SyncEngine -.->|"Fetch External Jobs"| AdzunaAPI
-    
-    GHActions -.->|"Trigger Internal Sync"| Router
-    Router -.->|"Dispatch Alerts"| EmailService
+    %% Interactions
+    UI -->|"HTTPS & Bearer / CSRF"| Gateway
+    VoiceCoach -.->|"Speech-to-Text / Audio"| UI
+    InterviewUI -->|"Answer Submission"| Gateway
+    Gateway --> AuthGuard
+    AuthGuard --> DescService
+    AuthGuard --> SyncEngine
+
+    SyncEngine -->|"Job Polling"| Adzuna
+    SyncEngine -->|"Requisition Parsing"| Workday
+    SyncEngine -->|"Fetch Brand Assets"| LogoResolver
+
+    DescService -.->|"Heuristic / AI Expansion"| LLM
+    Gateway -.->|"Email Alerts"| Mailer
+    Gateway -->|"Document Storage"| Cloudinary
+    Gateway -->|"Data CRUD"| Atlas
+    SyncEngine -->|"Bulk Upsert"| Atlas
 ```
 
 ---
 
 ## 🧰 Tech Stack
 
-| Category | Technology |
+| Domain | Technologies |
 | --- | --- |
 | **Frontend** | React 19, Vite, Tailwind CSS, Lucide React, React Router v7, Axios, Web Speech API |
-| **Backend** | Node.js, Express.js (v5), Mongoose, JWT Authentication |
-| **Database & Infrastructure** | MongoDB Atlas, Oracle Cloud Infrastructure (OCI), Vercel |
-| **AI Integration** | DHRUV Voice Assistant (STT / TTS Readback, Conversational AI) |
-| **Security & Email** | CSRF Middleware, Security Audit Logging, Nodemailer (STARTTLS), Cloudinary (Signed Resumes), Firebase Admin (Google OAuth) |
-| **Testing & CI** | Jest, ESLint, GitHub Actions CI/CD Pipeline (Scheduled Job Sync) |
+| **Backend** | Node.js (v20+), Express.js (v5), Mongoose, Cheerio, JWT Authentication |
+| **Database & Caching** | MongoDB Atlas, Redis Caching, In-Memory Fallbacks |
+| **AI & Natural Language** | Google GenAI (Gemini), Groq API, Rule-Based Natural Language Parsers |
+| **Storage & Media** | Cloudinary (Signed Expiring Resume URLs) |
+| **Email & Alerts** | Nodemailer with RFC-compliant STARTTLS fallback |
+| **Job Aggregation** | Adzuna API, Workday Career Scraper, SDE Priority Crawl Scheduler |
+| **Branding & Logos** | Clearbit Logo API, Brandfetch, SVGL, Vector SVG Brand Assets |
+| **Testing & CI/CD** | Jest, Supertest, ESLint, GitHub Actions (Dual CI Quality Gates), Vercel |
 
 ---
 
-## ⭐ Key Features
+## 🎯 Role-Based Modules
 
-### 🔒 Security & Performance Engineering
-- **CSRF Protection Middleware**: Custom header and Bearer token validation across all state-changing API endpoints (`POST`, `PUT`, `DELETE`).
-- **Security Audit Logging**: Logs request origins, user agents, and sensitive administrative actions.
-- **Time-Expiring Signed Resume Access**: Sensitive candidate resume documents are served via Cloudinary authenticated signed URLs.
-- **STARTTLS Resilient Email Transport**: Email service using port 587 STARTTLS with connection error fallback for reliable delivery.
-- **Locale-Aware Formatting**: Normalizes salary ranges explicitly with `en-IN` locale formatting (`₹1,00,000 - ₹1,50,000`).
+### 1. 🎓 Candidate Portal
+- **Smart Job Search & Filtering**: Filter by title, tech stack, location, salary range, and work mode (Remote / Hybrid / On-site).
+- **One-Click Application Flow**: Apply seamlessly with uploaded resumes, personal details, and instant status tracking.
+- **Application History**: Track requisition states (`Pending`, `Reviewed`, `Shortlisted`, `Rejected`) with real-time updates.
+- **Saved Opportunities**: Bookmark roles for later review with persistent candidate dashboards.
+- **DHRUV Voice Coach**: Ask career questions verbally and listen to tailored recommendations in real time.
+- **AI Mock Interview Room**: Practice technical questions with speech input, automated evaluation, and actionable feedback.
 
-### 🤖 DHRUV AI Assistant & Candidate Portal
-- **DHRUV Voice Coach**: Interactive AI drawer for job recommendations, interview prep, and career guidance.
-- **Live Job Search**: Search and filter live aggregated jobs across technical, management, design, and business domains.
-- **Smart Job Description Formatter**: Multi-strategy parser handling Markdown formatting, header stripping, section splitting, and bullet rendering.
-- **Profile & Resume Tracking**: Single-click application submission with instant status history tracking.
+### 2. 💼 Recruiter Portal
+- **Job Requisition Management**: Draft, publish, edit, feature, and close job postings.
+- **Applicant Tracking Pipeline**: View candidates per role, inspect authenticated resume previews, and update candidate stages.
+- **Direct Candidate Notifications**: Automatic branded email notifications sent on application status updates.
 
-### 🏢 Recruiter & Admin Management
-- **Job Posting Management**: Create, edit, feature, and manage job requisitions.
-- **Applicant Pipeline**: Review candidates, inspect resumes, shortlist or decline applicants, and communicate with job seekers.
-- **Admin System Dashboard**: System management metrics covering platform applications, active job listings, user feedback tickets, and security logs.
+### 3. 🛡️ Admin Control Center
+- **System Metrics**: Real-time overview of total platform users, active listings, job sync health, and applications.
+- **Manual & Scheduled Sync Controls**: On-demand triggers for job crawlers and synchronization diagnostics.
+- **User Feedback & Moderation**: Manage candidate inquiries, hide invalid job postings, and review security audit logs.
 
 ---
 
-## ⚙️ Setup & Installation
+## 🧪 Testing & Quality Gates
+
+The project enforces strict automated checks on every pull request and push to `main`:
+
+```bash
+# Backend Test Suite (20 Test Suites | 108 Tests)
+cd backend
+npm test -- --runInBand --forceExit
+
+# Frontend Lint & Production Compilation
+cd ../frontend
+npm run lint
+npm run build
+```
+
+### Coverage Highlights:
+- **Security & CSRF**: Verifies header presence, CSRF token generation, origin validation, and state-changing verb protection.
+- **Full Description Service**: Tests JSON-LD extraction, HTML sanitization, section categorization, bullet list parsing, and employer posting validation.
+- **Sync & Lifecycle Engine**: Validates deduplication, crawl priority scheduling (Active / Stale / Dormant), and Workday plugin integration.
+- **AI Interview Assistant**: Tests fallback heuristics when AI APIs are unreachable, scoring accuracy, and domain question generation.
+
+---
+
+## ⚙️ Quick Start & Local Setup
 
 ### 1. Clone the Repository
 
@@ -120,88 +158,86 @@ git clone https://github.com/Chinmay0608/job-portal-system.git
 cd job-portal-system
 ```
 
-### 2. Install Dependencies
+### 2. Backend Setup
 
 ```bash
-# Install backend packages
 cd backend
 npm install
+```
 
-# Install frontend packages
+Create a `.env` file in the `backend/` directory:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/job-portal
+JWT_SECRET=your_jwt_secret_key
+SYNC_SECRET_KEY=your_sync_secret_key
+
+# Cloudinary (Resume Storage)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+
+# Email Dispatch
+EMAIL_USER=SkillBridge684@gmail.com
+EMAIL_PASS=your_gmail_app_password
+
+# Job APIs (Optional for external crawl)
+ADZUNA_APP_ID=your_adzuna_id
+ADZUNA_APP_KEY=your_adzuna_key
+
+# AI Services (Optional for AI interview & translation)
+GEMINI_API_KEY=your_gemini_key
+GROQ_API_KEY=your_groq_key
+
+# Allowed Origins
+FRONTEND_URL=http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:5173
+```
+
+Start the backend:
+
+```bash
+npm run dev
+```
+
+### 3. Frontend Setup
+
+```bash
 cd ../frontend
 npm install
 ```
 
-### 3. Environment Variables Configuration
-
-Create a `.env` file in both `backend/` and `frontend/` directories:
-
-#### Backend `.env`
-
-```env
-PORT=5000
-NODE_ENV=production
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/job-portal
-JWT_SECRET=your_jwt_secret_key
-SYNC_SECRET_KEY=your_sync_secret_key
-
-# Cloudinary Storage
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Email Services
-EMAIL_USER=SkillBridge684@gmail.com
-EMAIL_PASS=your_email_app_password
-
-# Job Provider APIs
-ADZUNA_APP_ID=your_adzuna_app_id
-ADZUNA_APP_KEY=your_adzuna_app_key
-
-# Allowed Origins
-FRONTEND_URL=https://job-portal-system-alpha.vercel.app
-ALLOWED_ORIGINS=https://job-portal-system-alpha.vercel.app
-```
-
-#### Frontend `.env`
+Create a `.env` file in the `frontend/` directory:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000
 VITE_FIREBASE_API_KEY=your_firebase_api_key
 ```
 
-`VITE_API_BASE_URL` can be provided either as the backend origin (`http://localhost:5000`) or with an `/api` suffix; the client normalizes both forms automatically.
-
----
-
-## 🧪 Running Tests & Quality Gates
-
-### Backend Unit Tests (Jest)
+Start the Vite development server:
 
 ```bash
-cd backend
-npm test
+npm run dev
 ```
 
-Runs 9 test suites (56 unit tests covering CSRF middleware, email transport error handling, envUtils, SDE core components, Adzuna normalization, sync controllers, and route handlers).
-
-### Frontend Quality Gate (ESLint & Vite Build)
-
-```bash
-cd frontend
-npm run lint
-npm run build
-```
-
----
-
-## 🤝 Contact & Support
-
-For security inquiries or platform support, reach out to the official team:
-📧 **Official Contact**: [SkillBridge684@gmail.com](mailto:SkillBridge684@gmail.com)
+Visit `http://localhost:5173` to explore SkillBridge locally.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is open-source and licensed under the [MIT License](LICENSE).
+
+You are free to use, copy, modify, merge, publish, distribute, and sublicense this software for personal or commercial projects, provided the original copyright notice is preserved.
+
+---
+
+## 🤝 Contact & Contributions
+
+Contributions, bug reports, and suggestions are welcome!
+
+- **Lead Developer**: [Chinmay Maheshwari](https://github.com/Chinmay0608)
+- **Official Support**: [SkillBridge684@gmail.com](mailto:SkillBridge684@gmail.com)
+- **GitHub Repository**: [Chinmay0608/job-portal-system](https://github.com/Chinmay0608/job-portal-system)
