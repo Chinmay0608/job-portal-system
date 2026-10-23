@@ -96,20 +96,12 @@ const deriveCompanyDomain = (company) => {
 
   if (domainOverrides[lower]) return domainOverrides[lower];
 
-  // 1. Direct domain in company name (e.g. Mistral.ai, Booking.com, Amazon.com)
-  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com|co|org|net|de|ch|nl|in|uk|app|tech|dev))\b/i);
+  // 1. Direct domain in company name (e.g. Mistral.ai, Booking.com)
+  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com))\b/i);
   if (domainMatch) return domainMatch[1].toLowerCase();
 
-  // 2. Clean out enterprise legal / corporate entity suffixes
-  const clean = raw
-    .replace(/\b(private\s+limited|pvt\.?\s*ltd\.?|ltd\.?|limited|inc\.?|llc\.?|corp\.?|corporation|gmbh|ag|sa|bv|sarl|group|partners|technologies|technology|tech|solutions|services|consulting|consultancy|software|international|holdings)\b/gi, "")
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .toLowerCase();
-
-  const slug = clean.replace(/\s+/g, "");
-  if (!slug || slug.length < 2) return null;
-  return `${slug}.com`;
+  // Strict: Never guess arbitrary domains for unknown companies
+  return null;
 };
 
 const getCompanyLogo = (company, logo) => {
