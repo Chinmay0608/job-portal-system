@@ -7,6 +7,7 @@ const { classifyJob } = require("../services/jobClassifierService");
 const { getEmbedding, cosineSimilarity } = require("../services/embeddingService");
 const { clearCache } = require("../middleware/cacheMiddleware");
 const asyncHandler = require("express-async-handler");
+const { resolveCompanyLogo } = require("../utils/companyLogoHelper");
 
 // Helper to escape regex characters and prevent ReDoS
 const escapeRegex = (string) => {
@@ -271,8 +272,16 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   const totalPages = Math.ceil(totalJobs / perPage) || 1;
 
+  const enhancedJobs = jobs.map((job) => {
+    const jobObj = job.toObject ? job.toObject() : { ...job };
+    if (!jobObj.companyLogo || jobObj.companyLogo.includes("ui-avatars.com")) {
+      jobObj.companyLogo = resolveCompanyLogo(jobObj.company, jobObj.companyLogo);
+    }
+    return jobObj;
+  });
+
   res.status(200).json({
-    jobs,
+    jobs: enhancedJobs,
     totalJobs,
     totalPages,
     currentPage,
