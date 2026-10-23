@@ -6276,6 +6276,17 @@ input[type="submit"]:active:not(:disabled),
   font-size: 0.875rem;
 }
 
+.candidate-results-layout {
+  view-transition-name: job-results-layout;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(job-results-layout),
+  ::view-transition-new(job-results-layout) {
+    animation-duration: 1ms;
+  }
+}
+
 .candidate-results-summary {
   display: flex;
   align-items: baseline;

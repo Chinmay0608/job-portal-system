@@ -121,7 +121,7 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
       });
     });
 
-    it("falls back to AI expansion when external career posting is blocked (e.g. 403)", async () => {
+    it("keeps the source snippet when the employer posting is unavailable", async () => {
       process.env.GEMINI_API_KEY = "dummy-gemini-key";
       axios.get.mockRejectedValue(new Error("Request failed with status code 403"));
 
@@ -136,14 +136,8 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
       };
 
       const result = await ensureFullJobDescription(job);
-      expect(result).toContain("<h3>Standard Job Title</h3>");
-      expect(result).toContain("<h3>Key Responsibilities</h3>");
-      expect(result).toContain("Design embedded DSP software");
-      expect(result).toContain("C/C++ proficiency");
-      expect(Job.findByIdAndUpdate).toHaveBeenCalledWith("job-dsp-103", {
-        description: expect.stringContaining("DSP Engineer"),
-        isFullDescription: true,
-      });
+      expect(result).toBe(snippet);
+      expect(Job.findByIdAndUpdate).not.toHaveBeenCalled();
     });
 
     it("repairs previously misstructured descriptions even when marked complete", async () => {
@@ -190,26 +184,21 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
       });
     });
 
-    it("repairs saved descriptions that contain invalid placeholder sections", async () => {
+    it("does not rewrite an invalid saved description without an employer source", async () => {
+      const description =
+        "<h3>Role Summary</h3><p>Required</p>" +
+        "<h3>Key Responsibilities</h3><p>undefined</p>" +
+        "<h3>Required Qualifications</h3><ul><li>1-4 years of relevant experience</li><li>Strong .NET and TypeScript skills</li></ul>";
       const result = await ensureFullJobDescription({
         _id: "job-saved-stale",
         title: "Software Engineer",
         company: "Eurofins",
         isFullDescription: true,
-        description:
-          "<h3>Role Summary</h3><p>Required</p>" +
-          "<h3>Key Responsibilities</h3><p>undefined</p>" +
-          "<h3>Required Qualifications</h3><ul><li>1-4 years of relevant experience</li><li>Strong .NET and TypeScript skills</li></ul>",
+        description,
       });
 
-      expect(result).toContain("<li>1-4 years of relevant experience</li>");
-      expect(result).toContain("<li>Strong .NET and TypeScript skills</li>");
-      expect(result).not.toContain(">undefined<");
-      expect(result).not.toContain("<p>Required</p>");
-      expect(Job.findByIdAndUpdate).toHaveBeenCalledWith("job-saved-stale", {
-        description: expect.stringContaining("Required Qualifications"),
-        isFullDescription: true,
-      });
+      expect(result).toBe(description);
+      expect(Job.findByIdAndUpdate).not.toHaveBeenCalled();
     });
 
     it("does not fetch private or local employer URLs", async () => {
