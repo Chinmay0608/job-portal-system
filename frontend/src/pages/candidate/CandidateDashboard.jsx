@@ -62,41 +62,67 @@ const JOB_CONCERN_REASONS = [
   "Other",
 ];
 const PENDING_EXTERNAL_APPLICATION_KEY = "pending_external_application_confirmation";
-const getCompanyLogo = (company, logo) => {
-  const name = (company || "").trim().toLowerCase();
-  const knownLogos = {
-    spotify: "https://unavatar.io/spotify.com",
-    hcl: "https://unavatar.io/hcltech.com",
-    "hcl technologies": "https://unavatar.io/hcltech.com",
-    kyndryl: "https://unavatar.io/kyndryl.com",
-    "ixon cloud": "https://unavatar.io/ixon.cloud",
-    everai: "https://unavatar.io/everai.ai",
-    airwallex: "https://unavatar.io/airwallex.com",
-    asm: "https://unavatar.io/asm.com",
-    "lefebvre sdu": "https://unavatar.io/sdu.nl",
-    banyansoftware: "https://unavatar.io/banyansoftware.com",
-    "banyan software": "https://unavatar.io/banyansoftware.com",
-    datadog: "https://unavatar.io/datadoghq.com",
-    alma31: "https://unavatar.io/almapay.com",
-    openai: "https://unavatar.io/openai.com",
-    graphcore: "https://unavatar.io/graphcore.ai",
-    "standard chartered bank": "https://unavatar.io/sc.com",
-    papigen: "https://unavatar.io/papigen.com",
-    "atharv consulting": "https://unavatar.io/atharvconsulting.in",
-    "atharv consultings": "https://unavatar.io/atharvconsulting.in",
+const deriveCompanyDomain = (company) => {
+  if (!company || typeof company !== "string") return null;
+  const raw = company.trim();
+  const lower = raw.toLowerCase();
+
+  const domainOverrides = {
+    "trigent software private limited": "trigent.com",
+    "trigent software": "trigent.com",
+    trigent: "trigent.com",
+    "rotzinger group": "rotzingergroup.com",
+    rotzinger: "rotzingergroup.com",
+    "swisspeak partners gmbh": "swisspeak.com",
+    "swisspeak partners": "swisspeak.com",
+    swisspeak: "swisspeak.com",
+    "mistral.ai": "mistral.ai",
+    mistral: "mistral.ai",
+    "centraal bureau voor de statistiek": "cbs.nl",
+    cbs: "cbs.nl",
+    nasdaq: "nasdaq.com",
+    bureau: "bureau.id",
+    swiggy: "swiggy.com",
+    keploy: "keploy.io",
+    datadog: "datadoghq.com",
+    alma31: "almapay.com",
+    openai: "openai.com",
+    graphcore: "graphcore.ai",
+    "standard chartered bank": "sc.com",
+    papigen: "papigen.com",
+    "atharv consulting": "atharvconsulting.in",
+    "atharv consultings": "atharvconsulting.in",
   };
-  return knownLogos[name] && (!logo || logo.includes("ui-avatars.com")) ? knownLogos[name] : logo;
+
+  if (domainOverrides[lower]) return domainOverrides[lower];
+
+  // 1. Direct domain in company name (e.g. Mistral.ai, Booking.com, Amazon.com)
+  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com|co|org|net|de|ch|nl|in|uk|app|tech|dev))\b/i);
+  if (domainMatch) return domainMatch[1].toLowerCase();
+
+  // 2. Clean out enterprise legal / corporate entity suffixes
+  const clean = raw
+    .replace(/\b(private\s+limited|pvt\.?\s*ltd\.?|ltd\.?|limited|inc\.?|llc\.?|corp\.?|corporation|gmbh|ag|sa|bv|sarl|group|partners|technologies|technology|tech|solutions|services|consulting|consultancy|software|international|holdings)\b/gi, "")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .toLowerCase();
+
+  const slug = clean.replace(/\s+/g, "");
+  if (!slug || slug.length < 2) return null;
+  return `${slug}.com`;
 };
-const companyLogoDomains = {
-  datadog: "datadoghq.com",
-  alma31: "almapay.com",
-  openai: "openai.com",
-  graphcore: "graphcore.ai",
-  "standard chartered bank": "sc.com",
-  papigen: "papigen.com",
-  "atharv consulting": "atharvconsulting.in",
-  "atharv consultings": "atharvconsulting.in",
+
+const getCompanyLogo = (company, logo) => {
+  if (logo && typeof logo === "string" && logo.trim().length > 0 && !logo.includes("ui-avatars.com")) {
+    return logo;
+  }
+  const domain = deriveCompanyDomain(company);
+  if (domain) {
+    return `https://unavatar.io/${domain}`;
+  }
+  return "";
 };
+const companyLogoDomains = {};
 
 const getRelativeTime = (dateString) => {
   if (!dateString) return "";
@@ -2141,7 +2167,7 @@ function CandidateDashboard() {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
                     const companyLogo = getCompanyLogo(job.company, job.companyLogo);
-                    const logoDomain = companyLogoDomains[(job.company || "").trim().toLowerCase()];
+                    const logoDomain = deriveCompanyDomain(job.company);
                     const matchInfo = calculateJobMatchScore(job, user);
                     const experienceLabel =
                       job.experienceRequired === "Fresher"
