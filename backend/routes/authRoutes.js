@@ -15,6 +15,7 @@ const {
 } = require("../controllers/authController");
 
 const { authLimiter } = require("../middleware/rateLimiter");
+const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 
 const router = express.Router();
 
@@ -31,8 +32,8 @@ router.post(
       .withMessage("Name must be at least 2 characters"),
     body("email").isEmail().withMessage("Valid email is required"),
     body("password")
-      .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters"),
+      .custom((password) => isStrongPassword(password))
+      .withMessage(PASSWORD_POLICY_MESSAGE),
     body("role")
       .isIn(["candidate", "recruiter"])
       .withMessage("Role must be either candidate or recruiter"),

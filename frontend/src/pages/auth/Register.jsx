@@ -9,6 +9,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
+import { getPasswordRequirements, isStrongPassword, PASSWORD_POLICY_MESSAGE } from "../../utils/passwordPolicy";
 
 function Register() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ function Register() {
     password: "",
     role: location.state?.role || "candidate",
   });
+  const passwordRequirements = getPasswordRequirements(formData.password);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -81,7 +83,7 @@ function Register() {
     if (trimmedName.length < 3) return toast.error("Name must be at least 3 characters");
     if (!/^[A-Za-z\s]+$/.test(trimmedName)) return toast.error("Name should contain only letters");
     if (trimmedPhone && !/^[6-9]\d{9}$/.test(trimmedPhone)) return toast.error("Enter a valid 10-digit phone number");
-    if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
+    if (!isStrongPassword(formData.password)) return toast.error(PASSWORD_POLICY_MESSAGE);
 
     try {
       setLoading(true);
@@ -97,7 +99,8 @@ function Register() {
       navigate("/login");
     } catch (error) {
       console.error("Registration Error:", error);
-      toast.error(error?.response?.data?.message || "Registration Failed");
+      const validationErrors = error?.response?.data?.errors;
+      toast.error(error?.response?.data?.message || (Array.isArray(validationErrors) ? validationErrors[0] : null) || "Registration Failed");
     } finally {
       setLoading(false);
     }
@@ -198,10 +201,13 @@ function Register() {
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                placeholder="Min 6 characters"
+                placeholder="Create a strong password"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                minLength={8}
+                autoComplete="new-password"
+                aria-describedby="password-rules"
                 className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
               />
               <button
@@ -213,6 +219,13 @@ function Register() {
                 {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
               </button>
             </div>
+            <ul id="password-rules" className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5 p-0 list-none text-[10px] leading-4">
+              {passwordRequirements.map(({ label, met }) => (
+                <li key={label} className={met ? "text-emerald-700" : "text-slate-500"}>
+                  <span aria-hidden="true">{met ? "✓" : "•"} </span>{label}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <button 

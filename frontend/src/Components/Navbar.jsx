@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MoreVertical, MessageSquare, Bell, Compass, UserRound } from "lucide-react";
+import { MoreVertical, MessageSquare, Bell, Compass, UserRound, DoorOpen } from "lucide-react";
 import { 
   BsBookmarkFill, 
   BsChatSquareTextFill, 
-  BsBellFill, 
-  BsPersonFill, 
-  BsBoxArrowRight 
+  BsBellFill
 } from "react-icons/bs";
 import { FiMenu, FiX, FiArrowLeft, FiHome } from "react-icons/fi";
-import { logoutUser, getStoredUser, notifyAuthChanged } from "../Services/authUtils";
+import { getStoredUser, logoutUser } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
 import AIChatWidget from "./AIChatWidget";
 import MessagesDrawer from "./MessagesDrawer";
@@ -19,9 +17,18 @@ import NotificationsDrawer from "./NotificationsDrawer";
 import { getUnreadNotificationsCountAPI } from "../Services/notificationService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 
+const profileAvatarColors = ["#2563eb", "#0f9f8f", "#db5a34", "#a23ec4", "#c27a0a", "#d44770", "#477b32"];
+const getProfileAvatarColor = (user) => {
+  const identity = (user?._id || user?.email || user?.name || "guest").toLowerCase();
+  const hash = [...identity].reduce((value, character) => (value * 31 + character.charCodeAt(0)) >>> 0, 0);
+  return profileAvatarColors[hash % profileAvatarColors.length];
+};
+
 function Navbar() {
   const [user, setUser] = useState(getStoredUser);
   const isLoggedIn = Boolean(user);
+  const profileInitial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
+  const profileAvatarColor = getProfileAvatarColor(user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCandidateMenuOpen, setIsCandidateMenuOpen] = useState(false);
   const candidateMenuRef = useRef(null);
@@ -203,16 +210,22 @@ function Navbar() {
 
   useEffect(() => {
     const updateIndicator = () => {
-      const activeTab = isJobsTab ? jobsTabRef.current : homeTabRef.current;
       const nav = navLinksRef.current;
-      if (!activeTab || !nav) return;
+      if (!nav) return;
+      const activeTab = isCandidateDashboard
+        ? (isJobsTab ? jobsTabRef.current : homeTabRef.current)
+        : null;
+      if (!activeTab) {
+        setTabIndicator({ left: 0, width: 0 });
+        return;
+      }
       setTabIndicator({ left: activeTab.offsetLeft, width: activeTab.offsetWidth });
     };
 
     updateIndicator();
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
-  }, [isJobsTab, location.pathname, user?.role]);
+  }, [isCandidateDashboard, isJobsTab, location.pathname, user?.role]);
 
   // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
   // Also gated behind VITE_DHRUV_ENABLED=true so it never loads on production until fully trained
@@ -263,20 +276,6 @@ function Navbar() {
     }
   };
 
-  const logout = async (e) => {
-    if (e) e.preventDefault();
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUser(null);
-      notifyAuthChanged();
-      toast.success("Logged out successfully");
-      navigate("/login", { replace: true });
-    }
-  };
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -289,6 +288,13 @@ function Navbar() {
   const handleMessageClick = () => {
     setIsMessagesOpen(true);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setIsCandidateMenuOpen(false);
+    await logoutUser();
+    setUser(null);
+    navigate("/login");
   };
 
   return (
@@ -475,8 +481,8 @@ function Navbar() {
 
                   {/* Profile User Icon */}
                   <div className={`icon-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}>
-                    <Link to="/candidate-profile" className="icon-btn-link" aria-label="Profile">
-                      <BsPersonFill className="header-icon" />
+                    <Link to="/candidate-profile" className="icon-btn-link profile-link" aria-label="Profile">
+                      <span className="profile-initial-avatar" style={{ backgroundColor: profileAvatarColor }} aria-hidden="true">{profileInitial}</span>
                       <span className="mobile-only-label">Profile</span>
                     </Link>
                     <div className="tooltip-bubble">Profile</div>
@@ -536,13 +542,22 @@ function Navbar() {
                   </div>
 
                   <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
-                    <Link to="/recruiter-profile" className="icon-btn-link" aria-label="Profile">
-                      <BsPersonFill className="header-icon" />
+                    <Link to="/recruiter-profile" className="icon-btn-link profile-link" aria-label="Profile">
+                      <span className="profile-initial-avatar" style={{ backgroundColor: profileAvatarColor }} aria-hidden="true">{profileInitial}</span>
                       <span className="mobile-only-label">Profile</span>
                     </Link>
                     <div className="tooltip-bubble">Profile</div>
                   </div>
                 </>
+              )}
+
+              {user?.role === "admin" && (
+                <div className="icon-tab-wrapper">
+                  <Link to={dashboardUrl} className="icon-btn-link profile-link" aria-label="Admin profile">
+                    <span className="profile-initial-avatar" style={{ backgroundColor: profileAvatarColor }} aria-hidden="true">{profileInitial}</span>
+                    <span className="mobile-only-label">Profile</span>
+                  </Link>
+                </div>
               )}
 
               {/* Vertical Separator Divider & Employers / Post Job Link (Recruiters & Guests only) */}
@@ -637,16 +652,22 @@ function Navbar() {
                 </div>
               )}
 
-              {/* Logout Button */}
-              <button 
-                type="button" 
-                className="logout-icon-btn" 
-                onClick={logout}
-                aria-label="Sign out"
-              >
-                <BsBoxArrowRight className="logout-icon" />
-                <span className="logout-text">Logout</span>
-              </button>
+              {user?.role === "candidate" && (
+                <div className="icon-tab-wrapper">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    aria-label="Log out"
+                    title="Log out"
+                    className="icon-btn-link nav-logout-icon-btn"
+                  >
+                    <DoorOpen size={20} className="header-icon" />
+                    <span className="mobile-only-label">Log out</span>
+                  </button>
+                  <div className="tooltip-bubble">Log out</div>
+                </div>
+              )}
+
             </div>
           )}
         </div>

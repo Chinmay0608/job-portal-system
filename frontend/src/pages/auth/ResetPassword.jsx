@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { getApiBaseUrl } from "../../Services/authUtils";
+import { isStrongPassword, PASSWORD_POLICY_MESSAGE } from "../../utils/passwordPolicy";
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -12,12 +13,7 @@ function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmedPassword = password.trim();
-
-    /* Validation */
-    if (trimmedPassword.length < 6) {
-      return toast.error("Password must be at least 6 characters");
-    }
+    if (!isStrongPassword(password)) return toast.error(PASSWORD_POLICY_MESSAGE);
     if (!token) {
       return toast.error("Invalid reset token");
     }
@@ -25,7 +21,7 @@ function ResetPassword() {
     try {
       setLoading(true);
       const response = await axios.put(`${getApiBaseUrl()}/api/auth/reset-password/${token}`, {
-        password: trimmedPassword,
+        password,
       });
 
       toast.success(response?.data?.message || "Password reset successful");
@@ -42,7 +38,7 @@ function ResetPassword() {
     <div className="auth-page">
       <div className="auth-right">
         <h1 className="auth-title">Reset Password</h1>
-        <p className="auth-subtitle">Enter your new password</p>
+        <p className="auth-subtitle">Use at least 8 characters, including uppercase and lowercase letters, a number, and 1–3 special characters. No spaces.</p>
 
         <form onSubmit={handleSubmit}>
           <input

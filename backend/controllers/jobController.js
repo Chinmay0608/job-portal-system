@@ -236,8 +236,27 @@ const getAllJobs = asyncHandler(async (req, res) => {
     query.employmentType = employmentType;
   }
 
-  if (minSalary && !isNaN(minSalary)) {
-    query.salaryMin = { $gte: Number(minSalary) };
+  if (minSalary) {
+    const currencyThresholds = String(minSalary)
+      .split(",")
+      .map((entry) => {
+        const match = entry.match(/^([A-Z]{3}):(\d+)$/i);
+        return match ? { currency: match[1].toUpperCase(), amount: Number(match[2]) } : null;
+      })
+      .filter(Boolean);
+
+    if (currencyThresholds.length) {
+      const salaryConditions = currencyThresholds.map(({ currency, amount }) => ({
+        salaryCurrency: currency,
+        salaryMin: { $gte: amount },
+      }));
+      query.$and ||= [];
+      query.$and.push({ $or: salaryConditions });
+    } else if (!isNaN(minSalary)) {
+      // Preserve compatibility with clients that still send a numeric INR threshold.
+      query.salaryCurrency = "INR";
+      query.salaryMin = { $gte: Number(minSalary) };
+    }
   }
 
   const currentPage = Number(page) > 0 ? Number(page) : 1;
@@ -291,7 +310,10 @@ const getRecruiterJobs = asyncHandler(async (req, res) => {
    GET RECOMMENDED JOBS
 ========================== */
 const getRecommendedJobs = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id).populate({
+    path: "hiddenJobFeedback.jobId",
+    select: "title domain role seniorityLevel experienceRequired salary salaryMin salaryMax salaryCurrency skillsRequired",
+  });
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // Show all active jobs (both internal and external)
@@ -818,7 +840,7 @@ const hideJob = asyncHandler(async (req, res) => {
   const jobExists = await Job.exists({ _id: jobId });
   if (!jobExists) return res.status(404).json({ message: "Job not found" });
 
-  const validReasons = ["seniority", "salary", "tech_stack_mismatch", "other"];
+  const validReasons = ["seniority", "salary", "tech_stack_mismatch", "other", "not_interested"];
   if (reason !== undefined && !validReasons.includes(reason)) {
     return res.status(400).json({ message: "Please select a valid reason for hiding this job" });
   }

@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const { extractSkillsFromResume, extractSkillsFromBuffer, parseFullResumeFromFile, parseFullResumeFromBuffer } = require("../services/resumeParserService");
 const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
+const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 
 // Helper to generate a signed Cloudinary URL for a resume
 const generateSignedResumeUrl = (resumeUrl) => {
@@ -54,6 +55,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     name,
     phone,
     location,
+    country,
     linkedin,
     github,
     portfolio,
@@ -75,9 +77,14 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  if (!String(location ?? user.location ?? "").trim()) {
+    return res.status(400).json({ message: "Location is required" });
+  }
+
   user.name = name || user.name;
   user.phone = phone || "";
   user.location = location !== undefined ? location : (user.location || "");
+  user.country = country || user.country || "India";
   user.linkedin = linkedin !== undefined ? linkedin : (user.linkedin || "");
   user.github = github !== undefined ? github : (user.github || "");
   user.portfolio = portfolio !== undefined ? portfolio : (user.portfolio || "");
@@ -198,6 +205,7 @@ const updateProfile = asyncHandler(async (req, res) => {
       role: user.role,
       phone: user.phone,
       location: user.location,
+      country: user.country || "India",
       linkedin: user.linkedin,
       github: user.github,
       portfolio: user.portfolio,
@@ -227,9 +235,9 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("All password fields are required");
   }
 
-  if (newPassword.length < 6) {
+  if (!isStrongPassword(newPassword)) {
     res.status(400);
-    throw new Error("New password must be at least 6 characters");
+    throw new Error(PASSWORD_POLICY_MESSAGE);
   }
 
   if (newPassword !== confirmNewPassword) {
@@ -470,6 +478,7 @@ const getProfile = asyncHandler(async (req, res) => {
       role: user.role,
       phone: user.phone || "",
       location: user.location || "",
+      country: user.country || "India",
       linkedin: user.linkedin || "",
       github: user.github || "",
       portfolio: user.portfolio || "",
@@ -497,7 +506,7 @@ const getProfile = asyncHandler(async (req, res) => {
    COMPLETE ONBOARDING
 ========================== */
 const completeOnboarding = asyncHandler(async (req, res) => {
-  const { location, highestQualification, experienceLevel, skills } = req.body;
+  const { location, country, highestQualification, experienceLevel, skills } = req.body;
 
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -505,7 +514,11 @@ const completeOnboarding = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  if (location !== undefined && !String(location).trim()) {
+    return res.status(400).json({ message: "Location is required" });
+  }
   if (location !== undefined) user.location = String(location).trim();
+  if (country !== undefined) user.country = String(country).trim() || "India";
   if (highestQualification !== undefined) {
     const trimmedHQ = String(highestQualification).trim();
     user.highestQualification = trimmedHQ;
@@ -536,6 +549,7 @@ const completeOnboarding = asyncHandler(async (req, res) => {
       role: user.role,
       phone: user.phone || "",
       location: user.location || "",
+      country: user.country || "India",
       linkedin: user.linkedin || "",
       github: user.github || "",
       portfolio: user.portfolio || "",

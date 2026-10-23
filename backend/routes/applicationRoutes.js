@@ -6,6 +6,7 @@ const { getApplicationsAdmin,
   getRecruiterApplications,
   getRecruiterStats,
   updateApplicationStatus,
+  updateCandidateTrackingStatus,
   withdrawApplication,
   getApplicationResume,
  } = require("../controllers/applicationController");
@@ -41,6 +42,12 @@ router.delete(
   protect,
   authorizeRoles("candidate"),
   withdrawApplication,
+);
+router.patch(
+  "/:applicationId/tracking-status",
+  protect,
+  authorizeRoles("candidate"),
+  updateCandidateTrackingStatus,
 );
 router.get(
   "/:applicationId/resume",

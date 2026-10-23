@@ -105,6 +105,7 @@ function AppContent() {
               {/* Informational Marketing & Legal Layout Trees */}
               <Route path="/about" element={<About />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<Blog />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/tech-stack" element={<TechStack />} />
               <Route path="/help-center" element={<HelpCenter />} />

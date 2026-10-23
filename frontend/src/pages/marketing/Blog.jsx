@@ -1,50 +1,64 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Sparkles,
   ArrowRight,
   Mail,
 } from "lucide-react";
 
+import featuredArticles from "./blogArticles";
+
 function Blog() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const { slug } = useParams();
+  const article = featuredArticles.find((item) => item.slug === slug);
+
+  if (slug) {
+    if (!article) {
+      return (
+        <div className="blog-page-container article-not-found">
+          <h1>Article not found</h1>
+          <Link to="/blog" className="article-read-btn">Back to articles <ArrowRight size={16} /></Link>
+        </div>
+      );
+    }
+
+    return (
+      <div className="blog-page-container">
+        <article className="blog-article-detail">
+          <Link to="/blog" className="article-back-link">← All articles</Link>
+          <img className="blog-article-hero" src={article.image} alt="" />
+          <div className="blog-article-body">
+            <span className="article-category-badge">{article.category}</span>
+            <div className="article-meta">{article.date} · {article.readTime}</div>
+            <h1>{article.title}</h1>
+            <p className="blog-article-intro">{article.excerpt}</p>
+            {article.content.map((section) => (
+              <section key={section.heading}>
+                <h2>{section.heading}</h2>
+                {section.text.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                {section.bullets && (
+                  <ul>
+                    {section.bullets.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                )}
+              </section>
+            ))}
+            <aside className="blog-article-sources" aria-label="Article sources">
+              <h2>Sources &amp; further reading</h2>
+              <ul>
+                {article.sources.map((source) => (
+                  <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></li>
+                ))}
+              </ul>
+            </aside>
+          </div>
+        </article>
+      </div>
+    );
+  }
 
   const categories = ["All", "Career Tips", "Startup Hiring", "Resume Guide", "Interview Prep", "Tech Insights"];
-
-  const featuredArticles = [
-    {
-      title: "Top 10 Skills Recruiters Want in 2026",
-      category: "Career Tips",
-      readTime: "5 min read",
-      date: "Sep 8, 2026",
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-      excerpt: "Discover the most in-demand technical, AI, and soft skills hiring managers are actively filtering for this year.",
-    },
-    {
-      title: "How Startups Hire Freshers in Today’s Market",
-      category: "Startup Hiring",
-      readTime: "6 min read",
-      date: "Sep 5, 2026",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-      excerpt: "A deep dive into founder expectations, portfolio signals, and how early-stage teams evaluate junior candidates.",
-    },
-    {
-      title: "Resume Mistakes That Cost You Interviews",
-      category: "Resume Guide",
-      readTime: "4 min read",
-      date: "Aug 29, 2026",
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1000",
-      excerpt: "Avoid these critical mistakes that cause ATS filters and candidate screening tools to drop your application.",
-    },
-    {
-      title: "Cracking Technical Interviews at Product Companies",
-      category: "Interview Prep",
-      readTime: "8 min read",
-      date: "Aug 22, 2026",
-      image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=1000",
-      excerpt: "Proven strategies for system design, live coding sessions, and behavioral interview questions.",
-    },
-  ];
 
   const filteredArticles = activeCategory === "All"
     ? featuredArticles
@@ -82,22 +96,7 @@ function Blog() {
         </div>
       </section>
 
-      {/* 2. NEWSLETTER BANNER */}
-      <section className="blog-newsletter-banner">
-        <div className="newsletter-card">
-          <div className="newsletter-badge">
-            <Mail size={16} /> WEEKLY CAREER DIGEST
-          </div>
-          <h2>Stay Ahead in Your Career & Hiring Journey</h2>
-          <p>Get curated hiring trends, tech interview guides, and salary insights delivered directly to your inbox every Monday.</p>
-          <div className="newsletter-form">
-            <input type="email" placeholder="Enter your email address..." className="newsletter-input" />
-            <button className="newsletter-submit-btn">Subscribe Free</button>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. ARTICLES GRID */}
+      {/* ARTICLES GRID */}
       <section className="blog-articles-section">
         <div className="section-header">
           <span className="section-kicker">Latest Content</span>
@@ -115,16 +114,31 @@ function Blog() {
 
               <div className="article-content">
                 <div className="article-meta">
-                  <span>{article.date}</span> • <span>{article.readTime}</span>
+                  <span>{article.date}</span> · <span>{article.readTime}</span>
                 </div>
                 <h3>{article.title}</h3>
                 <p>{article.excerpt}</p>
-                <Link to="/candidate-dashboard?tab=jobs" className="article-read-btn">
+                <Link to={`/blog/${article.slug}`} className="article-read-btn">
                   Read Article <ArrowRight size={16} />
                 </Link>
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      {/* NEWSLETTER AT THE END OF THE PAGE */}
+      <section className="blog-newsletter-banner">
+        <div className="newsletter-card">
+          <div className="newsletter-badge">
+            <Mail size={16} /> WEEKLY CAREER DIGEST
+          </div>
+          <h2>Stay Ahead in Your Career & Hiring Journey</h2>
+          <p>Get curated hiring trends, tech interview guides, and salary insights delivered directly to your inbox every Monday.</p>
+          <div className="newsletter-form">
+            <input type="email" placeholder="Enter your email address..." className="newsletter-input" />
+            <button className="newsletter-submit-btn">Subscribe Free</button>
+          </div>
         </div>
       </section>
     </div>

@@ -11,6 +11,7 @@ import {
   getMyApplications, 
   getResumeSignedUrlAPI 
 } from "../../Services/jobService";
+import { isStrongPassword, PASSWORD_POLICY_MESSAGE } from "../../utils/passwordPolicy";
 import { 
   Camera, 
   FileText, 
@@ -40,6 +41,7 @@ const COMMON_SKILLS = [
 ];
 
 import { getApiBaseUrl } from "../../Services/authUtils";
+import { COUNTRY_OPTIONS } from "../../utils/countryCurrency";
 import { QUALIFICATION_OPTIONS } from "../../utils/qualificationOptions";
 
 function CandidateProfile() {
@@ -63,6 +65,7 @@ function CandidateProfile() {
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [location, setLocation] = useState(user?.location || "");
+  const [country, setCountry] = useState(user?.country || "India");
   const [linkedin, setLinkedin] = useState(user?.linkedin || "");
   const [github, setGithub] = useState(user?.github || "");
   const [portfolio, setPortfolio] = useState(user?.portfolio || "");
@@ -131,6 +134,7 @@ function CandidateProfile() {
       profileUser?.name,
       profileUser?.email,
       profileUser?.phone,
+      profileUser?.country,
       profileUser?.location,
       profileUser?.linkedin,
       profileUser?.github,
@@ -186,6 +190,7 @@ function CandidateProfile() {
       setEmail(user.email || "");
       setPhone(user.phone || "");
       setLocation(user.location || "");
+      setCountry(user.country || "India");
       setLinkedin(user.linkedin || "");
       setGithub(user.github || "");
       setPortfolio(user.portfolio || "");
@@ -199,6 +204,10 @@ function CandidateProfile() {
   }, [user]);
 
   const handleSave = async () => {
+    if (!location.trim()) {
+      toast.error("Location is required");
+      return;
+    }
     try {
       setLoading(true);
       const formData = new FormData();
@@ -206,6 +215,7 @@ function CandidateProfile() {
       formData.append("name", name);
       formData.append("phone", phone);
       formData.append("location", location);
+      formData.append("country", country);
       formData.append("linkedin", linkedin);
       formData.append("github", github);
       formData.append("portfolio", portfolio);
@@ -237,7 +247,11 @@ function CandidateProfile() {
       setProfileImage(null);
     } catch (error) {
       console.error("Update Error:", error);
-      toast.error(error?.response?.data?.message || "Update failed");
+      const validationErrors = error?.response?.data?.errors;
+      const message = error?.response?.data?.message
+        || (Array.isArray(validationErrors) ? validationErrors.join(". ") : null)
+        || "Update failed";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -328,6 +342,11 @@ function CandidateProfile() {
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmNewPassword) {
       toast.error("Please fill in all password fields.");
+      return;
+    }
+
+    if (!isStrongPassword(newPassword)) {
+      toast.error(PASSWORD_POLICY_MESSAGE);
       return;
     }
 
@@ -679,12 +698,25 @@ function CandidateProfile() {
 
               {/* Location */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Location</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Country</label>
+                <CustomSelect
+                  options={COUNTRY_OPTIONS.map((item) => ({ value: item, label: item }))}
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full text-sm"
+                  aria-label="Country"
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Location <span className="text-rose-600">*</span></label>
                 <input 
                   type="text" 
                   placeholder="e.g., Jaipur, India / Remote" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)} 
+                  required
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 />
               </div>
@@ -993,6 +1025,7 @@ function CandidateProfile() {
                   />
                 </div>
               </div>
+              <p className="-mt-2 mb-4 text-xs text-slate-500">New password: 8+ characters, uppercase and lowercase letters, a number, and 1–3 special characters. No spaces.</p>
               <div className="flex justify-end">
                 <button 
                   type="submit" 

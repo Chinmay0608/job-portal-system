@@ -91,9 +91,13 @@ const createTicket = asyncHandler(async (req, res) => {
   });
 
   // Instant notification to Telegram bot
-  sendTicketAlertToTelegram(ticket, { finalStatus: "open", isHighSeverity: false }).catch((err) =>
-    console.error("[Telegram] Instant alert failed:", err.message)
-  );
+  sendTicketAlertToTelegram(ticket, { finalStatus: "open", isHighSeverity: false })
+    .then((result) => {
+      if (!result.success) {
+        console.error("[Telegram] Instant alert not delivered:", result.reason || result.error);
+      }
+    })
+    .catch((err) => console.error("[Telegram] Instant alert failed:", err.message));
 
   // Fire-and-forget: agent runs in background after response is sent
   setImmediate(() => {

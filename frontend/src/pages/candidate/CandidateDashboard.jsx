@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
+import { getCountryCurrency, getSalaryOptions } from "../../utils/countryCurrency";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI, getEnglishJobDescriptionAPI } from "../../Services/jobService";
 import { CANDIDATE_WELCOME_DISMISSED_KEY, setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
@@ -38,6 +39,8 @@ import {
   UserRound,
   Sparkles,
   Flag,
+  Grid2X2,
+  PanelLeft,
 } from "lucide-react";
 
 const JOBS_PER_PAGE = 20;
@@ -64,8 +67,25 @@ const getCompanyLogo = (company, logo) => {
     hcl: "https://unavatar.io/hcltech.com",
     "hcl technologies": "https://unavatar.io/hcltech.com",
     kyndryl: "https://unavatar.io/kyndryl.com",
+    "ixon cloud": "https://unavatar.io/ixon.cloud",
+    everai: "https://unavatar.io/everai.ai",
+    airwallex: "https://unavatar.io/airwallex.com",
+    asm: "https://unavatar.io/asm.com",
+    "lefebvre sdu": "https://unavatar.io/sdu.nl",
+    banyansoftware: "https://unavatar.io/banyansoftware.com",
+    "banyan software": "https://unavatar.io/banyansoftware.com",
+    datadog: "https://unavatar.io/datadoghq.com",
+    alma31: "https://unavatar.io/almapay.com",
+    openai: "https://unavatar.io/openai.com",
+    graphcore: "https://unavatar.io/graphcore.ai",
   };
   return knownLogos[name] && (!logo || logo.includes("ui-avatars.com")) ? knownLogos[name] : logo;
+};
+const companyLogoDomains = {
+  datadog: "datadoghq.com",
+  alma31: "almapay.com",
+  openai: "openai.com",
+  graphcore: "graphcore.ai",
 };
 
 const getRelativeTime = (dateString) => {
@@ -83,7 +103,7 @@ const isDescriptionSnippet = (description) => {
     isMisstructuredDescription(text) ||
     text.length < 350 ||
     text.endsWith("...") ||
-    text.endsWith("…") ||
+    text.endsWith("â€¦") ||
     /\band\s*\.\.\.$/i.test(text) ||
     text.includes("read more on career portal") ||
     text.includes("preview snippet")
@@ -219,7 +239,7 @@ const alignWhoWeAreHeading = (html) => {
       <div className="job-description-content space-y-5 text-slate-700">
         {sections.map(({ heading, content }, idx) => {
           const items = content
-            .split(/\s*[•●▪]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
+            .split(/\s*[â€¢â—â–ª]\s*|\s*;\s*|\s*(?<=\.)\s+(?=[A-Z])/)
             .map((item) => item.replace(/^[-*]\s*/, "").replace(/^(?:\([a-z]\)|[a-z][).])\s+/i, "").trim())
             .filter(Boolean);
           const isWhoWeAreSection = /^who\s+we\s+are$/i.test(heading);
@@ -263,23 +283,30 @@ const alignWhoWeAreHeading = (html) => {
 };
 
 const formatSalary = (salaryText, min, max, currency) => {
+  const currencySymbol = currency === "INR" || currency === "\u20B9"
+    ? "\u20B9"
+    : currency === "EUR"
+      ? "\u20AC"
+      : currency === "GBP"
+        ? "\u00A3"
+        : "$";
+
   if (min && max) {
     const formatShorthand = (num) => {
-      if (num >= 100000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${Number((num / 100000).toFixed(1))}L`;
-      if (num >= 1000) return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${Number((num / 1000).toFixed(1))}k`;
-      return `${currency === 'INR' || currency === '₹' ? '₹' : '$'}${num}`;
+      if (num >= 100000) return `${currencySymbol}${Number((num / 100000).toFixed(1))}L`;
+      if (num >= 1000) return `${currencySymbol}${Number((num / 1000).toFixed(1))}k`;
+      return `${currencySymbol}${num}`;
     };
-    return `${formatShorthand(min)}–${formatShorthand(max)}`;
+    return `${formatShorthand(min)}\u2013${formatShorthand(max)}`;
   }
-  
-  if (typeof salaryText === 'string' && isNaN(Number(salaryText))) return salaryText;
-  if (!salaryText || Number(salaryText) === 0) return "Competitive";
-  return `₹${Number(salaryText).toLocaleString("en-IN")} a year`;
-};
 
+  if (typeof salaryText === "string" && isNaN(Number(salaryText))) return salaryText;
+  if (!salaryText || Number(salaryText) === 0) return "Competitive";
+  return `${currencySymbol}${Number(salaryText).toLocaleString(currency === "INR" ? "en-IN" : "en-US")} a year`;
+};
 const inferExperienceFromDescription = (description = "") => {
   const text = decodeHTMLEntities(description).replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ");
-  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|–|to)\s*(\d+)\+?)?\s*years?\b/gi)]
+  const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|â€“|to)\s*(\d+)\+?)?\s*years?\b/gi)]
     .filter((match) => /experience/i.test(text.slice(Math.max(0, match.index - 50), match.index + match[0].length + 80)));
   const buckets = new Set(matches.map((match) => {
     const minimum = Number(match[1]);
@@ -408,6 +435,16 @@ function CandidateDashboard() {
   const [totalJobs, setTotalJobs] = useState(0);
 
   const [selectedJob, setSelectedJob] = useState(null);
+  const [jobViewMode, setJobViewMode] = useState("grid");
+  const [isGridJobModalOpen, setIsGridJobModalOpen] = useState(false);
+  useEffect(() => {
+    if (!isGridJobModalOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsGridJobModalOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isGridJobModalOpen]);
   const [externalApplyToConfirm, setExternalApplyToConfirm] = useState(null);
   const [isConfirmingExternalApplication, setIsConfirmingExternalApplication] = useState(false);
   const pendingExternalApplyRef = useRef(null);
@@ -548,11 +585,7 @@ function CandidateDashboard() {
       setTotalPages(response?.totalPages || 1);
       setCurrentPage(response?.currentPage || 1);
 
-      if (rawJobs.length > 0) {
-        setSelectedJob(rawJobs[0]);
-      } else {
-        setSelectedJob(null);
-      }
+      setSelectedJob(null);
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobLoadError("Unable to load jobs. Please check your connection and retry.");
@@ -571,6 +604,15 @@ function CandidateDashboard() {
       setAppliedJobs(appliedIds);
     } catch (error) {
       console.error("Error fetching applications:", error);
+    }
+  };
+
+  const refreshRecommendedJobs = async () => {
+    try {
+      const response = await getRecommendedJobs();
+      setRecommendedJobsList(response?.jobs || []);
+    } catch (error) {
+      console.error("Failed to refresh personalized recommendations:", error);
     }
   };
 
@@ -649,7 +691,7 @@ function CandidateDashboard() {
     fetchAllInitialData();
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  // Profile completion nudge — runs once per account, ever, unless they
+  // Profile completion nudge â€” runs once per account, ever, unless they
   // complete enough of their profile that it would no longer trigger.
   // We only show this after onboarding has been completed.
   useEffect(() => {
@@ -958,7 +1000,8 @@ function CandidateDashboard() {
         reason: hideJobReason,
         details: hideJobDetails.trim(),
       });
-      toast.success("Job hidden from your feed");
+      await refreshRecommendedJobs();
+      toast.success("Job hidden. Your recommendations have been updated.");
       setJobs((prev) => prev.filter((job) => job._id !== pendingHideJob._id));
       setRecommendedJobsList((prev) => prev.filter((job) => job._id !== pendingHideJob._id));
       if (selectedJob?._id === pendingHideJob._id) {
@@ -1104,8 +1147,9 @@ function CandidateDashboard() {
   const handleFeedbackHide = async () => {
     if (!pendingFeedbackJob) return;
     try {
-      await hideJob(pendingFeedbackJob._id);
-      toast.success("Job hidden. You won't see this again.");
+      await hideJob(pendingFeedbackJob._id, { reason: "not_interested" });
+      await refreshRecommendedJobs();
+      toast.success("Job hidden. Your recommendations have been updated.");
       
       setJobs((prev) => prev.filter((j) => j._id !== pendingFeedbackJob._id));
       setRecommendedJobsList((prev) => prev.filter((j) => j._id !== pendingFeedbackJob._id));
@@ -1208,7 +1252,7 @@ function CandidateDashboard() {
     ? availableJobs.filter((job) => user?.savedJobs?.includes(job._id))
     : availableJobs;
 
-  // Final deduplication guard — ensures no duplicate _id regardless of source
+  // Final deduplication guard â€” ensures no duplicate _id regardless of source
   const seen = new Set();
   const displayedJobs = rawDisplayed.filter((job) => {
     if (!job._id || seen.has(job._id)) return false;
@@ -1220,6 +1264,7 @@ function CandidateDashboard() {
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
+    setIsGridJobModalOpen(jobViewMode === "grid");
     resetApplyState();
     setIsMobileDetailView(true);
     setIsDescriptionExpanded(false);
@@ -1231,14 +1276,9 @@ function CandidateDashboard() {
     setVisibleCount(JOBS_PER_PAGE);
   }, [submittedSearch, locationFilter, salaryFilter, companyFilter, activeTab]);
 
-  // Auto-sync selectedJob to the top item of the active tab if current selection is not present
   useEffect(() => {
-    if (!loading && displayedJobs.length > 0) {
-      if (!selectedJob || !displayedJobs.some((j) => j._id === selectedJob._id)) {
-        setSelectedJob(displayedJobs[0]);
-      }
-    }
-  }, [activeTab, loading]);
+    setSelectedJob(null);
+  }, [activeTab]);
 
   const profileCompletion = user ? calculateCompletion(user) : 0;
 
@@ -1404,7 +1444,7 @@ function CandidateDashboard() {
             <div className="candidate-welcome-header bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! ðŸ‘‹</h2>
               </div>
             </div>
           </div>
@@ -1547,20 +1587,19 @@ function CandidateDashboard() {
 
             <div className="candidate-desktop-filters hidden md:grid">
               <CustomSelect
-                options={[
-                  { value: "", label: "Any salary" },
-                  { value: "300000", label: "₹3 LPA+" },
-                  { value: "600000", label: "₹6 LPA+" },
-                  { value: "1000000", label: "₹10 LPA+" },
-                  { value: "1800000", label: "₹18 LPA+" },
-                  { value: "2500000", label: "₹25 LPA+" },
-                ]}
+                options={getSalaryOptions(user?.country)}
                 value={salaryFilter}
                 onChange={(e) => setSalaryFilter(e.target.value)}
-                placeholder="Any salary"
+                placeholder={`Any salary (${getCountryCurrency(user?.country).symbol})`}
                 aria-label="Filter by minimum salary"
+                borderless
+                mutedValue
+                maxMenuHeight={320}
+                className="candidate-filter-select"
               />
-              <CustomSelect
+              <div className="candidate-filter-select-with-icon">
+                <BriefcaseBusiness size={17} className="candidate-filter-prefix-icon" aria-hidden="true" />
+                <CustomSelect
                 options={[
                   { value: "All", label: "Any job type" },
                   { value: "Full-time", label: "Full-time" },
@@ -1572,7 +1611,12 @@ function CandidateDashboard() {
                 onChange={(e) => setEmploymentTypeFilter(e.target.value)}
                 placeholder="Any job type"
                 aria-label="Filter by job type"
-              />
+                borderless
+                mutedValue
+                maxMenuHeight={320}
+                className="candidate-filter-select candidate-filter-select-has-icon"
+                />
+              </div>
               <label className={`candidate-remote-filter ${isRemoteFilter === "true" ? "is-active" : ""}`}>
                 <input
                   type="checkbox"
@@ -1739,7 +1783,7 @@ function CandidateDashboard() {
                     {applicationRecords.slice(0, 3).map((application) => (
                       <div key={application._id} className="flex items-center gap-3 px-5 py-4">
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-600"><BriefcaseBusiness size={18} /></span>
-                        <div className="min-w-0 flex-1"><p className="m-0 truncate text-sm font-bold text-slate-900">{application.job.title}</p><p className="mb-0 mt-1 truncate text-xs text-slate-500">{application.job.company || "Company"}{application.createdAt ? ` · Applied ${new Date(application.createdAt).toLocaleDateString()}` : ""}</p></div>
+                        <div className="min-w-0 flex-1"><p className="m-0 truncate text-sm font-bold text-slate-900">{application.job.title}</p><p className="mb-0 mt-1 truncate text-xs text-slate-500">{application.job.company || "Company"}{application.createdAt ? ` Â· Applied ${new Date(application.createdAt).toLocaleDateString()}` : ""}</p></div>
                         <StatusBadge status={application.status || "pending"} />
                       </div>
                     ))}
@@ -1765,7 +1809,7 @@ function CandidateDashboard() {
                       return (
                         <button key={job._id} type="button" onClick={() => openRecommendedJob(job)} className="group flex w-full items-center gap-3 rounded-xl border border-slate-100 bg-[#fffdfa] p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
                           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-brand-700"><BriefcaseBusiness size={17} /></span>
-                          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-900">{job.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{job.company || "Company"} · {job.location || "Location flexible"}</span></span>
+                          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-900">{job.title}</span><span className="mt-1 block truncate text-xs text-slate-500">{job.company || "Company"} Â· {job.location || "Location flexible"}</span></span>
                           <span className="shrink-0 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-brand-700">{match.score}% match</span>
                         </button>
                       );
@@ -1803,7 +1847,7 @@ function CandidateDashboard() {
                   onClick={() => setIsMobileSearchExpanded(false)}
                   aria-label="Close filters"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -1859,17 +1903,10 @@ function CandidateDashboard() {
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Pay / Salary</label>
                     <CustomSelect
-                      options={[
-                        { value: "", label: "Any Pay / Salary" },
-                        { value: "300000", label: "₹3 LPA+ ($40k+)" },
-                        { value: "600000", label: "₹6 LPA+ ($75k+)" },
-                        { value: "1000000", label: "₹10 LPA+ ($120k+)" },
-                        { value: "1800000", label: "₹18 LPA+ ($200k+)" },
-                        { value: "2500000", label: "₹25 LPA+ ($300k+)" }
-                      ]}
+                      options={getSalaryOptions(user?.country)}
                       value={salaryFilter}
                       onChange={(e) => setSalaryFilter(e.target.value)}
-                      placeholder="Any Pay"
+                      placeholder={`Any salary (${getCountryCurrency(user?.country).symbol})`}
                       className="w-full text-sm"
                     />
                   </div>
@@ -1956,15 +1993,19 @@ function CandidateDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className={`grid grid-cols-1 ${jobViewMode === "split" && selectedJob ? "lg:grid-cols-12" : ""} gap-6 items-start`}>
           {/* LEFT COLUMN: LISTING CONTAINER */}
-          <div data-tour="job-feed" className={`${isMobileDetailView ? "hidden lg:block" : "block"} lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)] overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
+          <div data-tour="job-feed" className={`${isMobileDetailView && jobViewMode === "split" ? "hidden lg:block" : "block"} ${jobViewMode === "split" && selectedJob ? "lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)]" : "w-full"} overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
             <div className="candidate-feed-heading">
               <div>
-                <p className="candidate-home-eyebrow">CURATED FOR YOU</p>
-                <h2>Explore opportunities</h2>
+                <p className="candidate-home-eyebrow">SEARCH RESULTS</p>
+                <h2>{totalJobs.toLocaleString()} verified jobs</h2>
+                <p className="m-0 mt-1 text-sm text-slate-500">Showing {displayedJobs.length ? (currentPage - 1) * JOBS_PER_PAGE + 1 : 0}–{Math.min(currentPage * JOBS_PER_PAGE, totalJobs)} of {totalJobs.toLocaleString()} jobs · Page {currentPage} of {totalPages}</p>
               </div>
-              <span>{displayedJobs.length} shown</span>
+              <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1">
+                <button type="button" aria-label="Grid view" aria-pressed={jobViewMode === "grid"} onClick={() => { setJobViewMode("grid"); setIsGridJobModalOpen(false); }} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "grid" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><Grid2X2 size={18} /></button>
+                <button type="button" aria-label="Jobs and description split view" title="Jobs and description split view" aria-pressed={jobViewMode === "split"} onClick={() => { if (!selectedJob && displayedJobs.length) setSelectedJob(displayedJobs[0]); setJobViewMode("split"); setIsGridJobModalOpen(false); }} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "split" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><PanelLeft size={19} strokeWidth={1.8} /></button>
+              </div>
             </div>
             {/* SEGMENTED CONTROL ROW */}
             <div className="mb-4" data-tour="recommended-toggle">
@@ -2058,10 +2099,12 @@ function CandidateDashboard() {
               />
             ) : (
               <>
-                <div className="space-y-3">
+                <div className={`grid grid-cols-1 ${jobViewMode === "grid" ? "lg:grid-cols-2" : ""} gap-4`}>
                   {visibleJobs.map((job) => {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
+                    const companyLogo = getCompanyLogo(job.company, job.companyLogo);
+                    const logoDomain = companyLogoDomains[(job.company || "").trim().toLowerCase()];
                     const matchInfo = calculateJobMatchScore(job, user);
                     const experienceLabel =
                       job.experienceRequired === "Fresher"
@@ -2085,15 +2128,17 @@ function CandidateDashboard() {
                             <h4 className="text-base font-extrabold text-slate-900 leading-snug tracking-tight mb-1 truncate group-hover:text-brand-600">
                               {job.title}
                             </h4>
-                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-medium">
-                              {job.companyLogo && (
-                                <img 
-                                  src={job.companyLogo} 
-                                  alt={job.company} 
-                                  className="w-[18px] h-[18px] object-contain rounded shrink-0"
-                                  onError={(e) => { e.target.style.display = 'none'; }}
-                                />
-                              )}
+                            <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-600 sm:text-sm">
+                              {companyLogo ? <img src={companyLogo} alt="" className="h-7 w-7 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-1" onError={(event) => {
+                                if (!event.currentTarget.dataset.fallback && logoDomain) {
+                                  event.currentTarget.dataset.fallback = "true";
+                                  event.currentTarget.src = `https://www.google.com/s2/favicons?domain=${logoDomain}&sz=128`;
+                                  return;
+                                }
+                                event.currentTarget.style.display = "none";
+                                if (event.currentTarget.nextElementSibling) event.currentTarget.nextElementSibling.style.display = "grid";
+                              }} /> : null}
+                              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-blue-50 text-xs font-bold text-brand-700 ${companyLogo ? "hidden" : ""}`}>{(job.company || "S").slice(0, 1).toUpperCase()}</span>
                               <p className="truncate m-0">
                                 {job.company} &bull; {job.location}
                               </p>
@@ -2136,7 +2181,7 @@ function CandidateDashboard() {
                         {job.salary || job.salaryMin ? (
                           <div className="mb-2.5">
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                              <span className="text-emerald-600 font-black">✓</span>
+                              <span className="text-emerald-600 font-black" aria-hidden="true">✓</span>
                               <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span>
                             </span>
                           </div>
@@ -2168,8 +2213,9 @@ function CandidateDashboard() {
                           {hasApplied && <StatusBadge status="applied" size="sm" />}
                         </div>
                         
-                        <div className="text-xs font-medium text-slate-400">
-                          {getRelativeTime(job.createdAt)}
+                        <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
+                          <span className="text-xs font-medium text-slate-500">{getRelativeTime(job.createdAt)}</span>
+                          <button type="button" onClick={(event) => { event.stopPropagation(); handleJobSelect(job); }} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">View</button>
                         </div>
                       </div>
                     );
@@ -2221,17 +2267,15 @@ function CandidateDashboard() {
           </div>
 
           {/* RIGHT COLUMN: DETAIL WORKSPACE */}
-          <div data-tour="job-details" className={`candidate-job-detail custom-scrollbar ${isMobileDetailView ? "fixed inset-0 z-[100] h-full bg-white p-4 overflow-y-auto" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm lg:h-[calc(100vh-88px)] overflow-y-auto flex flex-col`}>
+          {isGridJobModalOpen && jobViewMode === "grid" && selectedJob && (
+            <button type="button" aria-label="Close job details" onClick={() => setIsGridJobModalOpen(false)} className="fixed inset-0 z-[120] cursor-default border-0 bg-slate-950/35 p-0 backdrop-blur-sm" />
+          )}
+          <div data-tour="job-details" className={`${jobViewMode === "grid" && isGridJobModalOpen && selectedJob ? "candidate-job-detail job-details-modal fixed left-1/2 top-[54%] z-[130] flex h-[84vh] w-[min(92vw,980px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl" : jobViewMode === "split" && selectedJob ? `candidate-job-detail custom-scrollbar ${isMobileDetailView ? "fixed inset-0 z-[100] h-full bg-white p-4 overflow-y-auto" : "hidden"} lg:block lg:sticky lg:top-[76px] lg:z-auto lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm lg:h-[calc(100vh-88px)] overflow-y-auto flex flex-col` : "hidden"}`}>
             {selectedJob ? (
-              <div className="flex flex-col min-h-full">
+              <div className={`flex flex-col ${jobViewMode === "grid" && isGridJobModalOpen ? "min-h-0 flex-1 custom-scrollbar overflow-y-auto" : "min-h-full"}`}>
                 {/* Header section */}
                 <div className="candidate-job-detail-header p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
-                  <button 
-                    className="block lg:hidden text-brand-600 font-bold text-sm mb-3 bg-transparent border-0 cursor-pointer p-0"
-                    onClick={() => setIsMobileDetailView(false)}
-                  >
-                    &larr; Back to Jobs
-                  </button>
+                  {(isGridJobModalOpen || isMobileDetailView) && <button aria-label={isGridJobModalOpen ? "Close job details" : "Back to jobs"} className={`${isGridJobModalOpen ? "text-2xl leading-none" : "text-sm"} text-brand-600 font-bold mb-3 bg-transparent border-0 cursor-pointer p-0 self-start`} onClick={() => { setIsGridJobModalOpen(false); setIsMobileDetailView(false); }}>{isGridJobModalOpen ? "Ã—" : "â† Back to Jobs"}</button>}
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-1">
                     {selectedJob.title}
                   </h3>
@@ -2267,7 +2311,7 @@ function CandidateDashboard() {
                               <span className="text-xs font-bold text-slate-600">Matched Skills:</span>
                               {matchInfo.matchedSkills.map((sk) => (
                                 <span key={sk} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-brand-700 border border-blue-200">
-                                  ✓ {sk}
+                                  âœ“ {sk}
                                 </span>
                               ))}
                             </div>
@@ -2276,7 +2320,7 @@ function CandidateDashboard() {
                       );
                     })()}
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                      💼 <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
+                      ðŸ’¼ <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
                     </span>
                     {selectedJob.isExternal && (
                       <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
@@ -2291,7 +2335,7 @@ function CandidateDashboard() {
                         Qualifications: {[
                           selectedJob.educationRequired,
                           selectedJob.experienceRequired,
-                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" · ")}
+                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" Â· ")}
                       </span>
                     )}
 
@@ -2352,7 +2396,7 @@ function CandidateDashboard() {
                             className="p-2 text-slate-400 hover:text-rose-600 bg-transparent border-0 cursor-pointer font-bold"
                             onClick={resetApplyState}
                           >
-                            ✕
+                            âœ•
                           </button>
                         </div>
                       </div>
@@ -2439,12 +2483,12 @@ function CandidateDashboard() {
                           className="inline-flex items-center rounded-md border-0 bg-[#2563eb] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70 cursor-pointer"
                           onClick={handleTranslateJobDescription}
                         >
-                          {isTranslatingDescription ? "Translating to English…" : "Translate to English"}
+                          {isTranslatingDescription ? "Translating to Englishâ€¦" : "Translate to English"}
                         </button>
                       )}
                       {((selectedJob.isFullDescription || !isDescriptionSnippet(selectedJob.description)) && !isMisstructuredDescription(selectedJob.description)) && (
                         <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                          ✓ Complete Requisition
+                          âœ“ Complete Requisition
                         </span>
                       )}
                     </div>
@@ -2531,7 +2575,7 @@ function CandidateDashboard() {
                                       );
                                       setIsDescriptionExpanded(true);
                                       if (!isFullDescription) {
-                                        toast("The employer’s full details could not be retrieved. Please try again later.");
+                                        toast("The employerâ€™s full details could not be retrieved. Please try again later.");
                                       }
                                     } else {
                                       setIsDescriptionExpanded(true);
@@ -2548,7 +2592,7 @@ function CandidateDashboard() {
                                 setIsDescriptionExpanded(!isDescriptionExpanded);
                               }}
                             >
-                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less ∧" : "Show more ∨"}
+                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less âˆ§" : "Show more âˆ¨"}
                             </button>
                           )}
                         </>
@@ -2577,10 +2621,10 @@ function CandidateDashboard() {
               onClick={() => setShowProfileNudge(false)}
               aria-label="Close"
             >
-              ✕
+              âœ•
             </button>
 
-            <span className="text-4xl mb-3 block">📋</span>
+            <span className="text-4xl mb-3 block">ðŸ“‹</span>
             <h3 className="text-xl font-black text-slate-900 mb-2">Complete your profile to get matched</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5">
               Your profile is only <strong className="text-slate-900">{profileCompletion}% complete</strong>.
@@ -2720,7 +2764,7 @@ function CandidateDashboard() {
             </label>
             <textarea
               id="job-concern-details"
-              rows={4}
+              rows={6}
               maxLength={1500}
               value={concernDetails}
               onChange={(event) => setConcernDetails(event.target.value)}
@@ -2732,7 +2776,7 @@ function CandidateDashboard() {
             <button
               type="submit"
               disabled={!concernReason || isSubmittingConcern}
-              className="w-full rounded-xl border-0 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] py-3 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+              className="w-full rounded-xl border-0 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] py-3 text-sm font-bold text-white shadow-md transition-[filter,box-shadow] duration-200 hover:brightness-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-100 cursor-pointer"
             >
               {isSubmittingConcern ? "Submitting..." : "Submit concern"}
             </button>
@@ -2761,7 +2805,7 @@ function CandidateDashboard() {
             onClick={(event) => event.stopPropagation()}
           >
             <h3 id="hide-job-feedback-title" className="m-0 text-lg font-bold text-slate-900">
-              Why isn’t this job a fit?
+              Why isnâ€™t this job a fit?
             </h3>
             <p className="mb-4 mt-1 text-sm text-slate-600">
               Your feedback helps us improve your job recommendations.
@@ -2794,7 +2838,7 @@ function CandidateDashboard() {
               <textarea
                 value={hideJobDetails}
                 onChange={(event) => setHideJobDetails(event.target.value)}
-                placeholder="Tell us what didn’t match (required)"
+                placeholder="Tell us what didnâ€™t match (required)"
                 aria-label="Describe why this job is not a fit"
                 maxLength={500}
                 rows={3}
@@ -2832,7 +2876,7 @@ function CandidateDashboard() {
       {showFeedbackModal && pendingFeedbackJob && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[1000] flex items-center justify-center p-4 animate-fade-in" onClick={closeFeedbackModal}>
           <div className="w-full max-w-md bg-white rounded-3xl p-7 text-center relative shadow-2xl border border-slate-100 animate-slide-in-right" onClick={(e) => e.stopPropagation()}>
-            <span className="text-4xl mb-3 block">👋</span>
+            <span className="text-4xl mb-3 block">ðŸ‘‹</span>
             <h3 className="text-xl font-black text-slate-900 mb-2">Welcome back!</h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
               Did you apply for the <strong className="text-slate-900">{pendingFeedbackJob.title}</strong> role at {pendingFeedbackJob.company}?
