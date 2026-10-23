@@ -1139,13 +1139,17 @@ const getFullJobDescription = asyncHandler(async (req, res) => {
   const {
     ensureFullJobDescription,
     isDescriptionSnippet,
+    isReferralAlertDescription,
   } = require("../services/fullDescriptionService");
+  const isReferralAlert = isReferralAlertDescription(job.description);
   const fullDescription = await ensureFullJobDescription(job);
+  const isSourceVerified = isReferralAlert && Boolean(fullDescription);
 
   res.status(200).json({
     jobId: job._id,
-    description: fullDescription || job.description,
+    description: fullDescription || (isReferralAlert ? "" : job.description),
     isFullDescription: !isDescriptionSnippet(fullDescription),
+    isSourceVerified,
   });
 });
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
 import axios from "axios";
 import CustomSelect from "../../Components/CustomSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
@@ -34,6 +35,7 @@ import {
   ChevronRight as ChevronRightIcon,
   ArrowUpRight,
   BriefcaseBusiness,
+  Check,
   Bookmark,
   FileText,
   UserRound,
@@ -78,6 +80,10 @@ const getCompanyLogo = (company, logo) => {
     alma31: "https://unavatar.io/almapay.com",
     openai: "https://unavatar.io/openai.com",
     graphcore: "https://unavatar.io/graphcore.ai",
+    "standard chartered bank": "https://unavatar.io/sc.com",
+    papigen: "https://unavatar.io/papigen.com",
+    "atharv consulting": "https://unavatar.io/atharvconsulting.in",
+    "atharv consultings": "https://unavatar.io/atharvconsulting.in",
   };
   return knownLogos[name] && (!logo || logo.includes("ui-avatars.com")) ? knownLogos[name] : logo;
 };
@@ -86,6 +92,10 @@ const companyLogoDomains = {
   alma31: "almapay.com",
   openai: "openai.com",
   graphcore: "graphcore.ai",
+  "standard chartered bank": "sc.com",
+  papigen: "papigen.com",
+  "atharv consulting": "atharvconsulting.in",
+  "atharv consultings": "atharvconsulting.in",
 };
 
 const getRelativeTime = (dateString) => {
@@ -103,6 +113,7 @@ const isDescriptionSnippet = (description) => {
     isMisstructuredDescription(text) ||
     text.length < 350 ||
     text.endsWith("...") ||
+    text.endsWith("…") ||
     text.endsWith("â€¦") ||
     /\band\s*\.\.\.$/i.test(text) ||
     text.includes("read more on career portal") ||
@@ -127,6 +138,9 @@ const isMisstructuredDescription = (description) => {
       ))
   );
 };
+
+const isReferralAlertDescription = (description) =>
+  /\breferral\s+alert\s*:/i.test(String(description || "").replace(/<[^>]*>/g, " "));
 
 const alignWhoWeAreHeading = (html) => {
   const doc = new DOMParser().parseFromString(DOMPurify.sanitize(html), "text/html");
@@ -733,33 +747,40 @@ function CandidateDashboard() {
 
   // Auto-expand snippet descriptions onsite so candidates never have to leave SkillBridge
   useEffect(() => {
-    if (!selectedJob?._id) return;
+    if (!selectedJob?._id || selectedJob.descriptionUnavailable) return;
 
+    const isReferralAlert = isReferralAlertDescription(selectedJob.description);
     const isTruncatedSnippet = isDescriptionSnippet(selectedJob.description);
 
-    if (isTruncatedSnippet && (!selectedJob.isFullDescription || isMisstructuredDescription(selectedJob.description))) {
+    if (isReferralAlert || isTruncatedSnippet) {
       let isCancelled = false;
       setIsExpandingDescription(true);
 
       getFullJobDescriptionAPI(selectedJob._id)
         .then((res) => {
-          if (!isCancelled && res?.description) {
+          if (!isCancelled && res?.jobId) {
+            const description = res.isSourceVerified
+              ? res.description
+              : isReferralAlert
+                ? ""
+                : res.description || selectedJob.description;
+            const descriptionUnavailable = isReferralAlert && !res.isSourceVerified;
             setSelectedJob((prev) =>
               prev && prev._id === res.jobId
-                ? { ...prev, description: res.description, isFullDescription: res.isFullDescription === true }
+                ? { ...prev, description, isFullDescription: res.isFullDescription === true, descriptionSourceVerified: res.isSourceVerified === true, descriptionUnavailable }
                 : prev
             );
             setJobs((prevJobs) =>
               prevJobs.map((j) =>
                 j._id === res.jobId
-                  ? { ...j, description: res.description, isFullDescription: res.isFullDescription === true }
+                  ? { ...j, description, isFullDescription: res.isFullDescription === true, descriptionSourceVerified: res.isSourceVerified === true, descriptionUnavailable }
                   : j
               )
             );
             setRecommendedJobsList((prevRec) =>
               prevRec.map((j) =>
                 j._id === res.jobId
-                  ? { ...j, description: res.description, isFullDescription: res.isFullDescription === true }
+                  ? { ...j, description, isFullDescription: res.isFullDescription === true, descriptionSourceVerified: res.isSourceVerified === true, descriptionUnavailable }
                   : j
               )
             );
@@ -776,10 +797,10 @@ function CandidateDashboard() {
         isCancelled = true;
       };
     }
-  }, [selectedJob?._id]);
+  }, [selectedJob?._id, selectedJob?.description, selectedJob?.isFullDescription, selectedJob?.descriptionUnavailable]);
 
   useEffect(() => {
-    if (!selectedJob?._id || !selectedJob.description) return;
+    if (!selectedJob?._id || !selectedJob.description || isReferralAlertDescription(selectedJob.description)) return;
     let isCancelled = false;
     const { _id, description } = selectedJob;
     setEnglishDescription(null);
@@ -1261,6 +1282,22 @@ function CandidateDashboard() {
   });
 
   const visibleJobs = displayedJobs;
+
+  const changeJobView = (mode) => {
+    const updateView = () => {
+      if (mode === "split" && !selectedJob && displayedJobs.length) {
+        setSelectedJob(displayedJobs[0]);
+      }
+      setJobViewMode(mode);
+      setIsGridJobModalOpen(false);
+    };
+
+    if (typeof document.startViewTransition === "function") {
+      document.startViewTransition(() => flushSync(updateView));
+    } else {
+      updateView();
+    }
+  };
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
@@ -1993,7 +2030,7 @@ function CandidateDashboard() {
           </div>
         )}
 
-        <div className={`grid grid-cols-1 ${jobViewMode === "split" && selectedJob ? "lg:grid-cols-12" : ""} gap-6 items-start`}>
+        <div className={`candidate-results-layout grid grid-cols-1 ${jobViewMode === "split" && selectedJob ? "lg:grid-cols-12" : ""} gap-6 items-start`}>
           {/* LEFT COLUMN: LISTING CONTAINER */}
           <div data-tour="job-feed" className={`${isMobileDetailView && jobViewMode === "split" ? "hidden lg:block" : "block"} ${jobViewMode === "split" && selectedJob ? "lg:col-span-5 lg:sticky lg:top-[76px] lg:h-[calc(100vh-88px)]" : "w-full"} overflow-y-auto pr-0 lg:pr-2 pb-2 space-y-4 custom-scrollbar`}>
             <div className="candidate-feed-heading">
@@ -2003,8 +2040,8 @@ function CandidateDashboard() {
                 <p className="m-0 mt-1 text-sm text-slate-500">Showing {displayedJobs.length ? (currentPage - 1) * JOBS_PER_PAGE + 1 : 0}–{Math.min(currentPage * JOBS_PER_PAGE, totalJobs)} of {totalJobs.toLocaleString()} jobs · Page {currentPage} of {totalPages}</p>
               </div>
               <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1">
-                <button type="button" aria-label="Grid view" aria-pressed={jobViewMode === "grid"} onClick={() => { setJobViewMode("grid"); setIsGridJobModalOpen(false); }} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "grid" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><Grid2X2 size={18} /></button>
-                <button type="button" aria-label="Jobs and description split view" title="Jobs and description split view" aria-pressed={jobViewMode === "split"} onClick={() => { if (!selectedJob && displayedJobs.length) setSelectedJob(displayedJobs[0]); setJobViewMode("split"); setIsGridJobModalOpen(false); }} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "split" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><PanelLeft size={19} strokeWidth={1.8} /></button>
+                <button type="button" aria-label="Grid view" aria-pressed={jobViewMode === "grid"} onClick={() => changeJobView("grid")} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "grid" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><Grid2X2 size={18} /></button>
+                <button type="button" aria-label="Jobs and description split view" title="Jobs and description split view" aria-pressed={jobViewMode === "split"} onClick={() => changeJobView("split")} className={`grid h-9 w-9 place-items-center rounded-xl border-0 transition ${jobViewMode === "split" ? "bg-slate-100 text-slate-900" : "bg-white text-slate-500 hover:bg-slate-50"}`}><PanelLeft size={19} strokeWidth={1.8} /></button>
               </div>
             </div>
             {/* SEGMENTED CONTROL ROW */}
@@ -2099,7 +2136,7 @@ function CandidateDashboard() {
               />
             ) : (
               <>
-                <div className={`grid grid-cols-1 ${jobViewMode === "grid" ? "lg:grid-cols-2" : ""} gap-4`}>
+                <div className={`candidate-job-results-grid grid grid-cols-1 ${jobViewMode === "grid" ? "lg:grid-cols-2" : ""} gap-4`}>
                   {visibleJobs.map((job) => {
                     const isSelected = selectedJob?._id === job._id;
                     const hasApplied = appliedJobs.includes(job._id);
@@ -2275,7 +2312,7 @@ function CandidateDashboard() {
               <div className={`flex flex-col ${jobViewMode === "grid" && isGridJobModalOpen ? "min-h-0 flex-1 custom-scrollbar overflow-y-auto" : "min-h-full"}`}>
                 {/* Header section */}
                 <div className="candidate-job-detail-header p-6 border-b border-slate-200 bg-white shrink-0 shadow-2xs z-10">
-                  {(isGridJobModalOpen || isMobileDetailView) && <button aria-label={isGridJobModalOpen ? "Close job details" : "Back to jobs"} className={`${isGridJobModalOpen ? "text-2xl leading-none" : "text-sm"} text-brand-600 font-bold mb-3 bg-transparent border-0 cursor-pointer p-0 self-start`} onClick={() => { setIsGridJobModalOpen(false); setIsMobileDetailView(false); }}>{isGridJobModalOpen ? "Ã—" : "â† Back to Jobs"}</button>}
+                  {(isGridJobModalOpen || isMobileDetailView) && <button aria-label={isGridJobModalOpen ? "Close job details" : "Back to jobs"} className={`${isGridJobModalOpen ? "text-2xl leading-none" : "text-sm"} text-brand-600 font-bold mb-3 bg-transparent border-0 cursor-pointer p-0 self-start`} onClick={() => { setIsGridJobModalOpen(false); setIsMobileDetailView(false); }}>{isGridJobModalOpen ? <>&times;</> : "← Back to Jobs"}</button>}
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight mb-1">
                     {selectedJob.title}
                   </h3>
@@ -2311,7 +2348,7 @@ function CandidateDashboard() {
                               <span className="text-xs font-bold text-slate-600">Matched Skills:</span>
                               {matchInfo.matchedSkills.map((sk) => (
                                 <span key={sk} className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-brand-700 border border-blue-200">
-                                  âœ“ {sk}
+                                  <Check size={12} aria-hidden="true" /> {sk}
                                 </span>
                               ))}
                             </div>
@@ -2320,7 +2357,7 @@ function CandidateDashboard() {
                       );
                     })()}
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                      ðŸ’¼ <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
+                      <BriefcaseBusiness size={13} aria-hidden="true" /> <span>{selectedJob.employmentType || selectedJob.role || "Full-time"}</span>
                     </span>
                     {selectedJob.isExternal && (
                       <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
@@ -2335,7 +2372,7 @@ function CandidateDashboard() {
                         Qualifications: {[
                           selectedJob.educationRequired,
                           selectedJob.experienceRequired,
-                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" Â· ")}
+                        ].filter((value) => value && value.toLowerCase() !== "not specified").join(" • ")}
                       </span>
                     )}
 
@@ -2480,15 +2517,16 @@ function CandidateDashboard() {
                         <button
                           type="button"
                           disabled={isTranslatingDescription}
+                          aria-busy={isTranslatingDescription}
                           className="inline-flex items-center rounded-md border-0 bg-[#2563eb] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-70 cursor-pointer"
                           onClick={handleTranslateJobDescription}
                         >
-                          {isTranslatingDescription ? "Translating to Englishâ€¦" : "Translate to English"}
+                          {isTranslatingDescription ? "Translating..." : "Translate to English"}
                         </button>
                       )}
-                      {((selectedJob.isFullDescription || !isDescriptionSnippet(selectedJob.description)) && !isMisstructuredDescription(selectedJob.description)) && (
+                      {(!selectedJob.descriptionUnavailable && (!isReferralAlertDescription(selectedJob.description) || selectedJob.descriptionSourceVerified) && !isDescriptionSnippet(selectedJob.description) && !isMisstructuredDescription(selectedJob.description)) && (
                         <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                          âœ“ Complete Requisition
+                          <Check size={13} aria-hidden="true" /> Complete Requisition
                         </span>
                       )}
                     </div>
@@ -2517,10 +2555,11 @@ function CandidateDashboard() {
                       const descriptionToDisplay = hasEnglishTranslation && !showOriginalDescription
                         ? englishDescription.text
                         : descText;
+                      const sourceDescriptionUnavailable = selectedJob.descriptionUnavailable ||
+                        (selectedJob.isExternal && isReferralAlertDescription(descText) && !selectedJob.descriptionSourceVerified);
                       const canExpandDescription =
                         selectedJob.isExternal &&
-                        (isMisstructuredDescription(descText) ||
-                          (!selectedJob.isFullDescription && isDescriptionSnippet(descText)));
+                        (isMisstructuredDescription(descText) || isDescriptionSnippet(descText));
 
                       return (
                         <>
@@ -2528,7 +2567,16 @@ function CandidateDashboard() {
                             !canExpandDescription || isDescriptionExpanded ? "max-h-none" : "max-h-96"
                           }`}>
                     <div className="job-description-content text-slate-700 space-y-4">
-                              {descriptionToDisplay
+                              {sourceDescriptionUnavailable ? (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-700">
+                                  <p className="m-0">We couldn’t retrieve a matching description from the job source, so this unverified referral text is hidden.</p>
+                                  {selectedJob.applyUrl && (
+                                    <a href={selectedJob.applyUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex font-semibold text-brand-700 hover:underline">
+                                      Open the original job source
+                                    </a>
+                                  )}
+                                </div>
+                              ) : descriptionToDisplay
                                 ? renderExternalDescription(descriptionToDisplay, selectedJob)
                                 : <p className="text-slate-400 italic">No description available.</p>
                               }
@@ -2546,8 +2594,7 @@ function CandidateDashboard() {
                                 if (
                                   !isDescriptionExpanded &&
                                   selectedJob.isExternal &&
-                                  (isMisstructuredDescription(selectedJob.description) ||
-                                    (!selectedJob.isFullDescription && isDescriptionSnippet(selectedJob.description)))
+                                  (isMisstructuredDescription(selectedJob.description) || isDescriptionSnippet(selectedJob.description))
                                 ) {
                                   setIsExpandingDescription(true);
                                   try {
@@ -2592,7 +2639,7 @@ function CandidateDashboard() {
                                 setIsDescriptionExpanded(!isDescriptionExpanded);
                               }}
                             >
-                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less âˆ§" : "Show more âˆ¨"}
+                              {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less ▲" : "Show more ▼"}
                             </button>
                           )}
                         </>

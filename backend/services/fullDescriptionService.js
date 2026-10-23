@@ -109,7 +109,7 @@ function isDescriptionSnippet(description) {
     isMisstructuredDescription(trimmed) ||
     trimmed.length < 350 ||
     trimmed.endsWith("...") ||
-    trimmed.endsWith("…") ||
+    trimmed.endsWith("â€¦") ||
     /\band\s*\.\.\.$/i.test(trimmed) ||
     /read more on career portal|preview snippet/i.test(trimmed)
   );
@@ -248,7 +248,7 @@ function asText(value) {
         value.value.value,
       ]
         .filter((part) => part !== undefined)
-        .join("–");
+        .join("â€“");
       return [value.currency, amount].filter(Boolean).join(" ");
     }
     return "";
@@ -266,7 +266,7 @@ function descriptionText(value) {
   const content = $("div").first();
   content.find("br").replaceWith("\n");
   content.find("li").each((_, item) => {
-    $(item).replaceWith(`\n• ${$(item).text()}\n`);
+    $(item).replaceWith(`\nâ€¢ ${$(item).text()}\n`);
   });
   content
     .find("p, h1, h2, h3, h4, h5, h6, div, section, tr")
@@ -342,54 +342,15 @@ function isMisstructuredDescription(description) {
   );
 }
 
-function structuredSection(description, title) {
-  const $ = cheerio.load(description || "");
-  let value = "";
-  $("h3").each((_, heading) => {
-    if ($(heading).text().trim().toLowerCase() === title.toLowerCase()) {
-      value = $(heading)
-        .nextUntil("h3")
-        .toArray()
-        .map((element) => $.html(element))
-        .join("");
-    }
-  });
-  return value;
-}
-
-function readStoredStructuredDetails(description) {
-  const section = (title) => {
-    const value = descriptionText(structuredSection(description, title));
-    return /^(?:undefined|null|not specified in the employer posting\.?)$/i.test(
-      value,
-    )
-      ? ""
-      : value;
-  };
-  const roleSummary = section("Role Summary");
-  return {
-    title: section("Standard Job Title"),
-    description: /^(?:required|undefined|null)$/i.test(roleSummary)
-      ? ""
-      : roleSummary,
-    responsibilities: section("Key Responsibilities"),
-    qualifications: section("Required Qualifications"),
-    preferredQualifications: section("Preferred Qualifications"),
-    compensation: section("Compensation and Benefits"),
-    workArrangement: section("Work Arrangement and Location"),
-    culture: section("Company Culture and Values"),
-  };
-}
-
 function toList(value) {
   if (!value) return [];
   const items = (Array.isArray(value) ? value : [value])
     .flatMap((entry) =>
       entry == null
         ? []
-        : String(entry).split(/\n+|(?<=[.!?])\s+|;\s+|[•●▪]\s*/),
+        : String(entry).split(/\n+|(?<=[.!?])\s+|;\s+|[â€¢â—â–ª]\s*/),
     )
-    .map((item) => item.replace(/^\s*[-*•●▪]\s*/, "").trim())
+    .map((item) => item.replace(/^\s*[-*â€¢â—â–ª]\s*/, "").trim())
     .filter(
       (item) =>
         item &&
@@ -440,7 +401,9 @@ function scrapeExternalPosting(html) {
   }
 
   return {
+    isJobPosting: Boolean(posting),
     title: asText(posting?.title),
+    company: asText(posting?.hiringOrganization?.name),
     description: description.slice(0, 16000),
     responsibilities: descriptionText(posting?.responsibilities),
     qualifications: descriptionText(posting?.qualifications),
@@ -471,6 +434,32 @@ function scrapeExternalPosting(html) {
       .filter(Boolean)
       .join(". "),
   };
+}
+
+function isReferralAlertDescription(description) {
+  return /\breferral\s+alert\s*:/i.test(String(description || "").replace(/<[^>]*>/g, " "));
+}
+
+function matchesJobPosting(job, details) {
+  if (!details?.isJobPosting || !details.title || !details.description) return false;
+
+  const words = (value) => String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 1 && !["and", "the", "for", "with"].includes(word));
+  const expectedTitle = words(job.title);
+  const actualTitle = new Set(words(details.title));
+  const titleMatches = expectedTitle.filter((word) => actualTitle.has(word)).length;
+  const requiredTitleMatches = expectedTitle.length > 3 ? 2 : 1;
+  if (titleMatches < requiredTitleMatches) return false;
+
+  if (job.company && details.company) {
+    const expectedCompany = words(job.company);
+    const actualCompany = new Set(words(details.company));
+    if (!expectedCompany.some((word) => actualCompany.has(word))) return false;
+  }
+  return details.description.length > 120;
 }
 
 function buildStructuredDescription(job, details) {
@@ -522,89 +511,6 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-async function generateDetailsWithAI(job) {
-  if (!hasApiKey("GEMINI") && !hasApiKey("GROQ")) return null;
-
-  const prompt = `Act as an expert enterprise technical recruiter. A job posting snippet from ${job.company || "the hiring employer"} was truncated by an aggregator:
-Job Title: ${job.title}
-Company: ${job.company || "Hiring Employer"}
-Location: ${job.location || "Hybrid / Remote"}
-Skills: ${(job.skillsRequired || []).join(", ") || "Technical and analytical skills"}
-Salary: ${job.salary || "Competitive Market Rate"}
-Available Snippet: "${(job.description || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1200)}"
-
-Reconstruct and expand this snippet into a full, detailed, professional enterprise job requisition.
-Return ONLY valid JSON matching this schema:
-{
-  "roleSummary": "2-3 comprehensive paragraphs describing the mission, scope, team impact, and day-to-day focus of the role",
-  "responsibilities": ["6 to 8 clear, actionable, and detailed bullet points for key responsibilities and deliverables"],
-  "qualifications": ["6 to 8 bullet points covering required qualifications, hands-on technical skills, tools, and experience"],
-  "preferredQualifications": ["3 to 4 bullet points covering preferred or nice-to-have qualifications"],
-  "workArrangement": "${job.isRemote ? "Remote" : (job.location || "Hybrid / On-site")}",
-  "culture": "Collaborative, innovation-driven culture committed to professional growth and continuous learning.",
-  "eeoStatement": "${job.company || "The employer"} is an equal opportunity employer committed to diversity, equity, and inclusion."
-}`;
-
-  if (hasApiKey("GEMINI")) {
-    const geminiModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
-    for (const model of geminiModels) {
-      try {
-        const jsonText = await withApiKey("GEMINI", async (apiKey) => {
-          const ai = new GoogleGenAI({ apiKey });
-          const resp = await ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              temperature: 0.2,
-            },
-          });
-          return resp.text || resp.candidates?.[0]?.content?.parts?.[0]?.text;
-        });
-        if (jsonText) {
-          const parsed = JSON.parse(jsonText.trim());
-          if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
-            return parsed;
-          }
-        }
-      } catch (err) {
-        console.warn(`[FullDescriptionService] Gemini (${model}) failed:`, err.message);
-      }
-    }
-  }
-
-  if (hasApiKey("GROQ")) {
-    const groqModels = ["openai/gpt-oss-120b", "groq/compound", "llama-3.3-70b-versatile"];
-    for (const model of groqModels) {
-      try {
-        const jsonText = await withApiKey("GROQ", async (apiKey) => {
-          const resp = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-              model,
-              messages: [{ role: "user", content: prompt }],
-              response_format: { type: "json_object" },
-              temperature: 0.2,
-            },
-            { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, timeout: 10000 }
-          );
-          return resp.data?.choices?.[0]?.message?.content;
-        });
-        if (jsonText) {
-          const parsed = JSON.parse(jsonText.trim());
-          if (parsed && (parsed.roleSummary || parsed.responsibilities)) {
-            return parsed;
-          }
-        }
-      } catch (err) {
-        console.warn(`[FullDescriptionService] Groq (${model}) failed:`, err.message);
-      }
-    }
-  }
-
-  return null;
 }
 
 async function translateDescriptionToEnglish(description) {
@@ -668,10 +574,11 @@ async function ensureEnglishDescription(job) {
 
 async function ensureFullJobDescription(job) {
   if (!job) return null;
-  const needsRepair = isMisstructuredDescription(job.description);
+  const referralAlert = isReferralAlertDescription(job.description);
+  const needsRepair = isMisstructuredDescription(job.description) || referralAlert;
   if (
     !needsRepair &&
-    (job.isFullDescription || !isDescriptionSnippet(job.description))
+    !isDescriptionSnippet(job.description)
   ) {
     return job.description;
   }
@@ -688,37 +595,18 @@ async function ensureFullJobDescription(job) {
     }
   }
 
-  if (needsRepair) {
-    const savedDetails = readStoredStructuredDetails(job.description);
-    details = Object.fromEntries(
-      Object.entries(savedDetails).map(([key, value]) => [
-        key,
-        details?.[key] || value,
-      ]),
-    );
-  }
-
-  let hasEmployerContent =
-    details &&
-    ((details.description || "").length > 120 ||
-      details.responsibilities ||
-      details.qualifications ||
-      details.skills);
-
-  // If scraping fails (403/captcha/no career posting), expand using AI
-  if (!hasEmployerContent) {
-    try {
-      const aiDetails = await generateDetailsWithAI(job);
-      if (aiDetails) {
-        details = aiDetails;
-        hasEmployerContent = true;
-      }
-    } catch (aiErr) {
-      console.warn("[FullDescriptionService] AI fallback failed:", aiErr.message);
+  const verifiedPosting = matchesJobPosting(job, details);
+  if (referralAlert) {
+    if (!verifiedPosting) return null;
+    const description = details.description;
+    if (job._id) {
+      const Job = require("../models/job");
+      await Job.findByIdAndUpdate(job._id, { description, isFullDescription: true });
     }
+    return description;
   }
 
-  if (!hasEmployerContent) return job.description;
+  if (!verifiedPosting) return job.description;
 
   const description = buildStructuredDescription(job, details);
 
@@ -734,10 +622,10 @@ async function ensureFullJobDescription(job) {
 
 module.exports = {
   isDescriptionSnippet,
+  isReferralAlertDescription,
   ensureFullJobDescription,
   scrapeExternalPosting,
   buildStructuredDescription,
   isMisstructuredDescription,
-  generateDetailsWithAI,
   ensureEnglishDescription,
 };
