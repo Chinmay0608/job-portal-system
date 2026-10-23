@@ -270,6 +270,19 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
     });
 
     it("returns 200 with expanded description when job exists", async () => {
+      axios.get.mockResolvedValueOnce({
+        status: 200,
+        headers: { "content-type": "text/html" },
+        data: `<html><script type="application/ld+json">${JSON.stringify({
+          "@type": "JobPosting",
+          title: "Software Engineer",
+          hiringOrganization: { name: "Google" },
+          description:
+            "<p>Develop enterprise systems and scalable web applications across distributed cloud environments.</p>",
+          responsibilities: "Develop enterprise systems",
+          qualifications: "Bachelor degree in CS or equivalent",
+        })}</script></html>`,
+      });
       const job = {
         _id: "job-200",
         title: "Software Engineer",

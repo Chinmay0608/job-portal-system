@@ -109,7 +109,7 @@ function isDescriptionSnippet(description) {
     isMisstructuredDescription(trimmed) ||
     trimmed.length < 350 ||
     trimmed.endsWith("...") ||
-    trimmed.endsWith("â€¦") ||
+    trimmed.endsWith("...") || trimmed.endsWith("\u2026") || trimmed.endsWith("…") ||
     /\band\s*\.\.\.$/i.test(trimmed) ||
     /read more on career portal|preview snippet/i.test(trimmed)
   );
@@ -248,7 +248,7 @@ function asText(value) {
         value.value.value,
       ]
         .filter((part) => part !== undefined)
-        .join("â€“");
+        .join("\u2013");
       return [value.currency, amount].filter(Boolean).join(" ");
     }
     return "";
@@ -266,7 +266,7 @@ function descriptionText(value) {
   const content = $("div").first();
   content.find("br").replaceWith("\n");
   content.find("li").each((_, item) => {
-    $(item).replaceWith(`\nâ€¢ ${$(item).text()}\n`);
+    $(item).replaceWith(`\n\u2022 ${$(item).text()}\n`);
   });
   content
     .find("p, h1, h2, h3, h4, h5, h6, div, section, tr")
@@ -348,9 +348,9 @@ function toList(value) {
     .flatMap((entry) =>
       entry == null
         ? []
-        : String(entry).split(/\n+|(?<=[.!?])\s+|;\s+|[â€¢â—â–ª]\s*/),
+        : String(entry).split(/\n+|(?<=[.!?])\s+|;\s+|[\u2022\u25cf\u25aa\u2043\u2219•●▪]\s*/),
     )
-    .map((item) => item.replace(/^\s*[-*â€¢â—â–ª]\s*/, "").trim())
+    .map((item) => item.replace(/^\s*[-*\u2022\u25cf\u25aa\u2043\u2219]\s*/, "").trim())
     .filter(
       (item) =>
         item &&
@@ -459,7 +459,7 @@ function matchesJobPosting(job, details) {
     const actualCompany = new Set(words(details.company));
     if (!expectedCompany.some((word) => actualCompany.has(word))) return false;
   }
-  return details.description.length > 120;
+  return details.description.length >= 60;
 }
 
 function buildStructuredDescription(job, details) {
