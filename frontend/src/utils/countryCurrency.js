@@ -28,7 +28,7 @@ const currencyByCountry = {
   "United Arab Emirates": { code: "AED", symbol: "د.إ", thresholds: [100000, 200000, 300000, 500000, 800000] },
   Singapore: { code: "SGD", symbol: "S$", thresholds: [40000, 75000, 120000, 200000, 300000] },
   "New Zealand": { code: "NZD", symbol: "NZ$", thresholds: [50000, 80000, 120000, 180000, 250000] },
-  Switzerland: { code: "CHF", symbol: "CHF ", thresholds: [50000, 80000, 120000, 180000, 250000] },
+  Switzerland: { code: "CHF", symbol: "CHF ", thresholds: [50000, 80000, 120000, 180000, 250000] },
   Japan: { code: "JPY", symbol: "¥", thresholds: [4000000, 6000000, 9000000, 15000000, 25000000] },
   China: { code: "CNY", symbol: "¥", thresholds: [100000, 200000, 300000, 500000, 800000] },
   Brazil: { code: "BRL", symbol: "R$", thresholds: [50000, 80000, 120000, 180000, 250000] },
@@ -47,7 +47,8 @@ export const getSalaryOptions = (country = "India") => {
   return [
     { value: "", label: `Any salary (${currency.symbol})` },
     ...currency.thresholds.map((amount, index) => ({
-      value: `${currency.code}:${amount}`,
+      // Send raw numeric value so it is 100% compatible with both legacy and new backend builds
+      value: String(amount),
       label: currency.labels?.[index] || `${currency.symbol}${formatter.format(amount)}+`,
     })),
   ];
