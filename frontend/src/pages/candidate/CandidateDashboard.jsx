@@ -329,6 +329,9 @@ const formatSalary = (salaryText, min, max, currency) => {
       if (num >= 1000) return `${currencySymbol}${Number((num / 1000).toFixed(1))}k`;
       return `${currencySymbol}${num}`;
     };
+    if (min === max) {
+      return formatShorthand(min);
+    }
     return `${formatShorthand(min)}\u2013${formatShorthand(max)}`;
   }
 
