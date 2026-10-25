@@ -42,3 +42,37 @@ describe("isLocalEnvironment Utility", () => {
     expect(isLocalEnvironment("")).toBe(false);
   });
 });
+
+const isTraoEnabled = (overrideHostname, overrideEnv) => {
+  const envFlag =
+    overrideEnv !== undefined
+      ? overrideEnv
+      : typeof process !== "undefined" && process?.env
+      ? process.env.VITE_TRAO_ENABLED
+      : undefined;
+
+  if (envFlag === "true") return true;
+  if (envFlag === "false") return false;
+  return isLocalEnvironment(overrideHostname);
+};
+
+describe("isTraoEnabled Utility", () => {
+  it("should return true in local development when env flag is not set", () => {
+    expect(isTraoEnabled("localhost", undefined)).toBe(true);
+    expect(isTraoEnabled("127.0.0.1", undefined)).toBe(true);
+    expect(isTraoEnabled("dev.local", undefined)).toBe(true);
+  });
+
+  it("should return false on production domains when env flag is not set", () => {
+    expect(isTraoEnabled("job-portal-system-alpha.vercel.app", undefined)).toBe(false);
+    expect(isTraoEnabled("skillbridge.com", undefined)).toBe(false);
+  });
+
+  it("should return true on production domains if VITE_TRAO_ENABLED is explicitly true", () => {
+    expect(isTraoEnabled("job-portal-system-alpha.vercel.app", "true")).toBe(true);
+  });
+
+  it("should return false in local development if VITE_TRAO_ENABLED is explicitly false", () => {
+    expect(isTraoEnabled("localhost", "false")).toBe(false);
+  });
+});
