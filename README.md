@@ -4,8 +4,8 @@
 
 [![SkillBridge CI Quality Gate](https://github.com/Chinmay0608/job-portal-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Chinmay0608/job-portal-system/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Demo-Vercel%20Live-brightgreen)](https://job-portal-system-alpha.vercel.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests: 20 passed](https://img.shields.io/badge/Tests-20%20Suites%20%7C%20108%20Passed-success)](backend/tests/)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Tests: 20 passed](https://img.shields.io/badge/Tests-20%20Suites%20%7C%20112%20Passed-success)](backend/tests/)
 
 SkillBridge is a modern MERN-stack job portal connecting **Candidates**, **Recruiters**, and **Administrators**. It integrates AI-powered voice career coaching, automated real-time mock interviews, multi-source job aggregation (Adzuna, Workday, career boards), verified company branding, and enterprise-grade security middleware.
 
@@ -21,12 +21,12 @@ SkillBridge is a modern MERN-stack job portal connecting **Candidates**, **Recru
 ## 🚀 Key Highlights & Capabilities
 
 - 🤖 **DHRUV Voice Coach**: Interactive career mentor supporting Speech-to-Text (STT) and Text-to-Speech (TTS) voice readback for job matching and resume coaching.
-- 🎙️ **AI Mock Interview Assistant**: Domain-tailored technical & behavioral interviews with real-time speech responses, scoring rubrics, and feedback powered by Gemini / Groq with heuristic fail-safes.
+- 🎙️ **TRAO AI Mock Interview Assistant (In Integration / Local Preview)**: Domain-tailored technical & behavioral interviews with real-time speech responses, scoring rubrics, and feedback powered by Gemini / Groq with heuristic fail-safes (gated in production; enabled locally).
 - 🔄 **Unified Job Aggregator Engine**: Automated aggregator syncing live openings across Adzuna, Workday, and employer portals with intelligent deduplication and SDE lifecycle management (Active / Stale / Dormant).
 - 📝 **Structured Description & Translation Engine**: Auto-repairs scraped postings into 9 standardized sections (`Role Summary`, `Key Responsibilities`, `Required Qualifications`, etc.) and translates foreign-language listings into clear English.
 - 🎨 **Verified Brand Logos**: High-fidelity company branding system resolving verified logos from Clearbit, Brandfetch, SVGL, and custom vector SVGs with strict fallback guards.
 - 🔒 **Enterprise Security Architecture**: Custom CSRF protection middleware, security audit logging, time-expiring signed Cloudinary resume URLs, and resilient STARTTLS email dispatching.
-- 🧪 **Comprehensive CI Quality Gate**: Automated dual-stage CI pipeline running 20 test suites (108 unit tests) and frontend linting/compilation before deployment.
+- 🧪 **Comprehensive CI Quality Gate**: Automated dual-stage CI pipeline running 20 test suites (112 unit tests) and frontend linting/compilation before deployment.
 
 ---
 
@@ -112,7 +112,7 @@ graph TD
 - **Application History**: Track requisition states (`Pending`, `Reviewed`, `Shortlisted`, `Rejected`) with real-time updates.
 - **Saved Opportunities**: Bookmark roles for later review with persistent candidate dashboards.
 - **DHRUV Voice Coach**: Ask career questions verbally and listen to tailored recommendations in real time.
-- **AI Mock Interview Room**: Practice technical questions with speech input, automated evaluation, and actionable feedback.
+- **TRAO AI Mock Interview Room (In Integration / Local Preview)**: Practice technical questions with speech input, automated evaluation, and actionable feedback.
 
 ### 2. 💼 Recruiter Portal
 - **Job Requisition Management**: Draft, publish, edit, feature, and close job postings.
@@ -131,7 +131,7 @@ graph TD
 The project enforces strict automated checks on every pull request and push to `main`:
 
 ```bash
-# Backend Test Suite (20 Test Suites | 108 Tests)
+# Backend Test Suite (20 Test Suites | 112 Tests)
 cd backend
 npm test -- --runInBand --forceExit
 
@@ -145,7 +145,7 @@ npm run build
 - **Security & CSRF**: Verifies header presence, CSRF token generation, origin validation, and state-changing verb protection.
 - **Full Description Service**: Tests JSON-LD extraction, HTML sanitization, section categorization, bullet list parsing, and employer posting validation.
 - **Sync & Lifecycle Engine**: Validates deduplication, crawl priority scheduling (Active / Stale / Dormant), and Workday plugin integration.
-- **AI Interview Assistant**: Tests fallback heuristics when AI APIs are unreachable, scoring accuracy, and domain question generation.
+- **TRAO AI Interview Assistant**: Tests fallback heuristics when AI APIs are unreachable, scoring accuracy, and domain question generation.
 
 ---
 
@@ -228,16 +228,16 @@ Visit `http://localhost:5173` to explore SkillBridge locally.
 
 ## 📄 License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
+Copyright (c) 2026 Chinmay Maheshwari. All Rights Reserved.
 
-You are free to use, copy, modify, merge, publish, distribute, and sublicense this software for personal or commercial projects, provided the original copyright notice is preserved.
+This software, source code, and associated documentation are **proprietary and confidential**. Unauthorized copying, modification, reproduction, or distribution of this software or any portion of it, via any medium, is strictly prohibited.
 
 ---
 
-## 🤝 Contact & Contributions
+## 🤝 Contact & Support
 
-Contributions, bug reports, and suggestions are welcome!
+For licensing, business inquiries, or platform support:
 
-- **Lead Developer**: [Chinmay Maheshwari](https://github.com/Chinmay0608)
+- **Lead Developer & Owner**: [Chinmay Maheshwari](https://github.com/Chinmay0608)
 - **Official Support**: [SkillBridge684@gmail.com](mailto:SkillBridge684@gmail.com)
 - **GitHub Repository**: [Chinmay0608/job-portal-system](https://github.com/Chinmay0608/job-portal-system)

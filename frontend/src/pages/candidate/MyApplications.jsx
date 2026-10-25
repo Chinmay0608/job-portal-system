@@ -10,6 +10,7 @@ import undrawResumeSvg from "../../assets/undraw_resume_jrgi.svg";
 import AiInterviewAssistant from "../../Components/AiInterviewAssistant";
 import { getApiBaseUrl, getStoredUser } from "../../Services/authUtils";
 import { Sparkles } from "lucide-react";
+import { isTraoEnabled } from "../../utils/envUtils";
 
 function MyApplications() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ function MyApplications() {
   const [fetchError, setFetchError] = useState("");
   const [filter, setFilter] = useState("All");
   const [prepJob, setPrepJob] = useState(null);
+  const showTraoPrep = isTraoEnabled();
 
   const API_URL = getApiBaseUrl();
 
@@ -243,15 +245,17 @@ function MyApplications() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPrepJob(application.job)}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-colors border-0 cursor-pointer"
-                        aria-label={`Create interview prep kit for ${application.job.title} at ${application.job.company}`}
-                      >
-                        <Sparkles size={16} />
-                        Prepare with TRAO AI
-                      </button>
+                      {showTraoPrep && (
+                        <button
+                          type="button"
+                          onClick={() => setPrepJob(application.job)}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-colors border-0 cursor-pointer"
+                          aria-label={`Create interview prep kit for ${application.job.title} at ${application.job.company}`}
+                        >
+                          <Sparkles size={16} />
+                          Prepare with TRAO AI
+                        </button>
+                      )}
                       {application.resume && (
                         <a
                           href={`${API_URL}/api/applications/${application._id}/resume?token=${localStorage.getItem("token") || ""}`}
@@ -302,7 +306,7 @@ function MyApplications() {
           </div>
         </div>
       )}
-      {prepJob && (
+      {showTraoPrep && prepJob && (
         <AiInterviewAssistant
           key={prepJob._id}
           user={getStoredUser()}
