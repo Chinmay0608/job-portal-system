@@ -160,6 +160,39 @@ const isMisstructuredDescription = (description) => {
 const isReferralAlertDescription = (description) =>
   /\breferral\s+alert\s*:/i.test(String(description || "").replace(/<[^>]*>/g, " "));
 
+const isDescriptionInEnglish = (text) => {
+  if (!text) return true;
+  const stripped = String(text)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim();
+  if (stripped.length < 20) return true;
+
+  const nonLatinMatches = stripped.match(/[^\u0000-\u024F\s\d.,!?'"()\-:;/@%&*+=#$€£₹[\]{}<>]/g);
+  const totalLetters = (stripped.match(/[\p{L}]/gu) || []).length;
+  if (totalLetters > 0 && nonLatinMatches && (nonLatinMatches.length / totalLetters) > 0.15) {
+    return false;
+  }
+
+  const englishTokens = new Set([
+    "the", "and", "to", "of", "in", "for", "is", "with", "that", "you", "your",
+    "will", "are", "be", "as", "at", "this", "have", "from", "or", "an", "we",
+    "our", "work", "team", "experience", "skills", "role", "requirements", "job"
+  ]);
+
+  const words = stripped.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+  if (words.length < 5) return true;
+
+  let englishCount = 0;
+  for (const word of words) {
+    if (englishTokens.has(word)) englishCount++;
+  }
+
+  const uniqueEnglishWords = new Set(words.filter(w => englishTokens.has(w))).size;
+  return uniqueEnglishWords >= 3 || (englishCount / words.length) >= 0.08;
+};
+
 const alignWhoWeAreHeading = (html) => {
   const doc = new DOMParser().parseFromString(DOMPurify.sanitize(html), "text/html");
   doc.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
@@ -821,7 +854,18 @@ function CandidateDashboard() {
   }, [selectedJob?._id, selectedJob?.description, selectedJob?.isFullDescription, selectedJob?.descriptionUnavailable]);
 
   useEffect(() => {
-    if (!selectedJob?._id || !selectedJob.description || isReferralAlertDescription(selectedJob.description)) return;
+    if (
+      !selectedJob?._id ||
+      !selectedJob.description ||
+      isReferralAlertDescription(selectedJob.description) ||
+      isDescriptionInEnglish(selectedJob.description)
+    ) {
+      setEnglishDescription(null);
+      setTranslationError("");
+      setShowOriginalDescription(false);
+      setIsTranslatingDescription(false);
+      return;
+    }
     let isCancelled = false;
     const { _id, description } = selectedJob;
     setEnglishDescription(null);
@@ -2534,7 +2578,7 @@ function CandidateDashboard() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
-                      {englishDescription?.jobId !== selectedJob._id && (
+                      {englishDescription?.jobId !== selectedJob._id && !isDescriptionInEnglish(selectedJob.description) && (
                         <button
                           type="button"
                           disabled={isTranslatingDescription}
@@ -2552,7 +2596,7 @@ function CandidateDashboard() {
                       )}
                     </div>
 
-                    {translationError && <p className="mb-3 text-xs text-rose-600" role="status">{translationError}</p>}
+                    {translationError && !isDescriptionInEnglish(selectedJob.description) && <p className="mb-3 text-xs text-rose-600" role="status">{translationError}</p>}
                     {englishDescription?.jobId === selectedJob._id && englishDescription.source === selectedJob.description && englishDescription.text !== selectedJob.description && (
                       <button
                         type="button"
