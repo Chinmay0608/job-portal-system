@@ -77,8 +77,20 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  if (!String(name ?? user.name ?? "").trim()) {
+    return res.status(400).json({ message: "Full Name is required" });
+  }
+
+  if (!String(user.email ?? "").trim()) {
+    return res.status(400).json({ message: "Email Address is required" });
+  }
+
   if (!String(location ?? user.location ?? "").trim()) {
     return res.status(400).json({ message: "Location is required" });
+  }
+
+  if (!String(experienceLevel ?? user.experienceLevel ?? "Fresher").trim()) {
+    return res.status(400).json({ message: "Experience Level is required" });
   }
 
   user.name = name || user.name;
