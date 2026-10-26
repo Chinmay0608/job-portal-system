@@ -559,7 +559,44 @@ async function translateDescriptionToEnglish(description) {
   return null;
 }
 
+function isDescriptionInEnglish(text) {
+  if (!text) return true;
+  const stripped = String(text)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim();
+  if (stripped.length < 20) return true;
+
+  const nonLatinMatches = stripped.match(/[^\u0000-\u024F\s\d.,!?'"()\-:;/@%&*+=#$€£₹[\]{}<>]/g);
+  const totalLetters = (stripped.match(/[\p{L}]/gu) || []).length;
+  if (totalLetters > 0 && nonLatinMatches && (nonLatinMatches.length / totalLetters) > 0.15) {
+    return false;
+  }
+
+  const englishTokens = new Set([
+    "the", "and", "to", "of", "in", "for", "is", "with", "that", "you", "your",
+    "will", "are", "be", "as", "at", "this", "have", "from", "or", "an", "we",
+    "our", "work", "team", "experience", "skills", "role", "requirements", "job"
+  ]);
+
+  const words = stripped.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+  if (words.length < 5) return true;
+
+  let englishCount = 0;
+  for (const word of words) {
+    if (englishTokens.has(word)) englishCount++;
+  }
+
+  const uniqueEnglishWords = new Set(words.filter(w => englishTokens.has(w))).size;
+  return uniqueEnglishWords >= 3 || (englishCount / words.length) >= 0.08;
+}
+
 async function ensureEnglishDescription(job) {
+  if (!job?.description) return null;
+  if (isDescriptionInEnglish(job.description)) {
+    return job.description;
+  }
   const hash = crypto.createHash("sha256").update("translation-v2:").update(job.description).digest("hex");
   if (job.descriptionEnglishSourceHash === hash && job.descriptionEnglish) {
     return job.descriptionEnglish;
