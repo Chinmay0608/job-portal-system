@@ -204,8 +204,20 @@ function CandidateProfile() {
   }, [user]);
 
   const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("Full Name is required");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Email Address is required");
+      return;
+    }
     if (!location.trim()) {
       toast.error("Location is required");
+      return;
+    }
+    if (!experienceLevel.trim()) {
+      toast.error("Experience Level is required");
       return;
     }
     try {
@@ -660,11 +672,12 @@ function CandidateProfile() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Full Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Full Name <span className="text-rose-600">*</span></label>
                 <input 
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
+                  required
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                   placeholder="Your full name"
                 />
@@ -672,7 +685,7 @@ function CandidateProfile() {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Email Address</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Email Address <span className="text-rose-600">*</span></label>
                 <input
                   type="email"
                   name="email"
@@ -680,6 +693,7 @@ function CandidateProfile() {
                   value={email}
                   disabled
                   readOnly
+                  required
                   className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-sm text-slate-500 outline-none cursor-not-allowed"
                 />
               </div>
@@ -734,7 +748,7 @@ function CandidateProfile() {
 
               {/* Experience Level */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Experience Level</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Experience Level <span className="text-rose-600">*</span></label>
                 <CustomSelect
                   options={[
                     { value: "Fresher", label: "Fresher / Entry Level" }, 
