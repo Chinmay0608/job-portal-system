@@ -12,6 +12,7 @@
 require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const Job = require("../models/job");
 const { resolveCompanyLogo, VERIFIED_ENTERPRISE_MAP } = require("../utils/companyLogoHelper");
@@ -66,6 +67,8 @@ function normalizeJobPayload(raw) {
   }
 
   const externalId = raw.externalId || `${company.replace(/[^a-z0-9]/gi, "").toUpperCase()}-${title.replace(/[^a-z0-9]/gi, "").toUpperCase()}-${Date.now().toString().slice(-4)}`;
+  const descriptionEnglish = raw.descriptionEnglish || description;
+  const descriptionEnglishSourceHash = crypto.createHash("sha256").update("translation-v2:").update(description).digest("hex");
 
   return {
     title,
@@ -81,14 +84,15 @@ function normalizeJobPayload(raw) {
     isActive: raw.isActive ?? true,
     companyLogo,
     description,
-    descriptionEnglish: raw.descriptionEnglish || `${company} is hiring for ${title} in ${location}.`,
+    descriptionEnglish,
+    descriptionEnglishSourceHash,
     isFullDescription: true,
     skillsRequired: Array.isArray(raw.skillsRequired) ? raw.skillsRequired : (raw.skills ? raw.skills.split(",").map(s => s.trim()) : []),
     educationRequired: raw.educationRequired || (batch ? `Graduating Batch ${batch}` : "B.Tech / B.E / MCA / Equivalent"),
     experienceRequired,
     source: raw.source || "REFERRAL_INGESTION",
     externalId,
-    employmentType: raw.employmentType || (/intern/i.test(title) ? "Internship" : "Full-Time"),
+    employmentType: raw.employmentType || (/intern/i.test(title) ? "Internship (+PPO)" : "Full-Time"),
     isRemote: raw.isRemote ?? /remote/i.test(location),
     domain: raw.domain || "Software Engineering",
     seniorityLevel: raw.seniorityLevel || (/intern/i.test(title) ? "Intern / Fresher" : "Junior / Entry-Level"),
@@ -126,13 +130,28 @@ async function ingestJobs(jobsList) {
       });
 
       if (existing) {
+        // Preserve rich existing fields if not explicitly overridden
+        if (!raw.description && existing.description && existing.description.length > job.description.length) {
+          job.description = existing.description;
+          job.descriptionEnglish = existing.description;
+          job.descriptionEnglishSourceHash = crypto.createHash("sha256").update("translation-v2:").update(existing.description).digest("hex");
+        }
+        if (!raw.skillsRequired && !raw.skills && existing.skillsRequired?.length) {
+          job.skillsRequired = existing.skillsRequired;
+        }
+        if (raw.salaryMin == null && existing.salaryMin != null) job.salaryMin = existing.salaryMin;
+        if (raw.salaryMax == null && existing.salaryMax != null) job.salaryMax = existing.salaryMax;
+        if (!raw.educationRequired && existing.educationRequired) job.educationRequired = existing.educationRequired;
+
         const updated = await Job.findByIdAndUpdate(existing._id, job, { returnDocument: "after" });
         console.log(`[UPDATED] ${job.company} - ${job.title} (ID: ${updated._id})`);
+        console.log(`          Apply URL: ${updated.applyUrl}`);
         console.log(`          Logo: ${job.companyLogo || "None"} | Salary: ${job.salary}`);
         results.updated++;
       } else {
         const created = await Job.create(job);
         console.log(`[CREATED] ${job.company} - ${job.title} (ID: ${created._id})`);
+        console.log(`          Apply URL: ${created.applyUrl}`);
         console.log(`          Logo: ${job.companyLogo || "None"} | Salary: ${job.salary}`);
         results.created++;
       }
