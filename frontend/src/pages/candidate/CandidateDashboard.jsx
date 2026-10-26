@@ -169,7 +169,7 @@ const isDescriptionInEnglish = (text) => {
     .trim();
   if (stripped.length < 20) return true;
 
-  const nonLatinMatches = stripped.match(/[^\u0000-\u024F\s\d.,!?'"()\-:;/@%&*+=#$€£₹[\]{}<>]/g);
+  const nonLatinMatches = stripped.match(/[^\u0020-\u024F\s\d.,!?'"()\-:;/@%&*+=#$€£₹[\]{}<>]/g);
   const totalLetters = (stripped.match(/[\p{L}]/gu) || []).length;
   if (totalLetters > 0 && nonLatinMatches && (nonLatinMatches.length / totalLetters) > 0.15) {
     return false;
