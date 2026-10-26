@@ -173,7 +173,8 @@ function CandidateProfile() {
         }
 
         if (appRes?.applications) {
-          setApplicationsCount(appRes.applications.length);
+          const validCount = appRes.applications.filter((app) => app && app.job).length;
+          setApplicationsCount(validCount);
         }
       } catch (err) {
         console.error("Failed to fetch fresh profile data:", err);

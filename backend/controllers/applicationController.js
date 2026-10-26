@@ -126,20 +126,27 @@ const getMyApplications = asyncHandler(async (req, res) => {
   const perPage = Number(limit) > 0 ? Number(limit) : 20;
 
   const query = { candidate: req.user.id };
-  const totalApplications = await Application.countDocuments(query);
 
-  const applications = await Application.find(query)
+  const allUserApps = await Application.find(query)
     .populate({
       path: "job",
       select: "title company location description salary salaryMin salaryMax salaryCurrency isExternal source companyLogo applyUrl domain skillsRequired experienceRequired",
     })
-    .skip((currentPage - 1) * perPage)
-    .limit(perPage);
+    .sort({ createdAt: -1 });
 
+  // Automatically prune orphaned applications whose job records no longer exist
+  const orphanedIds = allUserApps.filter((app) => !app.job).map((app) => app._id);
+  if (orphanedIds.length > 0) {
+    await Application.deleteMany({ _id: { $in: orphanedIds } });
+  }
+
+  const validApps = allUserApps.filter((app) => Boolean(app.job));
+  const totalApplications = validApps.length;
   const totalPages = Math.ceil(totalApplications / perPage) || 1;
+  const paginatedApps = validApps.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   res.status(200).json({ 
-    applications,
+    applications: paginatedApps,
     totalApplications,
     totalPages,
     currentPage,

@@ -480,7 +480,12 @@ const getProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const applicationsCount = await Application.countDocuments({ candidate: user._id });
+  const userApps = await Application.find({ candidate: user._id }).populate("job", "_id");
+  const orphanedIds = userApps.filter((app) => !app.job).map((app) => app._id);
+  if (orphanedIds.length > 0) {
+    await Application.deleteMany({ _id: { $in: orphanedIds } });
+  }
+  const applicationsCount = userApps.length - orphanedIds.length;
 
   res.status(200).json({
     user: {
@@ -550,7 +555,12 @@ const completeOnboarding = asyncHandler(async (req, res) => {
   user.hasCompletedOnboarding = true;
   await user.save();
 
-  const applicationsCount = await Application.countDocuments({ candidate: user._id });
+  const userApps = await Application.find({ candidate: user._id }).populate("job", "_id");
+  const orphanedIds = userApps.filter((app) => !app.job).map((app) => app._id);
+  if (orphanedIds.length > 0) {
+    await Application.deleteMany({ _id: { $in: orphanedIds } });
+  }
+  const applicationsCount = userApps.length - orphanedIds.length;
 
   res.status(200).json({
     message: "Onboarding complete",
