@@ -10,6 +10,9 @@ const asyncHandler = require("express-async-handler");
 const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 const Application = require("../models/Application");
 
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "5d";
+const COOKIE_MAX_AGE = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
+
 const formatUserDTO = (user, applicationsCount = 0) => ({
   _id: user._id,
   name: user.name,
@@ -64,14 +67,14 @@ const registerUser = asyncHandler(async (req, res) => {
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "3d" },
+    { expiresIn: JWT_EXPIRES_IN },
   );
 
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 3 * 24 * 60 * 60 * 1000,
+    maxAge: COOKIE_MAX_AGE,
   });
 
   res.status(201).json({
@@ -113,14 +116,14 @@ const loginUser = asyncHandler(async (req, res) => {
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "3d" },
+    { expiresIn: JWT_EXPIRES_IN },
   );
 
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 3 * 24 * 60 * 60 * 1000,
+    maxAge: COOKIE_MAX_AGE,
   });
 
   const applicationsCount = await Application.countDocuments({ candidate: user._id });
@@ -190,14 +193,14 @@ const googleLogin = asyncHandler(async (req, res) => {
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "3d" },
+    { expiresIn: JWT_EXPIRES_IN },
   );
 
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 3 * 24 * 60 * 60 * 1000,
+    maxAge: COOKIE_MAX_AGE,
   });
 
   res.status(200).json({

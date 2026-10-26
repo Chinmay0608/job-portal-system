@@ -7,7 +7,7 @@ function Security() {
       <p>This page describes security controls visible in the current SkillBridge application. It is not a certification or guarantee that every risk can be prevented.</p>
 
       <h2>1. Account security</h2>
-      <p>Passwords created through the email and password registration flow are hashed with bcrypt before they are stored. Login sessions use signed tokens with a three-day expiry. The server sets an HTTP-only authentication cookie, and the browser application also stores the token in localStorage to authorize API requests.</p>
+      <p>Passwords created through the email and password registration flow are hashed with bcrypt before they are stored. Login sessions use signed tokens with a five-day expiry. The server sets an HTTP-only authentication cookie, and the browser application also stores the token in localStorage to authorize API requests.</p>
 
       <h2>2. Access controls</h2>
       <p>Authenticated routes and role checks restrict access to account and recruiter features. Application resumes are made available to the candidate and the recruiter for the relevant job through an authorized route; the generated Cloudinary link expires after one hour.</p>
