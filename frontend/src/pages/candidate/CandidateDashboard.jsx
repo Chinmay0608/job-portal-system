@@ -2779,50 +2779,50 @@ function CandidateDashboard() {
             aria-modal="true"
             aria-labelledby="external-apply-confirm-title"
             onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-2xl sm:p-8"
+            className="relative w-full max-w-[420px] rounded-3xl border border-slate-200 bg-white p-7 shadow-2xl sm:p-9"
           >
             <button
               type="button"
               aria-label="Close"
               disabled={isConfirmingExternalApplication}
               onClick={() => handleConfirmExternalApplication(false)}
-              className="absolute right-4 top-4 border-0 bg-transparent p-1 text-slate-500 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
+              className="absolute right-4 top-4 border-0 bg-transparent p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-50 cursor-pointer rounded-full hover:bg-slate-100 transition-colors"
             >
-              <CloseIcon size={19} />
+              <CloseIcon size={18} />
             </button>
-            <div className="flex items-start gap-4 pr-5">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="mb-4 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2.5 shadow-xs">
                 {externalApplyToConfirm.companyLogo ? (
                   <img src={externalApplyToConfirm.companyLogo} alt="" className="h-full w-full object-contain" />
                 ) : (
-                  <BriefcaseBusiness size={24} className="text-blue-600" />
+                  <BriefcaseBusiness size={26} className="text-blue-600" />
                 )}
               </div>
-              <div>
-                <h2 id="external-apply-confirm-title" className="mb-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                  Have you applied?
-                </h2>
-                <p className="mb-6 text-sm leading-6 text-slate-500 sm:text-base">
-                  You opened the application page for <span className="font-semibold text-slate-800">{externalApplyToConfirm.title}</span> at <span className="font-semibold text-slate-800">{externalApplyToConfirm.company}</span>. Did you submit your application?
-                </p>
-              </div>
+              <h2 id="external-apply-confirm-title" className="mb-2.5 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+                Have you applied?
+              </h2>
+              <p className="text-sm leading-relaxed text-slate-500">
+                You opened the application page for <span className="font-semibold text-slate-800">{externalApplyToConfirm.title}</span> at <span className="font-semibold text-slate-800">{externalApplyToConfirm.company}</span>. Did you submit your application?
+              </p>
             </div>
-            <button
-              type="button"
-              disabled={isConfirmingExternalApplication}
-              onClick={() => handleConfirmExternalApplication(true)}
-              className="w-full rounded-xl border-0 bg-gradient-to-r from-blue-700 to-cyan-500 py-3 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
-            >
-              {isConfirmingExternalApplication ? "Updating..." : "Yes, I applied"}
-            </button>
-            <button
-              type="button"
-              disabled={isConfirmingExternalApplication}
-              onClick={() => handleConfirmExternalApplication(false)}
-              className="mt-2.5 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-100 disabled:opacity-50 cursor-pointer"
-            >
-              Not yet
-            </button>
+            <div className="flex flex-col gap-2.5">
+              <button
+                type="button"
+                disabled={isConfirmingExternalApplication}
+                onClick={() => handleConfirmExternalApplication(true)}
+                className="w-full rounded-xl border-0 bg-gradient-to-r from-blue-700 to-cyan-500 py-3.5 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:cursor-wait disabled:opacity-60 cursor-pointer transition-all active:scale-[0.99]"
+              >
+                {isConfirmingExternalApplication ? "Updating..." : "Yes, I applied"}
+              </button>
+              <button
+                type="button"
+                disabled={isConfirmingExternalApplication}
+                onClick={() => handleConfirmExternalApplication(false)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-100 disabled:opacity-50 cursor-pointer transition-all active:scale-[0.99]"
+              >
+                Not yet
+              </button>
+            </div>
           </div>
         </div>
       )}
