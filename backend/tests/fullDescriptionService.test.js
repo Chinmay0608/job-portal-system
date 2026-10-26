@@ -252,6 +252,27 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
         "• Strong knowledge of TypeScript.",
       );
     });
+
+    it("extracts Zoho Recruit embedded JSON postings and repairs synthetic $undefined placeholders", () => {
+      const zohoHtml = `<html>
+        <head><title>Digital Aicademy - System Developer intern - Remote Job</title></head>
+        <body>
+          <script>
+            var jobs = JSON.parse('[{\\x22Posting_Title\\x22:\\x22System Developer intern\\x22,\\x22Remote_Job\\x22:true,\\x22Industry\\x22:\\x22IT Services\\x22,\\x22Work_Experience\\x22:\\x221-3 years\\x22,\\x22Job_Type\\x22:\\x22Full time\\x22,\\x22Job_Description\\x22:\\x22<h2>Summary</h2><div>We are seeking a motivated System Developer Intern.</div><h2>Responsibilities</h2><ul><li>Develop Python and Zoho apps.</li></ul><h2>Requirements</h2><ul><li>Proficiency in Python and SQL.</li></ul>\\x22}]');
+          </script>
+        </body>
+      </html>`;
+      const details = scrapeExternalPosting(zohoHtml);
+      expect(details.isJobPosting).toBe(true);
+      expect(details.title).toBe("System Developer intern");
+      expect(details.company).toBe("Digital Aicademy");
+      expect(details.description).toContain("We are seeking a motivated System Developer Intern.");
+      expect(details.description).toContain("• Develop Python and Zoho apps.");
+
+      const syntheticPlaceholder =
+        "## About the Role\nAiCademy is hiring for **System Developer Intern** in the $undefined space. Location: Remote (Remote). Type: Internship.\n\n## How to Apply\nUse the Apply button to open the employer's official application page.";
+      expect(isDescriptionSnippet(syntheticPlaceholder)).toBe(true);
+    });
   });
 
   describe("getFullJobDescription Controller", () => {

@@ -25,6 +25,7 @@ const DESCRIPTION_HEADINGS = [
       "job description",
       "role summary",
       "position summary",
+      "summary",
       "about the role",
       "about the position",
       "overview",
@@ -299,11 +300,31 @@ function parseDescriptionSections(description) {
 
   for (let index = 0; index < matches.length; index += 1) {
     const match = matches[index];
+    const matchedHeadingText = match[2];
+    const fullMatchText = match[0];
+    const isSingleWord = !/\s/.test(matchedHeadingText.trim());
+    const startsOnNewLine = index === 0 && match.index === 0 || /\n/.test(match[1]);
+    const hasColonOrTrailingNewline = /:/.test(fullMatchText) || /\n/.test(fullMatchText.slice(match[1].length + matchedHeadingText.length));
+    if (isSingleWord && (!startsOnNewLine || !hasColonOrTrailingNewline) && !/:/.test(fullMatchText)) {
+      continue;
+    }
     const heading = headings.find(
-      (item) => item.heading.toLowerCase() === match[2].toLowerCase(),
+      (item) => item.heading.toLowerCase() === matchedHeadingText.toLowerCase(),
     );
     const start = match.index + match[0].length;
-    const end = matches[index + 1]?.index ?? text.length;
+    let nextValidIndex = index + 1;
+    while (nextValidIndex < matches.length) {
+      const nextM = matches[nextValidIndex];
+      const nextSingle = !/\s/.test(nextM[2].trim());
+      const nextNewLine = /\n/.test(nextM[1]);
+      const nextColonOrNL = /:/.test(nextM[0]) || /\n/.test(nextM[0].slice(nextM[1].length + nextM[2].length));
+      if (nextSingle && (!nextNewLine || !nextColonOrNL) && !/:/.test(nextM[0])) {
+        nextValidIndex += 1;
+      } else {
+        break;
+      }
+    }
+    const end = matches[nextValidIndex]?.index ?? text.length;
     const value = text.slice(start, end).trim();
     if (value)
       sections[heading.key] = [sections[heading.key], value]
@@ -321,7 +342,15 @@ function parseDescriptionSections(description) {
 }
 
 function isMisstructuredDescription(description) {
-  const $ = cheerio.load(description || "");
+  const raw = String(description || "");
+  if (
+    /\$(?:undefined|null)\b/i.test(raw) ||
+    /is hiring for [\s\S]{1,120}? in the [\s\S]{1,60}? space\./i.test(raw) ||
+    /Use the Apply button to open the employer's official application page\./i.test(raw)
+  ) {
+    return true;
+  }
+  const $ = cheerio.load(raw);
   let roleSummary = "";
   let hasInvalidSection = false;
   $("h3").each((_, heading) => {
@@ -361,6 +390,41 @@ function toList(value) {
   return [...new Set(items)];
 }
 
+function findZohoRecruitPosting($, html) {
+  const match = String(html || "").match(/var\s+jobs\s*=\s*JSON\.parse\('((?:\\'|[^'])+)'\)/);
+  if (!match) return null;
+  try {
+    const decoded = match[1]
+      .replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/\\'/g, "'")
+      .replace(/\\"/g, '"')
+      .replace(/\\-/g, "-")
+      .replace(/\\\//g, "/")
+      .replace(/\\\\/g, "\\");
+    const jobs = JSON.parse(decoded);
+    const zohoJob = Array.isArray(jobs) ? jobs[0] : jobs;
+    if (!zohoJob || typeof zohoJob !== "object") return null;
+    const pageTitle = $("meta[property='og:title']").attr("content") || $("title").text() || "";
+    const companyFromTitle = pageTitle.includes(" - ") ? pageTitle.split(" - ")[0].trim() : "";
+    return {
+      "@type": "JobPosting",
+      title: zohoJob.Posting_Title || zohoJob.Job_Opening_Name,
+      hiringOrganization: {
+        name: zohoJob.Account_Name?.name || zohoJob.Company || companyFromTitle,
+      },
+      description: zohoJob.Job_Description,
+      experienceRequirements: zohoJob.Work_Experience,
+      employmentType: zohoJob.Job_Type,
+      jobLocationType: zohoJob.Remote_Job ? "Remote" : "",
+      jobLocation: [zohoJob.City, zohoJob.State, zohoJob.Country].filter(Boolean).join(", "),
+      baseSalary: zohoJob.Salary,
+      industry: zohoJob.Industry,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function scrapeExternalPosting(html) {
   const $ = cheerio.load(html);
   let posting = null;
@@ -372,6 +436,9 @@ function scrapeExternalPosting(html) {
       // Ignore malformed JSON-LD and continue looking for a valid posting.
     }
   });
+  if (!posting) {
+    posting = findZohoRecruitPosting($, html);
+  }
 
   const selectors = [
     '[data-qa="job-description"]',
