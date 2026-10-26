@@ -142,6 +142,9 @@ const isDescriptionSnippet = (description) => {
 const isMisstructuredDescription = (description) => {
   const text = description || "";
   return (
+    /\$(?:undefined|null)\b/i.test(text) ||
+    /is hiring for [\s\S]{1,120}? in the [\s\S]{1,60}? space\./i.test(text) ||
+    /Use the Apply button to open the employer's official application page\./i.test(text) ||
     /<h3[^>]*>\s*Role Summary\s*<\/h3>\s*<p[^>]*>\s*(?:Required|undefined|null)\s*<\/p>/i.test(
       text,
     ) ||
@@ -228,27 +231,16 @@ const alignWhoWeAreHeading = (html) => {
       );
     }
 
-    let body = decodedText
-      .replace(/\bSalary comparison\b[\s\S]*$/i, "")
-      .replace(/\b(?:Receive similar jobs by email|Similar jobs)\b[\s\S]*$/i, "")
-      .replace(/\b(?:Back to last search|Stats for this job)\b/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const leadingJobDetails = [job?.title, job?.company]
-      .filter(Boolean)
-      .some((value) => body.slice(0, 300).toLowerCase().includes(value.toLowerCase()));
-    const applyActionIndex = body.toLowerCase().indexOf("apply for this job");
-    if (leadingJobDetails && applyActionIndex >= 0 && applyActionIndex < 400) {
-      body = body.slice(applyActionIndex + "apply for this job".length).trim();
-    }
-    body = body.replace(/\bApply for this job\b/gi, " ").replace(/\s+/g, " ").trim();
-
-    if (body.includes("##") || body.includes("**")) {
-      const md = body
+    if (decodedText.includes("##") || decodedText.includes("**")) {
+      const md = decodedText
+        .replace(/\bSalary comparison\b[\s\S]*$/i, "")
+        .replace(/\b(?:Receive similar jobs by email|Similar jobs)\b[\s\S]*$/i, "")
+        .replace(/\b(?:Back to last search|Stats for this job|Apply for this job)\b/gi, " ")
+        .replace(/\bin the \$undefined space\b/gi, "")
+        .replace(/\$undefined\s*/gi, "")
         .replace(/[ \t]{3,}/g, "\n\n")
         .replace(/(?<!\n)(#{1,6}\s)/g, "\n\n$1")
-        .replace(/(?<!\n)([-*]\s)/g, "\n$1");
+        .replace(/(?<!\n|\*)([-*]\s)/g, "\n$1");
       const html = marked.parse(md);
       return (
         <div
@@ -262,6 +254,24 @@ const alignWhoWeAreHeading = (html) => {
         />
       );
     }
+
+    let body = decodedText
+      .replace(/\bSalary comparison\b[\s\S]*$/i, "")
+      .replace(/\b(?:Receive similar jobs by email|Similar jobs)\b[\s\S]*$/i, "")
+      .replace(/\b(?:Back to last search|Stats for this job)\b/gi, " ")
+      .replace(/\bin the \$undefined space\b/gi, "")
+      .replace(/\$undefined\s*/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const leadingJobDetails = [job?.title, job?.company]
+      .filter(Boolean)
+      .some((value) => body.slice(0, 300).toLowerCase().includes(value.toLowerCase()));
+    const applyActionIndex = body.toLowerCase().indexOf("apply for this job");
+    if (leadingJobDetails && applyActionIndex >= 0 && applyActionIndex < 400) {
+      body = body.slice(applyActionIndex + "apply for this job".length).trim();
+    }
+    body = body.replace(/\bApply for this job\b/gi, " ").replace(/\s+/g, " ").trim();
 
     const sectionHeaders = [
       "About the role", "About the company", "About us", "Who We Are", "The role",
