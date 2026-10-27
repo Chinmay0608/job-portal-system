@@ -14,10 +14,7 @@ jest.mock("../models/Application", () => ({ deleteMany: jest.fn() }));
 jest.mock("../models/job", () => ({ find: jest.fn(), deleteMany: jest.fn() }));
 jest.mock("../middleware/securityAuditMiddleware", () => ({ logSecurityEvent: jest.fn() }));
 jest.mock("../utils/sendEmail", () => jest.fn());
-jest.mock("bcryptjs", () => ({ compare: jest.fn() }));
-
 const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const AccountDeletionRequest = require("../models/AccountDeletionRequest");
 const Application = require("../models/Application");
@@ -33,16 +30,15 @@ const response = () => ({
 describe("account deletion controller", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("sends an OTP after verifying the user's password and stores only its hash", async () => {
-    const user = { _id: "user-1", email: "person@example.com", role: "candidate", password: "hashed" };
-    User.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(user) });
-    bcrypt.compare.mockResolvedValue(true);
+  it("sends an OTP to the signed-in user's email and stores only its hash", async () => {
+    const user = { _id: "user-1", email: "person@example.com", role: "candidate" };
+    User.findById.mockResolvedValue(user);
     AccountDeletionRequest.findOne.mockResolvedValue(null);
     sendEmail.mockResolvedValue(true);
     const randomInt = jest.spyOn(crypto, "randomInt").mockReturnValue(123456);
     const res = response();
 
-    await requestOtp({ user: { id: "user-1" }, body: { email: " Person@Example.com ", password: "secret", reason: "No longer needed" } }, res);
+    await requestOtp({ user: { id: "user-1" }, body: { email: " Person@Example.com ", reason: "No longer needed" } }, res);
 
     const savedRequest = AccountDeletionRequest.mock.instances[0];
     expect(savedRequest.otpHash).toBe(crypto.createHash("sha256").update("123456").digest("hex"));

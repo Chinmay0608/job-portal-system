@@ -1,5 +1,4 @@
 const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const AccountDeletionRequest = require("../models/AccountDeletionRequest");
 const Application = require("../models/Application");
@@ -9,11 +8,11 @@ const sendEmail = require("../utils/sendEmail");
 
 const requestOtp = async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
-  const { password, reason, privacyRequest = "" } = req.body;
-  if (!email || !password || !String(reason || "").trim()) return res.status(400).json({ message: "Email, password, and reason are required." });
+  const { reason, privacyRequest = "" } = req.body;
+  if (!email || !String(reason || "").trim()) return res.status(400).json({ message: "Email and reason are required." });
   if (String(reason).length > 1000 || String(privacyRequest).length > 1000) return res.status(400).json({ message: "Please keep each response under 1000 characters." });
-  const user = await User.findById(req.user.id).select("+password");
-  if (!user || user.email !== email || !(await bcrypt.compare(password, user.password))) return res.status(400).json({ message: "Email or password is incorrect." });
+  const user = await User.findById(req.user.id);
+  if (!user || user.email !== email) return res.status(400).json({ message: "Email does not match the signed-in account." });
   if (user.role === "admin") return res.status(403).json({ message: "Admin accounts cannot use self-service deletion." });
   const pending = await AccountDeletionRequest.findOne({ user: user._id, status: "pending" });
   const otp = String(crypto.randomInt(100000, 1000000));
