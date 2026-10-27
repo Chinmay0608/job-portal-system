@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
 
 function Login() {
   const navigate = useNavigate();
@@ -142,136 +141,98 @@ function Login() {
   const tickerDuration = Math.max(previewJobs.length * 3.5, 10);
 
   return (
-    <div className="app-canvas-surface min-h-screen w-full flex items-center justify-center px-4 py-8 font-sans">
-      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] lg:gap-12">
-        <aside className="hidden lg:block lg:translate-x-20">
-          <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
-          <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">Find work that fits the life you want.</h2>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">A more thoughtful way to find a role, meet a team, and move your career forward.</p>
-          <div className="mt-8 space-y-4 text-sm font-semibold text-[#554737]">
-            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaChessRook size={15} /></span>{loginRole === "candidate" ? "Roles matched to your skills" : "Reach candidates suited to your roles"}</div>
-            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaShieldAlt size={15} /></span>{loginRole === "candidate" ? "Your applications, all in one place" : "Review applicants in one place"}</div>
-            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]"><FaBuilding size={15} /></span>A clearer path to your next team</div>
+    <main className="signup-page login-auth-page">
+      <div aria-hidden="true" className="signup-decoration signup-decoration-top" />
+      <div aria-hidden="true" className="signup-decoration signup-decoration-bottom" />
+      <div className="signup-layout">
+        <aside className="signup-panel signup-left-panel">
+          <div key={loginRole} className="signup-role-content">
+            <p className="signup-eyebrow"><span />{loginRole === "candidate" ? "Make your next move" : "Find your next hire"}</p>
+            <h1 className="signup-headline">
+              {loginRole === "candidate" ? "Find work that" : "Find great talent"}{" "}
+              <span className="signup-headline-accent">
+                {loginRole === "candidate" ? "fits the life you want." : "and build your team."}
+                <svg aria-hidden="true" viewBox="0 0 200 10" preserveAspectRatio="none"><path d="M2 6c30-5 60 3 96-1s60-3 100 0" /></svg>
+              </span>
+            </h1>
+            <p className="signup-intro">{loginRole === "candidate" ? "A more thoughtful way to find a role, meet a team, and move your career forward." : "Meet skilled people, review applicants, and build a team that moves your company forward."}</p>
+            <div className="signup-benefits">
+              {[loginRole === "candidate" ? "Roles matched to your skills" : "Reach candidates suited to your roles", loginRole === "candidate" ? "Your applications, all in one place" : "Review applicants in one place", loginRole === "candidate" ? "A clearer path to your next team" : "A simpler path to your next hire"].map((item, index) => (
+                <div className="signup-benefit" key={item}>
+                  <span className="signup-benefit-icon">{index === 0 ? <FaChessRook aria-hidden="true" /> : index === 1 ? <FaShieldAlt aria-hidden="true" /> : <FaBuilding aria-hidden="true" />}</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </aside>
 
-        <div className="mx-auto w-full max-w-sm animate-scale-up sm:max-w-md">
-        <div className="w-full bg-gradient-to-br from-[#fffdf9] via-[#fffaf2] to-[#f8f0e4] rounded-2xl sm:rounded-3xl border border-[#e9dfd1] shadow-[0_20px_60px_rgba(110,80,45,0.14)] p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4">
-        <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
-          <SkillBridgeLogo width={210} center />
-        </div>
+        <section className="signup-card login-card" aria-labelledby="login-card-title">
+          <button type="button" className="signup-logo brand-wordmark" onClick={() => navigate("/")} aria-label="SkillBridge home">
+            <span>Skill</span><span>Bridge</span>
+          </button>
 
-        <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-[#30271f] tracking-tight m-0">Welcome Back</h1>
-          <p className="text-xs text-[#827361] mt-1 m-0">Find the job made for you!</p>
-        </div>
+          <div className="signup-card-heading">
+            <h2 id="login-card-title">Welcome Back</h2>
+            <p>Find the job made for you!</p>
+          </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-[#f5ead9] rounded-xl border border-[#e9dfd1]">
-          <button 
-            type="button"
-            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "candidate" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
-            }`}
-            onClick={() => setLoginRole("candidate")}
-          >
-            <FaChessRook size={13} /> <span>Candidate</span>
-          </button>
-          <button 
-            type="button"
-            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              loginRole === "recruiter" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
-            }`}
-            onClick={() => setLoginRole("recruiter")}
-          >
-            <FaBuilding size={13} /> <span>Recruiter</span>
-          </button>
+        <div className="signup-role-toggle" role="group" aria-label="Choose account type">
+          <button type="button" aria-pressed={loginRole === "candidate"} className={loginRole === "candidate" ? "is-active" : ""} onClick={() => setLoginRole("candidate")}>Candidate</button>
+          <button type="button" aria-pressed={loginRole === "recruiter"} className={loginRole === "recruiter" ? "is-active" : ""} onClick={() => setLoginRole("recruiter")}>Recruiter</button>
         </div>
 
-        <button
-          type="button"
-          className="w-full py-2.5 px-3 bg-[#fffdf9] hover:bg-[#fff7eb] border border-[#e9dfd1] text-[#554737] font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-        >
-          <FcGoogle size={19} />
+        <button type="button" className="signup-google" onClick={handleGoogleLogin} disabled={googleLoading}>
+          <FcGoogle size={19} aria-hidden="true" />
           <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
         </button>
 
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-[#e9dfd1]"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-[#a18d74] uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-[#e9dfd1]"></div>
-        </div>
+        <div className="signup-divider"><span>OR</span></div>
 
-        <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Email Address</label>
+        <form onSubmit={handleSubmit} className="signup-form">
+          <div className="signup-field">
+            <label htmlFor="login-email">Email Address</label>
             <input
+              id="login-email"
               type="email"
               placeholder="mail@website.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
+              autoComplete="email"
             />
           </div>
 
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Password</label>
-            <div className="relative">
+          <div className="signup-field">
+            <label htmlFor="login-password">Password</label>
+            <div className="signup-password-wrap">
               <input
+                id="login-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
+                autoComplete="current-password"
               />
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+              <button type="button" className="signup-password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>
+                {showPassword ? <FiEyeOff size={17} aria-hidden="true" /> : <FiEye size={17} aria-hidden="true" />}
               </button>
             </div>
           </div>
 
-          <div className="text-right">
-            <span 
-              className="text-xs font-bold text-[#a3612b] hover:text-[#814a24] cursor-pointer"
-              onClick={() => navigate("/forgot-password")}
-            >
-              Forgot password?
-            </span>
-          </div>
+          <div className="login-forgot"><a href="/forgot-password" onClick={(event) => { event.preventDefault(); navigate("/forgot-password"); }}>Forgot password?</a></div>
 
-          <button 
-            type="submit" 
-            className="w-full py-3 bg-[#b96d3c] hover:bg-[#a45c31] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-[0_5px_14px_rgba(164,92,49,0.22)] border-0 disabled:opacity-50 mt-1.5"
-            disabled={loading} 
-            aria-label="Log in"
-          >
+          <button type="submit" className="signup-submit" disabled={loading} aria-label="Log in">
             {loading ? "Logging in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-xs font-medium text-[#827361] m-0 pt-1.5 sm:pt-2">
-            Not registered?{" "}
-            <span 
-              className="font-bold text-[#a3612b] hover:text-[#814a24] hover:underline cursor-pointer"
-              onClick={() => navigate("/register", { state: { role: loginRole } })}
-            >
-              Sign up
-            </span>
-          </p>
+          <p className="signup-footer">Not registered? <a href="/register" onClick={(event) => { event.preventDefault(); navigate("/register", { state: { role: loginRole } }); }}>Sign up</a></p>
         </form>
-        </div>
-        </div>
+        </section>
 
-        <aside aria-hidden="true" className="relative hidden h-[440px] lg:block lg:-translate-x-20">
-          <div className="absolute right-4 top-10 h-64 w-64 rounded-full bg-[#f1ddc2]/60 blur-3xl" />
+        <aside aria-hidden="true" className="signup-panel signup-right-panel login-right-panel h-[440px]">
           {previewJobs.length >= 2 ? (
             <div className="login-job-ticker absolute right-0 top-8 h-[420px] w-[330px]" style={{ "--ticker-duration": `${tickerDuration}s`, "--ticker-delay": `${-tickerDuration * tickerPhase}s` }}>
               <div className="login-job-ticker-track" style={{ animationPlayState: isPreviewHovered ? "paused" : "running" }}>
@@ -302,13 +263,15 @@ function Login() {
               </div>
             </div>
           ) : (
-            <div className="absolute right-0 top-24 w-[270px] rounded-2xl border border-[#e9dfd1] bg-[#fffdf9]/90 p-4 text-sm font-semibold text-[#827361] shadow-[0_16px_40px_rgba(110,80,45,0.08)]">
-              New opportunities are updated daily.
+            <div className="login-opportunity-card">
+              <p className="signup-eyebrow"><span />Your next step</p>
+              <h3>{loginRole === "candidate" ? "New opportunities, every day." : "Meet your next great hire."}</h3>
+              <p>{loginRole === "candidate" ? "Sign in to find roles that fit your skills and goals." : "Sign in to review applicants and move great candidates forward."}</p>
             </div>
           )}
         </aside>
       </div>
-    </div>
+    </main>
   );
 }
 
