@@ -6,10 +6,61 @@ import { auth, provider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import { FaChessRook, FaBuilding } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import SkillBridgeLogo from "../../Components/SkillBridgeLogo";
 import { getPasswordRequirements, isStrongPassword, PASSWORD_POLICY_MESSAGE } from "../../utils/passwordPolicy";
+
+const signupContent = {
+  recruiter: {
+    eyebrow: "Make your next move",
+    headline: ["Build the team that", "moves you forward."],
+    intro: "Share your opportunities, meet skilled people, and grow your team.",
+    benefits: [
+      { icon: "target", label: "Reach candidates suited to your roles" },
+      { icon: "panel", label: "Review applicants in one place" },
+      { icon: "team", label: "Build your team with confidence" },
+    ],
+    sample: { subtitle: "Applied today / 3 yrs experience", pill: "Shortlisted" },
+    steps: [
+      { title: "Set up your account", description: "Introduce your company to candidates.", icon: "building" },
+      { title: "Post an opportunity", description: "Describe the role and skills you need.", icon: "pen" },
+      { title: "Meet great candidates", description: "Review applicants and build your team.", icon: "check" },
+    ],
+  },
+  candidate: {
+    eyebrow: "Find your next role",
+    headline: ["Find work that", "fits your skills."],
+    intro: "Show what you can do, meet recruiters who are hiring, and take your next step.",
+    benefits: [
+      { icon: "target", label: "Get matched to roles that suit you" },
+      { icon: "bolt", label: "Apply quickly and track every application" },
+      { icon: "search", label: "Be seen by recruiters who are hiring" },
+    ],
+    sample: { subtitle: "Remote / Full-time", pill: "Good match" },
+    steps: [
+      { title: "Create your profile", description: "Add your skills and experience.", icon: "user" },
+      { title: "Find opportunities", description: "Browse roles that match you.", icon: "search" },
+      { title: "Get hired", description: "Apply and hear back from recruiters.", icon: "check" },
+    ],
+  },
+};
+
+const signupIconPaths = {
+  target: "M12 3a9 9 0 100 18 9 9 0 000-18zM12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zM12 11.2a.8.8 0 100 1.6.8.8 0 000-1.6z",
+  panel: "M6.5 4h11A3 3 0 0120.5 7v10a3 3 0 01-3 3h-11a3 3 0 01-3-3V7a3 3 0 013-3zM3.5 9.5h17M9 9.5V20",
+  team: "M9 5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 5.2a3.3 3.3 0 010 6.2M18.5 14.8c1.7.7 2.7 2.3 3 5.2",
+  building: "M7 3.5h10a2 2 0 012 2v15H5v-15a2 2 0 012-2zM9 8h2M13 8h2M9 12h2M13 12h2M10 20.5v-4h4v4",
+  pen: "M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19l-4 1zM14.5 6.5l3 3",
+  check: "M12 3a9 9 0 100 18 9 9 0 000-18zM8 12.3l2.7 2.7 5.3-5.5",
+  user: "M12 4a4 4 0 100 8 4 4 0 000-8zM4.5 20c.7-4 3.6-6 7.5-6s6.8 2 7.5 6",
+  search: "M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4",
+  bolt: "M13 3L5 13.5h6L10 21l8-10.5h-6L13 3z",
+};
+
+const SignupIcon = ({ name, className = "" }) => (
+  <svg aria-hidden="true" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d={signupIconPaths[name]} />
+  </svg>
+);
 
 function Register() {
   const navigate = useNavigate();
@@ -22,7 +73,7 @@ function Register() {
     email: "",
     phone: "",
     password: "",
-    role: location.state?.role || "candidate",
+    role: location.state?.role || "recruiter",
   });
   const passwordRequirements = getPasswordRequirements(formData.password);
   const missingPasswordRequirements = passwordRequirements.filter(({ met }) => !met);
@@ -112,198 +163,127 @@ function Register() {
   };
 
   return (
-    <div className="app-canvas-surface h-screen max-h-screen w-full flex items-center justify-center overflow-hidden px-4 py-4 font-sans">
-      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] xl:gap-12">
-      <aside className="hidden xl:block">
-        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
-        <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">
-          {formData.role === "candidate" ? "Find work that fits the life you want." : "Build the team that moves you forward."}
-        </h2>
-        <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">
-          {formData.role === "candidate" ? "Create your profile, show what you do best, and discover roles made for you." : "Share your opportunities, meet skilled people, and grow your team."}
-        </p>
-        <div className="mt-8 space-y-4 text-sm font-semibold text-[#554737]">
-          {(formData.role === "candidate"
-            ? ["Roles matched to your skills", "Your applications, all in one place", "A clearer path to your next team"]
-            : ["Reach candidates suited to your roles", "Review applicants in one place", "Build your team with confidence"]
-          ).map((item, index) => (
-            <div key={item} className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]">
-                {index === 0 ? <FaChessRook size={15} /> : <FaBuilding size={15} />}
+    <main className="signup-page">
+      <div aria-hidden="true" className="signup-decoration signup-decoration-top" />
+      <div aria-hidden="true" className="signup-decoration signup-decoration-bottom" />
+      <div className="signup-layout">
+        <aside className="signup-panel signup-left-panel">
+          <div key={formData.role} className="signup-role-content">
+            <p className="signup-eyebrow"><span />{signupContent[formData.role].eyebrow}</p>
+            <h1 className="signup-headline">
+              {signupContent[formData.role].headline[0]}{" "}
+              <span className="signup-headline-accent">
+                {signupContent[formData.role].headline[1]}
+                <svg aria-hidden="true" viewBox="0 0 200 10" preserveAspectRatio="none">
+                  <path d="M2 6c30-5 60 3 96-1s60-3 100 0" />
+                </svg>
               </span>
-              {item}
+            </h1>
+            <p className="signup-intro">{signupContent[formData.role].intro}</p>
+            <div className="signup-benefits">
+              {signupContent[formData.role].benefits.map(({ icon, label }) => (
+                <div className="signup-benefit" key={label}>
+                  <span className="signup-benefit-icon"><SignupIcon name={icon} /></span>
+                  <span>{label}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </aside>
-
-      <div className="w-full max-w-sm sm:max-w-md bg-gradient-to-br from-[#fffdf9] via-[#fffaf2] to-[#f8f0e4] rounded-2xl sm:rounded-3xl border border-[#e9dfd1] shadow-[0_20px_60px_rgba(110,80,45,0.14)] p-4 sm:py-5 sm:px-6 space-y-2 sm:space-y-3 animate-scale-up">
-        <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
-          <SkillBridgeLogo width={210} center />
-        </div>
-
-        <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-[#30271f] tracking-tight m-0">Create an Account</h1>
-          <p className="text-xs text-[#827361] mt-1 m-0">Start your journey with SkillBridge</p>
-        </div>
-
-        {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-[#f5ead9] rounded-xl border border-[#e9dfd1]">
-          <button 
-            type="button"
-            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "candidate" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
-            }`}
-            onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
-          >
-            <FaChessRook size={13} /> <span>Candidate</span>
-          </button>
-          <button 
-            type="button"
-            className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "recruiter" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
-            }`}
-            onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
-          >
-            <FaBuilding size={13} /> <span>Recruiter</span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="w-full py-2.5 px-3 bg-[#fffdf9] hover:bg-white border border-[#e7d8c4] text-[#40352a] font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
-          onClick={handleGoogleSignup}
-          disabled={googleLoading}
-        >
-          <FcGoogle size={19} />
-          <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
-        </button>
-
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-[#e7d8c4]"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-[#a89883] uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-[#e7d8c4]"></div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Full Name</label>
-            <input
-              type="text"
-              name="name"
-              placeholder="e.g. Jane Doe"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="mail@website.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="10-digit mobile number"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Create a strong password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength={8}
-                autoComplete="new-password"
-                aria-describedby="password-rules"
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
-              />
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#a89883] hover:text-[#625343] p-1 border-0 bg-transparent cursor-pointer"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
-              </button>
-            </div>
-            {formData.password && <p id="password-rules" aria-live="polite" className={`mt-1.5 text-[10px] leading-4 ${missingPasswordRequirements.length ? "text-slate-500" : "text-emerald-700"}`}>
-              {missingPasswordRequirements.length
-                ? `${missingPasswordRequirements.length} requirement${missingPasswordRequirements.length === 1 ? "" : "s"} remaining: ${missingPasswordRequirements.map(({ label }) => label).join(", ")}.`
-                : "Password meets all requirements."}
-            </p>}
-          </div>
-
-          <button 
-            type="submit" 
-            className="w-full py-3 bg-[#b96d3c] hover:bg-[#a45c31] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-[0_5px_14px_rgba(164,92,49,0.22)] border-0 disabled:opacity-50 mt-1.5"
-            disabled={loading} 
-            aria-label="Create account"
-          >
-            {loading ? "Creating Account..." : "Create Account →"}
-          </button>
-
-          <p className="text-center text-xs font-medium text-[#827361] m-0 pt-1.5 sm:pt-2">
-            Already have an account?{" "}
-            <span 
-              className="font-bold text-[#a3612b] hover:text-[#814a24] hover:underline cursor-pointer"
-              onClick={() => navigate("/login")}
-            >
-              Sign in
-            </span>
-          </p>
-        </form>
-      </div>
-
-      <aside aria-hidden="true" className="relative hidden h-[440px] xl:block">
-        <div className="absolute right-4 top-10 h-64 w-64 rounded-full bg-[#f1ddc2]/60 blur-3xl" />
-        <div className="absolute right-0 top-12 w-full max-w-[310px] space-y-3">
-          <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#a3612b]">Your first steps</p>
-          {(formData.role === "candidate"
-            ? [
-                ["01", "Create your profile", "Tell employers what you do best."],
-                ["02", "Add your skills", "Help us find roles that fit."],
-                ["03", "Explore opportunities", "Take the next step in your career."],
-              ]
-            : [
-                ["01", "Set up your account", "Introduce your company to candidates."],
-                ["02", "Post an opportunity", "Describe the role and skills you need."],
-                ["03", "Meet great candidates", "Review applicants and build your team."],
-              ]
-          ).map(([step, title, detail], index) => (
-            <div key={step} className={`rounded-2xl border border-[#e9dfd1] bg-[#fffdf9]/95 p-4 shadow-[0_16px_40px_rgba(110,80,45,0.08)] ${index === 1 ? "-translate-x-4" : ""}`}>
-              <div className="mb-2 flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5ead9] text-[10px] font-extrabold text-[#a3612b]">{step}</span>
-                <h3 className="m-0 text-sm font-extrabold text-[#30271f]">{title}</h3>
+            <div className="signup-sample-card" aria-hidden="true">
+              <div className="signup-sample-top">
+                <span className="signup-avatar">F</span>
+                <div className="signup-sample-copy">
+                  <strong>Frontend Developer</strong>
+                  <span>{signupContent[formData.role].sample.subtitle}</span>
+                </div>
+                <span className="signup-match-pill">{signupContent[formData.role].sample.pill}</span>
               </div>
-              <p className="m-0 pl-9 text-xs leading-5 text-[#827361]">{detail}</p>
+              <div className="signup-sample-chips"><span>React</span><span>Node.js</span><span>SQL</span></div>
             </div>
-          ))}
-        </div>
-      </aside>
+          </div>
+        </aside>
+
+        <section className="signup-card" aria-labelledby="signup-card-title">
+          <h1 key={formData.role} className="signup-mobile-headline signup-role-content">
+            {signupContent[formData.role].headline[0]}{" "}{signupContent[formData.role].headline[1]}
+          </h1>
+          <button type="button" className="signup-logo brand-wordmark" onClick={() => navigate("/")} aria-label="SkillBridge home">
+            <span>Skill</span><span>Bridge</span>
+          </button>
+          <div className="signup-card-heading">
+            <h2 id="signup-card-title">Create an Account</h2>
+            <p>Start your journey with SkillBridge</p>
+          </div>
+
+          <div className="signup-role-toggle" role="group" aria-label="Choose account type">
+            <button type="button" aria-pressed={formData.role === "candidate"} className={formData.role === "candidate" ? "is-active" : ""} onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}>Candidate</button>
+            <button type="button" aria-pressed={formData.role === "recruiter"} className={formData.role === "recruiter" ? "is-active" : ""} onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}>Recruiter</button>
+          </div>
+
+          <button type="button" className="signup-google" onClick={handleGoogleSignup} disabled={googleLoading}>
+            <FcGoogle size={19} aria-hidden="true" />
+            <span>{googleLoading ? "Please wait..." : "Continue with Google"}</span>
+          </button>
+
+          <div className="signup-divider"><span>OR</span></div>
+
+          <form onSubmit={handleSubmit} className="signup-form">
+            <div className="signup-field">
+              <label htmlFor="signup-name">Full Name</label>
+              <input id="signup-name" type="text" name="name" placeholder="e.g. Jane Doe" value={formData.name} onChange={handleChange} required autoComplete="name" />
+            </div>
+            <div className="signup-field">
+              <label htmlFor="signup-email">Email Address</label>
+              <input id="signup-email" type="email" name="email" placeholder="mail@website.com" value={formData.email} onChange={handleChange} required autoComplete="email" />
+            </div>
+            <div className="signup-field">
+              <label htmlFor="signup-phone">Phone Number (Optional)</label>
+              <input id="signup-phone" type="tel" name="phone" placeholder="10-digit mobile number" value={formData.phone} onChange={handleChange} autoComplete="tel" />
+            </div>
+            <div className="signup-field">
+              <label htmlFor="signup-password">Password</label>
+              <div className="signup-password-wrap">
+                <input id="signup-password" type={showPassword ? "text" : "password"} name="password" placeholder="Create a strong password" value={formData.password} onChange={handleChange} required minLength={8} autoComplete="new-password" aria-describedby="password-rules" />
+                <button type="button" className="signup-password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>
+                  {showPassword ? <FiEyeOff size={17} aria-hidden="true" /> : <FiEye size={17} aria-hidden="true" />}
+                </button>
+              </div>
+              {formData.password && <p id="password-rules" aria-live="polite" className={`signup-password-rules ${missingPasswordRequirements.length ? "is-missing" : "is-met"}`}>
+                {missingPasswordRequirements.length
+                  ? `${missingPasswordRequirements.length} requirement${missingPasswordRequirements.length === 1 ? "" : "s"} remaining: ${missingPasswordRequirements.map(({ label }) => label).join(", ")}.`
+                  : "Password meets all requirements."}
+              </p>}
+            </div>
+            <button type="submit" className="signup-submit" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account →"}
+            </button>
+            <p className="signup-footer">Already have an account? <a href="/login" onClick={(event) => { event.preventDefault(); navigate("/login"); }}>Sign in</a></p>
+          </form>
+        </section>
+
+        <aside className="signup-panel signup-right-panel">
+          <div key={formData.role} className="signup-role-content">
+            <p className="signup-eyebrow"><span />Your first steps</p>
+            <div className="signup-timeline">
+              {signupContent[formData.role].steps.map(({ title, description, icon }, index) => (
+                <div className="signup-step-row" key={title}>
+                  <div className="signup-step-rail">
+                    <span className={`signup-step-number step-${index + 1}`}>{index + 1}</span>
+                    {index < 2 && <span className="signup-step-connector" />}
+                  </div>
+                  <article className="signup-step-card">
+                    <div className="signup-step-title">
+                      <h3>{title}</h3>
+                      <SignupIcon name={icon} />
+                    </div>
+                    <p>{description}</p>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
+    </main>
   );
 }
 

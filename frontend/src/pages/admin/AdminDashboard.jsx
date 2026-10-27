@@ -1512,7 +1512,7 @@ const AdminDashboard = () => {
             <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
               <Activity size={18} className="text-white" />
             </div>
-            SkillBridge <span className="text-slate-400 font-normal">Admin</span>
+            <span className="brand-wordmark">SkillBridge</span> <span className="text-slate-400 font-normal">Admin</span>
           </div>
         </div>
 
