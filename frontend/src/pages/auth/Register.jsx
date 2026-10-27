@@ -112,23 +112,47 @@ function Register() {
   };
 
   return (
-    <div className="app-canvas-surface h-screen max-h-screen w-full flex items-center justify-center p-3 sm:p-4 overflow-hidden font-sans">
-      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xl p-5 sm:py-7 sm:px-6 space-y-3 sm:space-y-4 -translate-y-1 sm:-translate-y-2 animate-scale-up">
+    <div className="app-canvas-surface h-screen max-h-screen w-full flex items-center justify-center overflow-hidden px-4 py-4 font-sans">
+      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,440px)_minmax(0,1fr)] xl:gap-12">
+      <aside className="hidden xl:block">
+        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#a3612b]">Make your next move</p>
+        <h2 className="max-w-xs text-4xl font-black leading-tight tracking-tight text-[#30271f]">
+          {formData.role === "candidate" ? "Find work that fits the life you want." : "Build the team that moves you forward."}
+        </h2>
+        <p className="mt-4 max-w-sm text-sm leading-6 text-[#827361]">
+          {formData.role === "candidate" ? "Create your profile, show what you do best, and discover roles made for you." : "Share your opportunities, meet skilled people, and grow your team."}
+        </p>
+        <div className="mt-8 space-y-4 text-sm font-semibold text-[#554737]">
+          {(formData.role === "candidate"
+            ? ["Roles matched to your skills", "Your applications, all in one place", "A clearer path to your next team"]
+            : ["Reach candidates suited to your roles", "Review applicants in one place", "Build your team with confidence"]
+          ).map((item, index) => (
+            <div key={item} className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e9dfd1] bg-[#fffaf2] text-[#a3612b]">
+                {index === 0 ? <FaChessRook size={15} /> : <FaBuilding size={15} />}
+              </span>
+              {item}
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <div className="w-full max-w-sm sm:max-w-md bg-gradient-to-br from-[#fffdf9] via-[#fffaf2] to-[#f8f0e4] rounded-2xl sm:rounded-3xl border border-[#e9dfd1] shadow-[0_20px_60px_rgba(110,80,45,0.14)] p-4 sm:py-5 sm:px-6 space-y-2 sm:space-y-3 animate-scale-up">
         <div className="flex justify-center cursor-pointer" onClick={() => navigate("/")}>
           <SkillBridgeLogo width={210} center />
         </div>
 
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">Create an Account</h1>
-          <p className="text-xs text-slate-500 mt-1 m-0">Start your journey with SkillBridge</p>
+          <h1 className="text-xl sm:text-2xl font-black text-[#30271f] tracking-tight m-0">Create an Account</h1>
+          <p className="text-xs text-[#827361] mt-1 m-0">Start your journey with SkillBridge</p>
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-2 p-1 bg-[#f5ead9] rounded-xl border border-[#e9dfd1]">
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "candidate" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+              formData.role === "candidate" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
             }`}
             onClick={() => setFormData(prev => ({ ...prev, role: "candidate" }))}
           >
@@ -137,7 +161,7 @@ function Register() {
           <button 
             type="button"
             className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-              formData.role === "recruiter" ? "bg-white text-slate-900 shadow-xs" : "bg-transparent text-slate-500 hover:text-slate-800"
+              formData.role === "recruiter" ? "bg-[#fffdf9] text-[#3c342b] shadow-xs" : "bg-transparent text-[#827361] hover:text-[#40352a]"
             }`}
             onClick={() => setFormData(prev => ({ ...prev, role: "recruiter" }))}
           >
@@ -147,7 +171,7 @@ function Register() {
 
         <button
           type="button"
-          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
+          className="w-full py-2.5 px-3 bg-[#fffdf9] hover:bg-white border border-[#e7d8c4] text-[#40352a] font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
           onClick={handleGoogleSignup}
           disabled={googleLoading}
         >
@@ -156,14 +180,14 @@ function Register() {
         </button>
 
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-200"></div>
-          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
-          <div className="flex-grow border-t border-slate-200"></div>
+          <div className="flex-grow border-t border-[#e7d8c4]"></div>
+          <span className="flex-shrink mx-2.5 text-[10px] font-bold text-[#a89883] uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-[#e7d8c4]"></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Full Name</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Full Name</label>
             <input
               type="text"
               name="name"
@@ -171,12 +195,12 @@ function Register() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Email Address</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Email Address</label>
             <input
               type="email"
               name="email"
@@ -184,24 +208,24 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Phone Number (Optional)</label>
             <input
               type="tel"
               name="phone"
               placeholder="10-digit mobile number"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">Password</label>
+            <label className="text-[11px] font-bold text-[#625343] uppercase tracking-wider block mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -213,11 +237,11 @@ function Register() {
                 minLength={8}
                 autoComplete="new-password"
                 aria-describedby="password-rules"
-                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                className="w-full px-3.5 py-2 sm:py-2.5 pr-9 bg-[#fffdf9] border border-[#e7d8c4] rounded-xl text-xs sm:text-sm text-[#30271f] placeholder:text-[#a89883] focus:bg-white focus:border-[#c58b50] focus:ring-2 focus:ring-[#c58b50]/20 outline-none transition-all"
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 border-0 bg-transparent cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#a89883] hover:text-[#625343] p-1 border-0 bg-transparent cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -233,23 +257,51 @@ function Register() {
 
           <button 
             type="submit" 
-            className="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-sm border-0 disabled:opacity-50 mt-1.5" 
+            className="w-full py-3 bg-[#b96d3c] hover:bg-[#a45c31] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl cursor-pointer transition-all shadow-[0_5px_14px_rgba(164,92,49,0.22)] border-0 disabled:opacity-50 mt-1.5"
             disabled={loading} 
             aria-label="Create account"
           >
             {loading ? "Creating Account..." : "Create Account →"}
           </button>
 
-          <p className="text-center text-xs font-medium text-slate-500 m-0 pt-1.5 sm:pt-2">
+          <p className="text-center text-xs font-medium text-[#827361] m-0 pt-1.5 sm:pt-2">
             Already have an account?{" "}
             <span 
-              className="font-bold text-brand-600 hover:underline cursor-pointer" 
+              className="font-bold text-[#a3612b] hover:text-[#814a24] hover:underline cursor-pointer"
               onClick={() => navigate("/login")}
             >
               Sign in
             </span>
           </p>
         </form>
+      </div>
+
+      <aside aria-hidden="true" className="relative hidden h-[440px] xl:block">
+        <div className="absolute right-4 top-10 h-64 w-64 rounded-full bg-[#f1ddc2]/60 blur-3xl" />
+        <div className="absolute right-0 top-12 w-full max-w-[310px] space-y-3">
+          <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#a3612b]">Your first steps</p>
+          {(formData.role === "candidate"
+            ? [
+                ["01", "Create your profile", "Tell employers what you do best."],
+                ["02", "Add your skills", "Help us find roles that fit."],
+                ["03", "Explore opportunities", "Take the next step in your career."],
+              ]
+            : [
+                ["01", "Set up your account", "Introduce your company to candidates."],
+                ["02", "Post an opportunity", "Describe the role and skills you need."],
+                ["03", "Meet great candidates", "Review applicants and build your team."],
+              ]
+          ).map(([step, title, detail], index) => (
+            <div key={step} className={`rounded-2xl border border-[#e9dfd1] bg-[#fffdf9]/95 p-4 shadow-[0_16px_40px_rgba(110,80,45,0.08)] ${index === 1 ? "-translate-x-4" : ""}`}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5ead9] text-[10px] font-extrabold text-[#a3612b]">{step}</span>
+                <h3 className="m-0 text-sm font-extrabold text-[#30271f]">{title}</h3>
+              </div>
+              <p className="m-0 pl-9 text-xs leading-5 text-[#827361]">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </aside>
       </div>
     </div>
   );
