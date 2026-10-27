@@ -44,7 +44,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://140.238.163.71/api/:path*"
+      "destination": "https://skillbridge-api.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
