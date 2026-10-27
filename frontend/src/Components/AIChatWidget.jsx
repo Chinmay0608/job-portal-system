@@ -372,12 +372,12 @@ export default function AIChatWidget({
   // Handle Speech-to-Text Microphone toggle
   const handleMicClick = useCallback((sendOnResult = false) => {
     if (!isVoiceRecognitionSupported) {
-      toast.error("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
+      toast.error("Microphone recording is not supported in this browser.");
       return;
     }
 
     if (isVoiceListening) {
-      stopListening();
+      stopListening(true);
     } else {
       tts.stop();
       startListening({
@@ -1656,14 +1656,14 @@ export default function AIChatWidget({
                 disabled={isLoading}
                 aria-label={
                   !voiceRec.isSupported
-                    ? "Speech recognition unavailable"
+                    ? "Microphone recording unavailable"
                     : voiceRec.isListening
                       ? "Stop dictation"
                       : "Dictate a message"
                 }
                 title={
                   !voiceRec.isSupported
-                    ? "Speech recognition is unavailable in this browser"
+                    ? "Microphone recording is unavailable in this browser"
                     : voiceRec.isListening
                       ? "Listening... Click to stop"
                       : "Speak to dictate a message"

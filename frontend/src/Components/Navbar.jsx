@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MoreVertical, MessageSquare, Bell, Compass, UserRound, DoorOpen } from "lucide-react";
+import { MoreVertical, MessageSquare, Bell, Compass, UserRound, DoorOpen, LifeBuoy } from "lucide-react";
 import { 
   BsBookmarkFill, 
   BsChatSquareTextFill, 
@@ -9,7 +9,9 @@ import {
 } from "react-icons/bs";
 import { FiMenu, FiX, FiArrowLeft, FiHome } from "react-icons/fi";
 import { getStoredUser, logoutUser } from "../Services/authUtils";
+import { getApiBaseUrl } from "../Services/authUtils";
 import SkillBridgeLogo from "./SkillBridgeLogo";
+import CustomSelect from "./CustomSelect";
 import AIChatWidget from "./AIChatWidget";
 import MessagesDrawer from "./MessagesDrawer";
 import { getUnreadMessagesCount, getUnreadCount } from "../Services/messageService";
@@ -31,6 +33,10 @@ function Navbar() {
   const profileAvatarColor = getProfileAvatarColor(user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCandidateMenuOpen, setIsCandidateMenuOpen] = useState(false);
+  const [deletionOpen, setDeletionOpen] = useState(false);
+  const [deletionOtpSent, setDeletionOtpSent] = useState(false);
+  const [deletionBusy, setDeletionBusy] = useState(false);
+  const [deletionForm, setDeletionForm] = useState({ email: user?.email || "", password: "", reason: "", reasonDetail: "", privacyRequest: "", otp: "" });
   const candidateMenuRef = useRef(null);
   const navLinksRef = useRef(null);
   const homeTabRef = useRef(null);
@@ -41,6 +47,16 @@ function Navbar() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const openAccountDeletion = () => {
+      setDeletionForm((form) => ({ ...form, email: getStoredUser()?.email || "" }));
+      setDeletionOtpSent(false);
+      setDeletionOpen(true);
+    };
+    window.addEventListener("skillbridge_open_account_deletion", openAccountDeletion);
+    return () => window.removeEventListener("skillbridge_open_account_deletion", openAccountDeletion);
+  }, []);
 
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(() => getUnreadMessagesCount(user));
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
@@ -295,6 +311,28 @@ function Navbar() {
     await logoutUser();
     setUser(null);
     navigate("/login");
+  };
+
+  const submitDeletion = async (event) => {
+    event.preventDefault();
+    if (!deletionOtpSent && !deletionForm.reason) return toast.error("Please select a reason for leaving.");
+    if (!deletionOtpSent && deletionForm.reason === "Other" && !deletionForm.reasonDetail.trim()) return toast.error("Please describe your reason for leaving.");
+    setDeletionBusy(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/account-deletion/${deletionOtpSent ? "confirm" : "otp"}`, {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(deletionOtpSent ? { otp: deletionForm.otp } : {
+          ...deletionForm,
+          reason: deletionForm.reason === "Other" ? `Other: ${deletionForm.reasonDetail.trim()}` : deletionForm.reason,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not submit deletion request.");
+      if (!deletionOtpSent) { setDeletionOtpSent(true); toast.success(data.message); }
+      else { toast.success(data.message); setDeletionOpen(false); setDeletionOtpSent(false); await logoutUser(); setUser(null); navigate("/login"); }
+    } catch (error) { toast.error(error.message); }
+    finally { setDeletionBusy(false); }
   };
 
   return (
@@ -581,7 +619,6 @@ function Navbar() {
                     aria-label={`Open account menu${unreadMessagesCount > 0 || unreadNotificationsCount > 0 ? ", unread messages or notifications" : ""}`}
                     aria-haspopup="menu"
                     aria-expanded={isCandidateMenuOpen}
-                    title="Account menu"
                     className="icon-btn-link candidate-menu-trigger"
                   >
                     <MoreVertical size={20} className="header-icon" />
@@ -647,6 +684,18 @@ function Navbar() {
                         <span className="nav-account-menu-icon"><UserRound size={16} /></span>
                         Profile {profileCompletion}%
                       </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsCandidateMenuOpen(false);
+                          window.dispatchEvent(new Event("skillbridge_open_help_widget"));
+                        }}
+                        className="nav-account-menu-item"
+                      >
+                        <span className="nav-account-menu-icon"><LifeBuoy size={16} /></span>
+                        Report an issue
+                      </button>
                     </div>
                   )}
                 </div>
@@ -698,6 +747,32 @@ function Navbar() {
         user={user}
         onUnreadCountChange={setUnreadNotificationsCount}
       />
+      {deletionOpen && <div className="fixed inset-0 z-[100] bg-slate-950/60 flex items-center justify-center p-4" role="presentation">
+        <form onSubmit={submitDeletion} className="account-deletion-dialog w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div><h2 id="delete-account-title" className="text-xl font-bold text-slate-900">Request account deletion</h2><p className="mt-1 text-sm text-slate-600">An administrator will review your verified request within 24–48 hours.</p></div>
+          {!deletionOtpSent ? <>
+            <div className="space-y-1"><label className="block text-sm font-medium">Reason for leaving</label><CustomSelect
+              aria-label="Reason for leaving"
+              options={[
+                { value: "", label: "Select a reason" },
+                { value: "I no longer need this account", label: "I no longer need this account" },
+                { value: "Privacy concerns", label: "Privacy concerns" },
+                { value: "I had a poor experience", label: "I had a poor experience" },
+                { value: "Other", label: "Other" },
+              ]}
+              value={deletionForm.reason}
+              onChange={e => setDeletionForm({...deletionForm, reason:e.target.value, reasonDetail:""})}
+              className="w-full text-sm deletion-reason-select"
+              classNamePrefix="deletion-reason"
+            /></div>
+            {deletionForm.reason === "Other" && <label className="block text-sm font-medium">Tell us your reason<textarea required maxLength={950} value={deletionForm.reasonDetail} onChange={e => setDeletionForm({...deletionForm, reasonDetail:e.target.value})} className="mt-1 w-full rounded-lg border p-3" rows={3} placeholder="Describe why you’re leaving"/></label>}
+            <label className="block text-sm font-medium">Privacy or data request (optional)<textarea maxLength={1000} value={deletionForm.privacyRequest} onChange={e => setDeletionForm({...deletionForm, privacyRequest:e.target.value})} className="mt-1 w-full rounded-lg border p-3" rows={2} placeholder="For example, ask us to export or erase personal data"/></label>
+            <label className="block text-sm font-medium">Confirm email<input required type="email" value={deletionForm.email} onChange={e => setDeletionForm({...deletionForm, email:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>
+            <label className="block text-sm font-medium">Password<input required type="password" value={deletionForm.password} onChange={e => setDeletionForm({...deletionForm, password:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>
+          </> : <label className="block text-sm font-medium">Email verification code<input required inputMode="numeric" pattern="[0-9]{6}" value={deletionForm.otp} onChange={e => setDeletionForm({...deletionForm, otp:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>}
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => {setDeletionOpen(false);setDeletionOtpSent(false);}} className="rounded-lg border px-4 py-2">Cancel</button><button disabled={deletionBusy} className="rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white disabled:opacity-50">{deletionBusy ? "Submitting…" : deletionOtpSent ? "Verify request" : "Send verification code"}</button></div>
+        </form>
+      </div>}
     </nav>
   );
 }

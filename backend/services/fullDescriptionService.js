@@ -425,7 +425,7 @@ function findZohoRecruitPosting($, html) {
   }
 }
 
-function scrapeExternalPosting(html) {
+function scrapeExternalPosting(html, expectedJob = null) {
   const $ = cheerio.load(html);
   let posting = null;
   $('script[type="application/ld+json"]').each((_, script) => {
@@ -467,7 +467,7 @@ function scrapeExternalPosting(html) {
     }
   }
 
-  return {
+  const result = {
     isJobPosting: Boolean(posting),
     title: asText(posting?.title),
     company: asText(posting?.hiringOrganization?.name),
@@ -501,6 +501,24 @@ function scrapeExternalPosting(html) {
       .filter(Boolean)
       .join(". "),
   };
+
+  if (result.isJobPosting || !expectedJob?.title) return result;
+
+  const normalize = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const expectedTitle = normalize(expectedJob.title);
+  let tableListing = null;
+  $("tr").each((_, row) => {
+    if (tableListing) return;
+    const cells = $(row).children("th, td").map((__, cell) => descriptionText($(cell).html() || "")).get();
+    if (cells.length < 2 || normalize(cells[0]) !== expectedTitle) return;
+    const headers = $(row).closest("table").find("tr").first().children("th, td").map((__, cell) => descriptionText($(cell).html() || "")).get();
+    const fields = cells.map((value, index) => `${headers[index] || (index === 0 ? "Role" : `Detail ${index}`)}: ${value}`);
+    tableListing = { title: cells[0], description: fields.join("\n") };
+  });
+
+  return tableListing
+    ? { ...result, isJobPosting: true, isTableListing: true, title: tableListing.title, company: expectedJob.company || "", description: tableListing.description }
+    : result;
 }
 
 function isReferralAlertDescription(description) {
@@ -688,9 +706,12 @@ async function ensureFullJobDescription(job) {
   }
 
   let details = null;
-  if (job.applyUrl) {
+  if (job.descriptionSourceUrl || job.applyUrl) {
     try {
-      details = scrapeExternalPosting(await fetchPosting(job.applyUrl));
+      details = scrapeExternalPosting(
+        await fetchPosting(job.descriptionSourceUrl || job.applyUrl),
+        job,
+      );
     } catch (error) {
       console.warn(
         "[FullDescriptionService] Could not fetch employer posting:",
@@ -712,13 +733,15 @@ async function ensureFullJobDescription(job) {
 
   if (!verifiedPosting) return job.description;
 
-  const description = buildStructuredDescription(job, details);
+  const description = details.isTableListing
+    ? details.description
+    : buildStructuredDescription(job, details);
 
   if (job._id) {
     const Job = require("../models/job");
     await Job.findByIdAndUpdate(job._id, {
       description,
-      isFullDescription: true,
+      isFullDescription: !isDescriptionSnippet(description),
     });
   }
   return description;

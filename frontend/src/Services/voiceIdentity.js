@@ -178,7 +178,7 @@ export async function recordVoiceSample(durationMs = 3000) {
   }
 }
 
-export async function startSpeakerAudioCapture(seconds = 4) {
+export async function startSpeakerAudioCapture(seconds = 4, onAudioChunk) {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error("Microphone capture is not supported in this browser.");
   }
@@ -207,6 +207,7 @@ export async function startSpeakerAudioCapture(seconds = 4) {
         ring[writeIndex] = input[index];
         writeIndex = (writeIndex + 1) % capacity;
       }
+      onAudioChunk?.(input);
       samplesWritten = Math.min(capacity, samplesWritten + input.length);
       event.outputBuffer.getChannelData(0).fill(0);
     };

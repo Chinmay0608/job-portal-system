@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { LifeBuoy, X, Camera, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw, ChevronRight } from "lucide-react";
+import { LifeBuoy, X, Camera, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { getStoredUser, getApiBaseUrl } from "../Services/authUtils";
 
 const API_BASE_URL = getApiBaseUrl();
@@ -97,6 +97,12 @@ export default function HelpWidget() {
       captureScreen();
     }, 150);
   };
+
+  useEffect(() => {
+    const openHelpWidget = () => handleOpen();
+    window.addEventListener("skillbridge_open_help_widget", openHelpWidget);
+    return () => window.removeEventListener("skillbridge_open_help_widget", openHelpWidget);
+  }, []);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -199,24 +205,6 @@ export default function HelpWidget() {
 
   return (
     <>
-      {/* Floating Trigger Button */}
-      {!isOpen && (
-        <button
-          id="help-widget-button"
-          type="button"
-          onClick={handleOpen}
-          className="report-issue-button fixed bottom-5 right-4 sm:bottom-20 sm:right-8 z-[10001]"
-          title="Report an Issue"
-          aria-label="Report an Issue"
-        >
-          <LifeBuoy size={22} className="report-issue-icon" aria-hidden="true" />
-          <span className="report-issue-divider" aria-hidden="true" />
-          <span className="report-issue-text">Report Issue</span>
-          <ChevronRight size={17} className="report-issue-chevron" aria-hidden="true" />
-        </button>
-      )}
-
-
       {/* Modal Backdrop & Dialog */}
       {isOpen && (
         <div

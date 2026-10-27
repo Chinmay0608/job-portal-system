@@ -115,6 +115,7 @@ const CustomSelect = ({
   "aria-label": ariaLabel,
   menuPlacement = "auto",
   maxMenuHeight = 220,
+  classNamePrefix = "custom-select",
 }) => {
   const selectedOption = options?.find(opt => opt.value === value) || null;
 
@@ -123,7 +124,7 @@ const CustomSelect = ({
       <Select
         aria-label={ariaLabel || placeholder}
         className="focus:ring-2 focus:ring-brand-500 rounded-xl"
-        classNamePrefix="custom-select"
+        classNamePrefix={classNamePrefix}
         styles={getCustomStyles(borderless, mutedValue, maxMenuHeight)}
         options={options}
         value={selectedOption}

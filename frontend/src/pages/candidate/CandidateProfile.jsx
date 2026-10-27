@@ -42,7 +42,7 @@ const COMMON_SKILLS = [
 
 import { getApiBaseUrl } from "../../Services/authUtils";
 import { COUNTRY_OPTIONS } from "../../utils/countryCurrency";
-import { QUALIFICATION_OPTIONS } from "../../utils/qualificationOptions";
+import { getQualificationsForField } from "../../utils/qualificationOptions";
 
 function CandidateProfile() {
   const API_URL = getApiBaseUrl();
@@ -73,6 +73,7 @@ function CandidateProfile() {
   const [education, setEducation] = useState(user?.education || "");
   const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "Fresher");
   const [field, setField] = useState(user?.field || "Software Engineering");
+  const qualificationOptions = getQualificationsForField(field);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(
     user?.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true
   );
@@ -204,6 +205,12 @@ function CandidateProfile() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (education && !qualificationOptions.some((option) => option.value === education)) {
+      setEducation("");
+    }
+  }, [field]);
+
   const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Full Name is required");
@@ -215,6 +222,14 @@ function CandidateProfile() {
     }
     if (!location.trim()) {
       toast.error("Location is required");
+      return;
+    }
+    if (!country.trim()) {
+      toast.error("Country is required");
+      return;
+    }
+    if (!education.trim()) {
+      toast.error("Highest Qualification is required");
       return;
     }
     if (!experienceLevel.trim()) {
@@ -711,15 +726,15 @@ function CandidateProfile() {
                 />
               </div>
 
-              {/* Location */}
+              {/* Country */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Country</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Country <span className="text-rose-600">*</span></label>
                 <CustomSelect
                   options={COUNTRY_OPTIONS.map((item) => ({ value: item, label: item }))}
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className="w-full text-sm"
-                  aria-label="Country"
+                  aria-label="Country (required)"
                 />
               </div>
 
@@ -738,12 +753,13 @@ function CandidateProfile() {
 
               {/* Highest Qualification */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Highest Qualification</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Highest Qualification <span className="text-rose-600">*</span></label>
                 <CustomSelect
-                  options={QUALIFICATION_OPTIONS}
+                  options={qualificationOptions}
                   value={education}
                   onChange={(e) => setEducation(e.target.value)}
                   className="w-full text-sm"
+                  aria-label="Highest Qualification (required)"
                 />
               </div>
 
@@ -769,6 +785,12 @@ function CandidateProfile() {
                 <CustomSelect
                   options={[
                     { value: "Software Engineering", label: "Software Engineering / IT" },
+                    { value: "Data & Analytics", label: "Data & Analytics" },
+                    { value: "Healthcare & Medical", label: "Healthcare & Medical" },
+                    { value: "Media & Video Creation", label: "Media & Video Creation" },
+                    { value: "Design & Creative", label: "Design & Creative" },
+                    { value: "Management & Operations", label: "Management & Operations" },
+                    { value: "Customer Support / Operations", label: "Customer Support / Operations" },
                     { value: "Data Science & Analytics", label: "Data Science & Analytics" },
                     { value: "Product Management", label: "Product Management" },
                     { value: "UI/UX & Design", label: "UI/UX & Design" },
@@ -1075,6 +1097,20 @@ function CandidateProfile() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-rose-200/80 shadow-sm p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <Trash2 size={16} className="text-rose-600" /> Account Deletion
+            </h2>
+            <p className="mb-4 text-sm text-slate-500">Request deletion of your account and review our privacy handling.</p>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("skillbridge_open_account_deletion"))}
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50"
+            >
+              Request account deletion
+            </button>
           </div>
 
           {/* Sticky Save Bar */}

@@ -25,6 +25,7 @@ function Register() {
     role: location.state?.role || "candidate",
   });
   const passwordRequirements = getPasswordRequirements(formData.password);
+  const missingPasswordRequirements = passwordRequirements.filter(({ met }) => !met);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -219,13 +220,11 @@ function Register() {
                 {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
               </button>
             </div>
-            <ul id="password-rules" className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5 p-0 list-none text-[10px] leading-4">
-              {passwordRequirements.map(({ label, met }) => (
-                <li key={label} className={met ? "text-emerald-700" : "text-slate-500"}>
-                  <span aria-hidden="true">{met ? "✓" : "•"} </span>{label}
-                </li>
-              ))}
-            </ul>
+            {formData.password && <p id="password-rules" aria-live="polite" className={`mt-1.5 text-[10px] leading-4 ${missingPasswordRequirements.length ? "text-slate-500" : "text-emerald-700"}`}>
+              {missingPasswordRequirements.length
+                ? `${missingPasswordRequirements.length} requirement${missingPasswordRequirements.length === 1 ? "" : "s"} remaining: ${missingPasswordRequirements.map(({ label }) => label).join(", ")}.`
+                : "Password meets all requirements."}
+            </p>}
           </div>
 
           <button 

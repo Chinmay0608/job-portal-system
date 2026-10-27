@@ -432,6 +432,21 @@ const calculateCompletion = (profileUser) => {
   return Math.round((completed / fields.length) * 100);
 };
 
+const getPopularRolesForField = (field = "") => {
+  const value = field.toLowerCase();
+  if (value.includes("health") || value.includes("medical")) return ["Doctor / Physician", "Registered Nurse", "Pharmacist", "Clinical Research Associate"];
+  if (value.includes("data") || value.includes("analytics")) return ["Data Analyst", "Data Scientist", "Machine Learning Engineer", "Data Engineer"];
+  if (value.includes("media") || value.includes("video")) return ["Video Editor", "Content Creator", "Motion Graphics Designer", "Video Producer"];
+  if (value.includes("design") || value.includes("creative")) return ["UI/UX Designer", "Product Designer", "Graphic Designer", "Visual Designer"];
+  if (value.includes("management") || value.includes("product")) return ["Product Manager", "Project Manager", "Operations Manager", "Scrum Master"];
+  if (value.includes("marketing") || value.includes("sales")) return ["Digital Marketing Specialist", "SEO Specialist", "Sales Executive", "Business Development Manager"];
+  if (value.includes("finance") || value.includes("account")) return ["Financial Analyst", "Accountant", "Auditor", "Tax Consultant"];
+  if (value.includes("support") || value.includes("operation") || value.includes("hr")) return ["Customer Support Representative", "Technical Support Specialist", "Customer Success Manager", "Operations Associate"];
+  if (value.includes("cloud") || value.includes("devops")) return ["DevOps Engineer", "Cloud Engineer", "Site Reliability Engineer", "Platform Engineer"];
+  if (value.includes("core engineering")) return ["Mechanical Engineer", "Civil Engineer", "Electrical Engineer", "Hardware Engineer"];
+  return ["Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer"];
+};
+
 const calculateJobMatchScore = (job, user) => {
   if (!job || !user) return { score: 75, matchedSkills: [], isDomainMatch: true };
 
@@ -611,6 +626,7 @@ function CandidateDashboard() {
       return null;
     }
   });
+  const popularRoles = getPopularRolesForField(user?.field || "Software Engineering");
 
   const API_URL = getApiBaseUrl();
 
@@ -1568,7 +1584,7 @@ function CandidateDashboard() {
             <div className="candidate-welcome-header bg-white p-4 sm:px-6 sm:py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">CANDIDATE WORKSPACE</span>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! ðŸ‘‹</h2>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 m-0">Welcome back, {user?.name?.split(" ")[0] || "Candidate"}! 👋</h2>
               </div>
             </div>
           </div>
@@ -1811,8 +1827,8 @@ function CandidateDashboard() {
 
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <span className="mr-1 font-semibold">Popular:</span>
-                {["Software Engineer", "Data Analyst", "Product Manager", "AI/ML", "Remote"].map((term) => (
-                  <button key={term} type="button" onClick={() => { if (term === "Remote") setLocationFilter("Remote"); else { setSearch(term); setSubmittedSearch(term); } setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-brand-700">{term}</button>
+                {popularRoles.map((term) => (
+                  <button key={term} type="button" onClick={() => { setSearch(term); setSubmittedSearch(term); setCurrentPage(1); navigate("/candidate-dashboard?tab=jobs"); }} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-brand-700">{term}</button>
                 ))}
               </div>
             </div>
@@ -2599,7 +2615,7 @@ function CandidateDashboard() {
                 <div className="candidate-job-description-area p-6 space-y-6">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-bold text-slate-900 m-0">Full Job Description</h4>
+                      <h4 className="text-sm font-bold text-slate-900 m-0">{selectedJob.descriptionSourceUrl ? "Employer Listing Details" : "Job Description"}</h4>
                       {englishDescription?.jobId !== selectedJob._id && !isDescriptionInEnglish(selectedJob.description) && (
                         <button
                           type="button"
@@ -2618,6 +2634,13 @@ function CandidateDashboard() {
                       )}
                     </div>
 
+                    {selectedJob.descriptionSourceUrl && (
+                      <p className="mb-3 text-xs text-slate-500">
+                        The employer’s source page provides these listing details but does not publish a longer job description.{" "}
+                        <a href={selectedJob.descriptionSourceUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-700 hover:underline">View employer listing</a>
+                      </p>
+                    )}
+
                     {translationError && !isDescriptionInEnglish(selectedJob.description) && <p className="mb-3 text-xs text-rose-600" role="status">{translationError}</p>}
                     {englishDescription?.jobId === selectedJob._id && englishDescription.source === selectedJob.description && englishDescription.text !== selectedJob.description && (
                       <button
@@ -2632,7 +2655,7 @@ function CandidateDashboard() {
                     {isExpandingDescription && (
                       <div className="mb-3.5 p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl text-blue-700 text-xs font-semibold flex items-center gap-2.5 animate-pulse">
                         <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
-                        <span>Loading complete in-depth job description for {selectedJob.company}...</span>
+                        <span>{selectedJob.descriptionSourceUrl ? "Loading details from the employer listing..." : `Loading the full job description for ${selectedJob.company}...`}</span>
                       </div>
                     )}
                     
@@ -2646,6 +2669,7 @@ function CandidateDashboard() {
                         (selectedJob.isExternal && isReferralAlertDescription(descText) && !selectedJob.descriptionSourceVerified);
                       const canExpandDescription =
                         selectedJob.isExternal &&
+                        !selectedJob.descriptionSourceUrl &&
                         (isMisstructuredDescription(descText) || isDescriptionSnippet(descText));
 
                       return (
@@ -2708,9 +2732,6 @@ function CandidateDashboard() {
                                         )
                                       );
                                       setIsDescriptionExpanded(true);
-                                      if (!isFullDescription) {
-                                        toast("The employerâ€™s full details could not be retrieved. Please try again later.");
-                                      }
                                     } else {
                                       setIsDescriptionExpanded(true);
                                       toast.error("Could not load the full job description.");

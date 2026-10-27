@@ -23,7 +23,7 @@ function PrivacyPolicy() {
 
       <h2>3. When information is shared</h2>
       <p>When you apply for a job, application information and your resume are made available to the recruiter for that job. Some listings link to an external employer or job source; their site and privacy policy apply after you leave SkillBridge.</p>
-      <p>SkillBridge uses service providers configured for the application, including database, file storage, authentication, email, and AI services. Information is sent to a provider when needed for the feature you use—for example, a resume may be processed by an AI provider when parsing is requested. Support reports may be sent to the configured Telegram support channel. Providers process information under their own terms and applicable arrangements.</p>
+      <p>SkillBridge uses service providers configured for the application, including database, file storage, authentication, email, and AI services. Information is sent to a provider when needed for the feature you use—for example, a resume may be processed by an AI provider when parsing is requested. When you use voice dictation, recorded audio is sent to ElevenLabs for transcription. Support reports may be sent to the configured Telegram support channel. Providers process information under their own terms and applicable arrangements.</p>
       <p>We do not knowingly sell personal information. We may disclose information where required by law or to protect users, the service, or legal rights.</p>
 
       <h2>4. Storage and retention</h2>
