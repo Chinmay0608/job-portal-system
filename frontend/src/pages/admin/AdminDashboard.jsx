@@ -81,24 +81,6 @@ const MetricCard = ({ title, icon, value, suffix, badgeText, badgeIcon: BadgeIco
   );
 };
 
-const DeltaBadge = ({ label, value, color }) => {
-  const colorStyles = {
-    emerald: 'bg-emerald-500',
-    blue: 'bg-blue-500',
-    amber: 'bg-amber-400',
-    rose: 'bg-rose-500'
-  };
-  return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50">
-      <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
-        <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${colorStyles[color]}`}></div>
-        {label}
-      </div>
-      <div className="font-bold text-slate-900">{value.toLocaleString()}</div>
-    </div>
-  );
-};
-
 const DashboardSkeleton = () => (
   <div className="w-full space-y-6 animate-pulse">
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -135,6 +117,13 @@ const MetricsView = ({ metrics, fetchHealth, handleTriggerCrawl, triggeringCrawl
   );
 
   const totalDeltas = (metrics.todayDeltas?.newJobs || 0) + (metrics.todayDeltas?.updatedJobs || 0);
+  const deltaValues = [
+    { label: 'New Jobs', value: metrics.todayDeltas?.newJobs || 0, color: 'bg-emerald-500' },
+    { label: 'Updated', value: metrics.todayDeltas?.updatedJobs || 0, color: 'bg-blue-500' },
+    { label: 'Unchanged', value: metrics.todayDeltas?.unchangedJobs || 0, color: 'bg-amber-400' },
+    { label: 'Expired', value: metrics.todayDeltas?.expiredJobs || 0, color: 'bg-rose-500' },
+  ];
+  const maxDelta = Math.max(...deltaValues.map(({ value }) => value), 1);
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500">
@@ -174,24 +163,24 @@ const MetricsView = ({ metrics, fetchHealth, handleTriggerCrawl, triggeringCrawl
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+        <div className="self-start bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
           <div className="px-6 py-5 border-b border-slate-100">
             <h3 className="font-semibold text-slate-900">Crawler Deltas</h3>
             <p className="text-xs text-slate-500 mt-1">Categorized breakdown of today's sync operations</p>
           </div>
-          <div className="p-6 flex-1 flex flex-col justify-center">
-            <div className="w-full h-4 flex rounded-full overflow-hidden mb-8 bg-slate-100 shadow-inner">
-              <div style={{width: '40%'}} className="bg-emerald-500 hover:opacity-90 transition-opacity"></div>
-              <div style={{width: '30%'}} className="bg-blue-500 hover:opacity-90 transition-opacity"></div>
-              <div style={{width: '20%'}} className="bg-amber-400 hover:opacity-90 transition-opacity"></div>
-              <div style={{width: '10%'}} className="bg-rose-500 hover:opacity-90 transition-opacity"></div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <DeltaBadge label="New Jobs" value={metrics.todayDeltas?.newJobs || 0} color="emerald" />
-              <DeltaBadge label="Updated" value={metrics.todayDeltas?.updatedJobs || 0} color="blue" />
-              <DeltaBadge label="Unchanged" value={metrics.todayDeltas?.unchangedJobs || 0} color="amber" />
-              <DeltaBadge label="Expired" value={metrics.todayDeltas?.expiredJobs || 0} color="rose" />
+          <div className="p-6">
+            <div className="space-y-6" role="img" aria-label="Today's crawler delta counts shown as proportional horizontal bars">
+              {deltaValues.map(({ label, value, color }) => (
+                <div key={label} title={`${label}: ${value.toLocaleString()}`}>
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-600">{label}</span>
+                    <span className="font-bold text-slate-900">{value.toLocaleString()}</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full ${color} transition-[width] duration-500`} style={{ width: `${(value / maxDelta) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
