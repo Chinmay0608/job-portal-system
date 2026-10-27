@@ -27,7 +27,7 @@ function PrivacyPolicy() {
       <p>We do not knowingly sell personal information. We may disclose information where required by law or to protect users, the service, or legal rights.</p>
 
       <h2>4. Storage and retention</h2>
-      <p>Account and application data is stored in the service database; uploaded resumes and profile images use the configured file-storage provider. We keep information while needed to provide the service and for legitimate operational or legal needs. The application does not currently provide a self-service account deletion feature or a fixed deletion deadline. To request access, correction, or deletion, email us; we will review the request under applicable law and explain any information that must be retained.</p>
+      <p>Account and application data is stored in the service database; uploaded resumes and profile images use the configured file-storage provider. We keep information while needed to provide the service and for legitimate operational or legal needs. Signed-in users can request account deletion from their profile, verify the request using a code sent to their account email, and receive an administrator decision by email. If you cannot access your account, email us to request access, correction, or deletion. We will review requests under applicable law and explain any information that must be retained.</p>
 
       <h2>5. Your choices and rights</h2>
       <p>You can edit supported profile information in your account and control available notification preferences. Depending on where you live, privacy laws may give you additional rights, such as access, correction, deletion, portability, or objection. Contact us to make a request. We may need to verify your identity before responding.</p>

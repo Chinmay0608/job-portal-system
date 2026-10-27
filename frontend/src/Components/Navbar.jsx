@@ -36,7 +36,7 @@ function Navbar() {
   const [deletionOpen, setDeletionOpen] = useState(false);
   const [deletionOtpSent, setDeletionOtpSent] = useState(false);
   const [deletionBusy, setDeletionBusy] = useState(false);
-  const [deletionForm, setDeletionForm] = useState({ email: user?.email || "", password: "", reason: "", reasonDetail: "", privacyRequest: "", otp: "" });
+  const [deletionForm, setDeletionForm] = useState({ email: user?.email || "", reason: "", reasonDetail: "", privacyRequest: "", otp: "" });
   const candidateMenuRef = useRef(null);
   const navLinksRef = useRef(null);
   const homeTabRef = useRef(null);
@@ -768,7 +768,6 @@ function Navbar() {
             {deletionForm.reason === "Other" && <label className="block text-sm font-medium">Tell us your reason<textarea required maxLength={950} value={deletionForm.reasonDetail} onChange={e => setDeletionForm({...deletionForm, reasonDetail:e.target.value})} className="mt-1 w-full rounded-lg border p-3" rows={3} placeholder="Describe why you’re leaving"/></label>}
             <label className="block text-sm font-medium">Privacy or data request (optional)<textarea maxLength={1000} value={deletionForm.privacyRequest} onChange={e => setDeletionForm({...deletionForm, privacyRequest:e.target.value})} className="mt-1 w-full rounded-lg border p-3" rows={2} placeholder="For example, ask us to export or erase personal data"/></label>
             <label className="block text-sm font-medium">Confirm email<input required type="email" value={deletionForm.email} onChange={e => setDeletionForm({...deletionForm, email:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>
-            <label className="block text-sm font-medium">Password<input required type="password" value={deletionForm.password} onChange={e => setDeletionForm({...deletionForm, password:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>
           </> : <label className="block text-sm font-medium">Email verification code<input required inputMode="numeric" pattern="[0-9]{6}" value={deletionForm.otp} onChange={e => setDeletionForm({...deletionForm, otp:e.target.value})} className="mt-1 w-full rounded-lg border p-3"/></label>}
           <div className="flex justify-end gap-3"><button type="button" onClick={() => {setDeletionOpen(false);setDeletionOtpSent(false);}} className="rounded-lg border px-4 py-2">Cancel</button><button disabled={deletionBusy} className="rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white disabled:opacity-50">{deletionBusy ? "Submitting…" : deletionOtpSent ? "Verify request" : "Send verification code"}</button></div>
         </form>
