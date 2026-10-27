@@ -35,6 +35,7 @@ import {
   ChevronRight as ChevronRightIcon,
   ArrowUpRight,
   BriefcaseBusiness,
+  CalendarClock,
   Check,
   Bookmark,
   FileText,
@@ -1696,7 +1697,7 @@ function CandidateDashboard() {
               </div>
               <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
               <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
-                <BriefcaseBusiness className="text-slate-400 shrink-0" size={18} aria-hidden="true" />
+                <CalendarClock className="text-slate-400 shrink-0" size={18} aria-hidden="true" />
                 <CustomSelect
                   borderless
                   mutedValue
