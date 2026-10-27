@@ -4,15 +4,6 @@ import "./CookieConsentBanner.css";
 
 const CONSENT_KEY = "consent_choice";
 
-export function getConsent() {
-  try {
-    const choice = localStorage.getItem(CONSENT_KEY);
-    return choice === "essential" || choice === "all" ? choice : null;
-  } catch {
-    return null;
-  }
-}
-
 function CookieConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
