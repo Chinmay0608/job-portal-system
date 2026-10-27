@@ -105,6 +105,19 @@ const deriveCompanyDomain = (company) => {
     vanco: "vanco.ai",
     innoventes: "innoventestech.com",
     "innoventes technologies": "innoventestech.com",
+    kpmg: "kpmg.com",
+    "kpmg india": "kpmg.com",
+    abb: "abb.com",
+    "abb india": "abb.com",
+    "abb group": "abb.com",
+    kiwi: "gokiwi.in",
+    ridecell: "ridecell.com",
+    sculptsoft: "sculptsoft.com",
+    credgenics: "credgenics.com",
+    appbrew: "appbrew.tech",
+    aiqon: "aiqon.in",
+    tekworks: "tekworks.in",
+    klimb: "klimb.io",
   };
 
   if (domainOverrides[lower]) return domainOverrides[lower];
