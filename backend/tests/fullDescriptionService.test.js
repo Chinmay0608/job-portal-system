@@ -180,7 +180,7 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
       );
       expect(Job.findByIdAndUpdate).toHaveBeenCalledWith("job-stale", {
         description: expect.stringContaining("Required Qualifications"),
-        isFullDescription: true,
+        isFullDescription: false,
       });
     });
 
