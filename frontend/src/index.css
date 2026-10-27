@@ -674,7 +674,7 @@ input[type="submit"]:active:not(:disabled),
   top: 0;
   z-index: 1000;
   width: 100%;
-  background: #faf7f1;
+  background: #fbf4e9;
   border-bottom: 1px solid #eadcc7;
   box-shadow: none;
   transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -820,7 +820,7 @@ input[type="submit"]:active:not(:disabled),
 }
 
 .navbar-container {
-  max-width: 1380px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 16px;
   height: 56px;
@@ -2689,6 +2689,35 @@ input[type="submit"]:active:not(:disabled),
   margin-top: 4px;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.deletion-reason-select .deletion-reason__control,
+.deletion-reason-select .deletion-reason__control:hover,
+.deletion-reason-select .deletion-reason__control--is-focused {
+  border-color: #0f172a !important;
+}
+
+.deletion-reason__menu {
+  border: 1px solid #0f172a !important;
+}
+
+.deletion-reason__option {
+  border-bottom: 1px solid #94a3b8;
+}
+
+.deletion-reason__option:last-child {
+  border-bottom: 0;
+}
+
+.onboarding-control__control,
+.onboarding-control__control:hover,
+.onboarding-control__control--is-focused {
+  border-color: #000 !important;
+}
+
+.account-deletion-dialog input,
+.account-deletion-dialog textarea {
+  border-color: #000 !important;
 }
 
 .skills-suggestion-item {
@@ -7195,14 +7224,14 @@ input[type="submit"]:active:not(:disabled),
 
 /* All-industry home page */
 .home-page {
-  background: #faf7f1;
+  background: #fbf4e9;
   color: #0d1117;
 }
 
 .home-hero {
   min-height: 0;
   padding: clamp(72px, 8vw, 112px) 7% 76px;
-  background: radial-gradient(ellipse at 82% 42%, rgba(37, 99, 235, 0.1), transparent 34%), #faf7f1;
+  background: radial-gradient(ellipse at 78% 42%, rgba(240, 203, 165, 0.2), transparent 36%), radial-gradient(ellipse at 12% 88%, rgba(217, 130, 91, 0.09), transparent 34%), #fbf4e9;
   text-align: left;
 }
 
@@ -7270,7 +7299,7 @@ input[type="submit"]:active:not(:disabled),
   padding: 8px;
   border: 1px solid #e5ddcf;
   border-radius: 16px;
-  background: #fffdf9;
+  background: #fffaf1;
   box-shadow: 0 16px 42px rgba(48, 43, 34, 0.09);
 }
 
@@ -7324,12 +7353,12 @@ input[type="submit"]:active:not(:disabled),
 .home-visual-orbit { position: absolute; z-index: -1; border: 1px solid rgba(37,99,235,0.12); border-radius: 50%; }
 .home-visual-orbit-one { width: 400px; height: 400px; }
 .home-visual-orbit-two { width: 310px; height: 310px; }
-.home-visual-card { position: absolute; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(229,221,207,0.9); border-radius: 16px; background: rgba(255,253,249,0.94); box-shadow: 0 18px 45px rgba(48,43,34,0.1); }
+.home-visual-card { position: absolute; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(226,211,188,0.9); border-radius: 16px; background: rgba(255,250,241,0.96); box-shadow: 0 18px 45px rgba(48,43,34,0.1); }
 .home-visual-card-main { top: 50%; left: 50%; width: 78%; min-height: 188px; padding: 25px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; transform: translate(-50%, -50%); }
 .home-visual-kicker { color: #2563eb; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .home-visual-card-main > strong { max-width: 290px; color: #132138; font-size: clamp(1.45rem, 2.4vw, 2rem); line-height: 1.12; letter-spacing: -0.04em; }
 .home-visual-tags { display: flex; flex-wrap: wrap; gap: 7px; }
-.home-visual-tags span { padding: 5px 9px; border-radius: 999px; background: #f1eee8; color: #5b6574; font-size: 0.68rem; font-weight: 650; }
+.home-visual-tags span { padding: 5px 9px; border-radius: 999px; background: #f3eadb; color: #5b5145; font-size: 0.68rem; font-weight: 650; }
 .home-visual-note { position: absolute; z-index: 1; top: 26px; right: -2%; display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid #e5ddcf; border-radius: 13px; background: #fffdf9; box-shadow: 0 12px 28px rgba(48,43,34,0.1); color: #2563eb; transform: rotate(3deg); }
 .home-visual-note-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #eff6ff; }
 .home-visual-note > span:nth-child(2) { display: grid; gap: 2px; }

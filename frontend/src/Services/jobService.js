@@ -54,6 +54,9 @@ export const postAIChatMessage = async (messages) => {
 export const synthesizeDhruvSpeech = async ({ text, voice }) =>
   (await api.post("/api/jobs/ai/speech", { text, voice }, { responseType: "blob" })).data;
 
+export const getDhruvRealtimeScribeToken = async () =>
+  (await api.post("/api/jobs/ai/transcribe-token")).data;
+
 export const postAIFeedback = async ({ prompt, response, rating, feedbackReason }) => {
   const res = await api.post("/api/jobs/ai-chat/feedback", { prompt, response, rating, feedbackReason });
   return res.data;

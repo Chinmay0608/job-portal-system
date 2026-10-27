@@ -27,7 +27,7 @@ const {
 } = require("../controllers/jobController");
 
 const { submitAiFeedback } = require("../controllers/feedbackController");
-const { synthesizeDhruvSpeech } = require("../controllers/speechController");
+const { synthesizeDhruvSpeech, createRealtimeScribeToken } = require("../controllers/speechController");
 const rateLimit = require("express-rate-limit");
 
 
@@ -82,6 +82,7 @@ router.post(
   speechLimiter,
   synthesizeDhruvSpeech,
 );
+router.post("/ai/transcribe-token", protect, authorizeRoles("candidate"), speechLimiter, createRealtimeScribeToken);
 router.post(
   "/ai/feedback",
   protect,

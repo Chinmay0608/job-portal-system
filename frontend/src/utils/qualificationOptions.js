@@ -53,3 +53,50 @@ export const QUALIFICATION_OPTIONS = [
   { value: "Bachelor's Degree (Other)", label: "Other Bachelor's Degree" },
   { value: "Master's Degree (Other)", label: "Other Master's Degree" },
 ];
+
+const QUALIFICATIONS_BY_FIELD = {
+  healthcare: [
+    "MBBS", "MD / MS", "B.Pharm / M.Pharm", "B.Sc Nursing / GNM",
+    "BDS / MDS", "BPT / MPT", "B.Sc (General / Honors)",
+    "M.Sc (General / Honors)", "Diploma / Professional Certificate",
+    "High School (10th / 12th Pass)",
+  ],
+  software: [
+    "B.Tech / B.E.", "M.Tech / M.E.", "BCA", "MCA",
+    "B.Sc Computer Science / IT", "M.Sc Computer Science / IT",
+    "Polytechnic Diploma", "Diploma / Professional Certificate",
+    "High School (10th / 12th Pass)",
+  ],
+  data: [
+    "B.Tech / B.E.", "M.Tech / M.E.", "BCA", "MCA",
+    "B.Sc Computer Science / IT", "M.Sc Computer Science / IT",
+    "B.Sc (General / Honors)", "M.Sc (General / Honors)",
+    "High School (10th / 12th Pass)",
+  ],
+  business: ["BBA / BBM", "MBA / PGDM", "B.Com", "M.Com", "CA / CS / CMA", "High School (10th / 12th Pass)"],
+  media: ["BJMC / MJMC", "BA (Bachelor of Arts)", "MA (Master of Arts)", "B.Des / M.Des", "High School (10th / 12th Pass)"],
+  design: ["B.Des / M.Des", "B.Arch / M.Arch", "BA (Bachelor of Arts)", "MA (Master of Arts)", "High School (10th / 12th Pass)"],
+  law: ["LLB / BA LLB", "LLM", "BA (Bachelor of Arts)", "MA (Master of Arts)", "High School (10th / 12th Pass)"],
+  general: ["BBA / BBM", "MBA / PGDM", "B.Com", "M.Com", "BA (Bachelor of Arts)", "MA (Master of Arts)", "High School (10th / 12th Pass)"],
+};
+
+export const getQualificationsForField = (field = "") => {
+  const normalized = field.toLowerCase();
+  const group = normalized.includes("health") || normalized.includes("medical") || normalized.includes("nurs") || normalized.includes("pharm")
+    ? "healthcare"
+    : normalized.includes("software") || normalized.includes("engineering") || normalized.includes("devops") || normalized.includes("cloud") || normalized.includes("it")
+      ? "software"
+      : normalized.includes("data") || normalized.includes("analytics") || normalized.includes("science")
+        ? "data"
+        : normalized.includes("finance") || normalized.includes("account") || normalized.includes("management") || normalized.includes("operation") || normalized.includes("product") || normalized.includes("sales") || normalized.includes("marketing") || normalized.includes("support") || normalized.includes("hr")
+          ? "business"
+          : normalized.includes("media") || normalized.includes("video") || normalized.includes("journal") || normalized.includes("content")
+            ? "media"
+            : normalized.includes("design") || normalized.includes("creative") || normalized.includes("art")
+              ? "design"
+              : normalized.includes("law") || normalized.includes("legal")
+                ? "law"
+                : "general";
+  const allowed = new Set(QUALIFICATIONS_BY_FIELD[group]);
+  return QUALIFICATION_OPTIONS.filter((option) => !option.value || allowed.has(option.value));
+};

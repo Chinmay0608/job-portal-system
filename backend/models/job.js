@@ -29,6 +29,7 @@ const jobSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    descriptionSourceUrl: { type: String, default: "" },
     isExternal: {
       type: Boolean,
       default: false,

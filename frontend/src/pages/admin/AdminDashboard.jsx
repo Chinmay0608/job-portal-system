@@ -1179,6 +1179,8 @@ const ConfigurationView = ({ onRefresh }) => {
 };
 
 const AdminDashboard = () => {
+  const [deletionRequests, setDeletionRequests] = useState([]);
+  const [loadingDeletionRequests, setLoadingDeletionRequests] = useState(false);
   const [metrics, setMetrics] = useState(null);
   const [users, setUsers] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -1250,6 +1252,24 @@ const AdminDashboard = () => {
         console.warn("Could not fetch open tickets count:", err.message);
       }
     }
+  };
+
+  const fetchDeletionRequests = async () => {
+    setLoadingDeletionRequests(true);
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/api/admin/account-deletion-requests`, getAuthHeaders());
+      setDeletionRequests(data);
+    } catch (err) { if (!handle401(err)) toast.error("Could not load deletion requests."); }
+    finally { setLoadingDeletionRequests(false); }
+  };
+
+  const decideDeletionRequest = async (id, decision) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/api/admin/account-deletion-requests/${id}`, { decision }, getAuthHeaders());
+      toast.success(`Request ${decision}.`);
+      fetchDeletionRequests();
+      if (decision === "approved") fetchUsers();
+    } catch (err) { if (!handle401(err)) toast.error(err.response?.data?.message || "Could not update request."); }
   };
 
   const fetchNotificationsCount = async () => {
@@ -1467,6 +1487,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (activeTab === 'users') fetchUsers();
+    if (activeTab === 'deletions') fetchDeletionRequests();
     if (activeTab === 'jobs') fetchJobs(jobsSearch, jobsPage, jobsLimit);
     if (activeTab === 'applications') fetchApplications();
     if (activeTab === 'activity') fetchActivity();
@@ -1512,6 +1533,7 @@ const AdminDashboard = () => {
           <nav className="space-y-1">
             <SidebarItem icon={<LayoutDashboard size={18} />} label="SDE Metrics" active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} />
             <SidebarItem icon={<Users size={18} />} label="User Management" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+            <SidebarItem icon={<Trash2 size={18} />} label="Deletion Requests" active={activeTab === 'deletions'} onClick={() => setActiveTab('deletions')} badge={deletionRequests.length} />
             <SidebarItem icon={<Database size={18} />} label="Jobs Registry" active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} />
             <SidebarItem icon={<Briefcase size={18} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
             <SidebarItem icon={<BookMarked size={18} />} label="Candidate Activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
@@ -1559,7 +1581,7 @@ const AdminDashboard = () => {
             <ChevronRight size={14} className="text-slate-300" />
             <span className="font-bold text-slate-900">
               {activeTab === 'metrics' ? 'SDE Metrics' : 
-               activeTab === 'users' ? 'User Management' : 
+               activeTab === 'users' ? 'User Management' : activeTab === 'deletions' ? 'Deletion Requests' :
                activeTab === 'jobs' ? 'Jobs Registry' : 
                activeTab === 'applications' ? 'Applications' : 
                activeTab === 'activity' ? 'Candidate Activity' : 
@@ -1598,6 +1620,7 @@ const AdminDashboard = () => {
               onClick={() => {
                 fetchHealth();
                 if (activeTab === 'users') fetchUsers();
+                if (activeTab === 'deletions') fetchDeletionRequests();
                 if (activeTab === 'jobs') fetchJobs(jobsSearch, jobsPage, jobsLimit);
                 if (activeTab === 'applications') fetchApplications();
                 if (activeTab === 'activity') fetchActivity();
@@ -1621,6 +1644,8 @@ const AdminDashboard = () => {
             <MetricsView metrics={metrics} fetchHealth={fetchHealth} handleTriggerCrawl={handleTriggerCrawl} triggeringCrawl={triggeringCrawl} setActiveTab={setActiveTab} />
           ) : activeTab === 'users' ? (
             <UsersView users={users} loading={loadingUsers} onRefresh={fetchUsers} onToggleRole={handleToggleRole} onDeleteUser={handleDeleteUser} />
+          ) : activeTab === 'deletions' ? (
+            <div className="space-y-4"><div><h2 className="text-lg font-semibold">Verified account deletion requests</h2><p className="text-sm text-slate-500">Review the reason and privacy request, then approve or reject.</p></div>{loadingDeletionRequests ? <p>Loading requests…</p> : deletionRequests.length ? deletionRequests.map(request => <article key={request._id} className="rounded-xl border bg-white p-5"><div className="flex flex-wrap justify-between gap-4"><div><h3 className="font-semibold">{request.user?.name || "Deleted user"} · {request.email}</h3><p className="text-xs text-slate-500">{new Date(request.createdAt).toLocaleString()}</p></div><div className="flex gap-2"><button onClick={() => decideDeletionRequest(request._id, "rejected")} className="rounded-lg border px-3 py-2 text-sm">Reject</button><button onClick={() => decideDeletionRequest(request._id, "approved")} className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white">Approve deletion</button></div></div><p className="mt-4 text-sm"><strong>Reason:</strong> {request.reason}</p>{request.privacyRequest && <p className="mt-2 text-sm"><strong>Privacy request:</strong> {request.privacyRequest}</p>}</article>) : <p className="rounded-xl border bg-white p-6 text-sm text-slate-500">No verified requests awaiting review.</p>}</div>
           ) : activeTab === 'jobs' ? (
             <JobsView 
               jobs={jobs} 

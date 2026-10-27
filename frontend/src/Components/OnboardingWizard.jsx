@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import debounce from "lodash.debounce";
 import toast from "react-hot-toast";
 import {
@@ -146,7 +146,7 @@ const DOMAIN_SENIORITIES = {
   ],
 };
 
-import { QUALIFICATION_OPTIONS } from "../utils/qualificationOptions";
+import { getQualificationsForField } from "../utils/qualificationOptions";
 
 const EXPERIENCE_OPTIONS = [
   { value: "Fresher", label: "Fresher / Student" },
@@ -213,7 +213,47 @@ export default function OnboardingWizard({ user, onComplete }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const selectedDomainObj = DOMAIN_OPTIONS.find((d) => d.id === field) || DOMAIN_OPTIONS[0];
+  const qualificationOptions = getQualificationsForField(field);
   const seniorityList = DOMAIN_SENIORITIES[field] || DOMAIN_SENIORITIES["DEFAULT"];
+
+  useEffect(() => {
+    const query = location.trim();
+    if (country !== "India" || query.length < 2) return undefined;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q: query, country: "IN", class: "P", limit: "10" });
+        const response = await fetch(`https://countries.dev/places?${params}`, { signal: controller.signal });
+        if (!response.ok) return;
+        const data = await response.json();
+        const places = Array.isArray(data) ? data : data?.data || [];
+        const cityNames = places.map((place) => place.name).filter(Boolean);
+        const localMatches = POPULAR_LOCATIONS.filter((place) => place.toLowerCase().includes(query.toLowerCase()));
+        const matches = [...new Set([...localMatches, ...cityNames])];
+        if (!matches.some((place) => place.toLowerCase() === query.toLowerCase())) matches.push(query);
+        setLocationSuggestions(matches.slice(0, 10));
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          const queryLower = query.toLowerCase();
+          const matches = POPULAR_LOCATIONS.filter((place) => place.toLowerCase().includes(queryLower));
+          if (!matches.some((place) => place.toLowerCase() === queryLower)) matches.push(query);
+          setLocationSuggestions(matches.slice(0, 10));
+        }
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [location, country]);
+
+  useEffect(() => {
+    if (highestQualification && !qualificationOptions.some((option) => option.value === highestQualification)) {
+      setHighestQualification("");
+    }
+  }, [field]);
 
   const toggleSeniorityLevel = (levelStr) => {
     setTargetSeniority((prev) => {
@@ -240,6 +280,7 @@ export default function OnboardingWizard({ user, onComplete }) {
       const matches = POPULAR_LOCATIONS.filter((loc) =>
         loc.toLowerCase().includes(q)
       );
+      if (!matches.some((loc) => loc.toLowerCase() === q)) matches.push(val.trim());
       setLocationSuggestions(matches);
       setIsLocationDropdownOpen(true);
     }
@@ -789,7 +830,7 @@ export default function OnboardingWizard({ user, onComplete }) {
                   <select
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    style={{ width: "100%", padding: "11px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "0.92rem", color: "#1e293b", marginBottom: "12px", background: "#fff" }}
+                    style={{ width: "100%", padding: "11px 14px", borderRadius: "10px", border: "1.5px solid #000", fontSize: "0.92rem", color: "#1e293b", marginBottom: "12px", background: "#fff" }}
                     aria-label="Country"
                   >
                     {COUNTRY_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
@@ -837,18 +878,18 @@ export default function OnboardingWizard({ user, onComplete }) {
                         width: "100%",
                         padding: "11px 14px",
                         borderRadius: "10px",
-                        border: "1.5px solid #cbd5e1",
+                        border: "1.5px solid #000",
                         fontSize: "0.92rem",
                         color: "#1e293b",
                         outline: "none",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "#2563eb";
+                        e.target.style.borderColor = "#000";
                         handleLocationChange(location);
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = "#cbd5e1";
+                        e.target.style.borderColor = "#000";
                         setTimeout(() => setIsLocationDropdownOpen(false), 200);
                       }}
                     />
@@ -864,7 +905,7 @@ export default function OnboardingWizard({ user, onComplete }) {
                           background: "#ffffff",
                           borderRadius: "10px",
                           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15)",
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid #000",
                           maxHeight: "180px",
                           overflowY: "auto",
                         }}
@@ -894,6 +935,9 @@ export default function OnboardingWizard({ user, onComplete }) {
                             <span>{item}</span>
                           </div>
                         ))}
+                        <div style={{ borderTop: "1px solid #000", padding: "6px 10px", fontSize: "0.7rem", color: "#64748b" }}>
+                          City data: <a href="https://www.geonames.org/" target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>GeoNames</a> (CC BY 4.0)
+                        </div>
                       </div>
                     )}
                   </div>
@@ -910,7 +954,7 @@ export default function OnboardingWizard({ user, onComplete }) {
                             background: isSelected ? "#2563eb" : "#f1f5f9",
                             color: isSelected ? "#ffffff" : "#475569",
                             border: "1px solid",
-                            borderColor: isSelected ? "#2563eb" : "#e2e8f0",
+                            borderColor: "#000",
                             borderRadius: "999px",
                             padding: "4px 10px",
                             fontSize: "0.78rem",
@@ -931,10 +975,11 @@ export default function OnboardingWizard({ user, onComplete }) {
                       Highest Degree
                     </label>
                     <CustomSelect
-                      options={QUALIFICATION_OPTIONS}
+                      options={qualificationOptions}
                       value={highestQualification}
                       onChange={(e) => setHighestQualification(e.target.value)}
                       placeholder="Select Degree"
+                      classNamePrefix="onboarding-control"
                     />
                   </div>
                   <div>
@@ -946,6 +991,7 @@ export default function OnboardingWizard({ user, onComplete }) {
                       value={experienceLevel}
                       onChange={(e) => setExperienceLevel(e.target.value)}
                       placeholder="Select Experience"
+                      classNamePrefix="onboarding-control"
                     />
                   </div>
                 </div>

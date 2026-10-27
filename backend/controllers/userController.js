@@ -89,6 +89,14 @@ const updateProfile = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Location is required" });
   }
 
+  if (!String(country ?? user.country ?? "India").trim()) {
+    return res.status(400).json({ message: "Country is required" });
+  }
+
+  if (!String(education ?? user.education ?? "").trim()) {
+    return res.status(400).json({ message: "Highest Qualification is required" });
+  }
+
   if (!String(experienceLevel ?? user.experienceLevel ?? "Fresher").trim()) {
     return res.status(400).json({ message: "Experience Level is required" });
   }

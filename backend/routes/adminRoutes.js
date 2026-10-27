@@ -12,6 +12,10 @@ const SecurityLog = require('../models/SecurityLog');
 const AiUsageLog = require('../models/AiUsageLog');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const { logSecurityEvent } = require('../middleware/securityAuditMiddleware');
+const { listRequests, decideRequest } = require('../controllers/accountDeletionController');
+
+router.get('/account-deletion-requests', protect, authorizeRoles('admin'), listRequests);
+router.patch('/account-deletion-requests/:id', protect, authorizeRoles('admin'), decideRequest);
 
 const isAdminUser = (user, decodedUser) => {
   if (user && user.role === 'admin') return true;

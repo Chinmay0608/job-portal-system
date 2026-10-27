@@ -48,4 +48,21 @@ const synthesizeDhruvSpeech = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { synthesizeDhruvSpeech };
+const createRealtimeScribeToken = asyncHandler(async (_req, res) => {
+  if (!process.env.ELEVEN_API_KEY) {
+    return res.status(503).json({ message: "DHRUV speech recognition is not configured" });
+  }
+  try {
+    const response = await axios.post("https://api.elevenlabs.io/v1/single-use-token/realtime_scribe", null, {
+      headers: { "xi-api-key": process.env.ELEVEN_API_KEY },
+      timeout: 15000,
+    });
+    if (!response.data?.token) throw new Error("ElevenLabs returned no realtime token");
+    return res.json({ token: response.data?.token });
+  } catch (error) {
+    logger.error({ status: error.response?.status }, "[ElevenLabs] Realtime speech token request failed");
+    return res.status(502).json({ message: "DHRUV could not start live transcription. Please try again." });
+  }
+});
+
+module.exports = { synthesizeDhruvSpeech, createRealtimeScribeToken };

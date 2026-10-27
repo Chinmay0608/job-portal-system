@@ -15,6 +15,7 @@ const {
 } = require("../controllers/authController");
 
 const { authLimiter } = require("../middleware/rateLimiter");
+const { requestOtp, confirmOtp } = require("../controllers/accountDeletionController");
 const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 
 const router = express.Router();
@@ -44,6 +45,8 @@ router.post(
 router.post("/login", authLimiter, loginUser);
 router.post("/google-login", authLimiter, googleLogin);
 router.post("/logout", logoutUser);
+router.post("/account-deletion/otp", protect, authLimiter, requestOtp);
+router.post("/account-deletion/confirm", protect, authLimiter, confirmOtp);
 
 /* ==========================
    PASSWORD RESET

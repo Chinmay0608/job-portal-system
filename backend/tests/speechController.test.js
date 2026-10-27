@@ -2,7 +2,7 @@ jest.mock("axios", () => ({ post: jest.fn() }));
 jest.mock("../utils/logger", () => ({ error: jest.fn() }));
 
 const axios = require("axios");
-const { synthesizeDhruvSpeech } = require("../controllers/speechController");
+const { synthesizeDhruvSpeech, createRealtimeScribeToken } = require("../controllers/speechController");
 
 describe("synthesizeDhruvSpeech", () => {
   let req;
@@ -54,5 +54,23 @@ describe("synthesizeDhruvSpeech", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(axios.post).not.toHaveBeenCalled();
+  });
+});
+
+describe("createRealtimeScribeToken", () => {
+  it("requests a temporary realtime token without exposing the API key", async () => {
+    process.env.ELEVEN_API_KEY = "test-api-key";
+    axios.post.mockReset();
+    axios.post.mockResolvedValue({ data: { token: "single-use-token" } });
+    const res = { json: jest.fn().mockReturnThis(), status: jest.fn().mockReturnThis() };
+
+    await createRealtimeScribeToken({}, res);
+
+    expect(axios.post).toHaveBeenCalledWith(
+      "https://api.elevenlabs.io/v1/single-use-token/realtime_scribe",
+      null,
+      expect.objectContaining({ headers: { "xi-api-key": "test-api-key" } })
+    );
+    expect(res.json).toHaveBeenCalledWith({ token: "single-use-token" });
   });
 });

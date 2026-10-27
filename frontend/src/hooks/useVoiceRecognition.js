@@ -7,10 +7,25 @@ import {
   matchesVoiceProfile,
   startSpeakerAudioCapture,
 } from "../Services/voiceIdentity";
+import { getDhruvRealtimeScribeToken } from "../Services/jobService";
 
 const getSpeechRecognitionClass = () => {
   if (typeof window === "undefined") return null;
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+};
+
+const encodePcmChunk = (audio) => {
+  const pcm = new Int16Array(audio.length);
+  for (let index = 0; index < audio.length; index += 1) {
+    const sample = Math.max(-1, Math.min(1, audio[index]));
+    pcm[index] = sample < 0 ? sample * 32768 : sample * 32767;
+  }
+  const bytes = new Uint8Array(pcm.buffer);
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
 };
 
 // Play crystal-clear Siri/Alexa-style ascending wake chime using native Web Audio API
@@ -56,28 +71,34 @@ export default function useVoiceRecognition() {
   const [error, setError] = useState(null);
 
   const SpeechRecognitionClass = getSpeechRecognitionClass();
-  const isSupported = Boolean(SpeechRecognitionClass);
+  const isSupported = typeof navigator !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia) && typeof (window.AudioContext || window.webkitAudioContext) !== "undefined";
 
-  const recognitionRef = useRef(null);
+  const regularAudioCaptureRef = useRef(null);
+  const transcriptionSocketRef = useRef(null);
+  const audioChunkCallbackRef = useRef(null);
+  const fallbackSessionRef = useRef(0);
+  const committedTranscriptRef = useRef("");
   const wakeRecognitionRef = useRef(null);
   const onResultCallbackRef = useRef(null);
+  const onEndCallbackRef = useRef(null);
   const onWakeDetectedCallbackRef = useRef(null);
   const onWakeStatusCallbackRef = useRef(null);
 
   // Stop regular listening
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.onend = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.stop();
-      } catch (err) {
-        console.warn("[VoiceRecognition] stop error:", err);
-      }
-      recognitionRef.current = null;
-    }
+  const stopListening = useCallback((shouldFinalize = false) => {
+    ++fallbackSessionRef.current;
+    const audioCapture = regularAudioCaptureRef.current;
+    regularAudioCaptureRef.current = null;
+    if (audioCapture) audioCapture.stop().catch((err) => console.warn("[VoiceRecognition] Audio capture stop error:", err));
+    audioChunkCallbackRef.current = null;
+    const socket = transcriptionSocketRef.current;
+    transcriptionSocketRef.current = null;
+    if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
     setIsListening(false);
-    setInterimTranscript("");
+    if (shouldFinalize && committedTranscriptRef.current) {
+      onResultCallbackRef.current?.(committedTranscriptRef.current);
+    }
+    onEndCallbackRef.current?.();
   }, []);
 
   const wakeRestartTimerRef = useRef(null);
@@ -114,11 +135,11 @@ export default function useVoiceRecognition() {
     setIsWakeListening(false);
   }, []);
 
-  // Start regular speech recognition (Speech-to-Text)
+  // Stream microphone audio to ElevenLabs and show partial transcripts while speaking.
   const startListening = useCallback(
-    ({ onResult, onEnd, continuous = false, lang = "en-US" } = {}) => {
+    async ({ onResult, onEnd } = {}) => {
       if (!isSupported) {
-        toast.error("Voice recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+        toast.error("Audio recording is not supported in this browser.");
         return;
       }
 
@@ -128,87 +149,116 @@ export default function useVoiceRecognition() {
       setError(null);
       setTranscript("");
       setInterimTranscript("");
+      committedTranscriptRef.current = "";
 
       onResultCallbackRef.current = onResult;
-
+      onEndCallbackRef.current = onEnd;
+      const sessionId = ++fallbackSessionRef.current;
+      setIsListening(true);
+      const connectingToast = "dhruv-realtime-transcription";
+      toast.loading("Connecting to live transcription...", { id: connectingToast });
       try {
-        const recognition = new SpeechRecognitionClass();
-        recognition.lang = lang;
-        recognition.interimResults = true;
-        recognition.continuous = continuous;
-        recognition.maxAlternatives = 1;
+        const capture = await startSpeakerAudioCapture(30, (audio) => audioChunkCallbackRef.current?.(audio));
+        if (fallbackSessionRef.current !== sessionId) {
+          await capture.stop();
+          return;
+        }
+        regularAudioCaptureRef.current = capture;
+        const { token } = await getDhruvRealtimeScribeToken();
+        if (fallbackSessionRef.current !== sessionId) return;
 
-        recognition.onstart = () => {
-          setIsListening(true);
-        };
-
-        recognition.onresult = (event) => {
-          let currentInterim = "";
-          let currentFinal = "";
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const item = event.results[i];
-            const text = item[0]?.transcript || "";
-            if (item.isFinal) {
-              currentFinal += text;
+        const params = new URLSearchParams({
+          model_id: "scribe_v2_realtime",
+          token,
+          audio_format: `pcm_${capture.sampleRate}`,
+          sample_rate: String(capture.sampleRate),
+          commit_strategy: "vad",
+        });
+        const socket = new WebSocket(`wss://api.elevenlabs.io/v1/speech-to-text/realtime?${params}`);
+        transcriptionSocketRef.current = socket;
+        let sessionStarted = false;
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error("Live transcription took too long to connect.")), 12000);
+          socket.onmessage = (event) => {
+            if (fallbackSessionRef.current !== sessionId) return;
+            try {
+              const message = JSON.parse(event.data);
+              if (message.message_type === "session_started") {
+                sessionStarted = true;
+                clearTimeout(timeout);
+                audioChunkCallbackRef.current = (audio) => {
+                  if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ message_type: "input_audio_chunk", audio_base_64: encodePcmChunk(audio) }));
+                  }
+                };
+                toast.dismiss(connectingToast);
+                resolve();
+              } else if (message.message_type === "partial_transcript") {
+                setInterimTranscript([committedTranscriptRef.current, message.text].filter(Boolean).join(" "));
+              } else if (message.message_type === "committed_transcript") {
+                committedTranscriptRef.current = [committedTranscriptRef.current, message.text].filter(Boolean).join(" ").trim();
+                setTranscript(committedTranscriptRef.current);
+                setInterimTranscript(committedTranscriptRef.current);
+              } else if (message.error || message.message_type?.endsWith("error") || message.message_type === "rate_limited") {
+                throw new Error(message.error || "Live transcription failed. Please try again.");
+              }
+            } catch (error) {
+              clearTimeout(timeout);
+              if (sessionStarted) {
+                setError(error.message);
+                toast.error(error.message);
+                stopListening();
+              } else {
+                reject(error);
+              }
+            }
+          };
+          socket.onerror = () => {
+            clearTimeout(timeout);
+            const error = new Error("Could not connect to ElevenLabs live transcription. Check your connection and try again.");
+            if (sessionStarted) {
+              setError(error.message);
+              toast.error(error.message);
+              stopListening();
             } else {
-              currentInterim += text;
+              reject(error);
             }
-          }
-
-          if (currentInterim) {
-            setInterimTranscript(currentInterim);
-          }
-
-          if (currentFinal) {
-            const trimmed = currentFinal.trim();
-            setTranscript(trimmed);
-            setInterimTranscript("");
-            if (onResultCallbackRef.current) {
-              onResultCallbackRef.current(trimmed);
+          };
+          socket.onclose = () => {
+            clearTimeout(timeout);
+            if (fallbackSessionRef.current === sessionId) {
+              const error = new Error("Live transcription connection closed.");
+              if (sessionStarted) {
+                setError(error.message);
+                toast.error(error.message);
+                stopListening();
+              } else {
+                reject(error);
+              }
             }
-          }
-        };
-
-        recognition.onerror = (event) => {
-          console.warn("[VoiceRecognition] Error event:", event.error);
-          setIsListening(false);
-          setInterimTranscript("");
-
-          if (event.error === "not-allowed") {
-            setError("Microphone permission denied");
-            toast.error("Microphone access was blocked. Please enable microphone permissions in your browser address bar.");
-          } else if (event.error === "no-speech") {
-            setError("No speech detected");
-          } else if (event.error === "network") {
-            setError("Network error in speech recognition");
-            toast.error("Speech service network error. Check your connection.");
-          } else {
-            setError(event.error);
-          }
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-          setInterimTranscript("");
-          if (onEnd) onEnd();
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-      } catch (err) {
-        console.error("[VoiceRecognition] Failed to start:", err);
+          };
+        });
+      } catch (captureError) {
+        if (fallbackSessionRef.current !== sessionId) return;
+        toast.dismiss(connectingToast);
+        regularAudioCaptureRef.current?.stop();
+        regularAudioCaptureRef.current = null;
+        transcriptionSocketRef.current?.close();
+        transcriptionSocketRef.current = null;
+        audioChunkCallbackRef.current = null;
         setIsListening(false);
-        setError(err.message);
+        const message = captureError.response?.data?.message || captureError.message || "Could not start live transcription.";
+        setError(message);
+        toast.error(message);
       }
     },
-    [isSupported, SpeechRecognitionClass, stopListening, stopWakeWord]
+    [isSupported, stopListening, stopWakeWord]
   );
 
   // Background Wake Word Detection ("Hey Dhruv", "Dhruv", "OK Dhruv")
   const listenForWakeWord = useCallback(
     (onWakeWordDetected, onWakeStatus) => {
-      if (!isSupported) return;
+      if (!SpeechRecognitionClass || !isSupported) return;
 
       stopWakeWord();
       stopListening();
