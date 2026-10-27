@@ -92,6 +92,18 @@ const deriveCompanyDomain = (company) => {
     papigen: "papigen.com",
     "atharv consulting": "atharvconsulting.in",
     "atharv consultings": "atharvconsulting.in",
+    flipkart: "flipkart.com",
+    "flipkart minutes": "flipkart.com",
+    snowflake: "snowflake.com",
+    acclime: "acclime.com",
+    "acclime india": "acclime.com",
+    rentomojo: "rentomojo.com",
+    codemonk: "codemonk.io",
+    babaclick: "babaclick.com",
+    "vanco ai": "vanco.ai",
+    vanco: "vanco.ai",
+    innoventes: "innoventestech.com",
+    "innoventes technologies": "innoventestech.com",
   };
 
   if (domainOverrides[lower]) return domainOverrides[lower];
