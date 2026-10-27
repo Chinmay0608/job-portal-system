@@ -327,7 +327,8 @@ function Navbar() {
           reason: deletionForm.reason === "Other" ? `Other: ${deletionForm.reasonDetail.trim()}` : deletionForm.reason,
         }),
       });
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await response.json() : {};
       if (!response.ok) throw new Error(data.message || "Could not submit deletion request.");
       if (!deletionOtpSent) { setDeletionOtpSent(true); toast.success(data.message); }
       else { toast.success(data.message); setDeletionOpen(false); setDeletionOtpSent(false); await logoutUser(); setUser(null); navigate("/login"); }
