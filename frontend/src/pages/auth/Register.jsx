@@ -55,12 +55,16 @@ function Register() {
         credentials: "include",
         body: JSON.stringify({ name: user.displayName, email: user.email, idToken }),
       });
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await response.json() : {};
       if (!response.ok) throw new Error(data.message || "Google Authentication Failed");
       setStoredUser(data.user, data.token);
       toast.success("Account initialized with Google successfully");
       redirectUser(data.user);
     } catch (error) {
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        return;
+      }
       console.error("Google Auth Error:", error);
       let errMsg = error.message || "Google Signup Failed";
       if (error?.code === "auth/unauthorized-domain") {

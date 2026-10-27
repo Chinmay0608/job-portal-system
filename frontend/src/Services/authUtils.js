@@ -53,7 +53,7 @@ export const getApiBaseUrl = () => {
   const rawUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
   const fallbackBase = typeof window !== "undefined" && window.location.hostname === "localhost"
     ? "http://localhost:5000"
-    : "https://skillbridge-api.onrender.com";
+    : "";
 
   let envUrl = rawUrl;
 
