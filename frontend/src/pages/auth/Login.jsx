@@ -116,12 +116,16 @@ function Login() {
         credentials: "include",
         body: JSON.stringify({ name: user.displayName, email: user.email, idToken }),
       });
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await response.json() : {};
       if (!response.ok) throw new Error(data.message || "Google Login Failed");
       setStoredUser(data.user, data.token);
       toast.success("Google login successful");
       redirectUser(data.user);
     } catch (error) {
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        return;
+      }
       console.error("Google Login Error:", error);
       let errMsg = error.message || "Google Login Failed";
       if (error?.code === "auth/unauthorized-domain") {

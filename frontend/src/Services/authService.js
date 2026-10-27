@@ -14,6 +14,7 @@ export const registerUser = async (userData) => {
   const response = await axios.post(`${getAuthApiUrl()}/register`, userData, {
     headers: authHeaders,
     withCredentials: true,
+    timeout: 15000,
   });
   if (response.data.token) {
     localStorage.setItem("token", response.data.token);
