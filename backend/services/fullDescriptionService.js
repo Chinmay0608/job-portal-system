@@ -37,8 +37,13 @@ const DESCRIPTION_HEADINGS = [
       "key responsibilities",
       "primary responsibilities",
       "responsibilities",
+      "what you'll do at figma weave",
+      "what you'll do at figma",
+      "examples of what you may work on across teams",
+      "what you'll be doing",
       "what you'll do",
       "what you will do",
+      "in this role you will",
       "duties",
       "essential functions",
     ],
@@ -46,6 +51,7 @@ const DESCRIPTION_HEADINGS = [
   [
     "requiredQualifications",
     [
+      "we'd love to hear from you if you have",
       "required experience and skills",
       "required skills and experience",
       "required qualifications",
@@ -57,16 +63,24 @@ const DESCRIPTION_HEADINGS = [
       "experience and skills",
       "what you'll need",
       "what you will need",
+      "what we're looking for",
+      "what you'll bring",
+      "who you are",
     ],
   ],
   [
     "preferredQualifications",
     [
+      "while it's not required, it's an added plus if you also have experience",
+      "while it's not required, it's an added plus if you also have",
+      "while not required, it's an added plus if you also have",
+      "while it's not required, it's a plus if you also have",
       "preferred qualifications",
       "preferred experience",
       "nice to have",
       "nice-to-have",
       "desired qualifications",
+      "bonus points",
     ],
   ],
   [
@@ -74,6 +88,7 @@ const DESCRIPTION_HEADINGS = [
     [
       "compensation and benefits",
       "salary and benefits",
+      "pay transparency disclosure",
       "benefits",
       "what we offer",
       "perks",
@@ -181,10 +196,236 @@ async function resolvePublicUrl(value) {
   return { url, addresses };
 }
 
+const ATS_BOARD_CACHE = new Map();
+const ATS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function getCachedBoard(key) {
+  const entry = ATS_BOARD_CACHE.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > ATS_CACHE_TTL_MS) {
+    ATS_BOARD_CACHE.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedBoard(key, data) {
+  ATS_BOARD_CACHE.set(key, { timestamp: Date.now(), data });
+}
+
+function decodeHtmlEntitiesIfNeeded(raw) {
+  const str = String(raw || "");
+  if (str.includes("&lt;") && !/<(p|div|ul|li|h[1-6]|br)\b/i.test(str)) {
+    return cheerio.load(`<div>${str}</div>`)("div").first().text();
+  }
+  return str;
+}
+
+function scoreTitleMatch(expectedTitle, expectedLocation, candidateTitle, candidateLocation) {
+  const norm = (v) =>
+    String(v || "")
+      .toLowerCase()
+      .replace(/\+/g, " plus ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const expT = norm(expectedTitle);
+  const candT = norm(candidateTitle);
+  if (!expT || !candT) return 0;
+
+  let score = 0;
+  if (expT === candT) {
+    score += 100;
+  } else if (candT.startsWith(expT) || expT.startsWith(candT)) {
+    score += 75;
+  } else {
+    const expWords = expT.split(/\s+/).filter((w) => w.length > 1);
+    const candWords = new Set(candT.split(/\s+/).filter((w) => w.length > 1));
+    const matched = expWords.filter((w) => candWords.has(w)).length;
+    if (matched === 0) return 0;
+    score += (matched / expWords.length) * 60;
+  }
+
+  if (expectedLocation && candidateLocation) {
+    const expLoc = norm(expectedLocation).split(/\s+/)[0];
+    if (expLoc && norm(candidateLocation).includes(expLoc)) {
+      score += 15;
+    }
+  }
+  return score;
+}
+
+async function fetchAtsPosting(urlValue, expectedJob = null) {
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(urlValue);
+  } catch {
+    return null;
+  }
+
+  const host = parsedUrl.hostname.toLowerCase();
+  const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+  // 1. Greenhouse Board API fast-path
+  if (
+    (host === "boards.greenhouse.io" || host === "job-boards.greenhouse.io") &&
+    pathParts.length >= 1
+  ) {
+    const boardToken = pathParts[0].toLowerCase();
+    const jobIdFromQuery = parsedUrl.searchParams.get("gh_jid");
+    const lastSegment = pathParts[pathParts.length - 1];
+    const numericId =
+      jobIdFromQuery && /^\d+$/.test(jobIdFromQuery)
+        ? jobIdFromQuery
+        : pathParts[1] === "jobs" && /^\d+$/.test(lastSegment)
+          ? lastSegment
+          : null;
+
+    let ghJob = null;
+    if (numericId) {
+      const response = await axios.get(
+        `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(boardToken)}/jobs/${numericId}`,
+        { timeout: 4500, validateStatus: (s) => s < 400 },
+      );
+      ghJob = response.data;
+    } else if (expectedJob?.title) {
+      const cacheKey = `gh:${boardToken}`;
+      let jobs = getCachedBoard(cacheKey);
+      if (!jobs) {
+        const response = await axios.get(
+          `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(boardToken)}/jobs?content=true`,
+          { timeout: 6000, validateStatus: (s) => s < 400 },
+        );
+        jobs = Array.isArray(response.data?.jobs) ? response.data.jobs : [];
+        setCachedBoard(cacheKey, jobs);
+      }
+      let bestScore = 0;
+      for (const candidate of jobs) {
+        const s = scoreTitleMatch(
+          expectedJob.title,
+          expectedJob.location,
+          candidate.title,
+          candidate.location?.name,
+        );
+        if (s > bestScore && s >= 45) {
+          bestScore = s;
+          ghJob = candidate;
+        }
+      }
+    }
+
+    if (ghJob && ghJob.content) {
+      const decodedHtml = decodeHtmlEntitiesIfNeeded(ghJob.content);
+      const text = descriptionText(decodedHtml);
+      if (text.length >= 60) {
+        return {
+          isJobPosting: true,
+          title: asText(ghJob.title) || expectedJob?.title || "",
+          company: expectedJob?.company || boardToken,
+          description: text.slice(0, 16000),
+          responsibilities: "",
+          qualifications: "",
+          skills: "",
+          education: "",
+          experience: "",
+          preferredQualifications: "",
+          compensation: "",
+          workArrangement: asText(ghJob.location?.name),
+          culture: "",
+          resolvedApplyUrl: ghJob.absolute_url || null,
+        };
+      }
+    }
+  }
+
+  // 2. Lever Postings API fast-path
+  if (host === "jobs.lever.co" && pathParts.length >= 1) {
+    const site = pathParts[0].toLowerCase();
+    const secondSegment = pathParts[1] || "";
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      secondSegment,
+    );
+
+    let leverJob = null;
+    if (isUuid) {
+      const response = await axios.get(
+        `https://api.lever.co/v0/postings/${encodeURIComponent(site)}/${secondSegment}?mode=json`,
+        { timeout: 4500, validateStatus: (s) => s < 400 },
+      );
+      leverJob = response.data;
+    } else if (expectedJob?.title) {
+      const cacheKey = `lever:${site}`;
+      let postings = getCachedBoard(cacheKey);
+      if (!postings) {
+        const response = await axios.get(
+          `https://api.lever.co/v0/postings/${encodeURIComponent(site)}?mode=json`,
+          { timeout: 6500, validateStatus: (s) => s < 400 },
+        );
+        postings = Array.isArray(response.data) ? response.data : [];
+        setCachedBoard(cacheKey, postings);
+      }
+      let bestScore = 0;
+      for (const candidate of postings) {
+        const s = scoreTitleMatch(
+          expectedJob.title,
+          expectedJob.location,
+          candidate.text,
+          candidate.categories?.location,
+        );
+        if (s > bestScore && s >= 45) {
+          bestScore = s;
+          leverJob = candidate;
+        }
+      }
+    }
+
+    if (leverJob && (leverJob.description || leverJob.descriptionPlain)) {
+      const listsHtml = Array.isArray(leverJob.lists)
+        ? leverJob.lists
+            .map((l) => `<h3>${l.text || ""}</h3><ul>${l.content || ""}</ul>`)
+            .join("\n")
+        : "";
+      const combinedHtml = [
+        leverJob.description || "",
+        listsHtml,
+        leverJob.additional || "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      const text = descriptionText(combinedHtml);
+      if (text.length >= 60) {
+        return {
+          isJobPosting: true,
+          title: asText(leverJob.text) || expectedJob?.title || "",
+          company: expectedJob?.company || site,
+          description: text.slice(0, 16000),
+          responsibilities: "",
+          qualifications: "",
+          skills: "",
+          education: "",
+          experience: "",
+          preferredQualifications: "",
+          compensation: "",
+          workArrangement: [
+            asText(leverJob.categories?.location),
+            asText(leverJob.categories?.commitment),
+            asText(leverJob.workplaceType),
+          ]
+            .filter(Boolean)
+            .join(". "),
+          culture: "",
+          resolvedApplyUrl: leverJob.hostedUrl || null,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
 async function fetchPosting(urlValue) {
   let currentUrl = urlValue;
 
-  for (let redirects = 0; redirects <= 5; redirects += 1) {
+  for (let redirects = 0; redirects <= 3; redirects += 1) {
     const { url, addresses } = await resolvePublicUrl(currentUrl);
     const addressByFamily = new Map(
       addresses.map(({ address, family }) => [family, address]),
@@ -194,7 +435,7 @@ async function fetchPosting(urlValue) {
         "User-Agent": "Mozilla/5.0 (compatible; JobPortal/1.0)",
         Accept: "text/html,application/xhtml+xml",
       },
-      timeout: 8000,
+      timeout: 4500,
       maxRedirects: 0,
       maxContentLength: 2_000_000,
       responseType: "text",
@@ -212,7 +453,7 @@ async function fetchPosting(urlValue) {
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.location;
-      if (!location || redirects === 5)
+      if (!location || redirects === 3)
         throw new Error("Too many redirects fetching employer posting");
       currentUrl = new URL(location, url).toString();
       continue;
@@ -285,6 +526,7 @@ function descriptionText(value) {
 function parseDescriptionSections(description) {
   const text = String(description || "")
     .replace(/\r/g, "")
+    .replace(/[\u2018\u2019]/g, "'")
     .trim();
   const headings = [...DESCRIPTION_HEADINGS].sort(
     (a, b) => b.heading.length - a.heading.length,
@@ -294,37 +536,46 @@ function parseDescriptionSections(description) {
     .join("|");
   const pattern = new RegExp(`(^|\\s)(${escapedHeadings})\\s*:?\\s*`, "gi");
   const sections = {};
-  const matches = [...text.matchAll(pattern)];
-  if (!matches.length)
+  const isValidHeadingMatch = (m) => {
+    const matchedHeadingText = m[2];
+    const fullMatchText = m[0];
+    const isSingleWord = !/\s/.test(matchedHeadingText.trim());
+    const startsOnNewLine = m.index === 0 || /\n/.test(m[1]);
+    const hasColon = /:/.test(fullMatchText);
+    const hasTrailingNewline = /\n/.test(
+      fullMatchText.slice(m[1].length + matchedHeadingText.length),
+    );
+    const afterMatchChar = text.slice(m.index + fullMatchText.length, m.index + fullMatchText.length + 1);
+    if (!hasColon && /^[,.;)]/.test(afterMatchChar)) {
+      return false;
+    }
+    if (isSingleWord) {
+      return hasColon || (startsOnNewLine && hasTrailingNewline);
+    }
+    return (
+      hasColon ||
+      startsOnNewLine ||
+      (/^[A-Z]/.test(matchedHeadingText.trim()) && !/^[a-z]/.test(afterMatchChar))
+    );
+  };
+
+  const validMatches = [...text.matchAll(pattern)].filter(isValidHeadingMatch);
+  if (!validMatches.length)
     return { hasHeadings: false, sections: { roleSummary: text } };
 
-  for (let index = 0; index < matches.length; index += 1) {
-    const match = matches[index];
+  const leadingSummary = text.slice(0, validMatches[0].index).trim();
+  if (leadingSummary && !/^required$/i.test(leadingSummary)) {
+    sections.roleSummary = leadingSummary;
+  }
+
+  for (let index = 0; index < validMatches.length; index += 1) {
+    const match = validMatches[index];
     const matchedHeadingText = match[2];
-    const fullMatchText = match[0];
-    const isSingleWord = !/\s/.test(matchedHeadingText.trim());
-    const startsOnNewLine = index === 0 && match.index === 0 || /\n/.test(match[1]);
-    const hasColonOrTrailingNewline = /:/.test(fullMatchText) || /\n/.test(fullMatchText.slice(match[1].length + matchedHeadingText.length));
-    if (isSingleWord && (!startsOnNewLine || !hasColonOrTrailingNewline) && !/:/.test(fullMatchText)) {
-      continue;
-    }
     const heading = headings.find(
       (item) => item.heading.toLowerCase() === matchedHeadingText.toLowerCase(),
     );
     const start = match.index + match[0].length;
-    let nextValidIndex = index + 1;
-    while (nextValidIndex < matches.length) {
-      const nextM = matches[nextValidIndex];
-      const nextSingle = !/\s/.test(nextM[2].trim());
-      const nextNewLine = /\n/.test(nextM[1]);
-      const nextColonOrNL = /:/.test(nextM[0]) || /\n/.test(nextM[0].slice(nextM[1].length + nextM[2].length));
-      if (nextSingle && (!nextNewLine || !nextColonOrNL) && !/:/.test(nextM[0])) {
-        nextValidIndex += 1;
-      } else {
-        break;
-      }
-    }
-    const end = matches[nextValidIndex]?.index ?? text.length;
+    const end = validMatches[index + 1]?.index ?? text.length;
     const value = text.slice(start, end).trim();
     if (value)
       sections[heading.key] = [sections[heading.key], value]
@@ -706,12 +957,16 @@ async function ensureFullJobDescription(job) {
   }
 
   let details = null;
-  if (job.descriptionSourceUrl || job.applyUrl) {
+  const sourceUrl = job.descriptionSourceUrl || job.applyUrl;
+  if (sourceUrl) {
     try {
-      details = scrapeExternalPosting(
-        await fetchPosting(job.descriptionSourceUrl || job.applyUrl),
-        job,
-      );
+      details = await fetchAtsPosting(sourceUrl, job);
+      if (!details) {
+        details = scrapeExternalPosting(
+          await fetchPosting(sourceUrl),
+          job,
+        );
+      }
     } catch (error) {
       console.warn(
         "[FullDescriptionService] Could not fetch employer posting:",
@@ -726,7 +981,9 @@ async function ensureFullJobDescription(job) {
     const description = details.description;
     if (job._id) {
       const Job = require("../models/job");
-      await Job.findByIdAndUpdate(job._id, { description, isFullDescription: true });
+      const updateDoc = { description, isFullDescription: true };
+      if (details.resolvedApplyUrl) updateDoc.applyUrl = details.resolvedApplyUrl;
+      await Job.findByIdAndUpdate(job._id, updateDoc);
     }
     return description;
   }
@@ -739,10 +996,12 @@ async function ensureFullJobDescription(job) {
 
   if (job._id) {
     const Job = require("../models/job");
-    await Job.findByIdAndUpdate(job._id, {
+    const updateDoc = {
       description,
       isFullDescription: !isDescriptionSnippet(description),
-    });
+    };
+    if (details.resolvedApplyUrl) updateDoc.applyUrl = details.resolvedApplyUrl;
+    await Job.findByIdAndUpdate(job._id, updateDoc);
   }
   return description;
 }
@@ -751,6 +1010,7 @@ module.exports = {
   isDescriptionSnippet,
   isReferralAlertDescription,
   ensureFullJobDescription,
+  fetchAtsPosting,
   scrapeExternalPosting,
   buildStructuredDescription,
   isMisstructuredDescription,

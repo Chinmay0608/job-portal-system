@@ -852,13 +852,21 @@ function CandidateDashboard() {
   }, [location.state]);
 
   // Auto-expand snippet descriptions onsite so candidates never have to leave SkillBridge
+  const attemptedExpansionIdsRef = useRef(new Set());
   useEffect(() => {
-    if (!selectedJob?._id || selectedJob.descriptionUnavailable) return;
+    if (
+      !selectedJob?._id ||
+      selectedJob.descriptionUnavailable ||
+      attemptedExpansionIdsRef.current.has(selectedJob._id)
+    ) {
+      return;
+    }
 
     const isReferralAlert = isReferralAlertDescription(selectedJob.description);
     const isTruncatedSnippet = isDescriptionSnippet(selectedJob.description);
 
     if (isReferralAlert || isTruncatedSnippet) {
+      attemptedExpansionIdsRef.current.add(selectedJob._id);
       let isCancelled = false;
       setIsExpandingDescription(true);
 
@@ -893,6 +901,7 @@ function CandidateDashboard() {
           }
         })
         .catch((err) => {
+          attemptedExpansionIdsRef.current.delete(selectedJob._id);
           console.warn("Could not expand full job description:", err?.message);
         })
         .finally(() => {
