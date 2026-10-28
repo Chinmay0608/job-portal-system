@@ -273,6 +273,47 @@ describe("fullDescriptionService & getFullJobDescription controller", () => {
         "## About the Role\nAiCademy is hiring for **System Developer Intern** in the $undefined space. Location: Remote (Remote). Type: Internship.\n\n## How to Apply\nUse the Apply button to open the employer's official application page.";
       expect(isDescriptionSnippet(syntheticPlaceholder)).toBe(true);
     });
+
+    it("expands Greenhouse slug URLs via the Greenhouse board JSON API", async () => {
+      axios.get.mockResolvedValueOnce({
+        status: 200,
+        data: {
+          jobs: [
+            {
+              id: 5552530004,
+              title: "Software Engineer - C++",
+              location: { name: "San Francisco, CA" },
+              absolute_url:
+                "https://boards.greenhouse.io/figma/jobs/5552530004?gh_jid=5552530004",
+              content:
+                "&lt;p&gt;Figma is growing our team of builders.&lt;/p&gt;&lt;h3&gt;What you’ll do at Figma:&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Optimize C++ and WebAssembly rendering performance.&lt;/li&gt;&lt;/ul&gt;&lt;h3&gt;We’d love to hear from you if you have:&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;4+ years of C++ software engineering experience.&lt;/li&gt;&lt;/ul&gt;",
+            },
+          ],
+        },
+      });
+
+      const job = {
+        _id: "job-figma-cpp",
+        title: "Software Engineer - C++",
+        company: "Figma",
+        location: "San Francisco",
+        description:
+          "Optimize graphics rendering and core application performance to ensure smooth interactions.",
+        applyUrl: "https://boards.greenhouse.io/figma/jobs/software-engineer-c++",
+      };
+
+      const result = await ensureFullJobDescription(job);
+      expect(result).toContain("Optimize C++ and WebAssembly rendering performance.");
+      expect(result).toContain("4+ years of C++ software engineering experience.");
+      expect(Job.findByIdAndUpdate).toHaveBeenCalledWith(
+        "job-figma-cpp",
+        expect.objectContaining({
+          isFullDescription: true,
+          applyUrl:
+            "https://boards.greenhouse.io/figma/jobs/5552530004?gh_jid=5552530004",
+        }),
+      );
+    });
   });
 
   describe("getFullJobDescription Controller", () => {
