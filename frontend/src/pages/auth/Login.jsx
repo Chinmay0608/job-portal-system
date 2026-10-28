@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { auth, provider } from "../../firebase";
 import { loginUser } from "../../Services/authService";
 import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
@@ -32,6 +32,53 @@ function Login() {
   const [tickerPhase] = useState(Math.random);
 
   useEffect(() => {
+    let isCancelled = false;
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (isCancelled || !result?.user) return;
+        setGoogleLoading(true);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+        const pendingRole = sessionStorage.getItem("pending_google_role") || loginRole;
+        const pendingRedirect = sessionStorage.getItem("pending_google_redirect");
+        sessionStorage.removeItem("pending_google_role");
+        sessionStorage.removeItem("pending_google_redirect");
+
+        const baseUrl = getApiBaseUrl();
+        const response = await fetch(`${baseUrl}/api/auth/google-login`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-requested-with": "XMLHttpRequest"
+          },
+          credentials: "include",
+          body: JSON.stringify({ name: user.displayName, email: user.email, idToken, ...(isAdminTarget || !pendingRole ? {} : { role: pendingRole }) }),
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const data = contentType.includes("application/json") ? await response.json() : {};
+        if (!response.ok) throw new Error(data.message || "Google Login Failed");
+        setStoredUser(data.user, data.token);
+        toast.success("Google login successful");
+        if (pendingRedirect) {
+          navigate(pendingRedirect, { replace: true });
+        } else {
+          redirectUser(data.user);
+        }
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") return;
+        console.error("Google Redirect Login Error:", error);
+        toast.error(error?.message || "Google Login Failed");
+      })
+      .finally(() => {
+        if (!isCancelled) setGoogleLoading(false);
+      });
+
+    return () => { isCancelled = true; };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     const fetchPreviewJobs = async () => {
       try {
@@ -61,33 +108,27 @@ function Login() {
     const params = new URLSearchParams(location.search);
     const destination = params.get("redirect") || location.state?.redirectAfterLogin;
 
-    if (destination && destination.startsWith("/")) {
-      navigate(destination, {
-        state: {
-          roleType: location.state?.roleType
-        }
-      });
+    const destinationForRole = user?.role === "recruiter"
+      ? (destination?.startsWith("/recruiter-") ? destination : "/recruiter-dashboard")
+      : user?.role === "admin"
+        ? (destination?.startsWith("/admin") ? destination : "/admin/dashboard")
+        : ["/candidate-dashboard", "/candidate-profile", "/my-applications", "/jobs"].some((path) => destination === path || destination?.startsWith(`${path}?`))
+          ? destination
+          : "/candidate-dashboard";
+
+    if (destinationForRole && destinationForRole !== "/recruiter-dashboard" && destinationForRole !== "/admin/dashboard" && destinationForRole !== "/candidate-dashboard") {
+      navigate(destinationForRole, { state: { roleType: location.state?.roleType } });
       return;
     }
 
-    if (user?.role === "candidate") {
-      navigate("/candidate-dashboard", {
-        state: {
-          roleType: location.state?.roleType
-        }
-      });
-    } else if (user?.role === "admin") {
-      navigate("/admin/dashboard");
-    } else {
-      navigate("/recruiter-dashboard");
-    }
+    navigate(destinationForRole);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await loginUser({ email, password });
+      const response = await loginUser({ email, password, ...(isAdminTarget ? {} : { role: loginRole }) });
       setStoredUser(response.user, response.token);
       toast.success("Login successful");
       redirectUser(response.user);
@@ -113,7 +154,7 @@ function Login() {
           "x-requested-with": "XMLHttpRequest"
         },
         credentials: "include",
-        body: JSON.stringify({ name: user.displayName, email: user.email, idToken }),
+        body: JSON.stringify({ name: user.displayName, email: user.email, idToken, ...(isAdminTarget ? {} : { role: loginRole }) }),
       });
       const contentType = response.headers.get("content-type") || "";
       const data = contentType.includes("application/json") ? await response.json() : {};
@@ -124,6 +165,21 @@ function Login() {
     } catch (error) {
       if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
         return;
+      }
+      if (error?.code === "auth/popup-blocked") {
+        console.warn("Popup blocked by browser. Attempting redirect fallback...");
+        toast.loading("Popup blocked by browser. Redirecting to Google Sign-In...", { id: "google-auth-toast", duration: 5000 });
+        sessionStorage.setItem("pending_google_role", isAdminTarget ? "" : loginRole);
+        sessionStorage.setItem("pending_google_redirect", redirectDestination || "");
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError) {
+          console.error("Redirect fallback failed:", redirectError);
+          toast.dismiss("google-auth-toast");
+          toast.error("Pop-up blocked. Please click the pop-up icon in your address bar to allow pop-ups for this site.", { duration: 7000 });
+          return;
+        }
       }
       console.error("Google Login Error:", error);
       let errMsg = error.message || "Google Login Failed";
