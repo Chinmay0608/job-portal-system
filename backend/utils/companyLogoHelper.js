@@ -79,6 +79,8 @@ const VERIFIED_ENTERPRISE_MAP = {
   "vanco": "https://unavatar.io/vanco.ai",
   "innoventes": "https://unavatar.io/innoventestech.com",
   "innoventes technologies": "https://unavatar.io/innoventestech.com",
+  "stitch": "https://unavatar.io/stitch.co",
+  "stitch financial technologies": "https://unavatar.io/stitch.co",
   "bureau": "https://unavatar.io/bureau.id",
   "keploy": "https://unavatar.io/keploy.io",
   "nasdaq": "https://unavatar.io/nasdaq.com",

@@ -105,6 +105,8 @@ const deriveCompanyDomain = (company) => {
     vanco: "vanco.ai",
     innoventes: "innoventestech.com",
     "innoventes technologies": "innoventestech.com",
+    stitch: "stitch.co",
+    "stitch financial technologies": "stitch.co",
     kpmg: "kpmg.com",
     "kpmg india": "kpmg.com",
     abb: "abb.com",
@@ -383,7 +385,7 @@ const alignWhoWeAreHeading = (html) => {
   return doc.documentElement.textContent;
 };
 
-const formatSalary = (salaryText, min, max, currency) => {
+const formatSalary = (salaryText, min, max, currency, showRange = true) => {
   const currencySymbol = currency === "INR" || currency === "\u20B9"
     ? "\u20B9"
     : currency === "EUR"
@@ -391,6 +393,8 @@ const formatSalary = (salaryText, min, max, currency) => {
       : currency === "GBP"
         ? "\u00A3"
         : "$";
+
+  if (!showRange) return typeof salaryText === "string" && isNaN(Number(salaryText)) && salaryText !== "Competitive" ? salaryText : "Competitive";
 
   if (min && max) {
     const formatShorthand = (num) => {
@@ -555,6 +559,7 @@ function CandidateDashboard() {
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobViewMode, setJobViewMode] = useState("grid");
+  const skipJobResetOnTabChangeRef = useRef(false);
   const [isGridJobModalOpen, setIsGridJobModalOpen] = useState(false);
   useEffect(() => {
     if (!isGridJobModalOpen) return undefined;
@@ -1075,7 +1080,11 @@ function CandidateDashboard() {
       sessionStorage.setItem(PENDING_EXTERNAL_APPLICATION_KEY, JSON.stringify(pending));
       pendingExternalApplyRef.current = pending;
       externalSiteLeftRef.current = false;
-      window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      if (/^mailto:/i.test(selectedJob.applyUrl || "")) {
+        window.location.href = selectedJob.applyUrl;
+      } else {
+        window.open(selectedJob.applyUrl, "_blank", "noopener,noreferrer");
+      }
       return;
     }
 
@@ -1411,10 +1420,10 @@ function CandidateDashboard() {
 
   const changeJobView = (mode) => {
     const updateView = () => {
-      if (mode === "split" && !selectedJob && displayedJobs.length) {
-        setSelectedJob(displayedJobs[0]);
-      }
+      const jobForView = selectedJob || (mode === "split" ? displayedJobs[0] : null);
+      if (mode === "split" && !selectedJob && jobForView) setSelectedJob(jobForView);
       setJobViewMode(mode);
+      setIsMobileDetailView(window.innerWidth < 1024 && Boolean(jobForView));
       setIsGridJobModalOpen(false);
     };
 
@@ -1429,7 +1438,7 @@ function CandidateDashboard() {
     setSelectedJob(job);
     setIsGridJobModalOpen(jobViewMode === "grid");
     resetApplyState();
-    setIsMobileDetailView(true);
+    setIsMobileDetailView(window.innerWidth < 1024);
     setIsDescriptionExpanded(false);
   };
 
@@ -1440,6 +1449,10 @@ function CandidateDashboard() {
   }, [submittedSearch, locationFilter, salaryFilter, companyFilter, activeTab]);
 
   useEffect(() => {
+    if (skipJobResetOnTabChangeRef.current) {
+      skipJobResetOnTabChangeRef.current = false;
+      return;
+    }
     setSelectedJob(null);
   }, [activeTab]);
 
@@ -1578,9 +1591,14 @@ function CandidateDashboard() {
   );
 
   const openRecommendedJob = (job) => {
+    if (activeTab !== "All Jobs") skipJobResetOnTabChangeRef.current = true;
+    setActiveTab("All Jobs");
     setSelectedJob(job);
-    setIsMobileDetailView(true);
+    setJobViewMode("split");
+    setIsGridJobModalOpen(false);
+    setIsMobileDetailView(window.innerWidth < 1024);
     setIsDescriptionExpanded(false);
+    resetApplyState();
     navigate("/candidate-dashboard?tab=jobs");
   };
 
@@ -1928,7 +1946,7 @@ function CandidateDashboard() {
                       </span>
                       <span className="mt-3 line-clamp-2 text-sm font-extrabold leading-5 text-slate-900">{job.title}</span>
                       <span className="mt-2 flex flex-wrap gap-1.5"><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{job.employmentType || "Full-time"}</span>{job.isRemote && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Remote</span>}</span>
-                      <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
+                      <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
                     </button>
                   ))}
                 </div>
@@ -2345,7 +2363,7 @@ function CandidateDashboard() {
                           <div className="mb-2.5">
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                               <span className="text-emerald-600 font-black" aria-hidden="true">✓</span>
-                              <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency)}</span>
+                              <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false)}</span>
                             </span>
                           </div>
                         ) : null}
@@ -2455,7 +2473,7 @@ function CandidateDashboard() {
                   </div>
                   <p className="text-xs text-slate-500 mb-1">{selectedJob.location}</p>
                   <p className="text-base font-bold text-slate-900 mb-3">
-                    {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency)}
+                    {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency, selectedJob.showSalaryRange !== false)}
                   </p>
                   
                   <div className="flex flex-wrap items-center gap-2 mb-4">
