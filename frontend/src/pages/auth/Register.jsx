@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { registerUser } from "../../Services/authService";
 import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import { auth, provider } from "../../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -90,6 +90,47 @@ function Register() {
     else navigate("/recruiter-dashboard");
   };
 
+  useEffect(() => {
+    let isCancelled = false;
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (isCancelled || !result?.user) return;
+        setGoogleLoading(true);
+        const user = result.user;
+        const idToken = await user.getIdToken();
+        const pendingRole = sessionStorage.getItem("pending_google_role") || formData.role;
+        sessionStorage.removeItem("pending_google_role");
+
+        const baseUrl = getApiBaseUrl();
+        const response = await fetch(`${baseUrl}/api/auth/google-login`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-requested-with": "XMLHttpRequest"
+          },
+          credentials: "include",
+          body: JSON.stringify({ name: user.displayName, email: user.email, idToken, role: pendingRole }),
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const data = contentType.includes("application/json") ? await response.json() : {};
+        if (!response.ok) throw new Error(data.message || "Google Authentication Failed");
+        setStoredUser(data.user, data.token);
+        toast.success("Account initialized with Google successfully");
+        redirectUser(data.user);
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") return;
+        console.error("Google Auth Redirect Error:", error);
+        toast.error(error?.message || "Google Signup Failed");
+      })
+      .finally(() => {
+        if (!isCancelled) setGoogleLoading(false);
+      });
+
+    return () => { isCancelled = true; };
+  }, []);
+
   const handleGoogleSignup = async () => {
     try {
       setGoogleLoading(true);
@@ -104,7 +145,7 @@ function Register() {
           "x-requested-with": "XMLHttpRequest"
         },
         credentials: "include",
-        body: JSON.stringify({ name: user.displayName, email: user.email, idToken }),
+        body: JSON.stringify({ name: user.displayName, email: user.email, idToken, role: formData.role }),
       });
       const contentType = response.headers.get("content-type") || "";
       const data = contentType.includes("application/json") ? await response.json() : {};
@@ -115,6 +156,20 @@ function Register() {
     } catch (error) {
       if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
         return;
+      }
+      if (error?.code === "auth/popup-blocked") {
+        console.warn("Popup blocked by browser. Attempting redirect fallback...");
+        toast.loading("Popup blocked by browser. Redirecting to Google Sign-In...", { id: "google-signup-toast", duration: 5000 });
+        sessionStorage.setItem("pending_google_role", formData.role);
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError) {
+          console.error("Redirect fallback failed:", redirectError);
+          toast.dismiss("google-signup-toast");
+          toast.error("Pop-up blocked. Please click the pop-up icon in your address bar to allow pop-ups for this site.", { duration: 7000 });
+          return;
+        }
       }
       console.error("Google Auth Error:", error);
       let errMsg = error.message || "Google Signup Failed";
