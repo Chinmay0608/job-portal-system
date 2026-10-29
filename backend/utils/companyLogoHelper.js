@@ -91,6 +91,8 @@ const VERIFIED_ENTERPRISE_MAP = {
   "rupeek": "https://unavatar.io/rupeek.com",
   "stratzy ai": "https://unavatar.io/stratzy.in",
   "stratzy": "https://unavatar.io/stratzy.in",
+  "videosdk": "https://unavatar.io/videosdk.live",
+  "videosdk.live": "https://unavatar.io/videosdk.live",
   "bureau": "https://unavatar.io/bureau.id",
   "keploy": "https://unavatar.io/keploy.io",
   "nasdaq": "https://unavatar.io/nasdaq.com",
