@@ -254,18 +254,35 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Rec
   `;
 };
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
 const runJobDigest = async () => {
   console.log("[Job Digest] Starting run at", new Date().toISOString());
+
+  // Strictly enforce 1 email alert per candidate per day (24-hour cooldown)
+  const oneDayAgo = new Date(Date.now() - ONE_DAY_MS);
 
   const candidates = await User.find({
     role: "candidate",
     emailNotificationsEnabled: { $ne: false },
     skills: { $exists: true, $ne: [] },
+    $or: [
+      { lastJobDigestSentAt: { $exists: false } },
+      { lastJobDigestSentAt: null },
+      { lastJobDigestSentAt: { $lt: oneDayAgo } },
+    ],
   });
 
   let emailsSent = 0;
 
   for (const candidate of candidates) {
+    if (candidate.lastJobDigestSentAt) {
+      const msSinceLast = Date.now() - new Date(candidate.lastJobDigestSentAt).getTime();
+      if (msSinceLast < ONE_DAY_MS) {
+        console.log(`[Job Digest] Skipping ${candidate.email} - email alert already sent ${(msSinceLast / (1000 * 60 * 60)).toFixed(1)}h ago (strictly max 1 per day).`);
+        continue;
+      }
+    }
     let query = {
       isActive: { $ne: false },
     };

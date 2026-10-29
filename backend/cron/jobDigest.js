@@ -2,8 +2,8 @@ const cron = require("node-cron");
 const { runJobDigest } = require("../services/jobDigestService");
 
 const scheduleJobDigest = () => {
-  // Every Monday at 9:00 AM server time.
-  cron.schedule("0 9 * * 1", async () => {
+  // Runs once per day at 9:00 AM server time.
+  cron.schedule("0 9 * * *", async () => {
     try {
       await runJobDigest();
     } catch (err) {
@@ -11,7 +11,7 @@ const scheduleJobDigest = () => {
     }
   });
 
-  console.log("[Job Digest] Cron job initialized. Will run every Monday at 9:00 AM.");
+  console.log("[Job Digest] Cron job initialized. Will run once per day at 9:00 AM.");
 };
 
 module.exports = scheduleJobDigest;
