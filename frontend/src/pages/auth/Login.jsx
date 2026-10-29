@@ -7,7 +7,7 @@ import { setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import { getJobs } from "../../Services/jobService";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
-import { FaChessRook, FaBuilding, FaShieldAlt } from "react-icons/fa";
+import { FaBullseye, FaClipboardList, FaUsers } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
 function Login() {
@@ -215,7 +215,15 @@ function Login() {
             <div className="signup-benefits">
               {[loginRole === "candidate" ? "Roles matched to your skills" : "Reach candidates suited to your roles", loginRole === "candidate" ? "Your applications, all in one place" : "Review applicants in one place", loginRole === "candidate" ? "A clearer path to your next team" : "A simpler path to your next hire"].map((item, index) => (
                 <div className="signup-benefit" key={item}>
-                  <span className="signup-benefit-icon">{index === 0 ? <FaChessRook aria-hidden="true" /> : index === 1 ? <FaShieldAlt aria-hidden="true" /> : <FaBuilding aria-hidden="true" />}</span>
+                  <span className="signup-benefit-icon">
+                    {index === 0 ? (
+                      <FaBullseye aria-hidden="true" />
+                    ) : index === 1 ? (
+                      <FaClipboardList aria-hidden="true" />
+                    ) : (
+                      <FaUsers aria-hidden="true" />
+                    )}
+                  </span>
                   <span>{item}</span>
                 </div>
               ))}
