@@ -130,6 +130,25 @@ const createJob = asyncHandler(async (req, res) => {
   let assignedDomain = domain || category || classification.domain;
   let assignedSeniority = req.body.seniorityLevel || classification.seniorityLevel;
 
+  let applicationDeadline = null;
+  let timelineDays = req.body.timelineDays !== undefined && req.body.timelineDays !== null && req.body.timelineDays !== ""
+    ? Number(req.body.timelineDays)
+    : 30;
+
+  if (req.body.applicationDeadline) {
+    const parsedDate = new Date(req.body.applicationDeadline);
+    if (!isNaN(parsedDate.getTime())) {
+      applicationDeadline = parsedDate;
+      const diffDays = Math.ceil((parsedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      timelineDays = diffDays > 0 ? diffDays : null;
+    }
+  } else if (timelineDays && timelineDays > 0) {
+    applicationDeadline = new Date(Date.now() + timelineDays * 24 * 60 * 60 * 1000);
+  } else {
+    timelineDays = null;
+    applicationDeadline = null;
+  }
+
   const jobData = {
     title,
     role: assignedDomain || role || classification.domain,
@@ -151,6 +170,8 @@ const createJob = asyncHandler(async (req, res) => {
     domain: assignedDomain,
     category: assignedDomain,
     seniorityLevel: assignedSeniority,
+    applicationDeadline,
+    timelineDays,
   };
 
   const job = await Job.create(jobData);
@@ -175,6 +196,7 @@ const getBaseActiveJobQuery = () => {
       { expiresAt: null },
       { expiresAt: { $gt: new Date() } }
     ],
+    applicationDeadline: { $not: { $lte: new Date() } },
     updatedAt: { $gte: ninetyDaysAgo }
   };
 };
@@ -901,6 +923,28 @@ const updateJob = asyncHandler(async (req, res) => {
   if (maxSalary !== undefined) updateData.salaryMax = maxSalary;
   if (req.body.salaryCurrency !== undefined) updateData.salaryCurrency = req.body.salaryCurrency;
   if (req.body.showSalaryRange !== undefined) updateData.showSalaryRange = req.body.showSalaryRange !== false && req.body.showSalaryRange !== "false";
+  if (req.body.applicationDeadline !== undefined) {
+    if (!req.body.applicationDeadline) {
+      updateData.applicationDeadline = null;
+      updateData.timelineDays = null;
+    } else {
+      const parsedDate = new Date(req.body.applicationDeadline);
+      if (!isNaN(parsedDate.getTime())) {
+        updateData.applicationDeadline = parsedDate;
+        const diffDays = Math.ceil((parsedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        updateData.timelineDays = diffDays > 0 ? diffDays : null;
+      }
+    }
+  } else if (req.body.timelineDays !== undefined) {
+    if (req.body.timelineDays === null || req.body.timelineDays === "" || Number(req.body.timelineDays) <= 0) {
+      updateData.timelineDays = null;
+      updateData.applicationDeadline = null;
+    } else {
+      const days = Number(req.body.timelineDays);
+      updateData.timelineDays = days;
+      updateData.applicationDeadline = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    }
+  }
 
   const updatedJob = await Job.findByIdAndUpdate(jobId, updateData, {
     returnDocument: "after",

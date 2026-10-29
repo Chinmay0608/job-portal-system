@@ -45,6 +45,7 @@ const initialFormState = {
   title: "", workplaceType: "", city: "", country: "", location: "", employmentType: "Full-time",
   experienceRequired: "", minSalary: "", maxSalary: "", showSalaryRange: true,
   skillsRequired: [], company: "", description: "",
+  timelineDays: 30, applicationDeadline: "", customTimeline: false,
 };
 const JOBS_PER_PAGE = 6;
 
@@ -314,6 +315,8 @@ function RecruiterDashboard() {
       minSalary,
       maxSalary,
       description: formData.description.trim(),
+      timelineDays: formData.timelineDays,
+      applicationDeadline: formData.applicationDeadline || null,
     };
     if (formData.workplaceType !== "Remote" && !payload.location) return toast.error("Location is required for on-site or hybrid roles");
 
@@ -408,6 +411,9 @@ function RecruiterDashboard() {
       ...((job.isRemote || job.workplaceType === "Remote") ? { city: "", country: "", location: "Remote" } : { ...splitJobLocation(job.location), location: job.location || "" }),
       salary: job.salary || "",
       description: job.description || "",
+      timelineDays: job.timelineDays !== undefined ? job.timelineDays : null,
+      applicationDeadline: job.applicationDeadline ? new Date(job.applicationDeadline).toISOString().split("T")[0] : "",
+      customTimeline: Boolean(job.applicationDeadline && ![7, 15, 30, 60].includes(job.timelineDays)),
     });
     setSkillInput("");
     setShowJobModal(true);
@@ -681,11 +687,32 @@ function RecruiterDashboard() {
                 <article key={job._id} className="recruiter-job-card border rounded-2xl p-5 transition-all flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between text-xs mb-3">
-                      <span className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
-                        job.isActive !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"
-                      }`}>
-                        {job.isActive !== false ? "Active" : "Closed"}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                          job.isActive === false
+                            ? "bg-slate-100 text-slate-600 border border-slate-200"
+                            : (job.applicationDeadline && new Date(job.applicationDeadline) < new Date())
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        }`}>
+                          {job.isActive === false
+                            ? "Closed"
+                            : (job.applicationDeadline && new Date(job.applicationDeadline) < new Date())
+                            ? "Expired"
+                            : "Active"}
+                        </span>
+                        {job.isActive !== false && job.applicationDeadline && (
+                          <span className="text-[11px] font-medium text-slate-500">
+                            {new Date(job.applicationDeadline) < new Date()
+                              ? `Closed ${new Date(job.applicationDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+                              : (() => {
+                                  const daysLeft = Math.ceil((new Date(job.applicationDeadline) - new Date()) / (1000 * 60 * 60 * 24));
+                                  return daysLeft <= 1 ? "Closes today" : `${daysLeft}d left`;
+                                })()
+                            }
+                          </span>
+                        )}
+                      </div>
                       <span className="text-slate-400 font-medium">
                         {new Date(job.createdAt).toLocaleDateString()}
                       </span>
@@ -857,6 +884,108 @@ function RecruiterDashboard() {
                   <CustomSelect className="w-full min-w-0" name="experienceRequired" value={formData.experienceRequired} onChange={handleChange} options={EXPERIENCE_LEVELS.map((level) => ({ value: level, label: level }))} placeholder="Select experience level" aria-label="Experience level" maxMenuHeight={180} compact />
                 </label>
               </div>
+
+              <fieldset>
+                <legend className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[#493b2e]">
+                  Application Timeline <span className="text-[11px] font-normal text-[#9b8067] lowercase">(how long this post stays open)</span>
+                </legend>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 rounded-xl bg-[#f6ead8] p-1">
+                  {[
+                    { label: "7 Days", days: 7 },
+                    { label: "15 Days", days: 15 },
+                    { label: "30 Days", days: 30 },
+                    { label: "60 Days", days: 60 },
+                  ].map((option) => {
+                    const isSelected = formData.timelineDays === option.days && !formData.customTimeline;
+                    return (
+                      <button
+                        key={option.days}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          const deadline = new Date();
+                          deadline.setDate(deadline.getDate() + option.days);
+                          setFormData((prev) => ({
+                            ...prev,
+                            timelineDays: option.days,
+                            applicationDeadline: deadline.toISOString().split("T")[0],
+                            customTimeline: false,
+                          }));
+                        }}
+                        className={`rounded-lg border-0 px-3 py-2 text-xs font-bold transition-colors ${
+                          isSelected
+                            ? "bg-[#fffdfa] text-[#8f4a24] shadow-sm"
+                            : "bg-transparent text-[#746555] hover:bg-[#fffdfa]/70"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, customTimeline: !prev.customTimeline }))}
+                    className={`font-semibold underline cursor-pointer border-0 bg-transparent p-0 ${formData.customTimeline ? "text-[#8f4a24]" : "text-[#746555] hover:text-[#493b2e]"}`}
+                  >
+                    {formData.customTimeline ? "Selected custom date:" : "Or pick custom date"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        timelineDays: null,
+                        applicationDeadline: "",
+                        customTimeline: false,
+                      }));
+                    }}
+                    className={`font-semibold cursor-pointer border-0 bg-transparent p-0 ${formData.timelineDays === null && !formData.customTimeline ? "text-[#8f4a24] underline" : "text-[#9b8067] hover:text-[#493b2e]"}`}
+                  >
+                    Keep open indefinitely
+                  </button>
+                </div>
+                {formData.customTimeline && (
+                  <div className="mt-2">
+                    <input
+                      type="date"
+                      name="applicationDeadline"
+                      min={new Date().toISOString().split("T")[0]}
+                      value={formData.applicationDeadline || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        let diffDays = null;
+                        if (val) {
+                          const targetDate = new Date(val);
+                          diffDays = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
+                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          applicationDeadline: val,
+                          timelineDays: diffDays,
+                          customTimeline: true,
+                        }));
+                      }}
+                      className="rounded-xl border border-[#ead5b7] bg-[#fffaf2] px-3.5 py-2 text-xs text-[#493b2e] outline-none focus:border-[#c26d3b] focus:bg-[#fffdfa] focus:ring-2 focus:ring-[#c26d3b]/20"
+                    />
+                  </div>
+                )}
+                {formData.applicationDeadline && (
+                  <p className="mt-1.5 text-xs text-[#8f4a24] font-medium flex items-center gap-1">
+                    <span>Closes on:</span>
+                    <strong>{new Date(formData.applicationDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>
+                    {formData.timelineDays && formData.timelineDays > 0 && (
+                      <span className="text-[#9b8067]">({formData.timelineDays} days from now)</span>
+                    )}
+                  </p>
+                )}
+                {formData.timelineDays === null && !formData.customTimeline && (
+                  <p className="mt-1.5 text-xs text-[#746555]">
+                    Post will remain open until you manually close or delete it.
+                  </p>
+                )}
+              </fieldset>
 
               <section>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -82,6 +82,8 @@ const jobSchema = new mongoose.Schema(
     source: { type: String, default: 'INTERNAL' }, 
     externalId: { type: String, default: null }, // Maps to Provider's job ID
     expiresAt: { type: Date, default: null }, // For TTL auto-cleanup
+    applicationDeadline: { type: Date, default: null }, // Recruiter posting timeline deadline
+    timelineDays: { type: Number, default: 30 }, // Days post remains open (e.g. 7, 15, 30, 60)
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
     employmentType: { type: String, default: "" },
     workplaceType: { type: String, enum: ["On-site", "Hybrid", "Remote"], default: "On-site" },

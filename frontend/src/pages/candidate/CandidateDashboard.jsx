@@ -2405,7 +2405,24 @@ function CandidateDashboard() {
                         </div>
                         
                         <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
-                          <span className="text-xs font-medium text-slate-500">{getRelativeTime(job.createdAt)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-500">{getRelativeTime(job.createdAt)}</span>
+                            {job.applicationDeadline && (
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                new Date(job.applicationDeadline) < new Date()
+                                  ? "bg-rose-50 text-rose-600 border border-rose-200"
+                                  : "bg-amber-50 text-amber-800 border border-amber-200"
+                              }`}>
+                                {new Date(job.applicationDeadline) < new Date()
+                                  ? "Closed"
+                                  : (() => {
+                                      const d = Math.ceil((new Date(job.applicationDeadline) - new Date()) / (1000 * 60 * 60 * 24));
+                                      return d <= 1 ? "Closes today" : `${d}d left`;
+                                    })()
+                                }
+                              </span>
+                            )}
+                          </div>
                           <button type="button" onClick={(event) => { event.stopPropagation(); handleJobSelect(job); }} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">View</button>
                         </div>
                       </div>
@@ -2535,11 +2552,34 @@ function CandidateDashboard() {
                     </span>
                   </div>
 
+                  {/* Application Deadline Alert */}
+                  {selectedJob.applicationDeadline && (
+                    <div className={`text-xs font-semibold px-3 py-2 rounded-xl mb-3 flex items-center justify-between border ${
+                      new Date(selectedJob.applicationDeadline) < new Date()
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-amber-50 text-amber-900 border-amber-200"
+                    }`}>
+                      <span className="flex items-center gap-1.5">
+                        <span>{new Date(selectedJob.applicationDeadline) < new Date() ? "⚠️" : "⏳"}</span>
+                        <span>{new Date(selectedJob.applicationDeadline) < new Date() ? "Application deadline has passed" : "Application deadline:"}</span>
+                        <strong>{new Date(selectedJob.applicationDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>
+                      </span>
+                      {new Date(selectedJob.applicationDeadline) > new Date() && (
+                        <span className="text-amber-800 font-bold">
+                          {(() => {
+                            const days = Math.ceil((new Date(selectedJob.applicationDeadline) - new Date()) / (1000 * 60 * 60 * 24));
+                            return days <= 1 ? "Closes today" : `${days} days left`;
+                          })()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {/* Action buttons */}
                   <div className="pt-2">
-                    {selectedJob.expiresAt && new Date(selectedJob.expiresAt) < new Date() ? (
+                    {(selectedJob.expiresAt && new Date(selectedJob.expiresAt) < new Date()) || (selectedJob.applicationDeadline && new Date(selectedJob.applicationDeadline) < new Date()) ? (
                       <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-rose-100 text-rose-800 border border-rose-200 cursor-not-allowed" disabled>
-                        This job is no longer available
+                        Applications Closed
                       </button>
                     ) : appliedJobs?.includes(selectedJob._id) ? (
                       <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" disabled>
