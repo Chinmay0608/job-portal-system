@@ -29,12 +29,24 @@ const formatUserDTO = (user, applicationsCount = 0) => ({
   education: user.education || "",
   highestQualification: user.highestQualification || user.education || "",
   hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+  isOnboarded: user.isOnboarded ?? false,
+  recruiterOnboardingPromptDismissed: user.recruiterOnboardingPromptDismissed ?? false,
   experienceLevel: user.experienceLevel || "Fresher",
   field: user.field || "Software Engineering",
   emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
   designation: user.designation || "",
   companyName: user.companyName || "",
   companyWebsite: user.companyWebsite || "",
+  companyLogo: user.companyLogo || "",
+  companyIndustry: user.companyIndustry || "",
+  companySize: user.companySize || "",
+  companyHeadquarters: user.companyHeadquarters || "",
+  companySocials: user.companySocials || { linkedin: "", twitter: "", github: "" },
+  timeZone: user.timeZone || "Asia/Kolkata",
+  schedulingLink: user.schedulingLink || "",
+  emailSignature: user.emailSignature || "",
+  contactVisibility: user.contactVisibility ?? false,
+  isVerified: user.isVerified ?? false,
   resume: user.resume || "",
   profileImage: user.profileImage || "",
   savedJobs: user.savedJobs || [],
@@ -88,7 +100,7 @@ const registerUser = asyncHandler(async (req, res) => {
    LOGIN USER
 ========================== */
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role: requestedRole } = req.body;
 
   if (!email || !password) {
     res.status(400);
@@ -111,6 +123,11 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!isMatch) {
     res.status(401);
     throw new Error("Invalid credentials");
+  }
+
+  if (["candidate", "recruiter"].includes(requestedRole) && ["candidate", "recruiter"].includes(user.role) && user.role !== requestedRole) {
+    res.status(403);
+    throw new Error(`This account is registered as a ${user.role}. Select ${user.role} to sign in.`);
   }
 
   const token = jwt.sign(
@@ -142,6 +159,9 @@ const { getAuth } = require("firebase-admin/auth");
 ========================== */
 const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
+  const requestedRole = ["candidate", "recruiter"].includes(req.body.role)
+    ? req.body.role
+    : "candidate";
   
   if (!idToken) {
     res.status(400);
@@ -186,8 +206,11 @@ const googleLogin = asyncHandler(async (req, res) => {
       name,
       email: normalizedEmail,
       password: hashedPassword,
-      role: "candidate",
+      role: requestedRole,
     });
+  } else if (user.role !== "admin" && user.role !== requestedRole) {
+    user.role = requestedRole;
+    await user.save();
   }
 
   const token = jwt.sign(

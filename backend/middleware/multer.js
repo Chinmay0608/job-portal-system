@@ -14,6 +14,10 @@ const cloudinaryStorage = {
       folder = "skillbridge/profile-images";
       resourceType = "image";
       fileType = "authenticated";
+    } else if (file.fieldname === "companyLogo") {
+      folder = "skillbridge/company-logos";
+      resourceType = "image";
+      fileType = "upload";
     } else if (file.fieldname === "screenshot") {
       folder = "skillbridge/support-screenshots";
       resourceType = "image";
@@ -56,7 +60,13 @@ const cloudinaryStorage = {
 };
 
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === "profileImage" || file.fieldname === "screenshot") {
+  if (file.fieldname === "companyLogo") {
+    if (["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Company logo must be a PNG, JPG, or WebP image"));
+    }
+  } else if (file.fieldname === "profileImage" || file.fieldname === "screenshot") {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {

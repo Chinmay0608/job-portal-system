@@ -66,7 +66,7 @@ const jobSchema = new mongoose.Schema(
 
     experienceRequired: {
       type: String,
-      enum: ["Fresher", "0-2 Years", "2-5 Years", "5+ Years", "Not Specified"],
+      enum: ["Entry-level / Fresher", "Mid-level", "Senior", "Lead", "Fresher", "0-2 Years", "2-5 Years", "5+ Years", "Not Specified"],
       default: "Not Specified",
     },
 
@@ -84,9 +84,11 @@ const jobSchema = new mongoose.Schema(
     expiresAt: { type: Date, default: null }, // For TTL auto-cleanup
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
     employmentType: { type: String, default: "" },
+    workplaceType: { type: String, enum: ["On-site", "Hybrid", "Remote"], default: "On-site" },
     isRemote: { type: Boolean, default: false },
     salaryMin: { type: Number, default: null },
     salaryMax: { type: Number, default: null },
+    showSalaryRange: { type: Boolean, default: true },
     salaryCurrency: { type: String, default: "USD" },
     keywords: [{ type: String, default: [] }],
     providerMetadata: { type: mongoose.Schema.Types.Mixed, default: {} },

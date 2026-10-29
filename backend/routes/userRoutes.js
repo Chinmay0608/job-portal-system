@@ -11,6 +11,7 @@ const {
   clearSkills,
   getSignedResumeUrl,
   completeOnboarding,
+  completeRecruiterOnboarding,
 } = require("../controllers/userController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/multer");
@@ -18,6 +19,14 @@ const upload = require("../middleware/multer");
 const router = express.Router();
 
 router.get("/profile", protect, getProfile);
+
+router.post(
+  "/recruiter-onboarding",
+  protect,
+  authorizeRoles("recruiter"),
+  upload.fields([{ name: "companyLogo", maxCount: 1 }]),
+  completeRecruiterOnboarding,
+);
 
 /* ==========================
    UPDATE PROFILE
@@ -33,6 +42,10 @@ router.put(
     },
     {
       name: "profileImage",
+      maxCount: 1,
+    },
+    {
+      name: "companyLogo",
       maxCount: 1,
     },
   ]),
@@ -53,8 +66,22 @@ router.put(
       .withMessage("Phone must contain between 7 and 15 digits"),
     body("companyWebsite").optional({ checkFalsy: true })
       .trim()
-      .isURL()
+      .isURL({ protocols: ["http", "https"], require_protocol: false })
       .withMessage("Company website must be a valid URL"),
+    body("linkedin").optional({ checkFalsy: true })
+      .trim()
+      .isURL({ protocols: ["http", "https"], require_protocol: false })
+      .withMessage("LinkedIn must be a valid URL"),
+    body("schedulingLink").optional({ checkFalsy: true })
+      .trim()
+      .isURL({ protocols: ["http", "https"], require_protocol: false })
+      .withMessage("Interview booking link must be a valid URL"),
+    body("companyIndustry").optional({ checkFalsy: true })
+      .isIn(["Software / SaaS", "FinTech", "EdTech", "Healthcare", "E-Commerce", "Other"])
+      .withMessage("Select a valid company industry"),
+    body("companySize").optional({ checkFalsy: true })
+      .isIn(["1-10", "11-50", "51-200", "201-500", "500+"])
+      .withMessage("Select a valid company size"),
   ],
   validateRequest,
   updateProfile,

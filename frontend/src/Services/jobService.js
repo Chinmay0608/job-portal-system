@@ -81,6 +81,8 @@ export const getPublicStatsAPI = async () => (await api.get("/api/jobs/public-st
 // USER MODULE
 export const getUserProfile = async () => (await api.get("/api/users/profile")).data;
 export const updateProfile = async (formData) => (await api.put("/api/users/update-profile", formData)).data;
+export const completeRecruiterOnboardingAPI = async (payload) =>
+  (await api.post("/api/users/recruiter-onboarding", payload)).data;
 export const changePassword = async (passwordData) => (await api.put("/api/users/change-password", passwordData)).data;
 export const extractSkillsAPI = async () => (await api.post("/api/users/extract-skills")).data;
 export const clearSkillsAPI = async () => (await api.delete("/api/users/skills")).data;

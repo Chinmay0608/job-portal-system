@@ -99,6 +99,7 @@ function AppContent() {
               {/* ========================================== */}
               {/* ============== RECRUITER ================= */}
               <Route path="/recruiter-dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
+              <Route path="/jobs/create" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
               <Route path="/recruiter-applications" element={<ProtectedRoute role="recruiter"><RecruiterApplications /></ProtectedRoute>} />
               <Route path="/recruiter-profile" element={<ProtectedRoute role="recruiter"><RecruiterProfile /></ProtectedRoute>} />
 

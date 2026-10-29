@@ -38,10 +38,17 @@ function Navbar() {
   const [deletionBusy, setDeletionBusy] = useState(false);
   const [deletionForm, setDeletionForm] = useState({ email: user?.email || "", reason: "", reasonDetail: "", privacyRequest: "", otp: "" });
   const candidateMenuRef = useRef(null);
+  const navbarContainerRef = useRef(null);
   const navLinksRef = useRef(null);
   const homeTabRef = useRef(null);
   const jobsTabRef = useRef(null);
-  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
+  const manageJobsTabRef = useRef(null);
+  const applicantsTabRef = useRef(null);
+  const myApplicationsTabRef = useRef(null);
+  const candidateProfileTabRef = useRef(null);
+  const recruiterProfileTabRef = useRef(null);
+  const hasMountedIndicatorRef = useRef(false);
+  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0, opacity: 0 });
   const [isDhruvOpen, setIsDhruvOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -221,27 +228,74 @@ function Navbar() {
   const isCandidateDashboard = location.pathname === "/candidate-dashboard";
   const isJobsTab = isCandidateDashboard && new URLSearchParams(location.search).get("tab") === "jobs";
   const isRecruiterDashboard = location.pathname === "/recruiter-dashboard";
+  const isRecruiterApplicants = location.pathname === "/recruiter-applications";
   const isAdminDashboard = location.pathname === "/admin-dashboard" || location.pathname.startsWith("/admin");
   const isMyApplications = location.pathname === "/my-applications";
 
   useEffect(() => {
     const updateIndicator = () => {
-      const nav = navLinksRef.current;
-      if (!nav) return;
-      const activeTab = isCandidateDashboard
-        ? (isJobsTab ? jobsTabRef.current : homeTabRef.current)
-        : null;
+      const container = navbarContainerRef.current;
+      if (!container) return;
+
+      let activeTab = null;
+      if (user?.role === "candidate") {
+        if (isCandidateDashboard) {
+          activeTab = isJobsTab ? jobsTabRef.current : homeTabRef.current;
+        } else if (isMyApplications) {
+          activeTab = myApplicationsTabRef.current;
+        } else if (location.pathname === "/candidate-profile") {
+          activeTab = candidateProfileTabRef.current;
+        }
+      } else if (user?.role === "recruiter") {
+        if (isRecruiterApplicants) {
+          activeTab = applicantsTabRef.current;
+        } else if (location.pathname === "/recruiter-dashboard") {
+          activeTab = manageJobsTabRef.current;
+        } else if (location.pathname === "/recruiter-profile") {
+          activeTab = recruiterProfileTabRef.current;
+        }
+      }
+
       if (!activeTab) {
-        setTabIndicator({ left: 0, width: 0 });
+        setTabIndicator((prev) => ({ ...prev, opacity: 0 }));
         return;
       }
-      setTabIndicator({ left: activeTab.offsetLeft, width: activeTab.offsetWidth });
+
+      const containerRect = container.getBoundingClientRect();
+      const tabRect = activeTab.getBoundingClientRect();
+
+      // If activeTab is an icon tab, apply a 6px inset to center nicely with the icon
+      const isIconTab = activeTab.classList?.contains("icon-tab-wrapper");
+      const inset = isIconTab ? 6 : 0;
+
+      const left = tabRect.left - containerRect.left + inset;
+      const width = Math.max(0, tabRect.width - inset * 2);
+
+      setTabIndicator({ left, width, opacity: 1 });
+
+      if (!hasMountedIndicatorRef.current) {
+        setTimeout(() => {
+          hasMountedIndicatorRef.current = true;
+        }, 50);
+      }
     };
 
     updateIndicator();
+    const rafId = requestAnimationFrame(updateIndicator);
     window.addEventListener("resize", updateIndicator);
-    return () => window.removeEventListener("resize", updateIndicator);
-  }, [isCandidateDashboard, isJobsTab, location.pathname, user?.role]);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", updateIndicator);
+    };
+  }, [
+    isCandidateDashboard,
+    isJobsTab,
+    isMyApplications,
+    isRecruiterApplicants,
+    location.pathname,
+    location.search,
+    user?.role,
+  ]);
 
   // DHRUV AI Assistant is strictly restricted to logged-in candidates in their dashboard / workspace
   // Also gated behind VITE_DHRUV_ENABLED=true so it never loads on production until fully trained
@@ -337,8 +391,8 @@ function Navbar() {
   };
 
   return (
-    <nav className="indeed-navbar">
-      <div className="navbar-container">
+    <nav className={`indeed-navbar${isRecruiterDashboard ? " recruiter-dashboard-nav" : ""}`}>
+      <div className="navbar-container" ref={navbarContainerRef}>
         {/* Left Section: Back Button + Logo + Main Text Links */}
         <div className="nav-left">
           {canGoBack && (
@@ -369,11 +423,11 @@ function Navbar() {
 
           {/* Left Text Navigation Links (Only on inner app pages, not landing page) */}
           {!isHome && (
-            <div ref={navLinksRef} className={`nav-links-left desktop-only ${user?.role === "candidate" ? "has-moving-indicator" : ""}`}>
-              {(!isLoggedIn || user?.role === "candidate") && (
+            <div ref={navLinksRef} className={`nav-links-left desktop-only ${["candidate", "recruiter"].includes(user?.role) ? "has-moving-indicator" : ""}`}>
+              {user?.role === "candidate" && (
                 <Link 
                   ref={user?.role === "candidate" ? homeTabRef : undefined}
-                  to={isLoggedIn ? "/candidate-dashboard" : "/"} 
+                  to="/candidate-dashboard"
                   className={`nav-tab-link ${isCandidateDashboard && !isJobsTab ? "active" : ""}`}
                 >
                   Home
@@ -384,23 +438,18 @@ function Navbar() {
                   Jobs
                 </Link>
               )}
-              {user?.role === "candidate" && (
-                <span
-                  className="nav-tab-indicator"
-                  aria-hidden="true"
-                  style={{ width: `${tabIndicator.width}px`, transform: `translateX(${tabIndicator.left}px)` }}
-                />
-              )}
 
               {user?.role === "recruiter" && (
                 <>
                   <Link 
+                    ref={manageJobsTabRef}
                     to="/recruiter-dashboard" 
                     className={`nav-tab-link ${location.pathname === "/recruiter-dashboard" ? "active" : ""}`}
                   >
                     Manage Jobs
                   </Link>
                   <Link 
+                    ref={applicantsTabRef}
                     to="/recruiter-applications" 
                     className={`nav-tab-link ${location.pathname === "/recruiter-applications" ? "active" : ""}`}
                   >
@@ -467,7 +516,7 @@ function Navbar() {
 
         {/* Mobile Header Controls: Home Button + Hamburger Toggle */}
         <div className="mobile-header-controls">
-          {!isHome && (
+          {isLoggedIn && !isHome && (
             <Link
               to={dashboardUrl}
               className={`header-home-btn ${(isCandidateDashboard || isRecruiterDashboard) ? "active" : ""}`}
@@ -488,7 +537,7 @@ function Navbar() {
         <div className={`nav-right ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           {(!isLoggedIn || isHome) ? (
             <div className="auth-buttons">
-              {!isHome && (
+              {isLoggedIn && !isHome && (
                 <Link className="nav-tab-link mobile-only-tab" to="/" style={{ padding: "8px 0", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px" }}>
                   <FiHome size={18} /> Home
                 </Link>
@@ -510,7 +559,10 @@ function Navbar() {
                   </div>
 
                   {/* Bookmark Icon (My Applications) */}
-                  <div className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}>
+                  <div
+                    ref={myApplicationsTabRef}
+                    className={`icon-tab-wrapper ${isMyApplications ? "active" : ""}`}
+                  >
                     <Link to="/my-applications" className="icon-btn-link" aria-label="My applications">
                       <BsBookmarkFill className="header-icon" />
                       <span className="mobile-only-label">My applications</span>
@@ -519,7 +571,10 @@ function Navbar() {
                   </div>
 
                   {/* Profile User Icon */}
-                  <div className={`icon-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}>
+                  <div
+                    ref={candidateProfileTabRef}
+                    className={`icon-tab-wrapper profile-tab-wrapper ${location.pathname === "/candidate-profile" ? "active" : ""}`}
+                  >
                     <Link to="/candidate-profile" className="icon-btn-link profile-link" aria-label="Profile">
                       <span className="profile-initial-avatar" style={{ backgroundColor: profileAvatarColor }} aria-hidden="true">{profileInitial}</span>
                       <span className="mobile-only-label">Profile</span>
@@ -580,12 +635,23 @@ function Navbar() {
                     <div className="tooltip-bubble">Notifications</div>
                   </div>
 
-                  <div className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}>
+                  <div
+                    ref={recruiterProfileTabRef}
+                    className={`icon-tab-wrapper ${location.pathname === "/recruiter-profile" ? "active" : ""}`}
+                  >
                     <Link to="/recruiter-profile" className="icon-btn-link profile-link" aria-label="Profile">
                       <span className="profile-initial-avatar" style={{ backgroundColor: profileAvatarColor }} aria-hidden="true">{profileInitial}</span>
                       <span className="mobile-only-label">Profile</span>
                     </Link>
                     <div className="tooltip-bubble">Profile</div>
+                  </div>
+
+                  <div className="icon-tab-wrapper">
+                    <button type="button" onClick={handleLogout} aria-label="Log out" title="Log out" className="icon-btn-link nav-logout-icon-btn">
+                      <DoorOpen size={20} className="header-icon" />
+                      <span className="mobile-only-label">Log out</span>
+                    </button>
+                    <div className="tooltip-bubble">Log out</div>
                   </div>
                 </>
               )}
@@ -599,19 +665,6 @@ function Navbar() {
                 </div>
               )}
 
-              {/* Vertical Separator Divider & Employers / Post Job Link (Recruiters & Guests only) */}
-              {user?.role === "recruiter" && (
-                <>
-                  <div className="nav-divider desktop-only"></div>
-                  <Link 
-                    to="/recruiter-dashboard" 
-                    className="employer-post-link desktop-only"
-                  >
-                    Employers / Post Job
-                  </Link>
-                </>
-              )}
-
               {user?.role === "candidate" && (
                 <div className="icon-tab-wrapper" ref={candidateMenuRef}>
                   <button
@@ -622,11 +675,13 @@ function Navbar() {
                     aria-expanded={isCandidateMenuOpen}
                     className="icon-btn-link candidate-menu-trigger"
                   >
-                    <MoreVertical size={20} className="header-icon" />
+                    <span className="icon-with-badge">
+                      <MoreVertical size={20} className="header-icon" />
+                      {(unreadMessagesCount > 0 || unreadNotificationsCount > 0) && (
+                        <span className="candidate-menu-unread-dot" aria-hidden="true" />
+                      )}
+                    </span>
                     <span className="mobile-only-label">Account menu</span>
-                    {(unreadMessagesCount > 0 || unreadNotificationsCount > 0) && (
-                      <span className="candidate-menu-unread-dot" aria-hidden="true" />
-                    )}
                   </button>
                   <div className="tooltip-bubble">Account menu</div>
                   {isCandidateMenuOpen && (
@@ -721,6 +776,20 @@ function Navbar() {
             </div>
           )}
         </div>
+
+        {/* Global smooth-sliding active tab indicator */}
+        <span
+          className="navbar-active-indicator desktop-only"
+          aria-hidden="true"
+          style={{
+            width: `${tabIndicator.width}px`,
+            transform: `translateX(${tabIndicator.left}px)`,
+            opacity: tabIndicator.opacity,
+            transition: hasMountedIndicatorRef.current
+              ? "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), width 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease"
+              : "opacity 200ms ease",
+          }}
+        />
       </div>
 
       {/* DHRUV AI Career Coach Drawer (Logged-in candidates only) */}

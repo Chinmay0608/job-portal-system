@@ -139,11 +139,11 @@ router.post(
       .trim()
       .isLength({ min: 3 })
       .withMessage("Job title must be at least 3 characters"),
-    body("company").trim().notEmpty().withMessage("Company is required"),
-    body("location").trim().notEmpty().withMessage("Location is required"),
-    body("salary")
-      .isFloat({ gt: 0 })
-      .withMessage("Salary must be a positive number"),
+    body("workplaceType").isIn(["On-site", "Hybrid", "Remote"]).withMessage("Select a workplace type"),
+    body("experienceRequired").isIn(["Entry-level / Fresher", "Mid-level", "Senior", "Lead"]).withMessage("Select an experience level"),
+    body("location").custom((value, { req }) => req.body.workplaceType === "Remote" || Boolean(String(value || "").trim())).withMessage("Location is required for on-site or hybrid jobs"),
+    body("minSalary").optional({ nullable: true, checkFalsy: true }).isFloat({ min: 0 }).withMessage("Minimum salary must be non-negative"),
+    body("maxSalary").optional({ nullable: true, checkFalsy: true }).isFloat({ min: 0 }).withMessage("Maximum salary must be non-negative"),
     body("description")
       .trim()
       .isLength({ min: 10 })

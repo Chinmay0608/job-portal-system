@@ -1,42 +1,47 @@
 import React from 'react';
 import Select from 'react-select';
 
-const getCustomStyles = (borderless, mutedValue, maxMenuHeight) => ({
+const getCustomStyles = (borderless, mutedValue, maxMenuHeight, compact) => ({
   control: (provided, state) => ({
     ...provided,
-    backgroundColor: borderless ? 'transparent' : '#ffffff',
-    borderColor: borderless 
+    backgroundColor: borderless ? 'transparent' : compact ? '#fffaf2' : '#ffffff',
+    borderColor: compact
+      ? state.isFocused ? '#c26d3b' : '#ead5b7'
+      : borderless
       ? 'transparent' 
       : state.isFocused ? '#3b82f6' : '#e2e8f0',
     boxShadow: borderless
       ? 'none'
-      : state.isFocused ? '0 0 0 3px rgba(37, 99, 235, 0.16)' : 'none',
+      : compact
+        ? state.isFocused ? '0 0 0 3px rgba(194, 109, 59, 0.14)' : 'none'
+        : state.isFocused ? '0 0 0 3px rgba(37, 99, 235, 0.16)' : 'none',
     '&:hover': {
-      borderColor: borderless 
+      borderColor: compact ? '#d9b994' : borderless
         ? 'transparent' 
         : state.isFocused ? '#3b82f6' : '#cbd5e1',
     },
-    borderRadius: borderless ? '9999px' : '1rem',
-    minHeight: borderless ? '44px' : '56px',
+    borderRadius: borderless ? '9999px' : compact ? '10px' : '1rem',
+    minHeight: borderless ? '44px' : compact ? '44px' : '56px',
+    ...(compact ? { height: '44px', maxHeight: '44px', boxSizing: 'border-box' } : {}),
     cursor: 'pointer',
     transition: 'all 150ms ease-in-out',
   }),
   valueContainer: (provided) => ({
     ...provided,
-    padding: borderless ? '0 4px' : '0 16px',
+    padding: borderless ? '0 4px' : compact ? '0 14px' : '0 16px',
   }),
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected 
-      ? '#3b82f6' 
+      ? compact ? '#b96534' : '#3b82f6'
       : state.isFocused 
-        ? '#eef2ff' 
+        ? compact ? '#fbefdc' : '#eef2ff'
         : '#ffffff',
     color: state.isSelected 
       ? '#ffffff' 
       : state.isFocused 
-        ? '#1d4ed8' 
-        : '#0f172a',
+        ? compact ? '#8f4a24' : '#1d4ed8'
+        : compact ? '#493b2e' : '#0f172a',
     cursor: 'pointer',
     padding: '10px 14px',
     margin: '2px 0',
@@ -51,18 +56,18 @@ const getCustomStyles = (borderless, mutedValue, maxMenuHeight) => ({
   }),
   menu: (provided, state) => ({
     ...provided,
-    borderRadius: '18px',
-    border: '1px solid #e2e8f0',
+    borderRadius: compact ? '12px' : '18px',
+    border: compact ? '1px solid #ead5b7' : '1px solid #e2e8f0',
     boxShadow: '0 18px 34px -18px rgba(15, 23, 42, 0.3), 0 5px 12px -7px rgba(15, 23, 42, 0.16)',
     padding: '6px',
     overflow: 'hidden',
     animation: state?.placement === 'top'
-      ? 'custom-select-menu-up 850ms cubic-bezier(0.16, 1, 0.3, 1)'
-      : 'custom-select-menu-down 850ms cubic-bezier(0.16, 1, 0.3, 1)',
+      ? `custom-select-menu-up ${compact ? 240 : 850}ms cubic-bezier(0.16, 1, 0.3, 1)`
+      : `custom-select-menu-down ${compact ? 240 : 850}ms cubic-bezier(0.16, 1, 0.3, 1)`,
     transformOrigin: state?.placement === 'top' ? 'bottom' : 'top',
     marginTop: state?.placement === 'top' ? '0' : '6px',
     marginBottom: state?.placement === 'top' ? '6px' : '0',
-    backgroundColor: '#ffffff',
+    backgroundColor: compact ? '#fffdfa' : '#ffffff',
     zIndex: 999999,
   }),
   menuList: (provided) => ({
@@ -76,13 +81,13 @@ const getCustomStyles = (borderless, mutedValue, maxMenuHeight) => ({
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: mutedValue ? '#64748b' : '#0f172a',
+    color: mutedValue ? '#64748b' : compact ? '#493b2e' : '#0f172a',
     fontWeight: 500,
     fontSize: '0.875rem',
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#64748b',
+    color: compact ? '#9b8067' : '#64748b',
     fontSize: '0.875rem',
     fontWeight: 400,
   }),
@@ -91,12 +96,12 @@ const getCustomStyles = (borderless, mutedValue, maxMenuHeight) => ({
   }),
   dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: state.isFocused ? '#3b82f6' : '#94a3b8',
+    color: compact ? '#9b8067' : state.isFocused ? '#3b82f6' : '#94a3b8',
     padding: '4px 8px',
     transition: 'color 150ms ease, transform 200ms ease',
     transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     '&:hover': {
-      color: '#3b82f6',
+      color: compact ? '#b96534' : '#3b82f6',
     },
   }),
 });
@@ -115,6 +120,7 @@ const CustomSelect = ({
   "aria-label": ariaLabel,
   menuPlacement = "auto",
   maxMenuHeight = 220,
+  compact = false,
   classNamePrefix = "custom-select",
 }) => {
   const selectedOption = options?.find(opt => opt.value === value) || null;
@@ -125,7 +131,7 @@ const CustomSelect = ({
         aria-label={ariaLabel || placeholder}
         className="focus:ring-2 focus:ring-brand-500 rounded-xl"
         classNamePrefix={classNamePrefix}
-        styles={getCustomStyles(borderless, mutedValue, maxMenuHeight)}
+        styles={getCustomStyles(borderless, mutedValue, maxMenuHeight, compact)}
         options={options}
         value={selectedOption}
         onChange={(selected) => onChange({ target: { name, value: selected ? selected.value : "" } })}
