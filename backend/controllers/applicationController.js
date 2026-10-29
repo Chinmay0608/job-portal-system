@@ -12,6 +12,11 @@ const applyJob = asyncHandler(async (req, res) => {
   const job = await Job.findById(jobId);
   if (!job) return res.status(404).json({ message: "Job not found" });
 
+  if (job.isActive === false || (job.applicationDeadline && new Date(job.applicationDeadline) < new Date())) {
+    res.status(400);
+    throw new Error("This job posting is closed or its application deadline has passed.");
+  }
+
   const currentUser = await User.findById(req.user.id);
   if (!currentUser) {
     res.status(404);
