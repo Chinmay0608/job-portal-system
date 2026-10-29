@@ -47,7 +47,7 @@ function Navbar() {
   const myApplicationsTabRef = useRef(null);
   const candidateProfileTabRef = useRef(null);
   const recruiterProfileTabRef = useRef(null);
-  const hasMountedIndicatorRef = useRef(false);
+  const [hasMountedIndicator, setHasMountedIndicator] = useState(false);
   const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0, opacity: 0 });
   const [isDhruvOpen, setIsDhruvOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
@@ -273,9 +273,9 @@ function Navbar() {
 
       setTabIndicator({ left, width, opacity: 1 });
 
-      if (!hasMountedIndicatorRef.current) {
+      if (!hasMountedIndicator) {
         setTimeout(() => {
-          hasMountedIndicatorRef.current = true;
+          setHasMountedIndicator(true);
         }, 50);
       }
     };
@@ -785,7 +785,7 @@ function Navbar() {
             width: `${tabIndicator.width}px`,
             transform: `translateX(${tabIndicator.left}px)`,
             opacity: tabIndicator.opacity,
-            transition: hasMountedIndicatorRef.current
+            transition: hasMountedIndicator
               ? "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), width 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease"
               : "opacity 200ms ease",
           }}

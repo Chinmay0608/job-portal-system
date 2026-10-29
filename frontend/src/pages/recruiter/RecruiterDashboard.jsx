@@ -91,7 +91,7 @@ function RecruiterDashboard() {
   useEffect(() => {
     if (!showOnboardingReminder) return;
 
-    let remainingTime = 30000;
+    let remainingTime;
     try {
       let start = sessionStorage.getItem(RECRUITER_REMINDER_START_KEY);
       if (!start) {
