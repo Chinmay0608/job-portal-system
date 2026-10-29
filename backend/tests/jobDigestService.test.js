@@ -19,12 +19,12 @@ jest.mock("../services/jobMatchService", () => ({
   ]),
 }));
 
-describe("jobDigestService - Daily Email Alerts Rate Limiting", () => {
+describe("jobDigestService - Daily Email Alerts Rate Limiting & LinkedIn Style", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test("buildDigestHtml generates valid email markup with daily alert indicator", () => {
+  test("buildDigestHtml generates valid LinkedIn-style email markup", () => {
     const html = buildDigestHtml("Alice", [
       {
         title: "Fullstack Engineer",
@@ -35,11 +35,14 @@ describe("jobDigestService - Daily Email Alerts Rate Limiting", () => {
       },
     ], "alice@example.com", "Software Engineering");
 
-    expect(html).toContain("SKILLBRIDGE");
-    expect(html).toContain("Job alert: Software Engineering");
+    expect(html).toContain("Skill");
+    expect(html).toContain("Bridge");
+    expect(html).toContain("Your job alert for");
+    expect(html).toContain("Software Engineering");
     expect(html).toContain("Acme Inc");
     expect(html).toContain("Fullstack Engineer");
-    expect(html).toContain("Sent Daily");
+    expect(html).toContain("See all jobs");
+    expect(html).toContain("Manage alerts");
   });
 
   test("queries only candidates with lastJobDigestSentAt older than 24 hours (or null)", async () => {
@@ -77,18 +80,21 @@ describe("jobDigestService - Daily Email Alerts Rate Limiting", () => {
       expect.objectContaining({
         role: "candidate",
         emailNotificationsEnabled: { $ne: false },
-        $or: [
+        skills: { $exists: true, $ne: [] },
+        $or: expect.arrayContaining([
           { lastJobDigestSentAt: { $exists: false } },
           { lastJobDigestSentAt: null },
-          { lastJobDigestSentAt: { $lt: expect.any(Date) } },
-        ],
+          expect.objectContaining({
+            lastJobDigestSentAt: { $lt: expect.any(Date) },
+          }),
+        ]),
       })
     );
 
     expect(sendEmail).toHaveBeenCalledTimes(1);
     expect(sendEmail).toHaveBeenCalledWith(
       "bob@example.com",
-      expect.stringContaining("Job alert: Software Engineering"),
+      "Frontend Developer at Tech Corp",
       expect.any(String)
     );
     expect(mockSave).toHaveBeenCalled();
