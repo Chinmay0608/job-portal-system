@@ -127,6 +127,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
+    recruiterOnboardingPromptDismissed: {
+      type: Boolean,
+      default: false,
+    },
 
     experienceLevel: {
       type: String,
@@ -147,6 +155,12 @@ const userSchema = new mongoose.Schema(
     emailNotificationsEnabled: {
       type: Boolean,
       default: true,
+    },
+
+    emailDigestFrequency: {
+      type: String,
+      enum: ["daily", "weekly", "monthly"],
+      default: "daily",
     },
 
     lastJobDigestSentAt: {
@@ -171,6 +185,53 @@ const userSchema = new mongoose.Schema(
     companyWebsite: {
       type: String,
       default: "",
+    },
+    companyLogo: {
+      type: String,
+      default: "",
+    },
+    companyIndustry: {
+      type: String,
+      enum: ["", "Software / SaaS", "FinTech", "EdTech", "Healthcare", "E-Commerce", "Other"],
+      default: "",
+    },
+    companySize: {
+      type: String,
+      enum: ["", "1-10", "11-50", "51-200", "201-500", "500+"],
+      default: "",
+    },
+    companyHeadquarters: {
+      type: String,
+      default: "",
+    },
+    companySocials: {
+      type: new mongoose.Schema({
+        linkedin: { type: String, default: "" },
+        twitter: { type: String, default: "" },
+        github: { type: String, default: "" },
+      }, { _id: false }),
+      default: () => ({}),
+    },
+    timeZone: {
+      type: String,
+      default: "Asia/Kolkata",
+    },
+    schedulingLink: {
+      type: String,
+      default: "",
+    },
+    emailSignature: {
+      type: String,
+      default: "",
+      maxlength: 1000,
+    },
+    contactVisibility: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
 
     jobPreferences: {

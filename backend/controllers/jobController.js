@@ -42,15 +42,27 @@ const generateJobDescription = asyncHandler(async (req, res) => {
   
   Return ONLY the HTML output. Do not include markdown codeblocks or any conversational wrapper text.`;
 
+  if (!hasApiKey("GEMINI")) {
+    return res.status(503).json({ message: "AI descriptions are not configured. Add a GEMINI_API_KEY to the backend environment." });
+  }
+
   try {
-    const response = await withApiKey('GEMINI', (apiKey) =>
-      new GoogleGenAI({ apiKey }).models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: prompt,
-      }),
-    );
+    let response;
+    let lastError;
+    for (const model of ["gemini-3.8-flash", "gemini-3.6-flash"]) {
+      try {
+        response = await withApiKey("GEMINI", (apiKey) =>
+          new GoogleGenAI({ apiKey }).models.generateContent({ model, contents: prompt }),
+        );
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (!response) throw lastError || new Error("Gemini returned no response");
     
-    let description = response.text.trim();
+    let description = String(response.text || "").trim();
+    if (!description) throw new Error("Gemini returned an empty job description");
     if (description.startsWith('```html')) description = description.slice(7);
     if (description.startsWith('```')) description = description.slice(3);
     if (description.endsWith('```')) description = description.slice(0, -3);
@@ -58,7 +70,15 @@ const generateJobDescription = asyncHandler(async (req, res) => {
     res.status(200).json({ description: description.trim() });
   } catch (error) {
     console.error('[Gemini AI Error]:', error);
-    res.status(500).json({ message: 'Failed to generate job description', error: error.message });
+    const status = error?.status || error?.statusCode || error?.response?.status;
+    const message = /No GEMINI_API_KEY configured|API keys are cooling down/i.test(error?.message || "")
+      ? "Gemini API keys are missing or unavailable. Check the backend GEMINI_API_KEY configuration."
+      : [401, 403].includes(status)
+        ? "Gemini rejected the configured API key. Check that the key is valid and enabled for the Gemini API."
+        : status === 429
+          ? "Gemini API quota or rate limit reached. Try again later or check the key's quota."
+          : "Gemini could not generate the job description. Check the backend logs for provider details.";
+    res.status(502).json({ message });
   }
 });
 
@@ -67,11 +87,43 @@ const generateJobDescription = asyncHandler(async (req, res) => {
 ========================== */
 const createJob = asyncHandler(async (req, res) => {
   const { title, role, company, location, salary, description, domain, category } = req.body;
+  const workplaceType = req.body.workplaceType;
+  const experienceRequired = req.body.experienceRequired;
+  const minSalary = req.body.minSalary === "" || req.body.minSalary == null ? null : Number(req.body.minSalary);
+  const maxSalary = req.body.maxSalary === "" || req.body.maxSalary == null ? null : Number(req.body.maxSalary);
+  const recruiter = await User.findById(req.user.id).select("companyName companyLogo");
+  const companyName = recruiter?.companyName?.trim() || company?.trim();
 
-  if (!title || !role || !company || !location || !salary || !description) {
+  if (!title?.trim() || title.trim().length < 3 || !description?.trim() || description.trim().length < 10) {
     res.status(400);
-    throw new Error("All fields are required");
+    throw new Error("Title (at least 3 characters) and description (at least 10 characters) are required");
   }
+  if (!["On-site", "Hybrid", "Remote"].includes(workplaceType)) {
+    res.status(400);
+    throw new Error("Select a valid workplace type");
+  }
+  if (!["Entry-level / Fresher", "Mid-level", "Senior", "Lead"].includes(experienceRequired)) {
+    res.status(400);
+    throw new Error("Select a valid experience level");
+  }
+  if (workplaceType !== "Remote" && !location?.trim()) {
+    res.status(400);
+    throw new Error("Location is required for on-site or hybrid jobs");
+  }
+  if (!companyName) {
+    res.status(400);
+    throw new Error("Add your company name in your recruiter profile first");
+  }
+  if ((minSalary !== null && (!Number.isFinite(minSalary) || minSalary < 0)) || (maxSalary !== null && (!Number.isFinite(maxSalary) || maxSalary < 0)) || (minSalary !== null && maxSalary !== null && maxSalary < minSalary)) {
+    res.status(400);
+    throw new Error("Enter a valid salary range");
+  }
+
+  let skills = req.body.skillsRequired || [];
+  if (typeof skills === "string") {
+    try { skills = JSON.parse(skills); } catch { skills = skills.split(","); }
+  }
+  if (!Array.isArray(skills)) skills = [];
 
   const classification = classifyJob({ title, description });
 
@@ -80,11 +132,21 @@ const createJob = asyncHandler(async (req, res) => {
 
   const jobData = {
     title,
-    role: assignedDomain || role,
-    company,
-    location,
-    salary,
+    role: assignedDomain || role || classification.domain,
+    employmentType: req.body.employmentType || role || "Full-time",
+    company: companyName,
+    companyLogo: recruiter?.companyLogo || "",
+    location: workplaceType === "Remote" ? "Remote" : location.trim(),
+    workplaceType,
+    isRemote: workplaceType === "Remote",
+    salary: salary || "Competitive",
+    salaryMin: minSalary,
+    salaryMax: maxSalary,
+    salaryCurrency: req.body.salaryCurrency || "INR",
+    showSalaryRange: req.body.showSalaryRange !== false && req.body.showSalaryRange !== "false",
     description,
+    experienceRequired,
+    skillsRequired: [...new Set(skills.map((skill) => String(skill).trim()).filter(Boolean))],
     recruiter: req.user.id,
     domain: assignedDomain,
     category: assignedDomain,
@@ -774,6 +836,20 @@ const updateJob = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Job description must be at least 10 characters");
   }
+  const minSalary = req.body.minSalary === "" || req.body.minSalary == null ? (req.body.minSalary === undefined ? undefined : null) : Number(req.body.minSalary);
+  const maxSalary = req.body.maxSalary === "" || req.body.maxSalary == null ? (req.body.maxSalary === undefined ? undefined : null) : Number(req.body.maxSalary);
+  if ((minSalary !== undefined && minSalary !== null && (!Number.isFinite(minSalary) || minSalary < 0)) || (maxSalary !== undefined && maxSalary !== null && (!Number.isFinite(maxSalary) || maxSalary < 0)) || (minSalary != null && maxSalary != null && maxSalary < minSalary)) {
+    res.status(400);
+    throw new Error("Enter a valid salary range");
+  }
+  if (req.body.workplaceType !== undefined && !["On-site", "Hybrid", "Remote"].includes(req.body.workplaceType)) {
+    res.status(400);
+    throw new Error("Select a valid workplace type");
+  }
+  if (experienceRequired !== undefined && !["Entry-level / Fresher", "Mid-level", "Senior", "Lead", "Fresher", "0-2 Years", "2-5 Years", "5+ Years", "Not Specified"].includes(experienceRequired)) {
+    res.status(400);
+    throw new Error("Select a valid experience level");
+  }
 
   const job = await Job.findById(jobId);
   if (!job) {
@@ -786,15 +862,45 @@ const updateJob = asyncHandler(async (req, res) => {
     throw new Error("Access denied");
   }
 
+  const effectiveMin = minSalary === undefined ? job.salaryMin : minSalary;
+  const effectiveMax = maxSalary === undefined ? job.salaryMax : maxSalary;
+  if (effectiveMin != null && effectiveMax != null && effectiveMax < effectiveMin) {
+    res.status(400);
+    throw new Error("Maximum salary must be greater than or equal to minimum salary");
+  }
+  if (req.body.workplaceType && req.body.workplaceType !== "Remote" && !(location ?? job.location)?.trim()) {
+    res.status(400);
+    throw new Error("Location is required for on-site or hybrid jobs");
+  }
+
   const updateData = {};
   if (title !== undefined) updateData.title = title;
-  if (role !== undefined) updateData.role = role;
-  if (company !== undefined) updateData.company = company;
-  if (location !== undefined) updateData.location = location;
+  if (role !== undefined) updateData.employmentType = role;
+  if (req.body.employmentType !== undefined) updateData.employmentType = req.body.employmentType;
+  if (company !== undefined) {
+    const recruiter = await User.findById(req.user.id).select("companyName companyLogo");
+    updateData.company = recruiter?.companyName?.trim() || company;
+    if (recruiter?.companyLogo) updateData.companyLogo = recruiter.companyLogo;
+  }
+  if (req.body.workplaceType !== undefined) {
+    updateData.workplaceType = req.body.workplaceType;
+    updateData.isRemote = req.body.workplaceType === "Remote";
+    updateData.location = req.body.workplaceType === "Remote" ? "Remote" : (location ?? job.location);
+  } else if (location !== undefined) updateData.location = location;
   if (salary !== undefined) updateData.salary = salary;
   if (description !== undefined) updateData.description = description;
   if (experienceRequired !== undefined) updateData.experienceRequired = experienceRequired;
-  if (skillsRequired !== undefined) updateData.skillsRequired = skillsRequired;
+  if (skillsRequired !== undefined) {
+    let skills = skillsRequired;
+    if (typeof skills === "string") {
+      try { skills = JSON.parse(skills); } catch { skills = skills.split(","); }
+    }
+    updateData.skillsRequired = Array.isArray(skills) ? [...new Set(skills.map((skill) => String(skill).trim()).filter(Boolean))] : [];
+  }
+  if (minSalary !== undefined) updateData.salaryMin = minSalary;
+  if (maxSalary !== undefined) updateData.salaryMax = maxSalary;
+  if (req.body.salaryCurrency !== undefined) updateData.salaryCurrency = req.body.salaryCurrency;
+  if (req.body.showSalaryRange !== undefined) updateData.showSalaryRange = req.body.showSalaryRange !== false && req.body.showSalaryRange !== "false";
 
   const updatedJob = await Job.findByIdAndUpdate(jobId, updateData, {
     returnDocument: "after",

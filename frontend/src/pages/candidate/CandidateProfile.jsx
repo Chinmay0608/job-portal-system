@@ -26,7 +26,8 @@ import {
   Bell, 
   Plus, 
   Briefcase, 
-  Bookmark
+  Bookmark,
+  UserRound
 } from "lucide-react";
 
 // Curated list of popular tech & domain skills for instant 0ms local autocomplete
@@ -59,6 +60,7 @@ function CandidateProfile() {
   const [user, setUser] = useState(storedUser);
   const [loading, setLoading] = useState(false);
   const [savedCompletion, setSavedCompletion] = useState(0);
+  const [activeTab, setActiveTab] = useState("public");
 
   // 2. Input Fields State
   const [name, setName] = useState(user?.name || "");
@@ -76,6 +78,9 @@ function CandidateProfile() {
   const qualificationOptions = getQualificationsForField(field);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(
     user?.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true
+  );
+  const [emailDigestFrequency, setEmailDigestFrequency] = useState(
+    user?.emailDigestFrequency || "daily"
   );
 
   // Password update state
@@ -202,6 +207,7 @@ function CandidateProfile() {
       setExperienceLevel(user.experienceLevel || "Fresher");
       setField(user.field || "Software Engineering");
       setEmailNotificationsEnabled(user.emailNotificationsEnabled !== undefined ? user.emailNotificationsEnabled : true);
+      setEmailDigestFrequency(user.emailDigestFrequency || "daily");
     }
   }, [user]);
 
@@ -253,6 +259,7 @@ function CandidateProfile() {
       formData.append("experienceLevel", experienceLevel);
       formData.append("field", field);
       formData.append("emailNotificationsEnabled", emailNotificationsEnabled);
+      formData.append("emailDigestFrequency", emailDigestFrequency);
 
       if (resume) formData.append("resume", resume);
       if (profileImage) formData.append("profileImage", profileImage);
@@ -534,11 +541,11 @@ function CandidateProfile() {
   };
 
   return (
-    <div className="app-canvas-surface w-full min-h-screen text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="candidate-profile-page app-canvas-surface w-full min-h-screen text-slate-900 py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-sans">
+      <div className="candidate-profile-layout max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* LEFT COLUMN: SIDEBAR */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center lg:sticky lg:top-24">
+        <div className="candidate-profile-sidebar lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center lg:sticky lg:top-24">
 
           <div className="relative mb-4">
             {user?.profileImage ? (
@@ -668,7 +675,7 @@ function CandidateProfile() {
         </div>
 
         {/* RIGHT COLUMN: MAIN FORM WORKSPACE */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="candidate-profile-main lg:col-span-8 space-y-6">
 
           {/* Page Header */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
@@ -679,7 +686,20 @@ function CandidateProfile() {
             </p>
           </div>
 
+          <div className="rp-tabs candidate-profile-tabs" role="tablist" aria-label="Candidate profile sections">
+            {[
+              { id: "public", label: "Public Profile & Career", icon: UserRound },
+              { id: "preferences", label: "Job Preferences", icon: Briefcase },
+              { id: "security", label: "Account Security", icon: Lock },
+            ].map(({ id, label, icon: Icon }) => (
+              <button key={id} id={`candidate-tab-${id}`} type="button" role="tab" aria-selected={activeTab === id} aria-controls={`candidate-panel-${id}`} className={activeTab === id ? "is-active" : ""} onClick={() => setActiveTab(id)}>
+                <Icon size={17} /><span>{label}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Basic Information Card */}
+          {activeTab === "public" && <div className="candidate-profile-tab-panel space-y-6" id="candidate-panel-public" role="tabpanel" aria-labelledby="candidate-tab-public">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
             <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
               Basic Information
@@ -1002,7 +1022,15 @@ function CandidateProfile() {
             </div>
           </div>
 
+          <div className="candidate-profile-save-row">
+            <button type="button" onClick={handleSave} disabled={loading} className="candidate-profile-save-button">
+              {loading ? "Saving Profile..." : "Save Profile Changes"}
+            </button>
+          </div>
+          </div>}
+
           {/* Change Password Card */}
+          {activeTab === "security" && <div className="candidate-profile-tab-panel space-y-6" id="candidate-panel-security" role="tabpanel" aria-labelledby="candidate-tab-security">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
             <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
               <Lock size={16} className="text-slate-600" /> Change Password
@@ -1075,30 +1103,6 @@ function CandidateProfile() {
             </form>
           </div>
 
-          {/* Job Alerts & Notification Preferences */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <Bell size={16} className="text-slate-600" /> Job Alerts & Email Digest
-            </h2>
-            <div className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="emailNotificationsToggle"
-                checked={emailNotificationsEnabled}
-                onChange={(e) => setEmailNotificationsEnabled(e.target.checked)}
-                className="w-4 h-4 mt-1 cursor-pointer accent-brand-600 rounded"
-              />
-              <div>
-                <label htmlFor="emailNotificationsToggle" className="block text-sm font-bold text-slate-800 cursor-pointer">
-                  Email me about new matching jobs & openings
-                </label>
-                <p className="text-xs text-slate-500 mt-0.5 m-0">
-                  Receive job alert digests with opportunities tailored directly to your skills and field whenever new positions are posted or synced.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white rounded-2xl border border-rose-200/80 shadow-sm p-6">
             <h2 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
               <Trash2 size={16} className="text-rose-600" /> Account Deletion
@@ -1112,18 +1116,91 @@ function CandidateProfile() {
               Request account deletion
             </button>
           </div>
+          </div>}
 
-          {/* Sticky Save Bar */}
-          <div className="flex justify-end pt-2">
-            <button 
-              type="button" 
-              onClick={handleSave} 
-              disabled={loading}
-              className="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 active:scale-98 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-brand-600/20 cursor-pointer outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 disabled:opacity-50"
-            >
-              {loading ? "Saving Profile..." : "Save Profile Changes"}
+          {activeTab === "preferences" && <div className="candidate-profile-tab-panel space-y-6" id="candidate-panel-preferences" role="tabpanel" aria-labelledby="candidate-tab-preferences">
+          {/* Job Alerts & Notification Preferences */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <Bell size={16} className="text-slate-600" /> Job Alerts & Email Digest
+            </h2>
+            <div className="flex items-start gap-3">
+              <input type="checkbox" id="emailNotificationsToggle" checked={emailNotificationsEnabled} onChange={(e) => setEmailNotificationsEnabled(e.target.checked)} className="w-4 h-4 mt-1 cursor-pointer accent-brand-600 rounded" />
+              <div>
+                <label htmlFor="emailNotificationsToggle" className="block text-sm font-bold text-slate-800 cursor-pointer">Email me about new matching jobs & openings</label>
+                <p className="text-xs text-slate-500 mt-0.5 m-0">Receive job alert digests with opportunities tailored directly to your skills and field whenever new positions are posted or synced.</p>
+              </div>
+            </div>
+
+            <div className={`mt-5 pt-4 border-t border-slate-100 transition-opacity ${emailNotificationsEnabled ? "opacity-100" : "opacity-50 pointer-events-none"}`}>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                Digest Delivery Frequency
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Digest Delivery Frequency">
+                {[
+                  {
+                    value: "daily",
+                    label: "Daily",
+                    badge: "Every 24h",
+                    desc: "Get fresh matching openings once a day as soon as roles are synced.",
+                  },
+                  {
+                    value: "weekly",
+                    label: "Weekly",
+                    badge: "Every 7 days",
+                    desc: "A curated weekly roundup of top-matching opportunities.",
+                  },
+                  {
+                    value: "monthly",
+                    label: "Monthly",
+                    badge: "Every 30 days",
+                    desc: "A concise monthly summary of high-match roles in your field.",
+                  },
+                ].map((opt) => {
+                  const isSelected = emailDigestFrequency === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      disabled={!emailNotificationsEnabled}
+                      onClick={() => setEmailDigestFrequency(opt.value)}
+                      className={`text-left rounded-xl p-3.5 border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-[#9a4a1c] bg-[#fdf6ee] shadow-xs ring-1 ring-[#9a4a1c]/25"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className={`text-sm font-bold ${isSelected ? "text-[#7c3711]" : "text-slate-800"}`}>
+                          {opt.label}
+                        </span>
+                        <span
+                          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            isSelected
+                              ? "bg-[#9a4a1c] text-white"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {opt.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 m-0 leading-relaxed">
+                        {opt.desc}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="candidate-profile-save-row">
+            <button type="button" onClick={handleSave} disabled={loading} className="candidate-profile-save-button">
+              {loading ? "Saving Preferences..." : "Save Preferences"}
             </button>
           </div>
+          </div>}
 
         </div>
 

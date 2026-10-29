@@ -8,6 +8,17 @@ const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
 const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 
+const cleanProfileUrl = (value) => {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const parsed = new URL(candidate);
+  if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname.includes(".")) {
+    throw new Error("Enter a valid http or https URL");
+  }
+  return parsed.toString();
+};
+
 // Helper to generate a signed Cloudinary URL for a resume
 const generateSignedResumeUrl = (resumeUrl) => {
   const urlParts = resumeUrl.split("/upload/");
@@ -65,9 +76,19 @@ const updateProfile = asyncHandler(async (req, res) => {
     experienceLevel,
     field,
     emailNotificationsEnabled,
+    emailDigestFrequency,
     designation,
     companyName,
     companyWebsite,
+    removeCompanyLogo,
+    companyIndustry,
+    companySize,
+    companyHeadquarters,
+    companySocials,
+    timeZone,
+    schedulingLink,
+    emailSignature,
+    contactVisibility,
   } = req.body;
 
   const user = await User.findById(req.user.id);
@@ -85,20 +106,30 @@ const updateProfile = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Email Address is required" });
   }
 
-  if (!String(location ?? user.location ?? "").trim()) {
+  if (user.role === "candidate" && !String(location ?? user.location ?? "").trim()) {
     return res.status(400).json({ message: "Location is required" });
   }
 
-  if (!String(country ?? user.country ?? "India").trim()) {
+  if (user.role === "candidate" && !String(country ?? user.country ?? "India").trim()) {
     return res.status(400).json({ message: "Country is required" });
   }
 
-  if (!String(education ?? user.education ?? "").trim()) {
+  if (user.role === "candidate" && !String(education ?? user.education ?? "").trim()) {
     return res.status(400).json({ message: "Highest Qualification is required" });
   }
 
-  if (!String(experienceLevel ?? user.experienceLevel ?? "Fresher").trim()) {
+  if (user.role === "candidate" && !String(experienceLevel ?? user.experienceLevel ?? "Fresher").trim()) {
     return res.status(400).json({ message: "Experience Level is required" });
+  }
+
+  if (user.role === "recruiter") {
+    const requiredRecruiterFields = [
+      ["Location", location ?? user.location],
+      ["Job title", designation ?? user.designation],
+      ["LinkedIn profile", linkedin ?? user.linkedin],
+    ];
+    const missingField = requiredRecruiterFields.find(([, value]) => !String(value || "").trim());
+    if (missingField) return res.status(400).json({ message: `${missingField[0]} is required` });
   }
 
   user.name = name || user.name;
@@ -114,6 +145,12 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.field = field || user.field || "Software Engineering";
   if (emailNotificationsEnabled !== undefined) {
     user.emailNotificationsEnabled = emailNotificationsEnabled === true || emailNotificationsEnabled === "true";
+  }
+  if (emailDigestFrequency !== undefined) {
+    const normalizedFreq = String(emailDigestFrequency).trim().toLowerCase();
+    if (["daily", "weekly", "monthly"].includes(normalizedFreq)) {
+      user.emailDigestFrequency = normalizedFreq;
+    }
   }
   if (skills !== undefined && skills !== null && skills !== "") {
     try {
@@ -134,6 +171,41 @@ const updateProfile = asyncHandler(async (req, res) => {
   user.designation = designation !== undefined ? designation : (user.designation || "");
   user.companyName = companyName !== undefined ? companyName : (user.companyName || "");
   user.companyWebsite = companyWebsite !== undefined ? companyWebsite : (user.companyWebsite || "");
+  user.companyIndustry = companyIndustry !== undefined ? companyIndustry : (user.companyIndustry || "");
+  user.companySize = companySize !== undefined ? companySize : (user.companySize || "");
+  user.companyHeadquarters = companyHeadquarters !== undefined ? companyHeadquarters : (user.companyHeadquarters || "");
+  user.timeZone = timeZone !== undefined ? String(timeZone).trim() || "Asia/Kolkata" : (user.timeZone || "Asia/Kolkata");
+  user.emailSignature = emailSignature !== undefined ? String(emailSignature).slice(0, 1000) : (user.emailSignature || "");
+  if (schedulingLink !== undefined) user.schedulingLink = cleanProfileUrl(schedulingLink);
+  if (companyWebsite !== undefined) user.companyWebsite = cleanProfileUrl(companyWebsite);
+  if (linkedin !== undefined) user.linkedin = cleanProfileUrl(linkedin);
+  if (contactVisibility !== undefined) user.contactVisibility = contactVisibility === true || contactVisibility === "true";
+  if (removeCompanyLogo === true || removeCompanyLogo === "true") user.companyLogo = "";
+  if (user.role === "recruiter" && String(user.companyName || "").trim() && String(user.companyWebsite || "").trim() && String(user.designation || "").trim()) {
+    user.isOnboarded = true;
+    user.recruiterOnboardingPromptDismissed = true;
+  }
+
+  if (companySocials !== undefined) {
+    let socials;
+    try {
+      socials = typeof companySocials === "string" ? JSON.parse(companySocials) : companySocials;
+    } catch {
+      return res.status(400).json({ message: "Company socials must be valid JSON" });
+    }
+    if (!socials || typeof socials !== "object" || Array.isArray(socials)) {
+      return res.status(400).json({ message: "Company socials must be an object" });
+    }
+    try {
+      user.companySocials = {
+        linkedin: cleanProfileUrl(socials.linkedin),
+        twitter: cleanProfileUrl(socials.twitter),
+        github: cleanProfileUrl(socials.github),
+      };
+    } catch {
+      return res.status(400).json({ message: "Company social links must be valid http or https URLs" });
+    }
+  }
 
   /* Resume */
   if (req.files?.resume?.[0]) {
@@ -143,6 +215,10 @@ const updateProfile = asyncHandler(async (req, res) => {
   /* Profile Image */
   if (req.files?.profileImage?.[0]) {
     user.profileImage = req.files.profileImage[0].path;
+  }
+
+  if (req.files?.companyLogo?.[0]) {
+    user.companyLogo = req.files.companyLogo[0].path;
   }
 
   // Resume Parsing & Auto-filling Logic for Blank Profile Fields
@@ -234,12 +310,24 @@ const updateProfile = asyncHandler(async (req, res) => {
       education: user.education,
       highestQualification: user.highestQualification || user.education || "",
       hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+      isOnboarded: user.isOnboarded ?? false,
+      recruiterOnboardingPromptDismissed: user.recruiterOnboardingPromptDismissed ?? false,
       experienceLevel: user.experienceLevel,
       field: user.field || "Software Engineering",
       emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
       designation: user.designation,
       companyName: user.companyName,
       companyWebsite: user.companyWebsite,
+      companyLogo: user.companyLogo || "",
+      companyIndustry: user.companyIndustry || "",
+      companySize: user.companySize || "",
+      companyHeadquarters: user.companyHeadquarters || "",
+      companySocials: user.companySocials || { linkedin: "", twitter: "", github: "" },
+      timeZone: user.timeZone || "Asia/Kolkata",
+      schedulingLink: user.schedulingLink || "",
+      emailSignature: user.emailSignature || "",
+      contactVisibility: user.contactVisibility ?? false,
+      isVerified: user.isVerified ?? false,
       resume: user.resume,
       profileImage: user.profileImage,
     },
@@ -512,17 +600,104 @@ const getProfile = asyncHandler(async (req, res) => {
       education: user.education || "",
       highestQualification: user.highestQualification || user.education || "",
       hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+      isOnboarded: user.isOnboarded ?? false,
+      recruiterOnboardingPromptDismissed: user.recruiterOnboardingPromptDismissed ?? false,
       experienceLevel: user.experienceLevel || "Fresher",
       field: user.field || "Software Engineering",
       emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
       designation: user.designation || "",
       companyName: user.companyName || "",
       companyWebsite: user.companyWebsite || "",
+      companyLogo: user.companyLogo || "",
+      companyIndustry: user.companyIndustry || "",
+      companySize: user.companySize || "",
+      companyHeadquarters: user.companyHeadquarters || "",
+      companySocials: user.companySocials || { linkedin: "", twitter: "", github: "" },
+      timeZone: user.timeZone || "Asia/Kolkata",
+      schedulingLink: user.schedulingLink || "",
+      emailSignature: user.emailSignature || "",
+      contactVisibility: user.contactVisibility ?? false,
+      isVerified: user.isVerified ?? false,
       resume: user.resume || "",
       profileImage: user.profileImage || "",
       savedJobs: user.savedJobs || [],
       applicationsCount,
       savedJobsCount: user.savedJobs?.length || 0,
+    },
+  });
+});
+
+const completeRecruiterOnboarding = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+  if (user.role !== "recruiter") return res.status(403).json({ message: "Recruiter account required" });
+
+  const timeZone = String(req.body.timeZone || "").trim();
+  if (timeZone) {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone }).format();
+      user.timeZone = timeZone;
+    } catch {
+      // Ignore an unavailable browser time zone and retain the account default.
+    }
+  }
+
+  if (req.body.skip === "true" || req.body.skip === true) {
+    user.recruiterOnboardingPromptDismissed = true;
+    await user.save();
+    return res.status(200).json({
+      message: "Onboarding reminder saved",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        companyName: user.companyName || "",
+        companyWebsite: user.companyWebsite || "",
+        companyLogo: user.companyLogo || "",
+        designation: user.designation || "",
+        timeZone: user.timeZone || "Asia/Kolkata",
+        isOnboarded: user.isOnboarded ?? false,
+        recruiterOnboardingPromptDismissed: true,
+      },
+    });
+  }
+
+  const companyName = String(req.body.companyName || "").trim();
+  const designation = String(req.body.designation || "").trim();
+  if (!companyName) return res.status(400).json({ message: "Company name is required" });
+  if (!designation) return res.status(400).json({ message: "Recruiter designation is required" });
+
+  let companyWebsite;
+  try {
+    companyWebsite = cleanProfileUrl(req.body.companyWebsite);
+  } catch {
+    return res.status(400).json({ message: "Enter a valid company website URL" });
+  }
+  if (!companyWebsite) return res.status(400).json({ message: "Company website is required" });
+
+  user.companyName = companyName;
+  user.companyWebsite = companyWebsite;
+  user.designation = designation;
+  if (req.files?.companyLogo?.[0]) user.companyLogo = req.files.companyLogo[0].path;
+  user.isOnboarded = true;
+  user.recruiterOnboardingPromptDismissed = true;
+  await user.save();
+
+  return res.status(200).json({
+    message: "Recruiter onboarding complete",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      companyName: user.companyName,
+      companyWebsite: user.companyWebsite,
+      companyLogo: user.companyLogo || "",
+      designation: user.designation,
+      timeZone: user.timeZone || "Asia/Kolkata",
+      isOnboarded: true,
+      recruiterOnboardingPromptDismissed: true,
     },
   });
 });
@@ -612,4 +787,5 @@ module.exports = {
   clearSkills,
   getSignedResumeUrl,
   completeOnboarding,
+  completeRecruiterOnboarding,
 };
