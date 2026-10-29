@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { flushSync } from "react-dom";
 import axios from "axios";
 import CustomSelect from "../../Components/CustomSelect";
+import ExperienceSelect from "../../Components/ExperienceSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
 import { getCountryCurrency, getSalaryOptions } from "../../utils/countryCurrency";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI, getEnglishJobDescriptionAPI } from "../../Services/jobService";
@@ -1381,10 +1382,21 @@ function CandidateDashboard() {
 
     // 3. Experience Level Filter
     if (experienceFilter && experienceFilter !== "All Experience") {
-      const jobExperience = job.experienceRequired?.toLowerCase();
-      const isFresherMatch =
-        experienceFilter.toLowerCase() === "0-2 years" && jobExperience === "fresher";
-      if (jobExperience && jobExperience !== experienceFilter.toLowerCase() && !isFresherMatch) {
+      const jobExperience = (job.experienceRequired || "").toLowerCase();
+      const expLower = experienceFilter.toLowerCase();
+      let matchesExp;
+      if (expLower.includes("0-1") || expLower.includes("0–1") || expLower === "0-2 years") {
+        matchesExp = jobExperience.includes("0-1") || jobExperience.includes("0–1") || jobExperience.includes("0-2") || jobExperience.includes("fresher") || jobExperience.includes("entry");
+      } else if (expLower.includes("1-3") || expLower.includes("1–3")) {
+        matchesExp = jobExperience.includes("1-3") || jobExperience.includes("1–3") || jobExperience.includes("0-2") || jobExperience.includes("2-5");
+      } else if (expLower.includes("3-5") || expLower.includes("3–5") || expLower === "2-5 years") {
+        matchesExp = jobExperience.includes("3-5") || jobExperience.includes("3–5") || jobExperience.includes("2-5") || jobExperience.includes("1-3");
+      } else if (expLower.includes("5+")) {
+        matchesExp = jobExperience.includes("5+") || jobExperience.includes("senior") || jobExperience.includes("lead");
+      } else {
+        matchesExp = jobExperience === expLower;
+      }
+      if (jobExperience && !matchesExp) {
         return false;
       }
     }
@@ -1748,16 +1760,9 @@ function CandidateDashboard() {
               <div className="hidden md:block w-px h-7 bg-slate-200 my-auto shrink-0" />
               <div className="hidden md:flex flex-1 items-center px-3 py-2 gap-2.5 min-w-0">
                 <CalendarClock className="text-slate-400 shrink-0" size={18} aria-hidden="true" />
-                <CustomSelect
+                <ExperienceSelect
                   borderless
-                  mutedValue
                   aria-label="Filter by experience"
-                  options={[
-                    { value: "", label: "All Experience" },
-                    { value: "0-2 Years", label: "0-2 Years" },
-                    { value: "2-5 Years", label: "2-5 Years" },
-                    { value: "5+ Years", label: "5+ Years" }
-                  ]}
                   value={experienceFilter}
                   onChange={(e) => setExperienceFilter(e.target.value)}
                   placeholder="All Experience"
@@ -2077,13 +2082,9 @@ function CandidateDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">Experience</label>
-                    <CustomSelect
-                      options={[
-                        { value: "", label: "All Experience" },
-                        { value: "0-2 Years", label: "0-2 Years" },
-                        { value: "2-5 Years", label: "2-5 Years" },
-                        { value: "5+ Years", label: "5+ Years" }
-                      ]}
+                    <ExperienceSelect
+                      compact
+                      aria-label="Filter by experience"
                       value={experienceFilter}
                       onChange={(e) => setExperienceFilter(e.target.value)}
                       placeholder="All Experience"

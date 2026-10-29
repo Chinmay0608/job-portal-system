@@ -295,8 +295,15 @@ const getAllJobs = asyncHandler(async (req, res) => {
   }
 
   if (experience && experience !== "All Experience" && experience !== "All") {
-    if (experience === "Fresher" || experience === "0-2 Years") {
-      query.experienceRequired = { $in: ["Fresher", "0-2 Years", "Entry Level"] };
+    const expLower = experience.toLowerCase();
+    if (expLower.includes("0-1") || expLower.includes("0–1") || expLower === "fresher" || expLower === "0-2 years") {
+      query.experienceRequired = { $in: ["Fresher", "0-1 years", "0–1 years", "0-2 Years", "Entry Level", "Entry-level / Fresher"] };
+    } else if (expLower.includes("1-3") || expLower.includes("1–3")) {
+      query.experienceRequired = { $in: ["1-3 years", "1–3 years", "0-2 Years", "2-5 Years"] };
+    } else if (expLower.includes("3-5") || expLower.includes("3–5") || expLower === "2-5 years") {
+      query.experienceRequired = { $in: ["3-5 years", "3–5 years", "2-5 Years", "1-3 years"] };
+    } else if (expLower.includes("5+") || expLower.includes("senior") || expLower.includes("lead")) {
+      query.experienceRequired = { $in: ["5+ Years", "5+ years", "Senior", "Lead"] };
     } else {
       query.experienceRequired = experience;
     }
