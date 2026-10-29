@@ -721,8 +721,8 @@ input[type="submit"]:active:not(:disabled),
 
 .candidate-menu-unread-dot {
   position: absolute;
-  top: -1px;
-  right: 2px;
+  top: -2px;
+  right: -4px;
   width: 9px;
   height: 9px;
   background: #ef4444;
