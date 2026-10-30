@@ -11,8 +11,8 @@ async function sendKrishJobAlert() {
   }
   await mongoose.connect(uri);
 
-  const User = mongoose.model("User", new mongoose.Schema({}, { strict: false }));
-  const Job = mongoose.model("Job", new mongoose.Schema({}, { strict: false }));
+  const User = mongoose.models.User || mongoose.model("User", new mongoose.Schema({}, { strict: false }));
+  const Job = mongoose.models.Job || mongoose.model("Job", new mongoose.Schema({}, { strict: false }));
 
   const recipientEmail = "krishvijay1505@gmail.com";
   const user = await User.findOne({ email: recipientEmail });
