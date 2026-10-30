@@ -22,7 +22,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
 
       const logoCell = logoUrl
         ? `<img src="${logoUrl}" alt="${job.company}" width="48" height="48" style="width: 48px; height: 48px; object-fit: contain; border-radius: 6px; border: 1px solid #e0dfdc; display: block; background-color: #ffffff;" />`
-        : `<table width="48" height="48" cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 6px; background-color: #f3f2ef; border: 1px solid #e0dfdc; text-align: center;"><tr><td align="center" style="font-size: 18px; font-weight: 700; color: #0a66c2;">${(job.company || "S").slice(0, 1).toUpperCase()}</td></tr></table>`;
+        : `<table width="48" height="48" cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 6px; background-color: #f1f5f9; border: 1px solid #e2e8f0; text-align: center;"><tr><td align="center" style="font-size: 18px; font-weight: 700; color: #2563eb;">${(job.company || "S").slice(0, 1).toUpperCase()}</td></tr></table>`;
 
       return `
         <tr>
@@ -37,7 +37,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                 </td>
                 <!-- Job Details Column -->
                 <td style="vertical-align: top;">
-                  <a href="${jobUrl}" style="font-size: 15px; font-weight: 600; color: #0a66c2; text-decoration: none; display: block; line-height: 1.35; margin-bottom: 3px;">
+                  <a href="${jobUrl}" style="font-size: 15px; font-weight: 600; color: #2563eb; text-decoration: none; display: block; line-height: 1.35; margin-bottom: 3px;">
                     ${job.title}
                   </a>
                   <div style="font-size: 13px; color: rgba(0,0,0,0.6); margin-bottom: 4px; line-height: 1.4;">
@@ -48,7 +48,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                     <tr>
                       <td style="vertical-align: middle;">
                         <!-- Easy Apply Badge -->
-                        <span style="font-size: 12px; font-weight: 600; color: #0a66c2; display: inline-flex; align-items: center;">
+                        <span style="font-size: 12px; font-weight: 600; color: #2563eb; display: inline-flex; align-items: center;">
                           ⚡ Easy Apply
                         </span>
                       </td>
@@ -90,8 +90,8 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                 <tr>
                   <td align="left" style="vertical-align: middle;">
                     <a href="${frontendUrl}" style="text-decoration: none;">
-                      <span style="font-size: 21px; font-weight: 800; color: #0a66c2; letter-spacing: -0.5px; font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        Skill<span style="background-color: #0a66c2; color: #ffffff; padding: 2px 5px; border-radius: 4px; margin-left: 2px; font-size: 18px;">Bridge</span>
+                      <span style="font-size: 22px; font-weight: 900; letter-spacing: -0.8px; font-family: 'Trebuchet MS', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        <span style="color: #0f172a;">Skill</span><span style="color: #2563eb;">Bridge</span>
                       </span>
                     </a>
                   </td>
@@ -139,12 +139,12 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; background-color: #0a66c2; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 9px 22px; border-radius: 9999px; text-align: center;">
+                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 9px 22px; border-radius: 9999px; text-align: center;">
                       See all jobs
                     </a>
                   </td>
                   <td style="padding-left: 18px;">
-                    <a href="${frontendUrl}/candidate-profile" style="color: #0a66c2; font-size: 14px; font-weight: 600; text-decoration: none;">
+                    <a href="${frontendUrl}/candidate-profile" style="color: #2563eb; font-size: 14px; font-weight: 600; text-decoration: none;">
                       Manage alerts
                     </a>
                   </td>
@@ -188,7 +188,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                     <div style="font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.9); margin-bottom: 10px;">
                       Stay updated at a glance
                     </div>
-                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; border: 1px solid #0a66c2; border-radius: 9999px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: #0a66c2; text-decoration: none;">
+                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; border: 1px solid #2563eb; border-radius: 9999px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
                       Explore Jobs
                     </a>
                   </td>
@@ -204,18 +204,20 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                 This email was intended for <strong style="color: rgba(0,0,0,0.9);">${userName || "Candidate"}</strong> (${targetField}).
               </p>
               <p style="margin: 0 0 10px 0;">
-                <a href="${frontendUrl}/help" style="color: #0a66c2; text-decoration: none;">Learn why we included this.</a>
+                <a href="${frontendUrl}/help" style="color: #2563eb; text-decoration: none;">Learn why we included this.</a>
               </p>
               <p style="margin: 0 0 14px 0;">
                 You are receiving Job Alert emails from SkillBridge.
               </p>
               <p style="margin: 0 0 18px 0;">
-                <a href="${frontendUrl}/candidate-profile" style="color: #0a66c2; text-decoration: none;">Manage job alerts</a> &nbsp;&bull;&nbsp; 
-                <a href="${frontendUrl}/candidate-profile" style="color: #0a66c2; text-decoration: none;">Unsubscribe</a> &nbsp;&bull;&nbsp; 
-                <a href="${frontendUrl}/help" style="color: #0a66c2; text-decoration: none;">Help</a>
+                <a href="${frontendUrl}/candidate-profile" style="color: #2563eb; text-decoration: none;">Manage job alerts</a> &nbsp;&bull;&nbsp; 
+                <a href="${frontendUrl}/candidate-profile" style="color: #2563eb; text-decoration: none;">Unsubscribe</a> &nbsp;&bull;&nbsp; 
+                <a href="${frontendUrl}/help" style="color: #2563eb; text-decoration: none;">Help</a>
               </p>
               <div style="margin-bottom: 6px;">
-                <span style="font-size: 16px; font-weight: 800; color: #0a66c2;">Skill<span style="background-color: #0a66c2; color: #ffffff; padding: 1px 4px; border-radius: 3px; margin-left: 2px; font-size: 14px;">Bridge</span></span>
+                <span style="font-size: 17px; font-weight: 900; letter-spacing: -0.5px; font-family: 'Trebuchet MS', -apple-system, sans-serif;">
+                  <span style="color: #0f172a;">Skill</span><span style="color: #2563eb;">Bridge</span>
+                </span>
               </div>
               <div style="font-size: 11px; color: rgba(0,0,0,0.5);">
                 &copy; 2026 SkillBridge Corporation, All rights reserved.
