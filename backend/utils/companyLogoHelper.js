@@ -123,7 +123,13 @@ const VERIFIED_ENTERPRISE_MAP = {
   "jio": "https://unavatar.io/jio.com",
   "paytm": "https://unavatar.io/paytm.com",
   "servicenow": "https://unavatar.io/servicenow.com",
-  "airtel": "https://unavatar.io/airtel.in"
+  "airtel": "https://unavatar.io/airtel.in",
+  "yellow.ai": "https://unavatar.io/yellow.ai",
+  "yellow ai": "https://unavatar.io/yellow.ai",
+  "inito": "https://unavatar.io/inito.com",
+  "gocomet": "https://unavatar.io/gocomet.com",
+  "snapdeal": "https://unavatar.io/snapdeal.com",
+  "nxtpe": "https://unavatar.io/nxtpe.com"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
