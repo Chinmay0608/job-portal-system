@@ -27,10 +27,12 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-/** Extract the first MongoDB ObjectId-shaped segment from a URL path */
+/** Extract the first MongoDB ObjectId-shaped segment from a URL path or query string */
 function extractObjectIdFromUrl(url) {
   if (!url) return null;
-  const match = url.match(/\/([a-f\d]{24})(?:\/|$|\?)/i);
+  const queryMatch = url.match(/[?&](?:jobId|id)=([a-f\d]{24})(?:&|$)/i);
+  if (queryMatch) return queryMatch[1];
+  const match = url.match(/(?:\/|^)([a-f\d]{24})(?:\/|$|\?|#)/i);
   return match ? match[1] : null;
 }
 
@@ -147,17 +149,18 @@ async function lookup_profile(ticket) {
 
 /**
  * lookup_job
- * Check whether a job mentioned in the ticket's pageUrl is still active.
- * Accepts only server-side URLs — never trusts client-supplied IDs.
+ * Check whether a job mentioned in the ticket's pageUrl or reportedJobId is still active.
  */
 async function lookup_job(ticket) {
-  const rawId = extractObjectIdFromUrl(ticket.pageUrl || "");
+  const rawId = (ticket.reportedJobId && isValidObjectId(ticket.reportedJobId))
+    ? String(ticket.reportedJobId)
+    : extractObjectIdFromUrl(ticket.pageUrl || "");
 
   if (!rawId || !isValidObjectId(rawId)) {
     return {
       resolved: false,
       message:
-        "Could not identify a specific job from the page URL you reported. " +
+        "Could not identify a specific job from the page URL or report details. " +
         "If you are looking for a particular posting, please search for it by title on the Jobs page.",
     };
   }
@@ -170,7 +173,7 @@ async function lookup_job(ticket) {
     return {
       resolved: true,
       message:
-        "The job listing referenced in your report (parsed from the page URL) no longer exists. " +
+        "The job listing referenced in your report no longer exists. " +
         "It may have been filled, expired, or removed by the recruiter. " +
         "We recommend searching for similar roles on the Jobs page.",
     };
@@ -180,9 +183,19 @@ async function lookup_job(ticket) {
     return {
       resolved: true,
       message:
-        `The job "${job.title}" at ${job.company} has been marked as inactive. ` +
-        "This typically means the position has been filled or the recruiter has paused the listing. " +
+        `The job "${job.title}" at ${job.company} has been verified and marked as inactive. ` +
+        "This typically means the position has been filled, closed, or expired on the employer's portal. " +
         "Please check the Jobs page for similar openings.",
+    };
+  }
+
+  // If candidate specifically reported that the job is already closed / expired
+  if (ticket.reportType === "job_concern" && /closed|expired/i.test(ticket.concernReason || "")) {
+    return {
+      resolved: false,
+      message:
+        `Thank you for reporting that the job "${job.title}" at ${job.company} is closed or expired. ` +
+        "Our moderation team has received the alert and is reviewing the external application portal to deactivate the listing.",
     };
   }
 
