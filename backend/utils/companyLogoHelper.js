@@ -41,6 +41,8 @@ const VERIFIED_ENTERPRISE_MAP = {
   "hcl technologies": "https://unavatar.io/hcltech.com",
   "tech mahindra": "https://unavatar.io/techmahindra.com",
   "persistent systems": "https://unavatar.io/persistent.com",
+  "firstsource": "https://unavatar.io/firstsource.com",
+  "firstsource solutions": "https://unavatar.io/firstsource.com",
   "barclays": "https://unavatar.io/barclays.com",
   "hsbc": "https://unavatar.io/hsbc.com",
   "jpmorgan": "https://unavatar.io/jpmorganchase.com",
