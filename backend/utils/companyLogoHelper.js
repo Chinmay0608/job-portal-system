@@ -129,7 +129,15 @@ const VERIFIED_ENTERPRISE_MAP = {
   "inito": "https://unavatar.io/inito.com",
   "gocomet": "https://unavatar.io/gocomet.com",
   "snapdeal": "https://unavatar.io/snapdeal.com",
-  "nxtpe": "https://unavatar.io/nxtpe.com"
+  "nxtpe": "https://unavatar.io/nxtpe.com",
+  "hackerrank": "https://unavatar.io/hackerrank.com",
+  "hook": "https://unavatar.io/hookmusic.com",
+  "hook music": "https://unavatar.io/hookmusic.com",
+  "aftershoot": "https://unavatar.io/aftershoot.com",
+  "nudge": "https://unavatar.io/nudgenow.com",
+  "provana": "https://unavatar.io/provana.com",
+  "vaidam": "https://unavatar.io/vaidam.com",
+  "vaidam health": "https://unavatar.io/vaidam.com"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
