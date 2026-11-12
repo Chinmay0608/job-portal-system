@@ -137,7 +137,14 @@ const VERIFIED_ENTERPRISE_MAP = {
   "nudge": "https://unavatar.io/nudgenow.com",
   "provana": "https://unavatar.io/provana.com",
   "vaidam": "https://unavatar.io/vaidam.com",
-  "vaidam health": "https://unavatar.io/vaidam.com"
+  "vaidam health": "https://unavatar.io/vaidam.com",
+  "the economic times": "https://unavatar.io/economictimes.indiatimes.com",
+  "economic times": "https://unavatar.io/economictimes.indiatimes.com",
+  "simviz labs": "https://unavatar.io/simvizlabs.com",
+  "simviz": "https://unavatar.io/simvizlabs.com",
+  "rinnovar": "https://unavatar.io/rinnovar.com",
+  "tndrr": "https://unavatar.io/tndrr.in",
+  "green portfolio": "https://unavatar.io/greenportfolio.co"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
