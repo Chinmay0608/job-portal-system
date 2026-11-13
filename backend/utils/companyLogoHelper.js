@@ -144,7 +144,17 @@ const VERIFIED_ENTERPRISE_MAP = {
   "simviz": "https://unavatar.io/simvizlabs.com",
   "rinnovar": "https://unavatar.io/rinnovar.com",
   "tndrr": "https://unavatar.io/tndrr.in",
-  "green portfolio": "https://unavatar.io/greenportfolio.co"
+  "green portfolio": "https://unavatar.io/greenportfolio.co",
+  "voyado": "https://unavatar.io/voyado.com",
+  "algouniversity": "https://unavatar.io/github/algouniversity",
+  "smallest.ai": "https://unavatar.io/smallest.ai",
+  "es magico": "https://unavatar.io/esmagico.com",
+  "krystelis": "https://unavatar.io/krystelis.com",
+  "krystelis ltd": "https://unavatar.io/krystelis.com",
+  "scaler": "https://unavatar.io/scaler.com",
+  "scaler academy": "https://unavatar.io/scaler.com",
+  "magic": "https://unavatar.io/magicedtech.com",
+  "magic edtech": "https://unavatar.io/magicedtech.com"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
