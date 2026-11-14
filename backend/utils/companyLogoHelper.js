@@ -154,7 +154,20 @@ const VERIFIED_ENTERPRISE_MAP = {
   "scaler": "https://unavatar.io/scaler.com",
   "scaler academy": "https://unavatar.io/scaler.com",
   "magic": "https://unavatar.io/magicedtech.com",
-  "magic edtech": "https://unavatar.io/magicedtech.com"
+  "magic edtech": "https://unavatar.io/magicedtech.com",
+  "bodhan ai": "https://unavatar.io/bodhan.ai",
+  "bodhan.ai": "https://unavatar.io/bodhan.ai",
+  "plutas.ai": "https://unavatar.io/plutas.ai",
+  "plutas ai": "https://unavatar.io/plutas.ai",
+  "aye finance": "https://unavatar.io/ayefin.com",
+  "aye": "https://unavatar.io/ayefin.com",
+  "pluang": "https://unavatar.io/pluang.com",
+  "kelp": "https://unavatar.io/kelp.app",
+  "kotak": "https://unavatar.io/kotak.com",
+  "kotak mahindra": "https://unavatar.io/kotak.com",
+  "kotak mahindra bank": "https://unavatar.io/kotak.com",
+  "cox & kings": "https://unavatar.io/coxandkings.com",
+  "cox and kings": "https://unavatar.io/coxandkings.com"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
