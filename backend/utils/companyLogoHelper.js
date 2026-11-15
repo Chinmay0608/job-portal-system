@@ -169,7 +169,10 @@ const VERIFIED_ENTERPRISE_MAP = {
   "cox & kings": "https://unavatar.io/coxandkings.com",
   "cox and kings": "https://unavatar.io/coxandkings.com",
   "kailasa capital": "https://unavatar.io/kailasacapital.in",
-  "kailasa capital advisors": "https://unavatar.io/kailasacapital.in"
+  "kailasa capital advisors": "https://unavatar.io/kailasacapital.in",
+  "ethereal exploration guild": "https://unavatar.io/etherealx.space",
+  "ethereal exploration guild private limited": "https://unavatar.io/etherealx.space",
+  "etherealx": "https://unavatar.io/etherealx.space"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
