@@ -172,7 +172,16 @@ const VERIFIED_ENTERPRISE_MAP = {
   "kailasa capital advisors": "https://unavatar.io/kailasacapital.in",
   "ethereal exploration guild": "https://unavatar.io/etherealx.space",
   "ethereal exploration guild private limited": "https://unavatar.io/etherealx.space",
-  "etherealx": "https://unavatar.io/etherealx.space"
+  "etherealx": "https://unavatar.io/etherealx.space",
+  "revrag ai": "https://unavatar.io/revrag.ai",
+  "revrag.ai": "https://unavatar.io/revrag.ai",
+  "revrag": "https://unavatar.io/revrag.ai",
+  "magdox": "https://unavatar.io/magdox.io",
+  "ipnia": "https://unavatar.io/ipnia.com",
+  "vahan": "https://unavatar.io/vahan.co",
+  "vahan.ai": "https://unavatar.io/vahan.ai",
+  "noise": "https://unavatar.io/gonoise.com",
+  "gonoise": "https://unavatar.io/gonoise.com"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
