@@ -167,7 +167,9 @@ const VERIFIED_ENTERPRISE_MAP = {
   "kotak mahindra": "https://unavatar.io/kotak.com",
   "kotak mahindra bank": "https://unavatar.io/kotak.com",
   "cox & kings": "https://unavatar.io/coxandkings.com",
-  "cox and kings": "https://unavatar.io/coxandkings.com"
+  "cox and kings": "https://unavatar.io/coxandkings.com",
+  "kailasa capital": "https://unavatar.io/kailasacapital.in",
+  "kailasa capital advisors": "https://unavatar.io/kailasacapital.in"
 };
 
 function resolveCompanyLogo(company, existingLogo) {
