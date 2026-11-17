@@ -17,12 +17,12 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
     .map((job, index) => {
       const logoUrl = resolveCompanyLogo(job.company, job.companyLogo);
       const isLast = index === jobs.length - 1;
-      const borderStyle = isLast ? "" : "border-bottom: 1px solid #f3f2ef;";
+      const borderStyle = isLast ? "" : "border-bottom: 1px solid #f1ece4;";
       const jobUrl = job.applyUrl || `${frontendUrl}/candidate-dashboard?jobId=${job._id || ""}`;
 
       const logoCell = logoUrl
-        ? `<img src="${logoUrl}" alt="${job.company}" width="48" height="48" style="width: 48px; height: 48px; object-fit: contain; border-radius: 6px; border: 1px solid #e0dfdc; display: block; background-color: #ffffff;" />`
-        : `<table width="48" height="48" cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 6px; background-color: #f1f5f9; border: 1px solid #e2e8f0; text-align: center;"><tr><td align="center" style="font-size: 18px; font-weight: 700; color: #2563eb;">${(job.company || "S").slice(0, 1).toUpperCase()}</td></tr></table>`;
+        ? `<img src="${logoUrl}" alt="${job.company}" width="48" height="48" style="width: 48px; height: 48px; object-fit: contain; border-radius: 8px; border: 1px solid #ebd9c2; display: block; background-color: #ffffff;" />`
+        : `<table width="48" height="48" cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 8px; background-color: #fef3c7; border: 1px solid #fde68a; text-align: center;"><tr><td align="center" style="font-size: 19px; font-weight: 800; color: #92400e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${(job.company || "S").slice(0, 1).toUpperCase()}</td></tr></table>`;
 
       return `
         <tr>
@@ -37,26 +37,26 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                 </td>
                 <!-- Job Details Column -->
                 <td style="vertical-align: top;">
-                  <a href="${jobUrl}" style="font-size: 15px; font-weight: 600; color: #2563eb; text-decoration: none; display: block; line-height: 1.35; margin-bottom: 3px;">
+                  <a href="${jobUrl}" style="font-size: 15px; font-weight: 700; color: #1e40af; text-decoration: none; display: block; line-height: 1.35; margin-bottom: 3px;">
                     ${job.title}
                   </a>
-                  <div style="font-size: 13px; color: rgba(0,0,0,0.6); margin-bottom: 4px; line-height: 1.4;">
+                  <div style="font-size: 13px; color: #6b635b; margin-bottom: 4px; line-height: 1.4;">
                     ${job.company} · ${job.location || "Remote, India"}${job.employmentType ? ` (${job.employmentType})` : ""}
                   </div>
-                  ${job.salary ? `<div style="font-size: 12px; font-weight: 600; color: rgba(0,0,0,0.8); margin-bottom: 5px;">${job.salary}</div>` : ""}
+                  ${job.salary ? `<div style="font-size: 12px; font-weight: 700; color: #292524; margin-bottom: 6px;">${job.salary}</div>` : ""}
                   <table cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td style="vertical-align: middle;">
                         <!-- Easy Apply Badge -->
-                        <span style="font-size: 12px; font-weight: 600; color: #2563eb; display: inline-flex; align-items: center;">
+                        <span style="display: inline-block; background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.2px;">
                           ⚡ Easy Apply
                         </span>
                       </td>
-                      <td style="padding-left: 12px; vertical-align: middle;">
+                      <td style="padding-left: 10px; vertical-align: middle;">
                         ${
                           job.matchPercentage
-                            ? `<span style="font-size: 12px; font-weight: 600; color: #057642;">${job.matchPercentage}% Match</span>`
-                            : `<span style="font-size: 12px; color: rgba(0,0,0,0.6);">🎯 Actively recruiting</span>`
+                            ? `<span style="display: inline-block; background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700;">${job.matchPercentage}% Match</span>`
+                            : `<span style="display: inline-block; background-color: #f5efe6; color: #786c5e; border: 1px solid #e7ded0; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600;">🎯 Actively recruiting</span>`
                         }
                       </td>
                     </tr>
@@ -76,16 +76,16 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkillBridge Job Alert: ${targetField}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f2ef; font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: rgba(0,0,0,0.9);">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f3f2ef; padding: 24px 8px;">
+<body style="margin: 0; padding: 0; background-color: #f8f5ee; font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1c1917;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f5ee; padding: 28px 10px;">
     <tr>
       <td align="center">
         <!-- Main Card Container -->
-        <table width="580" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #ffffff; border-radius: 8px; border: 1px solid #e0dfdc; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <table width="580" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #fffdfa; border-radius: 12px; border: 1px solid #e8dfd1; overflow: hidden; box-shadow: 0 4px 18px rgba(85, 60, 30, 0.06);">
           
-          <!-- Top Nav Row (LinkedIn Style) -->
+          <!-- Top Nav Row (LinkedIn Style with SkillBridge Warm Theme) -->
           <tr>
-            <td style="padding: 16px 24px; border-bottom: 1px solid #f3f2ef;">
+            <td style="padding: 18px 24px; border-bottom: 1px solid #f1ece4; background-color: #fffdfa;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="left" style="vertical-align: middle;">
@@ -99,13 +99,13 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                     <table cellpadding="0" cellspacing="0" border="0" align="right">
                       <tr>
                         <td style="padding: 0 8px;">
-                          <a href="${frontendUrl}/candidate-dashboard" style="color: #666666; text-decoration: none; font-size: 17px;" title="Messages">💬</a>
+                          <a href="${frontendUrl}/candidate-dashboard" style="color: #78716c; text-decoration: none; font-size: 17px;" title="Messages">💬</a>
                         </td>
                         <td style="padding: 0 8px;">
-                          <a href="${frontendUrl}/candidate-dashboard" style="color: #666666; text-decoration: none; font-size: 17px;" title="Network">👥</a>
+                          <a href="${frontendUrl}/candidate-dashboard" style="color: #78716c; text-decoration: none; font-size: 17px;" title="Network">👥</a>
                         </td>
                         <td style="padding: 0 0 0 8px;">
-                          <a href="${frontendUrl}/candidate-dashboard" style="color: #666666; text-decoration: none; font-size: 17px;" title="Notifications">🔔</a>
+                          <a href="${frontendUrl}/candidate-dashboard" style="color: #78716c; text-decoration: none; font-size: 17px;" title="Notifications">🔔</a>
                         </td>
                       </tr>
                     </table>
@@ -118,8 +118,8 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
           <!-- Heading Section -->
           <tr>
             <td style="padding: 24px 24px 10px 24px;">
-              <h1 style="margin: 0; font-size: 21px; font-weight: 700; color: rgba(0,0,0,0.9); line-height: 1.3;">
-                Your job alert for <span style="color: #191919;">${targetField}</span>
+              <h1 style="margin: 0; font-size: 21px; font-weight: 700; color: #1c1917; line-height: 1.3;">
+                Your job alert for <span style="color: #0f172a;">${targetField}</span>
               </h1>
             </td>
           </tr>
@@ -139,7 +139,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 9px 22px; border-radius: 9999px; text-align: center;">
+                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 10px 24px; border-radius: 9999px; text-align: center; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.22);">
                       See all jobs
                     </a>
                   </td>
@@ -155,40 +155,40 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
 
           <!-- Divider -->
           <tr>
-            <td style="border-top: 1px solid #e0dfdc;"></td>
+            <td style="border-top: 1px solid #ebd9c2;"></td>
           </tr>
 
           <!-- Career Smarter Spotlight Section -->
           <tr>
-            <td style="padding: 24px 24px 20px 24px; text-align: center;">
-              <div style="font-size: 11px; font-weight: 700; color: #b24020; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;">
+            <td style="padding: 24px 24px 20px 24px; text-align: center; background-color: #fffaf2;">
+              <div style="font-size: 11px; font-weight: 800; color: #b45309; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;">
                 ⭐ SKILLBRIDGE PREMIUM
               </div>
-              <div style="font-size: 17px; font-weight: 700; color: rgba(0,0,0,0.9); margin-bottom: 6px;">
+              <div style="font-size: 17px; font-weight: 700; color: #1c1917; margin-bottom: 6px;">
                 Job search smarter with Premium
               </div>
-              <div style="font-size: 13px; color: rgba(0,0,0,0.6); margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto; line-height: 1.4;">
+              <div style="font-size: 13px; color: #6b635b; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto; line-height: 1.45;">
                 Get personalized match analysis, profile visibility boosts, and direct application tracking.
               </div>
-              <a href="${frontendUrl}/candidate-profile" style="display: inline-block; border: 1px solid rgba(0,0,0,0.75); border-radius: 9999px; padding: 7px 22px; font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.75); text-decoration: none;">
+              <a href="${frontendUrl}/candidate-profile" style="display: inline-block; border: 1px solid #d6c7b2; background-color: #ffffff; border-radius: 9999px; padding: 7px 22px; font-size: 13px; font-weight: 600; color: #443a2f; text-decoration: none;">
                 Review Profile
               </a>
             </td>
           </tr>
 
-          <!-- Stay Updated Widget Banner (From Screenshot 2) -->
+          <!-- Stay Updated Widget Banner -->
           <tr>
-            <td style="padding: 0 24px 24px 24px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border: 1px solid #e0dfdc; border-radius: 8px; background-color: #fafaf9;">
+            <td style="padding: 0 24px 24px 24px; background-color: #fffaf2;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border: 1px solid #ebd9c2; border-radius: 10px; background-color: #fbf5eb;">
                 <tr>
                   <td style="padding: 16px 20px;">
-                    <div style="font-size: 11px; font-weight: 600; color: rgba(0,0,0,0.6); text-transform: uppercase; margin-bottom: 4px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
                       Curated Opportunities
                     </div>
-                    <div style="font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.9); margin-bottom: 10px;">
+                    <div style="font-size: 15px; font-weight: 700; color: #1c1917; margin-bottom: 10px;">
                       Stay updated at a glance
                     </div>
-                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; border: 1px solid #2563eb; border-radius: 9999px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                    <a href="${frontendUrl}/candidate-dashboard" style="display: inline-block; border: 1px solid #2563eb; background-color: #ffffff; border-radius: 9999px; padding: 6px 18px; font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
                       Explore Jobs
                     </a>
                   </td>
@@ -197,11 +197,11 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
             </td>
           </tr>
 
-          <!-- Footer (From Screenshot 2) -->
+          <!-- Footer -->
           <tr>
-            <td style="background-color: #ffffff; border-top: 1px solid #e0dfdc; padding: 24px 24px 20px 24px; font-size: 12px; color: rgba(0,0,0,0.6); line-height: 1.5;">
+            <td style="background-color: #f7f3ec; border-top: 1px solid #ebd9c2; padding: 24px 24px 20px 24px; font-size: 12px; color: #78716c; line-height: 1.5;">
               <p style="margin: 0 0 6px 0;">
-                This email was intended for <strong style="color: rgba(0,0,0,0.9);">${userName || "Candidate"}</strong> (${targetField}).
+                This email was intended for <strong style="color: #292524;">${userName || "Candidate"}</strong> (${targetField}).
               </p>
               <p style="margin: 0 0 10px 0;">
                 <a href="${frontendUrl}/help" style="color: #2563eb; text-decoration: none;">Learn why we included this.</a>
@@ -219,7 +219,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                   <span style="color: #0f172a;">Skill</span><span style="color: #2563eb;">Bridge</span>
                 </span>
               </div>
-              <div style="font-size: 11px; color: rgba(0,0,0,0.5);">
+              <div style="font-size: 11px; color: #a8a29e;">
                 &copy; 2026 SkillBridge Corporation, All rights reserved.
               </div>
             </td>
