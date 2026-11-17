@@ -301,8 +301,21 @@ const alignWhoWeAreHeading = (html) => {
   const renderExternalDescription = (text, job) => {
     if (!text) return null;
 
-    const hasHtmlMarkup = /<[a-z][\s\S]*>/i.test(text);
-    const decodedText = hasHtmlMarkup ? text : decodeHTMLEntities(text);
+    let content = text;
+    // Decode escaped HTML tags (e.g. &lt;p&gt;, &lt;div&gt;, &lt;span&gt;) so raw code isn't rendered as plain text
+    if (/&lt;\/?(?:p|div|span|strong|b|em|i|ul|ol|li|h[1-6]|br|a|table|tr|td|th)\b/i.test(content) || /^&lt;[a-z]/i.test(content.trim())) {
+      content = content
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;nbsp;/g, " ")
+        .replace(/&amp;quot;/g, '"')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;amp;/g, "&");
+    }
+
+    const hasHtmlMarkup = /<[a-z][\s\S]*>/i.test(content);
+    const decodedText = hasHtmlMarkup ? content : decodeHTMLEntities(content);
     if (hasHtmlMarkup || /<[a-z][\s\S]*>/i.test(decodedText)) {
       return (
         <div
