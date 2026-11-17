@@ -1,6 +1,7 @@
 const axios = require("axios");
 const BaseProvider = require("./baseProvider");
 const jobAggConfig = require("../../config/jobAggregation");
+const { resolveCompanyLogo } = require("../../utils/companyLogoHelper");
 
 const getExperienceFromDescription = (description) => {
   const text = String(description || "")
@@ -38,7 +39,7 @@ class AdzunaProvider extends BaseProvider {
   async fetchJobs(lastSyncAt) {
     try {
       let allResults = [];
-      // Multi-domain search terms to cover all job fields (Tech, Management, Sales, Marketing, HR, Finance, Design, Data, Operations)
+      // Multi-domain search terms to cover common job fields, including healthcare.
       const searchTerms = [
         "developer",
         "engineer",
@@ -51,7 +52,16 @@ class AdzunaProvider extends BaseProvider {
         "hr",
         "operations",
         "support",
-        "consultant"
+        "consultant",
+        "doctor",
+        "nurse",
+        "physician",
+        "surgeon",
+        "dentist",
+        "pharmacist",
+        "medical assistant",
+        "therapist",
+        "radiologist"
       ];
 
       const fetchPage = async (term, page) => {
@@ -202,10 +212,13 @@ class AdzunaProvider extends BaseProvider {
       }
     });
 
+    const companyName = rawJob.company && rawJob.company.display_name ? rawJob.company.display_name : "Hiring Enterprise";
+
     return {
       title: rawJob.title ? rawJob.title.replace(/<\/?[^>]+(>|$)/g, "") : "Professional Position",
       role: rawJob.category && rawJob.category.label ? rawJob.category.label : "General",
-      company: rawJob.company && rawJob.company.display_name ? rawJob.company.display_name : "Hiring Enterprise",
+      company: companyName,
+      companyLogo: resolveCompanyLogo(companyName),
       location: rawJob.location && rawJob.location.display_name ? rawJob.location.display_name : "India",
       salary: rawJob.salary_min && rawJob.salary_max 
         ? `₹${this.formatINR(rawJob.salary_min)} - ₹${this.formatINR(rawJob.salary_max)}` 

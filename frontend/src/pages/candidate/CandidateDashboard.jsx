@@ -131,15 +131,58 @@ const deriveCompanyDomain = (company) => {
     aiqon: "aiqon.in",
     tekworks: "tekworks.in",
     klimb: "klimb.io",
+    finom: "finom.co",
+    mendix: "mendix.com",
+    coda: "coda.io",
+    figma: "figma.com",
+    kyndryl: "kyndryl.com",
+    reddit: "reddit.com",
+    notion: "notion.so",
+    samsara: "samsara.com",
+    "deutsche bank": "db.com",
+    palantir: "palantir.com",
+    brex: "brex.com",
+    celonis: "celonis.com",
+    "scale ai": "scale.com",
+    affirm: "affirm.com",
+    coinbase: "coinbase.com",
+    pinterest: "pinterest.com",
+    twilio: "twilio.com",
+    ramp: "ramp.com",
+    deliveroo: "deliveroo.com",
+    robinhood: "robinhood.com",
+    asana: "asana.com",
+    perplexity: "perplexity.ai",
+    "perplexity ai": "perplexity.ai",
+    instacart: "instacart.com",
+    vercel: "vercel.com",
+    elevenlabs: "elevenlabs.io",
+    pfizer: "pfizer.com",
+    morningstar: "morningstar.com",
+    doctolib: "doctolib.com",
+    airwallex: "airwallex.com",
+    hellofresh: "hellofresh.com",
   };
 
   if (domainOverrides[lower]) return domainOverrides[lower];
 
-  // 1. Direct domain in company name (e.g. Mistral.ai, Booking.com)
-  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com))\b/i);
+  // 1. Direct domain in company name (e.g. Mistral.ai, Booking.com, Coda.io)
+  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com|co|org|net|de|nl|in|tech|app|space|so|works))\b/i);
   if (domainMatch) return domainMatch[1].toLowerCase();
 
-  // Strict: Never guess arbitrary domains for unknown companies
+  // 2. Normalized dictionary lookup (strip corporate entity legal suffixes)
+  const normalized = lower
+    .replace(/\b(inc\.?|llc\.?|ltd\.?|limited|corp\.?|corporation|technologies|solutions|services|group|gmbh|pvt\.?|private|co\.?|company|holdings|enterprises)\b/gi, "")
+    .replace(/[^\w\s]/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  if (normalized && domainOverrides[normalized]) return domainOverrides[normalized];
+
+  // 3. Fallback to clean slug
+  const cleanSlug = (normalized || lower).replace(/[^a-z0-9]/g, "");
+  if (cleanSlug.length >= 2) return `${cleanSlug}.com`;
+
   return null;
 };
 
@@ -2823,13 +2866,14 @@ function CandidateDashboard() {
                                             : job
                                         )
                                       );
-                                      setIsDescriptionExpanded(true);
+                                      setIsDescriptionExpanded(isFullDescription);
+                                      if (!isFullDescription) {
+                                        toast.error("The full job description isn't available. Check the original posting for details.");
+                                      }
                                     } else {
-                                      setIsDescriptionExpanded(true);
                                       toast.error("Could not load the full job description.");
                                     }
                                   } catch {
-                                    setIsDescriptionExpanded(true);
                                     toast.error("Could not retrieve the full job details. Please try again later.");
                                   } finally {
                                     setIsExpandingDescription(false);
@@ -2841,6 +2885,25 @@ function CandidateDashboard() {
                             >
                               {isExpandingDescription ? "Loading full description..." : isDescriptionExpanded ? "Show less ▲" : "Show more ▼"}
                             </button>
+                          )}
+                          {canExpandDescription && !isDescriptionExpanded && !isExpandingDescription && (
+                            <p className="mt-2 text-xs text-slate-500">
+                              Full description unavailable.
+                              {(selectedJob.descriptionSourceUrl || selectedJob.applyUrl) && (
+                                <>
+                                  {" "}
+                                  <a
+                                    href={selectedJob.descriptionSourceUrl || selectedJob.applyUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+                                  >
+                                    View the original posting
+                                  </a>
+                                  {" "}for details.
+                                </>
+                              )}
+                            </p>
                           )}
                         </>
                       );

@@ -1,6 +1,11 @@
 /**
- * Strict Verified Enterprise Logo Helper
- * Only returns official verified logos. Never guesses arbitrary domains.
+ * Enterprise Company Logo Helper & Auto-Resolution Engine
+ * Resolves verified enterprise logos with multi-tiered resolution:
+ * 1. Verified official map
+ * 2. Embedded domain extraction
+ * 3. Normalized corporate suffix stripping
+ * 4. Fuzzy word matching against verified enterprises
+ * 5. Automatic brand domain derivation via unavatar.io
  */
 
 const VERIFIED_ENTERPRISE_MAP = {
@@ -99,6 +104,7 @@ const VERIFIED_ENTERPRISE_MAP = {
   "keploy": "https://unavatar.io/keploy.io",
   "nasdaq": "https://unavatar.io/nasdaq.com",
   "centraal bureau voor de statistiek": "https://unavatar.io/cbs.nl",
+  "cbs": "https://unavatar.io/cbs.nl",
   "trigent": "https://unavatar.io/trigent.com",
   "trigent software": "https://unavatar.io/trigent.com",
   "trigent software private limited": "https://unavatar.io/trigent.com",
@@ -108,6 +114,7 @@ const VERIFIED_ENTERPRISE_MAP = {
   "swisspeak partners": "https://unavatar.io/swisspeak.com",
   "swisspeak partners gmbh": "https://unavatar.io/swisspeak.com",
   "mistral.ai": "https://unavatar.io/mistral.ai",
+  "mistral": "https://unavatar.io/mistral.ai",
   "canonical": "https://unavatar.io/canonical.com",
   "hp": "https://unavatar.io/hp.com",
   "exl": "https://unavatar.io/exlservice.com",
@@ -117,7 +124,9 @@ const VERIFIED_ENTERPRISE_MAP = {
   "birlasoft": "https://unavatar.io/birlasoft.com",
   "coforge": "https://unavatar.io/coforge.com",
   "bosch group": "https://unavatar.io/bosch.com",
+  "bosch": "https://unavatar.io/bosch.com",
   "hexaware technologies": "https://unavatar.io/hexaware.com",
+  "hexaware": "https://unavatar.io/hexaware.com",
   "target": "https://unavatar.io/target.com",
   "unacademy": "https://unavatar.io/unacademy.com",
   "jio": "https://unavatar.io/jio.com",
@@ -181,27 +190,145 @@ const VERIFIED_ENTERPRISE_MAP = {
   "vahan": "https://unavatar.io/vahan.co",
   "vahan.ai": "https://unavatar.io/vahan.ai",
   "noise": "https://unavatar.io/gonoise.com",
-  "gonoise": "https://unavatar.io/gonoise.com"
+  "gonoise": "https://unavatar.io/gonoise.com",
+
+  // Top Tech & European Enterprises
+  "finom": "https://unavatar.io/finom.co",
+  "finom payments": "https://unavatar.io/finom.co",
+  "mendix": "https://unavatar.io/mendix.com",
+  "mendix technology": "https://unavatar.io/mendix.com",
+  "coda": "https://unavatar.io/coda.io",
+  "coda.io": "https://unavatar.io/coda.io",
+  "codat": "https://unavatar.io/codat.io",
+  "openai": "https://unavatar.io/openai.com",
+  "figma": "https://unavatar.io/figma.com",
+  "kyndryl": "https://unavatar.io/kyndryl.com",
+  "standard chartered": "https://unavatar.io/sc.com",
+  "standard chartered bank": "https://unavatar.io/sc.com",
+  "samsara": "https://unavatar.io/samsara.com",
+  "deutsche bank": "https://unavatar.io/db.com",
+  "palantir": "https://unavatar.io/palantir.com",
+  "palantir technologies": "https://unavatar.io/palantir.com",
+  "brex": "https://unavatar.io/brex.com",
+  "celonis": "https://unavatar.io/celonis.com",
+  "reddit": "https://unavatar.io/reddit.com",
+  "gitlab": "https://unavatar.io/gitlab.com",
+  "scale ai": "https://unavatar.io/scale.com",
+  "affirm": "https://unavatar.io/affirm.com",
+  "coinbase": "https://unavatar.io/coinbase.com",
+  "pinterest": "https://unavatar.io/pinterest.com",
+  "twilio": "https://unavatar.io/twilio.com",
+  "ramp": "https://unavatar.io/ramp.com",
+  "notion": "https://unavatar.io/notion.so",
+  "deliveroo": "https://unavatar.io/deliveroo.com",
+  "robinhood": "https://unavatar.io/robinhood.com",
+  "asana": "https://unavatar.io/asana.com",
+  "perplexity": "https://unavatar.io/perplexity.ai",
+  "perplexity ai": "https://unavatar.io/perplexity.ai",
+  "instacart": "https://unavatar.io/instacart.com",
+  "livspace": "https://unavatar.io/livspace.com",
+  "vercel": "https://unavatar.io/vercel.com",
+  "synthesia": "https://unavatar.io/synthesia.io",
+  "enpal": "https://unavatar.io/enpal.de",
+  "carta": "https://unavatar.io/carta.com",
+  "chime": "https://unavatar.io/chime.com",
+  "invesco": "https://unavatar.io/invesco.com",
+  "hellofresh": "https://unavatar.io/hellofresh.com",
+  "elevenlabs": "https://unavatar.io/elevenlabs.io",
+  "pfizer": "https://unavatar.io/pfizer.com",
+  "morningstar": "https://unavatar.io/morningstar.com",
+  "doctolib": "https://unavatar.io/doctolib.com",
+  "airwallex": "https://unavatar.io/airwallex.com",
+  "ebay": "https://unavatar.io/ebay.com",
+  "qonto": "https://unavatar.io/qonto.com",
+  "nebius": "https://unavatar.io/nebius.com",
+  "h&m": "https://unavatar.io/hm.com",
+  "lendable": "https://unavatar.io/lendable.com",
+  "thermo fisher": "https://unavatar.io/thermofisher.com",
+  "thermo fisher scientific": "https://unavatar.io/thermofisher.com",
+  "reckitt": "https://unavatar.io/reckitt.com",
+  "gusto": "https://unavatar.io/gusto.com",
+  "bank of america": "https://unavatar.io/bankofamerica.com",
+  "jabil": "https://unavatar.io/jabil.com",
+  "warner bros": "https://unavatar.io/wbd.com",
+  "warner bros. discovery": "https://unavatar.io/wbd.com",
+  "bjak": "https://unavatar.io/bjak.com",
+  "moody's": "https://unavatar.io/moodys.com",
+  "elsevier": "https://unavatar.io/elsevier.com",
+  "novartis": "https://unavatar.io/novartis.com",
+  "danaher": "https://unavatar.io/danaher.com",
+  "teampicnic": "https://unavatar.io/picnic.app",
+  "picnic": "https://unavatar.io/picnic.app",
+  "pennylane": "https://unavatar.io/pennylane.com",
+  "cornerstone ondemand": "https://unavatar.io/cornerstoneondemand.com",
+  "eclerx": "https://unavatar.io/eclerx.com",
+  "the exploration company": "https://unavatar.io/exploration.space",
+  "arup": "https://unavatar.io/arup.com",
+  "weekday ai": "https://unavatar.io/weekday.works",
+  "te connectivity": "https://unavatar.io/te.com",
+  "capco": "https://unavatar.io/capco.com",
+  "taxtalente": "https://unavatar.io/taxtalente.de",
+  "graphcore": "https://unavatar.io/graphcore.ai",
 };
 
+/**
+ * Resolves a reliable logo image URL for any employer or company name.
+ * Never leaves a company without an official brand logo or icon.
+ */
 function resolveCompanyLogo(company, existingLogo) {
-  if (existingLogo && typeof existingLogo === "string" && existingLogo.trim().length > 0 && !existingLogo.includes("ui-avatars.com")) {
-    return existingLogo;
+  // If an existing logo URL is provided and valid, return it
+  if (
+    existingLogo &&
+    typeof existingLogo === "string" &&
+    existingLogo.trim().length > 0 &&
+    !existingLogo.includes("ui-avatars.com")
+  ) {
+    return existingLogo.trim();
   }
+
   if (!company || typeof company !== "string") return "";
-  const lower = company.trim().toLowerCase();
-  
-  // 1. Strict exact match against verified map
+  const raw = company.trim();
+  const lower = raw.toLowerCase();
+
+  // 1. Exact match in verified enterprise map
   if (VERIFIED_ENTERPRISE_MAP[lower]) {
     return VERIFIED_ENTERPRISE_MAP[lower];
   }
 
-  // 2. If the company name literally contains a domain (e.g. Mistral.ai)
-  if (lower.endsWith(".ai") || lower.endsWith(".io") || lower.endsWith(".com")) {
-    return `https://unavatar.io/${lower}`;
+  // 2. Embedded domain detection (e.g. "Mistral.ai", "Coda.io", "Booking.com", "Taxtalente.de")
+  const domainMatch = raw.match(/\b([a-zA-Z0-9-]+\.(?:ai|io|com|co|org|net|de|nl|in|tech|app|space|so|works))\b/i);
+  if (domainMatch) {
+    return `https://unavatar.io/${domainMatch[1].toLowerCase()}`;
   }
 
-  // Never guess arbitrary domains
+  // 3. Normalized dictionary lookup (strip corporate entity legal suffixes)
+  const normalized = lower
+    .replace(/\b(inc\.?|llc\.?|ltd\.?|limited|corp\.?|corporation|technologies|solutions|services|group|gmbh|pvt\.?|private|co\.?|company|holdings|enterprises)\b/gi, "")
+    .replace(/[^\w\s]/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  if (normalized && VERIFIED_ENTERPRISE_MAP[normalized]) {
+    return VERIFIED_ENTERPRISE_MAP[normalized];
+  }
+
+  // 4. Fuzzy word match against known verified enterprise keys (min length 4)
+  for (const [key, verifiedUrl] of Object.entries(VERIFIED_ENTERPRISE_MAP)) {
+    if (key.length >= 4) {
+      const regex = new RegExp(`\\b${key}\\b`, "i");
+      if (regex.test(lower) || (normalized && regex.test(normalized))) {
+        return verifiedUrl;
+      }
+    }
+  }
+
+  // 5. Intelligent Automated Brand Slug Derivation:
+  // For any other company in the world, derive clean brand domain on unavatar.io
+  const cleanSlug = (normalized || lower).replace(/[^a-z0-9]/g, "");
+  if (cleanSlug.length >= 2) {
+    return `https://unavatar.io/${cleanSlug}.com`;
+  }
+
   return "";
 }
 
