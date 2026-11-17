@@ -10,8 +10,17 @@ const MAX_JOBS_PER_EMAIL = 5;
 /**
  * Builds a modern, responsive LinkedIn-style Job Alert HTML email
  */
-const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Software Engineer") => {
+const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Software Engineer", candidateSkills = []) => {
   const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || "https://skillbridge.careers";
+
+  const candidateFirstName = userName ? userName.trim().split(" ")[0] : "there";
+  const skillsList = Array.isArray(candidateSkills) && candidateSkills.length > 0
+    ? candidateSkills.slice(0, 3).map((s) => String(s).trim()).filter(Boolean).join(", ")
+    : "";
+
+  const matchingCalloutHtml = skillsList
+    ? `Your background in <strong style="color: #1c1917;">${skillsList}</strong> aligns closely with these open roles. Here are your highest-matched positions for this week:`
+    : `Based on your career interests in <strong style="color: #1c1917;">${targetField}</strong>, our matching engine selected these verified positions actively recruiting right now:`;
 
   const jobRowsHtml = jobs
     .map((job, index) => {
@@ -19,6 +28,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
       const isLast = index === jobs.length - 1;
       const borderStyle = isLast ? "" : "border-bottom: 1px solid #f1ece4;";
       const jobUrl = job.applyUrl || `${frontendUrl}/candidate-dashboard?jobId=${job._id || ""}`;
+      const isRemote = Boolean(job.isRemote || (job.location && /remote/i.test(job.location)));
 
       const logoCell = logoUrl
         ? `<img src="${logoUrl}" alt="${job.company}" width="48" height="48" style="width: 48px; height: 48px; object-fit: contain; border-radius: 8px; border: 1px solid #ebd9c2; display: block; background-color: #ffffff;" />`
@@ -52,13 +62,22 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                           ⚡ Easy Apply
                         </span>
                       </td>
-                      <td style="padding-left: 10px; vertical-align: middle;">
+                      <td style="padding-left: 8px; vertical-align: middle;">
                         ${
                           job.matchPercentage
                             ? `<span style="display: inline-block; background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700;">${job.matchPercentage}% Match</span>`
                             : `<span style="display: inline-block; background-color: #f5efe6; color: #786c5e; border: 1px solid #e7ded0; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600;">🎯 Actively recruiting</span>`
                         }
                       </td>
+                      ${
+                        isRemote
+                          ? `<td style="padding-left: 8px; vertical-align: middle;">
+                               <span style="display: inline-block; background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 700;">
+                                 ✔ Remote
+                               </span>
+                             </td>`
+                          : ""
+                      }
                     </tr>
                   </table>
                 </td>
@@ -83,7 +102,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
         <!-- Main Card Container -->
         <table width="580" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #fffdfa; border-radius: 12px; border: 1px solid #e8dfd1; overflow: hidden; box-shadow: 0 4px 18px rgba(85, 60, 30, 0.06);">
           
-          <!-- Top Nav Row (LinkedIn Style with SkillBridge Warm Theme) -->
+          <!-- Top Nav Row (SkillBridge Warm Branding) -->
           <tr>
             <td style="padding: 18px 24px; border-bottom: 1px solid #f1ece4; background-color: #fffdfa;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -124,6 +143,20 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
             </td>
           </tr>
 
+          <!-- Explainable AI Matching Callout (Indeed Style) -->
+          <tr>
+            <td style="padding: 0 24px 14px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #faf5ec; border: 1px solid #ede1cf; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; font-size: 13px; line-height: 1.45; color: #574c40;">
+                    <span style="font-weight: 700; color: #1c1917;">Hi ${candidateFirstName},</span>
+                    ${matchingCalloutHtml}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
           <!-- Jobs List -->
           <tr>
             <td style="padding: 0 24px;">
@@ -133,9 +166,30 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
             </td>
           </tr>
 
+          <!-- 1-Click Relevance Feedback (Indeed & Naukri Style) -->
+          <tr>
+            <td style="padding: 16px 24px 0 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fbf7f0; border: 1px dashed #e2d7c5; border-radius: 8px;">
+                <tr>
+                  <td align="left" style="padding: 10px 14px; font-size: 12px; font-weight: 600; color: #6b635b; vertical-align: middle;">
+                    Are these job recommendations relevant?
+                  </td>
+                  <td align="right" style="padding: 10px 14px; vertical-align: middle;">
+                    <a href="${frontendUrl}/candidate-dashboard?feedback=relevant&ref=email" style="display: inline-block; background-color: #ffffff; border: 1px solid #d4c8b6; border-radius: 6px; padding: 4px 11px; font-size: 11px; font-weight: 700; color: #15803d; text-decoration: none; margin-right: 6px;">
+                      👍 Yes
+                    </a>
+                    <a href="${frontendUrl}/candidate-profile?action=preferences&ref=email" style="display: inline-block; background-color: #ffffff; border: 1px solid #d4c8b6; border-radius: 6px; padding: 4px 11px; font-size: 11px; font-weight: 700; color: #b45309; text-decoration: none;">
+                      👎 Tune
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
           <!-- Action Buttons (See all jobs & Manage alerts) -->
           <tr>
-            <td style="padding: 22px 24px 26px 24px;">
+            <td style="padding: 20px 24px 26px 24px;">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
@@ -158,20 +212,20 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
             <td style="border-top: 1px solid #ebd9c2;"></td>
           </tr>
 
-          <!-- Career Smarter Spotlight Section -->
+          <!-- High-Conversion Profile Freshness Hook (Naukri Style) -->
           <tr>
-            <td style="padding: 24px 24px 20px 24px; text-align: center; background-color: #fffaf2;">
-              <div style="font-size: 11px; font-weight: 800; color: #b45309; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;">
-                ⭐ SKILLBRIDGE PREMIUM
+            <td style="padding: 24px 24px 22px 24px; text-align: center; background-color: #fffaf2;">
+              <div style="font-size: 11px; font-weight: 800; color: #b45309; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;">
+                ⚡ PROFILE OPTIMIZATION
               </div>
-              <div style="font-size: 17px; font-weight: 700; color: #1c1917; margin-bottom: 6px;">
-                Job search smarter with Premium
+              <div style="font-size: 17px; font-weight: 800; color: #1c1917; margin-bottom: 6px; line-height: 1.3;">
+                Profiles updated recently are <span style="color: #b45309;">3x more likely</span> to get shortlisted
               </div>
-              <div style="font-size: 13px; color: #6b635b; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto; line-height: 1.45;">
-                Get personalized match analysis, profile visibility boosts, and direct application tracking.
+              <div style="font-size: 13px; color: #6b635b; margin-bottom: 16px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.45;">
+                Top recruiters actively prioritize candidates with verified skills, recent project links, and an updated resume.
               </div>
-              <a href="${frontendUrl}/candidate-profile" style="display: inline-block; border: 1px solid #d6c7b2; background-color: #ffffff; border-radius: 9999px; padding: 7px 22px; font-size: 13px; font-weight: 600; color: #443a2f; text-decoration: none;">
-                Review Profile
+              <a href="${frontendUrl}/candidate-profile" style="display: inline-block; background-color: #ffffff; border: 1px solid #d6c7b2; border-radius: 9999px; padding: 8px 24px; font-size: 13px; font-weight: 700; color: #382e25; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                Update Profile & Skills →
               </a>
             </td>
           </tr>
@@ -197,7 +251,7 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Footer (with Pause and Unsubscribe options) -->
           <tr>
             <td style="background-color: #f7f3ec; border-top: 1px solid #ebd9c2; padding: 24px 24px 20px 24px; font-size: 12px; color: #78716c; line-height: 1.5;">
               <p style="margin: 0 0 6px 0;">
@@ -207,11 +261,12 @@ const buildDigestHtml = (userName, jobs, recipientEmail = "", targetField = "Sof
                 <a href="${frontendUrl}/help" style="color: #2563eb; text-decoration: none;">Learn why we included this.</a>
               </p>
               <p style="margin: 0 0 14px 0;">
-                You are receiving Job Alert emails from SkillBridge.
+                You are receiving Job Alert emails from SkillBridge based on your career interests.
               </p>
               <p style="margin: 0 0 18px 0;">
                 <a href="${frontendUrl}/candidate-profile" style="color: #2563eb; text-decoration: none;">Manage job alerts</a> &nbsp;&bull;&nbsp; 
-                <a href="${frontendUrl}/candidate-profile" style="color: #2563eb; text-decoration: none;">Unsubscribe</a> &nbsp;&bull;&nbsp; 
+                <a href="${frontendUrl}/candidate-profile?action=pause" style="color: #78716c; text-decoration: none;">Pause for 30 days</a> &nbsp;&bull;&nbsp; 
+                <a href="${frontendUrl}/candidate-profile?action=unsubscribe" style="color: #78716c; text-decoration: none;">Unsubscribe</a> &nbsp;&bull;&nbsp; 
                 <a href="${frontendUrl}/help" style="color: #2563eb; text-decoration: none;">Help</a>
               </p>
               <div style="margin-bottom: 6px;">
@@ -340,7 +395,7 @@ const runJobDigest = async () => {
       ? `${matched[0].title} at ${matched[0].company}`
       : `Job alert for ${targetField}`;
 
-    const html = buildDigestHtml(candidate.name, matched, candidate.email, targetField);
+    const html = buildDigestHtml(candidate.name, matched, candidate.email, targetField, candidate.skills || []);
     await sendEmail(candidate.email, emailSubject, html);
 
     candidate.lastJobDigestSentAt = new Date();
