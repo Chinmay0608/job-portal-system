@@ -29,109 +29,10 @@ import {
 
 const generateMsgId = () => "msg-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9);
 
-const INITIAL_CONVERSATIONS_CANDIDATE = [
-  {
-    id: "conv-1",
-    name: "Sarah Jenkins",
-    role: "Lead Technical Recruiter",
-    company: "Google Cloud",
-    color: "#4285F4",
-    initials: "SJ",
-    jobTitle: "Senior Frontend / React Engineer",
-    unread: true,
-    archived: false,
-    lastTime: "10:32 AM",
-    messages: [
-      {
-        id: "m-1",
-        sender: "recruiter",
-        text: "Hi there! I reviewed your SkillBridge profile and was very impressed with your frontend expertise. We have an active opening on our Core Cloud Tools team.",
-        time: "10:30 AM"
-      },
-      {
-        id: "m-2",
-        sender: "recruiter",
-        text: "Would you be open to an introductory 20-minute discussion this Thursday or Friday to chat about the role and team roadmap?",
-        time: "10:32 AM"
-      }
-    ],
-    quickReplies: [
-      "I'm very interested! Thursday afternoon works great.",
-      "Friday morning works best for me. Let's schedule it!",
-      "Could you share more details about the team's tech stack?"
-    ]
-  },
-  {
-    id: "conv-2",
-    name: "Marcus Vance",
-    role: "Head of Engineering Talent",
-    company: "Stripe",
-    color: "#635BFF",
-    initials: "MV",
-    jobTitle: "Full Stack Platform Developer",
-    unread: true,
-    archived: false,
-    lastTime: "Yesterday",
-    messages: [
-      {
-        id: "m-3",
-        sender: "recruiter",
-        text: "Hello! Thank you for applying to Stripe via SkillBridge. Our hiring committee looked over your background and we would like to proceed with your candidacy.",
-        time: "Yesterday, 3:15 PM"
-      },
-      {
-        id: "m-4",
-        sender: "recruiter",
-        text: "Please let us know your general availability next week for our initial technical walkthrough.",
-        time: "Yesterday, 3:16 PM"
-      }
-    ],
-    quickReplies: [
-      "Thank you Marcus! I am free anytime Monday or Tuesday afternoon.",
-      "Excited to move forward! Please send over the calendar invite.",
-      "I am available any weekday between 2 PM and 5 PM."
-    ]
-  }
-];
-
-const INITIAL_CONVERSATIONS_RECRUITER = [
-  {
-    id: "conv-r1",
-    name: "Arjun Mehta",
-    role: "Candidate",
-    company: "Applicant for Full Stack Engineer",
-    color: "#059669",
-    initials: "AM",
-    jobTitle: "Full Stack Engineer (React / Node.js)",
-    unread: true,
-    archived: false,
-    lastTime: "11:15 AM",
-    messages: [
-      {
-        id: "mr-1",
-        sender: "recruiter",
-        text: "Hello! Thank you for considering my application for the Full Stack Engineer role. I noticed you were looking for experience with distributed systems and MERN architecture.",
-        time: "11:12 AM"
-      },
-      {
-        id: "mr-2",
-        sender: "recruiter",
-        text: "I have uploaded my latest portfolio with my recent production microservices project. Please let me know if you need any additional code samples!",
-        time: "11:15 AM"
-      }
-    ],
-    quickReplies: [
-      "Thanks Arjun! I am reviewing your code samples now.",
-      "Great portfolio! Are you free for a call this week?",
-      "Thank you for reaching out. We will follow up shortly."
-    ]
-  }
-];
-
 export default function MessagesDrawer({ isOpen, onClose, user }) {
   const userKey = STORAGE_KEY_PREFIX + (user?._id || user?.email || "guest");
 
-  // Tab mode: "official" (backend DB messages) | "threads" (mock/recruiter chat)
+  // Tab mode: "official" (backend DB messages) | "threads" (recruiter chat)
   const [activeTab, setActiveTab] = useState("official");
 
   // Backend Official Communications State
@@ -141,17 +42,22 @@ export default function MessagesDrawer({ isOpen, onClose, user }) {
   const [selectedOfficialMsg, setSelectedOfficialMsg] = useState(null);
   const [officialFilter, setOfficialFilter] = useState("all"); // "all" | "unread"
 
-  // Local/Mock Conversation Threads State
+  // Recruiter Conversation Threads State (Starts empty for genuine accounts, purging any legacy mock demo threads)
   const [conversations, setConversations] = useState(() => {
     try {
       const saved = localStorage.getItem(userKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(
+            (c) => c.id !== "conv-1" && c.id !== "conv-2" && c.id !== "conv-r1"
+          );
+        }
+      }
     } catch (e) {
       console.error("Failed to load messages from localStorage:", e);
     }
-    return user?.role === "recruiter" 
-      ? INITIAL_CONVERSATIONS_RECRUITER 
-      : INITIAL_CONVERSATIONS_CANDIDATE;
+    return [];
   });
 
   const [activeId, setActiveId] = useState(null);

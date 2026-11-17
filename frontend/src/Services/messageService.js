@@ -135,7 +135,11 @@ export const getUnreadMessagesCount = (user) => {
     const saved = localStorage.getItem(key);
     if (saved) {
       const convs = JSON.parse(saved);
-      return convs.filter((c) => c.unread && !c.archived).length;
+      if (Array.isArray(convs)) {
+        return convs
+          .filter((c) => c.id !== "conv-1" && c.id !== "conv-2" && c.id !== "conv-r1")
+          .filter((c) => c.unread && !c.archived).length;
+      }
     }
   } catch (e) {
     console.error("Error reading unread count:", e);
