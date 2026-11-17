@@ -187,16 +187,25 @@ const deriveCompanyDomain = (company) => {
 };
 
 const getCompanyLogo = (company, logo) => {
+  if (company && typeof company === "string" && /mendix/i.test(company)) {
+    return "https://avatars.githubusercontent.com/u/133443?s=200&v=4";
+  }
   if (logo && typeof logo === "string" && logo.trim().length > 0 && !logo.includes("ui-avatars.com")) {
     if (logo.includes("unavatar.io/")) {
       const clean = logo.replace(/^.*unavatar\.io\//i, "").replace(/\?.*$/, "");
-      return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${clean}&size=128`;
+      return `https://icon.horse/icon/${clean}`;
+    }
+    if (logo.includes("mendix")) {
+      return "https://avatars.githubusercontent.com/u/133443?s=200&v=4";
     }
     return logo;
   }
   const domain = deriveCompanyDomain(company);
   if (domain) {
-    return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+    if (domain.includes("mendix")) {
+      return "https://avatars.githubusercontent.com/u/133443?s=200&v=4";
+    }
+    return `https://icon.horse/icon/${domain}`;
   }
   return "";
 };

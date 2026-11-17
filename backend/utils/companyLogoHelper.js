@@ -7,19 +7,19 @@
  */
 
 const VERIFIED_ENTERPRISE_MAP = {
-  "google": "google.com",
-  "microsoft": "microsoft.com",
-  "microsoft corporation": "microsoft.com",
-  "amazon": "amazon.com",
-  "apple": "apple.com",
-  "meta": "meta.com",
-  "meta platforms": "meta.com",
-  "facebook": "meta.com",
-  "netflix": "netflix.com",
-  "spotify": "spotify.com",
-  "uber": "uber.com",
-  "airbnb": "airbnb.com",
-  "stripe": "stripe.com",
+  "google": "https://avatars.githubusercontent.com/u/1342004?s=200&v=4",
+  "microsoft": "https://avatars.githubusercontent.com/u/6154722?s=200&v=4",
+  "microsoft corporation": "https://avatars.githubusercontent.com/u/6154722?s=200&v=4",
+  "amazon": "https://avatars.githubusercontent.com/u/859467?s=200&v=4",
+  "apple": "https://icon.horse/icon/apple.com",
+  "meta": "https://avatars.githubusercontent.com/u/69631?s=200&v=4",
+  "meta platforms": "https://avatars.githubusercontent.com/u/69631?s=200&v=4",
+  "facebook": "https://avatars.githubusercontent.com/u/69631?s=200&v=4",
+  "netflix": "https://avatars.githubusercontent.com/u/1429010?s=200&v=4",
+  "spotify": "https://avatars.githubusercontent.com/u/251374?s=200&v=4",
+  "uber": "https://avatars.githubusercontent.com/u/327277?s=200&v=4",
+  "airbnb": "https://avatars.githubusercontent.com/u/698437?s=200&v=4",
+  "stripe": "https://avatars.githubusercontent.com/u/856813?s=200&v=4",
   "databricks": "databricks.com",
   "datadog": "datadoghq.com",
   "tcs": "tcs.com",
@@ -191,12 +191,12 @@ const VERIFIED_ENTERPRISE_MAP = {
   "gonoise": "gonoise.com",
 
   // Top Tech & Global Enterprises
-  "finom": "finom.co",
-  "finom payments": "finom.co",
-  "mendix": "mendix.com",
-  "mendix technology": "mendix.com",
-  "coda": "coda.io",
-  "coda.io": "coda.io",
+  "finom": "https://icon.horse/icon/finom.co",
+  "finom payments": "https://icon.horse/icon/finom.co",
+  "mendix": "https://avatars.githubusercontent.com/u/133443?s=200&v=4",
+  "mendix technology": "https://avatars.githubusercontent.com/u/133443?s=200&v=4",
+  "coda": "https://icon.horse/icon/coda.io",
+  "coda.io": "https://icon.horse/icon/coda.io",
   "codat": "codat.io",
   "openai": "openai.com",
   "figma": "figma.com",
@@ -270,8 +270,8 @@ const VERIFIED_ENTERPRISE_MAP = {
 };
 
 /**
- * Builds a 100% reliable image URL using Google's Favicon CDN
- * Never blocked or rate-limited by Gmail Image Proxy
+ * Builds a 100% reliable, high-resolution (192-256px retina) image URL
+ * Proxy-safe, never blocked or rate-limited by Gmail Image Proxy
  */
 function toReliableLogoUrl(domainOrUrl) {
   if (!domainOrUrl || typeof domainOrUrl !== "string") return "";
@@ -285,25 +285,24 @@ function toReliableLogoUrl(domainOrUrl) {
     clean = clean.replace(/^.*logo\.clearbit\.com\//i, "").replace(/\?.*$/, "");
   }
 
-  // If already a direct uploaded asset (Cloudinary, AWS S3, Firebase), keep as-is
+  // If already a direct uploaded asset (Cloudinary, AWS S3, Firebase, GitHub avatars, IconHorse, etc.), keep as-is
   if (
     /^https?:\/\//i.test(clean) &&
     !clean.includes("unavatar.io") &&
     !clean.includes("clearbit.com") &&
-    (clean.includes("res.cloudinary.com") ||
-      clean.includes("amazonaws.com") ||
-      clean.includes("firebasestorage") ||
-      clean.endsWith(".png") ||
-      clean.endsWith(".jpg") ||
-      clean.endsWith(".jpeg") ||
-      clean.endsWith(".webp") ||
-      clean.includes("gstatic.com"))
+    !clean.includes("gstatic.com")
   ) {
     return clean;
   }
 
-  // Clean raw domain string
-  const domain = clean
+  // Extract domain if it was wrapped in gstatic or is a raw domain/URL
+  let domain = clean;
+  if (clean.includes("gstatic.com") && clean.includes("url=")) {
+    const match = clean.match(/url=([^&]+)/);
+    if (match) domain = decodeURIComponent(match[1]);
+  }
+
+  domain = domain
     .replace(/^https?:\/\//i, "")
     .replace(/\/.*$/, "")
     .trim()
@@ -311,8 +310,17 @@ function toReliableLogoUrl(domainOrUrl) {
 
   if (!domain || domain.length < 2) return "";
 
-  // Return Google Favicon V2 endpoint
-  return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+  // Check if domain matches an entry in VERIFIED_ENTERPRISE_MAP
+  const baseName = domain.replace(/\.[a-z]{2,8}$/i, "");
+  if (VERIFIED_ENTERPRISE_MAP[baseName] && /^https?:\/\//i.test(VERIFIED_ENTERPRISE_MAP[baseName])) {
+    return VERIFIED_ENTERPRISE_MAP[baseName];
+  }
+  if (VERIFIED_ENTERPRISE_MAP[domain] && /^https?:\/\//i.test(VERIFIED_ENTERPRISE_MAP[domain])) {
+    return VERIFIED_ENTERPRISE_MAP[domain];
+  }
+
+  // Return high-resolution IconHorse endpoint (256x256 / 192x192 retina PNG, proxy-safe, zero rate limits)
+  return `https://icon.horse/icon/${domain}`;
 }
 
 /**
