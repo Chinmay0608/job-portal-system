@@ -189,6 +189,9 @@ const VERIFIED_ENTERPRISE_MAP = {
   "vahan.ai": "vahan.ai",
   "noise": "gonoise.com",
   "gonoise": "gonoise.com",
+  "urban harvest": "https://icon.horse/icon/uharvest.in",
+  "urbanharvest": "https://icon.horse/icon/uharvest.in",
+  "uharvest": "https://icon.horse/icon/uharvest.in",
 
   // Top Tech & Global Enterprises
   "finom": "https://icon.horse/icon/finom.co",
