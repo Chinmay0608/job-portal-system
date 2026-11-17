@@ -47,12 +47,19 @@ describe("SendEmail Utility", () => {
     const result = await sendEmail("applicant@gmail.com", "Application Received", "<h1>Thank You</h1>");
 
     expect(result).toEqual({ response: "250 2.0.0 OK" });
-    expect(currentSendMailImpl).toHaveBeenCalledWith({
-      from: "SkillBridge <SkillBridge684@gmail.com>",
-      to: "applicant@gmail.com",
-      subject: "Application Received",
-      html: "<h1>Thank You</h1>",
-    });
+    expect(currentSendMailImpl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "SkillBridge <SkillBridge684@gmail.com>",
+        to: "applicant@gmail.com",
+        subject: "Application Received",
+        html: "<h1>Thank You</h1>",
+        text: "Thank You",
+        headers: expect.objectContaining({
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          "Precedence": "bulk",
+        }),
+      })
+    );
   });
 
   it("should catch connection errors (ENETUNREACH/ECONNECTION) and return null without throwing", async () => {

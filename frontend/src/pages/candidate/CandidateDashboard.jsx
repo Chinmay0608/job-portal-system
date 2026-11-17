@@ -188,11 +188,15 @@ const deriveCompanyDomain = (company) => {
 
 const getCompanyLogo = (company, logo) => {
   if (logo && typeof logo === "string" && logo.trim().length > 0 && !logo.includes("ui-avatars.com")) {
+    if (logo.includes("unavatar.io/")) {
+      const clean = logo.replace(/^.*unavatar\.io\//i, "").replace(/\?.*$/, "");
+      return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${clean}&size=128`;
+    }
     return logo;
   }
   const domain = deriveCompanyDomain(company);
   if (domain) {
-    return `https://unavatar.io/${domain}`;
+    return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
   }
   return "";
 };
