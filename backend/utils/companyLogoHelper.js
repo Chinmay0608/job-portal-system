@@ -205,6 +205,8 @@ const VERIFIED_ENTERPRISE_MAP = {
   "tarento": "https://d3e64cxw1rkxsu.cloudfront.net/Tarento_logo_efeb39d3b6.svg",
   "binocs": "https://icon.horse/icon/binocs.co",
   "binocs.co": "https://icon.horse/icon/binocs.co",
+  "reldech": "https://icon.horse/icon/reldech.com",
+  "reldech technologies": "https://icon.horse/icon/reldech.com",
 
   // Top Tech & Global Enterprises
   "finom": "https://icon.horse/icon/finom.co",
