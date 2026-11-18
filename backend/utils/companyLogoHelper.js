@@ -207,6 +207,10 @@ const VERIFIED_ENTERPRISE_MAP = {
   "binocs.co": "https://icon.horse/icon/binocs.co",
   "reldech": "https://icon.horse/icon/reldech.com",
   "reldech technologies": "https://icon.horse/icon/reldech.com",
+  "key software": "https://keysoftwareservices.co.in/images/keyss-logo.png",
+  "key software services": "https://keysoftwareservices.co.in/images/keyss-logo.png",
+  "keyss": "https://keysoftwareservices.co.in/images/keyss-logo.png",
+  "keyss.in": "https://keysoftwareservices.co.in/images/keyss-logo.png",
 
   // Top Tech & Global Enterprises
   "finom": "https://icon.horse/icon/finom.co",
