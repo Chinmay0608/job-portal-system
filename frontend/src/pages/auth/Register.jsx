@@ -70,10 +70,11 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     email: "",
     phone: "",
     password: "",
-    role: location.state?.role || "recruiter",
+    role: location.state?.role || (new URLSearchParams(location.search).has("redirect") ? "candidate" : "recruiter"),
   });
   const passwordRequirements = getPasswordRequirements(formData.password);
   const missingPasswordRequirements = passwordRequirements.filter(({ met }) => !met);
@@ -86,7 +87,9 @@ function Register() {
   };
 
   const redirectUser = (user) => {
-    if (user?.role === "candidate") navigate("/candidate-dashboard");
+    const destination = new URLSearchParams(location.search).get("redirect") || location.state?.redirectAfterLogin;
+    if (user?.role === "candidate" && destination?.startsWith("/candidate-dashboard")) navigate(destination);
+    else if (user?.role === "candidate") navigate("/candidate-dashboard");
     else navigate("/recruiter-dashboard");
   };
 
@@ -188,11 +191,20 @@ function Register() {
     e.preventDefault();
 
     const trimmedName = formData.name.trim();
+    const trimmedUsername = formData.username?.trim().replace(/^@/, "").toLowerCase() || "";
     const trimmedEmail = formData.email.trim().toLowerCase();
     const trimmedPhone = formData.phone.trim();
 
     if (trimmedName.length < 3) return toast.error("Name must be at least 3 characters");
     if (!/^[A-Za-z\s]+$/.test(trimmedName)) return toast.error("Name should contain only letters");
+    if (trimmedUsername) {
+      if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+        return toast.error("Username must be between 3 and 30 characters");
+      }
+      if (!/^[a-z0-9_.-]+$/.test(trimmedUsername)) {
+        return toast.error("Username can only contain lowercase letters, numbers, underscores, dots, or hyphens");
+      }
+    }
     if (trimmedPhone && !/^[6-9]\d{9}$/.test(trimmedPhone)) return toast.error("Enter a valid 10-digit phone number");
     if (!isStrongPassword(formData.password)) return toast.error(PASSWORD_POLICY_MESSAGE);
 
@@ -202,12 +214,16 @@ function Register() {
       const response = await registerUser({
         ...formData,
         name: formattedName,
+        username: trimmedUsername || undefined,
         email: trimmedEmail,
         phone: trimmedPhone,
       });
 
       toast.success(response.message || "Account created successfully");
-      navigate("/login");
+      const redirect = new URLSearchParams(location.search).get("redirect") || location.state?.redirectAfterLogin;
+      navigate(redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login", {
+        state: { role: formData.role },
+      });
     } catch (error) {
       console.error("Registration Error:", error);
       const validationErrors = error?.response?.data?.errors;
@@ -285,6 +301,18 @@ function Register() {
             <div className="signup-field">
               <label htmlFor="signup-name">Full Name</label>
               <input id="signup-name" type="text" name="name" placeholder="e.g. Jane Doe" value={formData.name} onChange={handleChange} required autoComplete="name" />
+            </div>
+            <div className="signup-field">
+              <label htmlFor="signup-username">Username <span className="font-normal text-xs text-stone-500">(Optional)</span></label>
+              <input
+                id="signup-username"
+                type="text"
+                name="username"
+                placeholder="e.g. janedoe (letters, numbers, _, ., -)"
+                value={formData.username}
+                onChange={handleChange}
+                autoComplete="username"
+              />
             </div>
             <div className="signup-field">
               <label htmlFor="signup-email">Email Address</label>

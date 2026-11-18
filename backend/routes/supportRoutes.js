@@ -4,6 +4,9 @@ const { protect, optionalAuth, authorizeRoles } = require("../middleware/authMid
 const upload = require("../middleware/multer");
 const {
   createTicket,
+  getMyTickets,
+  getMyTicket,
+  addTicketFollowUp,
   getTicketsAdmin,
   updateTicketStatus,
   deleteTicket,
@@ -12,6 +15,11 @@ const {
 
 // Reporter: submit a new ticket (open to all: logged-in candidates, recruiters, and guests)
 router.post("/report", optionalAuth, upload.single("screenshot"), createTicket);
+
+// Reporter: view and add details to their own tickets
+router.get("/my-tickets", protect, getMyTickets);
+router.get("/my-tickets/:id", protect, getMyTicket);
+router.post("/my-tickets/:id/messages", protect, addTicketFollowUp);
 
 // Admin: list tickets with optional status / severity / category filters
 router.get("/tickets", protect, authorizeRoles("admin"), getTicketsAdmin);

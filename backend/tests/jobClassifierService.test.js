@@ -40,4 +40,20 @@ describe("jobClassifierService", () => {
     expect(result.domain).toBe("Data & Analytics");
     expect(result.seniorityLevel).toBe("Staff / Principal");
   });
+
+  test("correctly classifies hospitality roles", () => {
+    const result = classifyJob({
+      title: "Executive Chef",
+      description: "Lead kitchen operations and banquet service.",
+    });
+    expect(result.domain).toBe("Hospitality & Food Service");
+  });
+
+  test("correctly classifies customer support roles", () => {
+    const result = classifyJob({
+      title: "Technical Support Specialist",
+      description: "Provide customer support through a helpdesk.",
+    });
+    expect(result.domain).toBe("Customer Support / Operations");
+  });
 });

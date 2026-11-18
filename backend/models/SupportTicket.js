@@ -56,6 +56,11 @@ const supportTicketSchema = new mongoose.Schema(
       index: true,
     },
     aiSummary: { type: String, default: "" },
+    resolutionMessage: { type: String, default: "" },
+    followUpMessages: [{
+      message: { type: String, required: true, maxlength: 1200 },
+      createdAt: { type: Date, default: Date.now },
+    }],
 
     // Agent execution audit trail
     agentLog: { type: [agentLogEntrySchema], default: [] },

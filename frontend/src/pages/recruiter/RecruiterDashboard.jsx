@@ -9,6 +9,7 @@ import RecruiterOnboardingModal from "../../Components/RecruiterOnboardingModal"
 import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton, MetricCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawCareerSvg from "../../assets/undraw_career-progress_vfq5.svg";
+import { formatSalary } from "../../utils/salary";
 
 import {
   HiOutlineBriefcase,
@@ -733,7 +734,7 @@ function RecruiterDashboard() {
                     </div>
 
                     <div className="text-sm font-extrabold text-slate-900 mb-4">
-                      {typeof job.salary === 'string' && isNaN(Number(job.salary)) ? job.salary : `₹${Number(job.salary).toLocaleString("en-IN")}`}
+                      {formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false, job.employmentType)}
                     </div>
                   </div>
 
@@ -989,8 +990,8 @@ function RecruiterDashboard() {
 
               <section>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="block"><span className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-[#493b2e]">Minimum salary (INR / year)</span><input type="number" min="0" name="minSalary" value={formData.minSalary} onChange={handleChange} placeholder="e.g. 800000" className="w-full rounded-xl border border-[#ead5b7] bg-[#fffaf2] px-3.5 py-2.5 text-sm text-[#493b2e] placeholder:text-[#9b8067] outline-none focus:border-[#c26d3b] focus:bg-[#fffdfa] focus:ring-2 focus:ring-[#c26d3b]/20" /></label>
-                  <label className="block"><span className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-[#493b2e]">Maximum salary (INR / year)</span><input type="number" min="0" name="maxSalary" value={formData.maxSalary} onChange={handleChange} placeholder="e.g. 1200000" className="w-full rounded-xl border border-[#ead5b7] bg-[#fffaf2] px-3.5 py-2.5 text-sm text-[#493b2e] placeholder:text-[#9b8067] outline-none focus:border-[#c26d3b] focus:bg-[#fffdfa] focus:ring-2 focus:ring-[#c26d3b]/20" /></label>
+                  <label className="block"><span className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-[#493b2e]">Minimum stipend/salary (INR / {formData.employmentType === "Internship" ? "month" : "year"})</span><input type="number" min="0" name="minSalary" value={formData.minSalary} onChange={handleChange} placeholder={formData.employmentType === "Internship" ? "e.g. 25000" : "e.g. 800000"} className="w-full rounded-xl border border-[#ead5b7] bg-[#fffaf2] px-3.5 py-2.5 text-sm text-[#493b2e] placeholder:text-[#9b8067] outline-none focus:border-[#c26d3b] focus:bg-[#fffdfa] focus:ring-2 focus:ring-[#c26d3b]/20" /></label>
+                  <label className="block"><span className="mb-1 block text-xs font-extrabold uppercase tracking-wider text-[#493b2e]">Maximum stipend/salary (INR / {formData.employmentType === "Internship" ? "month" : "year"})</span><input type="number" min="0" name="maxSalary" value={formData.maxSalary} onChange={handleChange} placeholder={formData.employmentType === "Internship" ? "e.g. 40000" : "e.g. 1200000"} className="w-full rounded-xl border border-[#ead5b7] bg-[#fffaf2] px-3.5 py-2.5 text-sm text-[#493b2e] placeholder:text-[#9b8067] outline-none focus:border-[#c26d3b] focus:bg-[#fffdfa] focus:ring-2 focus:ring-[#c26d3b]/20" /></label>
                 </div>
                 <label className="mt-2 flex items-center gap-2 text-sm text-[#746555]"><input type="checkbox" name="showSalaryRange" checked={formData.showSalaryRange} onChange={(event) => setFormData((current) => ({ ...current, showSalaryRange: event.target.checked }))} className="h-4 w-4 accent-[#b96534]" />Show salary range on job post</label>
               </section>

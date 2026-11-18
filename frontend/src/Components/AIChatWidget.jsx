@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
+import { normalizeChatMarkdown } from "../utils/chatFormatting";
 import { HiSparkles } from "react-icons/hi2";
 import { BsPerson } from "react-icons/bs";
 import { 
@@ -26,14 +29,6 @@ import { uploadResume } from "../Services/userService";
 import useVoiceRecognition from "../hooks/useVoiceRecognition";
 import useTextToSpeech from "../hooks/useTextToSpeech";
 import dhruvAvatar from "../assets/dhruv_avatar.png";
-import {
-  clearVoiceProfile,
-  createSpeakerEmbedding,
-  getVoiceProfile,
-  prepareSpeakerModel,
-  recordVoiceSample,
-  saveVoiceProfile,
-} from "../Services/voiceIdentity";
 
 const createUniqueMsgId = (prefix = "msg") =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -62,35 +57,16 @@ const GUIDED_ROLES = [
 
 const renderFormattedContent = (content) => {
   if (!content) return null;
-  const lines = content.split("\n");
-  return lines.map((line, lineIndex) => {
-    const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
-    const formattedParts = parts.map((part, partIndex) => {
-      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-        return <strong key={partIndex} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
-      }
-      const link = part.match(/^\[([^\]]+)\]\((\/(?!\/)[^)]+)\)$/);
-      if (link) {
-        return (
-          <Link
-            key={partIndex}
-            to={link[2]}
-            style={{ color: "#0369a1", fontWeight: 600, textDecoration: "underline" }}
-          >
-            {link[1]}
-          </Link>
-        );
-      }
-      return part;
-    });
-
-    return (
-      <React.Fragment key={lineIndex}>
-        {formattedParts}
-        {lineIndex < lines.length - 1 && <br />}
-      </React.Fragment>
-    );
-  });
+  const normalizedContent = normalizeChatMarkdown(content);
+  const html = DOMPurify.sanitize(
+    marked.parse(normalizedContent, { breaks: true, gfm: false }),
+  );
+  return (
+    <div
+      className="dhruv-message-markdown"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 };
 
 export default function AIChatWidget({ 
@@ -107,11 +83,6 @@ export default function AIChatWidget({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
-  const [isVoiceSetupOpen, setIsVoiceSetupOpen] = useState(false);
-  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [voiceProfileSaved, setVoiceProfileSaved] = useState(() => Boolean(getVoiceProfile()));
-  const [voiceSetupMessage, setVoiceSetupMessage] = useState("");
-  const [voiceSampleNumber, setVoiceSampleNumber] = useState(0);
   const fileInputRef = useRef(null);
   const quickMenuRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -381,6 +352,7 @@ export default function AIChatWidget({
     } else {
       tts.stop();
       startListening({
+        keyterms: user?.name ? [user.name.trim().split(/\s+/)[0]] : [],
         onResult: (finalText) => {
           if (finalText && finalText.trim()) {
             const cleanFinal = finalText.trim();
@@ -390,43 +362,7 @@ export default function AIChatWidget({
         },
       });
     }
-  }, [isVoiceRecognitionSupported, isVoiceListening, startListening, stopListening, tts, sendMessage]);
-
-  const handleVoiceEnrollment = useCallback(async () => {
-    if (isRecordingVoice) return;
-    setIsRecordingVoice(true);
-    setVoiceSampleNumber(0);
-    setVoiceSetupMessage("First setup downloads about 130 MB of model and runtime files.");
-    const embeddings = [];
-
-    try {
-      await prepareSpeakerModel((progress) => {
-        if (progress.status === "progress" && Number.isFinite(progress.progress)) {
-          setVoiceSetupMessage(`Loading local voice model: ${Math.round(progress.progress)}%`);
-        }
-      });
-
-      for (let sampleNumber = 1; sampleNumber <= 3; sampleNumber += 1) {
-        setVoiceSampleNumber(sampleNumber);
-        setVoiceSetupMessage(`Sample ${sampleNumber} of 3: say “Hey Dhruv” clearly.`);
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const sample = await recordVoiceSample(3000);
-        embeddings.push(await createSpeakerEmbedding(sample.audio, sample.sampleRate));
-      }
-
-      saveVoiceProfile(embeddings);
-      setVoiceProfileSaved(true);
-      setVoiceSetupMessage("Voice match is ready on this browser.");
-      toast.success("Your local DHRUV voice profile is ready.");
-    } catch (error) {
-      console.error("[DHRUV] Voice enrollment failed:", error);
-      setVoiceSetupMessage(error.message || "Voice enrollment failed. Please try again.");
-      toast.error(error.message || "Voice enrollment failed. Please try again.");
-    } finally {
-      setIsRecordingVoice(false);
-      setVoiceSampleNumber(0);
-    }
-  }, [isRecordingVoice]);
+  }, [isVoiceRecognitionSupported, isVoiceListening, startListening, stopListening, tts, sendMessage, user?.name]);
 
   const greetAndListen = useCallback(() => {
     stopWakeWord();
@@ -452,15 +388,9 @@ export default function AIChatWidget({
     });
   }, [user, tts, handleMicClick, stopWakeWord]);
 
-  const openVoiceSetup = () => {
-    stopWakeWord();
-    stopListening();
-    setIsVoiceSetupOpen(true);
-  };
-
   useEffect(() => {
     wakeWordCallbackRef.current = (promptAfterWake) => {
-      toast("Dhruv detected your voice.", { icon: "⚡" });
+      toast("Hey Dhruv is listening.", { icon: "⚡" });
       if (promptAfterWake && promptAfterWake.length > 2) {
         sendMessage(promptAfterWake);
       } else {
@@ -488,28 +418,13 @@ export default function AIChatWidget({
 
   // Keep wake-word listening active while the DHRUV drawer is open.
   useEffect(() => {
-    if (!isOpen || !isVoiceRecognitionSupported || isVoiceListening || isVoiceSetupOpen) {
+    if (!isOpen || !isVoiceRecognitionSupported || isVoiceListening) {
       stopWakeWord();
       return;
     }
 
     listenForWakeWord((promptAfterWake) => {
       wakeWordCallbackRef.current?.(promptAfterWake);
-    }, (status) => {
-      const messagesByStatus = {
-        checking: "I heard “Hey Dhruv.” Checking your voice…",
-        "profile-missing": "I heard “Hey Dhruv,” but voice match isn’t set up in this browser. Tap the microphone icon above to enroll your voice.",
-        "capture-unavailable": "I heard “Hey Dhruv,” but couldn’t access microphone audio to verify your voice.",
-        "speaker-mismatch": "I couldn’t match that voice to your enrolled profile. Try again or re-enroll using the microphone button above.",
-        "verification-error": "I heard “Hey Dhruv,” but couldn’t verify your voice. Please try again.",
-      };
-      const content = messagesByStatus[status];
-      if (content) {
-        setMessages((prev) => [
-          ...prev,
-          { id: createUniqueMsgId("wake_status"), role: "assistant", content },
-        ]);
-      }
     });
 
     return () => {
@@ -519,7 +434,6 @@ export default function AIChatWidget({
     isOpen,
     isVoiceRecognitionSupported,
     isVoiceListening,
-    isVoiceSetupOpen,
     listenForWakeWord,
     stopWakeWord,
   ]);
@@ -598,7 +512,7 @@ export default function AIChatWidget({
 
       if (jobs.length > 0) {
         const jobListings = jobs.slice(0, 3).map((j, i) => 
-          `${i + 1}. **${j.title}** at **${j.company || "Leading Company"}**\n   📍 ${j.location || "Remote"} • 💼 ${j.type || "Full-time"}\n   🔗 [View & Apply on SkillBridge](/candidate-dashboard?${new URLSearchParams({ search: j.title })})`
+          `### ${i + 1}. ${j.title}\n**Company:** ${j.company || "Leading Company"}\n\n**Location:** ${j.location || "Remote"}\n\n**Type:** ${j.type || "Full-time"}\n\n[View & Apply](/candidate-dashboard?${new URLSearchParams({ search: j.title })})`
         ).join("\n\n");
 
         const replyContent = `🎯 Found top live positions for **${roleName}**:\n\n${jobListings}\n\nWould you like me to analyze interview questions for these roles or explore other skills?`;
@@ -895,27 +809,6 @@ export default function AIChatWidget({
               onTouchStart={(e) => e.stopPropagation()}
               style={{ display: "flex", alignItems: "center", gap: "4px" }}
             >
-              {voiceRec.isSupported && (
-                <button
-                  type="button"
-                  onClick={openVoiceSetup}
-                  aria-label={voiceProfileSaved ? "Manage enrolled voice" : "Enroll your voice for Hey Dhruv"}
-                  title={voiceProfileSaved ? "Manage voice match" : "Set up owner voice match"}
-                  style={{
-                    background: voiceProfileSaved ? "#eff6ff" : "transparent",
-                    border: "1px solid transparent",
-                    padding: "6px",
-                    cursor: "pointer",
-                    color: voiceProfileSaved ? "#2563eb" : "#64748b",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Mic size={16} />
-                </button>
-              )}
-
               {/* Reset / Restart Chat */}
               <button
                 type="button"
@@ -1712,116 +1605,7 @@ export default function AIChatWidget({
         </div>
       )}
 
-      {isVoiceSetupOpen && (
-        <div
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isRecordingVoice) {
-              setIsVoiceSetupOpen(false);
-            }
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10001,
-            display: "grid",
-            placeItems: "center",
-            padding: "20px",
-            background: "rgba(15, 23, 42, 0.48)",
-          }}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="dhruv-voice-setup-title"
-            style={{
-              width: "min(440px, 100%)",
-              padding: "24px",
-              background: "#ffffff",
-              border: "1px solid #dbe4f0",
-              borderRadius: "18px",
-              boxShadow: "0 24px 60px rgba(15, 23, 42, 0.28)",
-              fontFamily: "Inter, system-ui, sans-serif",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
-              <h2 id="dhruv-voice-setup-title" style={{ margin: 0, color: "#0f172a", fontSize: "1.1rem" }}>
-                Hey Dhruv voice match
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsVoiceSetupOpen(false)}
-                disabled={isRecordingVoice}
-                aria-label="Close voice setup"
-                style={{ border: 0, background: "transparent", color: "#64748b", cursor: "pointer" }}
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <p style={{ margin: "14px 0", color: "#475569", fontSize: "0.9rem", lineHeight: 1.55 }}>
-              Enroll three short samples. DHRUV compares future wake phrases to your voice profile before responding.
-            </p>
-            <p style={{ margin: "0 0 18px", padding: "12px", color: "#475569", background: "#f8fafc", borderRadius: "10px", fontSize: "0.78rem", lineHeight: 1.5 }}>
-              The quantized model downloads once (about 102 MB). Enrollment audio is processed locally and discarded; your voice profile stays in this browser. Wake-word transcription uses your browser’s speech service and may follow its audio-processing policy. This experimental match is not account security and may accept similar voices or recordings.
-            </p>
-
-            {voiceSetupMessage && (
-              <p role="status" aria-live="polite" style={{ margin: "0 0 14px", color: isRecordingVoice ? "#1d4ed8" : "#334155", fontSize: "0.85rem", fontWeight: 600 }}>
-                {voiceSetupMessage}
-              </p>
-            )}
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={handleVoiceEnrollment}
-                disabled={isRecordingVoice}
-                style={{
-                  minHeight: "40px",
-                  padding: "0 14px",
-                  color: "#ffffff",
-                  background: isRecordingVoice ? "#64748b" : "#2563eb",
-                  border: 0,
-                  borderRadius: "9px",
-                  fontWeight: 700,
-                  cursor: isRecordingVoice ? "wait" : "pointer",
-                }}
-              >
-                {isRecordingVoice ? `Recording ${voiceSampleNumber}/3...` : voiceProfileSaved ? "Re-enroll voice" : "Enroll my voice"}
-              </button>
-              {voiceProfileSaved && (
-                <button
-                  type="button"
-                  disabled={isRecordingVoice}
-                  onClick={() => {
-                    try {
-                      clearVoiceProfile();
-                      setVoiceProfileSaved(false);
-                      setVoiceSetupMessage("Voice profile removed from this browser.");
-                    } catch (error) {
-                      console.error("[DHRUV] Could not remove voice profile:", error);
-                      toast.error("Could not remove the voice profile.");
-                    }
-                  }}
-                  style={{
-                    minHeight: "40px",
-                    padding: "0 12px",
-                    color: "#b91c1c",
-                    background: "#fef2f2",
-                    border: "1px solid #fecaca",
-                    borderRadius: "9px",
-                    fontWeight: 600,
-                    cursor: isRecordingVoice ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Remove profile
-                </button>
-              )}
-            </div>
-          </section>
-        </div>
-      )}
     </>
   );
 }

@@ -12,7 +12,7 @@ const TIME_ZONES = typeof Intl.supportedValuesOf === "function"
   : ["Asia/Kolkata", "UTC", "Asia/Dubai", "Asia/Singapore", "Europe/London", "Europe/Paris", "America/New_York", "America/Chicago", "America/Los_Angeles", "Australia/Sydney"];
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const BASE_PROFILE = {
-  name: "", email: "", phone: "", location: "", linkedin: "", designation: "", companyName: "", companyWebsite: "", about: "",
+  name: "", username: "", email: "", phone: "", location: "", linkedin: "", designation: "", companyName: "", companyWebsite: "", about: "",
   profileImage: "", companyLogo: "", companyIndustry: "", companySize: "", companyHeadquarters: "",
   companySocials: { linkedin: "", twitter: "", github: "" }, timeZone: "Asia/Kolkata", schedulingLink: "", emailSignature: "", contactVisibility: false, isVerified: false,
 };
@@ -124,6 +124,7 @@ function RecruiterProfile() {
     event.preventDefault();
     const requiredFields = [
       ["Full name", profile.name],
+      ["Username", profile.username],
       ["Account email", profile.email],
       ["Location", profile.location],
       ["Job title", profile.designation],
@@ -135,10 +136,23 @@ function RecruiterProfile() {
       return;
     }
 
+    const cleanUsername = String(profile.username || "").trim().replace(/^@/, "").toLowerCase();
+    if (cleanUsername) {
+      if (cleanUsername.length < 3 || cleanUsername.length > 30) {
+        toast.error("Username must be between 3 and 30 characters");
+        return;
+      }
+      if (!/^[a-z0-9_.-]+$/.test(cleanUsername)) {
+        toast.error("Username can only contain lowercase letters, numbers, underscores, dots, or hyphens");
+        return;
+      }
+    }
+
     let normalized;
     try {
       normalized = {
         ...profile,
+        username: cleanUsername,
         companyWebsite: normalizeUrl(profile.companyWebsite, "Company website"),
         linkedin: normalizeUrl(profile.linkedin, "LinkedIn"),
         schedulingLink: normalizeUrl(profile.schedulingLink, "Scheduling link"),
@@ -156,7 +170,7 @@ function RecruiterProfile() {
     try {
       setSaving(true);
       const formData = new FormData();
-      ["name", "phone", "location", "linkedin", "designation", "companyName", "companyWebsite", "about", "companyIndustry", "companySize", "companyHeadquarters", "timeZone", "schedulingLink", "emailSignature"].forEach((key) => {
+      ["name", "username", "phone", "location", "linkedin", "designation", "companyName", "companyWebsite", "about", "companyIndustry", "companySize", "companyHeadquarters", "timeZone", "schedulingLink", "emailSignature"].forEach((key) => {
         formData.append(key, normalized[key] || "");
       });
       formData.append("companySocials", JSON.stringify(normalized.companySocials));
@@ -273,6 +287,7 @@ function RecruiterProfile() {
                 <div className="rp-section-heading"><div><h3>Personal information</h3><p>Keep your recruiter contact details current.</p></div></div>
                 <div className="rp-fields">
                   {textField("Full name", "name", { autoComplete: "name", required: true })}
+                  {textField("Username", "username", { placeholder: "recruiter_handle", autoComplete: "username", required: true })}
                   {textField("Account email", "email", { type: "email", readOnly: true, autoComplete: "email", required: true })}
                   {textField("Phone number", "phone", { type: "tel", placeholder: "+91 98765 43210", autoComplete: "tel" })}
                   {textField("Location", "location", { placeholder: "Bengaluru, India", autoComplete: "address-level2", required: true })}

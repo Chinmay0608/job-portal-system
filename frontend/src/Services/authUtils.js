@@ -1,7 +1,6 @@
 import { logoutUserAPI } from "./authService";
 
 export const CANDIDATE_WELCOME_DISMISSED_KEY = "candidate_welcome_dismissed";
-export const DHRUV_MIC_ACCESS_NOTICE_KEY = "dhruv_mic_access_notice_shown";
 export const RECRUITER_REMINDER_START_KEY = "recruiter_profile_reminder_start";
 
 export const notifyAuthChanged = () => {
@@ -22,7 +21,6 @@ export const logoutUser = async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("last_google_email");
     localStorage.removeItem(CANDIDATE_WELCOME_DISMISSED_KEY);
-    localStorage.removeItem(DHRUV_MIC_ACCESS_NOTICE_KEY);
     try { sessionStorage.removeItem(RECRUITER_REMINDER_START_KEY); } catch {}
     notifyAuthChanged();
   }
@@ -39,7 +37,6 @@ export const setStoredUser = (user, token) => {
       if (token) {
         localStorage.setItem("token", token);
         localStorage.removeItem(CANDIDATE_WELCOME_DISMISSED_KEY);
-        localStorage.removeItem(DHRUV_MIC_ACCESS_NOTICE_KEY);
         try {
           if (user?.role === "recruiter" && !user?.isOnboarded) {
             sessionStorage.setItem(RECRUITER_REMINDER_START_KEY, String(Date.now()));
@@ -60,7 +57,7 @@ export const setStoredUser = (user, token) => {
 
 export const getApiBaseUrl = () => {
   const rawUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
-  const fallbackBase = typeof window !== "undefined" && window.location.hostname === "localhost"
+  const fallbackBase = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)
     ? "http://localhost:5000"
     : "";
 

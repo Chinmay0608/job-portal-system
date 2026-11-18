@@ -21,7 +21,7 @@ function Login() {
     redirectDestination.includes("/admin") || 
     searchParams.get("role") === "admin";
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -126,9 +126,20 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const cleanIdentifier = identifier.trim();
+    if (!cleanIdentifier) {
+      toast.error("Please enter your email or username");
+      return;
+    }
     try {
       setLoading(true);
-      const response = await loginUser({ email, password, ...(isAdminTarget ? {} : { role: loginRole }) });
+      const response = await loginUser({
+        identifier: cleanIdentifier,
+        email: cleanIdentifier,
+        username: cleanIdentifier,
+        password,
+        ...(isAdminTarget ? {} : { role: loginRole }),
+      });
       setStoredUser(response.user, response.token);
       toast.success("Login successful");
       redirectUser(response.user);
@@ -256,15 +267,15 @@ function Login() {
 
         <form onSubmit={handleSubmit} className="signup-form">
           <div className="signup-field">
-            <label htmlFor="login-email">Email Address</label>
+            <label htmlFor="login-identifier">Email or Username</label>
             <input
-              id="login-email"
-              type="email"
-              placeholder="mail@website.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="login-identifier"
+              type="text"
+              placeholder="Username or email address"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 

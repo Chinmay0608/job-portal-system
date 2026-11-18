@@ -198,10 +198,14 @@ export default function NotificationsDrawer({ isOpen, onClose, user, onUnreadCou
         if (onOpenMessages) onOpenMessages();
         else window.dispatchEvent(new CustomEvent("skillbridge_open_messages"));
       } else {
-        if (notif.type === "support_update" || targetUrl.includes("/admin")) {
+        if (targetUrl.includes("/admin")) {
           window.dispatchEvent(new CustomEvent("skillbridge_open_admin_support"));
         }
-        navigate(targetUrl);
+        navigate(
+          notif.type === "support_update" && !targetUrl.includes("/admin")
+            ? targetUrl.startsWith("/support/requests") ? targetUrl : "/support/requests"
+            : targetUrl,
+        );
       }
     }
   };

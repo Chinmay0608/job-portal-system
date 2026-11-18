@@ -1,12 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import { DHRUV_MIC_ACCESS_NOTICE_KEY } from "../Services/authUtils";
-import {
-  createSpeakerEmbedding,
-  getVoiceProfile,
-  matchesVoiceProfile,
-  startSpeakerAudioCapture,
-} from "../Services/voiceIdentity";
+import { startMicrophoneAudioCapture } from "../Services/audioCapture";
 import { getDhruvRealtimeScribeToken } from "../Services/jobService";
 
 const getSpeechRecognitionClass = () => {
@@ -78,34 +72,56 @@ export default function useVoiceRecognition() {
   const audioChunkCallbackRef = useRef(null);
   const fallbackSessionRef = useRef(0);
   const committedTranscriptRef = useRef("");
+  const interimTranscriptRef = useRef("");
+  const audioSampleRateRef = useRef(16000);
+  const pendingAudioChunksRef = useRef([]);
+  const hasSentAudioRef = useRef(false);
+  const pendingFinalizeRef = useRef(false);
+  const pendingFinalizeTimerRef = useRef(null);
+  const completeStopRef = useRef(null);
   const wakeRecognitionRef = useRef(null);
   const onResultCallbackRef = useRef(null);
   const onEndCallbackRef = useRef(null);
   const onWakeDetectedCallbackRef = useRef(null);
-  const onWakeStatusCallbackRef = useRef(null);
+  const wakeTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem("dhruv_voice_profile_v1");
+      localStorage.removeItem("dhruv_mic_access_notice_shown");
+    } catch {
+      // Voice matching data is obsolete; storage may be unavailable in private browsing.
+    }
+  }, []);
 
   // Stop regular listening
   const stopListening = useCallback((shouldFinalize = false) => {
-    ++fallbackSessionRef.current;
     const audioCapture = regularAudioCaptureRef.current;
     regularAudioCaptureRef.current = null;
     if (audioCapture) audioCapture.stop().catch((err) => console.warn("[VoiceRecognition] Audio capture stop error:", err));
     audioChunkCallbackRef.current = null;
     const socket = transcriptionSocketRef.current;
-    transcriptionSocketRef.current = null;
-    if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
-    setIsListening(false);
-    if (shouldFinalize && committedTranscriptRef.current) {
-      onResultCallbackRef.current?.(committedTranscriptRef.current);
+    if (shouldFinalize && socket?.readyState === WebSocket.OPEN && hasSentAudioRef.current) {
+      if (pendingFinalizeRef.current) return;
+      pendingFinalizeRef.current = true;
+      try {
+        const sampleRate = audioSampleRateRef.current;
+        socket.send(JSON.stringify({
+          message_type: "input_audio_chunk",
+          audio_base_64: encodePcmChunk(new Float32Array(Math.ceil(sampleRate * 0.1))),
+          commit: true,
+        }));
+        pendingFinalizeTimerRef.current = setTimeout(() => completeStopRef.current?.(true), 1800);
+        return;
+      } catch (error) {
+        console.warn("[VoiceRecognition] Could not finalize transcript:", error);
+      }
     }
-    onEndCallbackRef.current?.();
+    completeStopRef.current?.(shouldFinalize);
   }, []);
 
   const wakeRestartTimerRef = useRef(null);
   const activeWakeRef = useRef(false);
-  const wakeAudioCaptureRef = useRef(null);
-  const wakeVerificationRef = useRef(false);
-  const lastVoicePromptRef = useRef(0);
 
   // Stop wake word listening
   const stopWakeWord = useCallback(() => {
@@ -124,20 +140,12 @@ export default function useVoiceRecognition() {
       }
       wakeRecognitionRef.current = null;
     }
-    const audioCapture = wakeAudioCaptureRef.current;
-    wakeAudioCaptureRef.current = null;
-    if (audioCapture) {
-      audioCapture.stop().catch((err) => {
-        console.warn("[VoiceRecognition] Audio capture stop error:", err);
-      });
-    }
-    wakeVerificationRef.current = false;
     setIsWakeListening(false);
   }, []);
 
   // Stream microphone audio to ElevenLabs and show partial transcripts while speaking.
   const startListening = useCallback(
-    async ({ onResult, onEnd } = {}) => {
+    async ({ onResult, onEnd, keyterms = [] } = {}) => {
       if (!isSupported) {
         toast.error("Audio recording is not supported in this browser.");
         return;
@@ -150,20 +158,49 @@ export default function useVoiceRecognition() {
       setTranscript("");
       setInterimTranscript("");
       committedTranscriptRef.current = "";
+      interimTranscriptRef.current = "";
+      pendingAudioChunksRef.current = [];
+      hasSentAudioRef.current = false;
+      pendingFinalizeRef.current = false;
 
       onResultCallbackRef.current = onResult;
       onEndCallbackRef.current = onEnd;
       const sessionId = ++fallbackSessionRef.current;
       setIsListening(true);
+      audioChunkCallbackRef.current = (audio) => {
+        const chunks = pendingAudioChunksRef.current;
+        if (chunks.length >= 100) chunks.shift();
+        chunks.push(new Float32Array(audio));
+      };
+      completeStopRef.current = (shouldFinalize = false) => {
+        if (fallbackSessionRef.current !== sessionId) return;
+        ++fallbackSessionRef.current;
+        clearTimeout(pendingFinalizeTimerRef.current);
+        pendingFinalizeTimerRef.current = null;
+        pendingFinalizeRef.current = false;
+        const capture = regularAudioCaptureRef.current;
+        regularAudioCaptureRef.current = null;
+        if (capture) capture.stop().catch((err) => console.warn("[VoiceRecognition] Audio capture stop error:", err));
+        audioChunkCallbackRef.current = null;
+        pendingAudioChunksRef.current = [];
+        const activeSocket = transcriptionSocketRef.current;
+        transcriptionSocketRef.current = null;
+        if (activeSocket && activeSocket.readyState < WebSocket.CLOSING) activeSocket.close();
+        setIsListening(false);
+        const finalText = interimTranscriptRef.current || committedTranscriptRef.current;
+        if (shouldFinalize && finalText.trim()) onResultCallbackRef.current?.(finalText.trim());
+        onEndCallbackRef.current?.();
+      };
       const connectingToast = "dhruv-realtime-transcription";
       toast.loading("Connecting to live transcription...", { id: connectingToast });
       try {
-        const capture = await startSpeakerAudioCapture(30, (audio) => audioChunkCallbackRef.current?.(audio));
+        const capture = await startMicrophoneAudioCapture((audio) => audioChunkCallbackRef.current?.(audio));
         if (fallbackSessionRef.current !== sessionId) {
           await capture.stop();
           return;
         }
         regularAudioCaptureRef.current = capture;
+        audioSampleRateRef.current = capture.sampleRate;
         const { token } = await getDhruvRealtimeScribeToken();
         if (fallbackSessionRef.current !== sessionId) return;
 
@@ -172,7 +209,10 @@ export default function useVoiceRecognition() {
           token,
           audio_format: `pcm_${capture.sampleRate}`,
           sample_rate: String(capture.sampleRate),
-          commit_strategy: "vad",
+          commit_strategy: "manual",
+        });
+        keyterms.filter((term) => typeof term === "string" && term.trim()).slice(0, 50).forEach((term) => {
+          params.append("keyterms", term.trim().slice(0, 20));
         });
         const socket = new WebSocket(`wss://api.elevenlabs.io/v1/speech-to-text/realtime?${params}`);
         transcriptionSocketRef.current = socket;
@@ -189,16 +229,24 @@ export default function useVoiceRecognition() {
                 audioChunkCallbackRef.current = (audio) => {
                   if (socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify({ message_type: "input_audio_chunk", audio_base_64: encodePcmChunk(audio) }));
+                    hasSentAudioRef.current = true;
                   }
                 };
+                pendingAudioChunksRef.current.splice(0).forEach((audio) => {
+                  socket.send(JSON.stringify({ message_type: "input_audio_chunk", audio_base_64: encodePcmChunk(audio) }));
+                  hasSentAudioRef.current = true;
+                });
                 toast.dismiss(connectingToast);
                 resolve();
               } else if (message.message_type === "partial_transcript") {
-                setInterimTranscript([committedTranscriptRef.current, message.text].filter(Boolean).join(" "));
+                interimTranscriptRef.current = [committedTranscriptRef.current, message.text?.trim()].filter(Boolean).join(" ").trim();
+                setInterimTranscript(interimTranscriptRef.current);
               } else if (message.message_type === "committed_transcript") {
-                committedTranscriptRef.current = [committedTranscriptRef.current, message.text].filter(Boolean).join(" ").trim();
+                committedTranscriptRef.current = [committedTranscriptRef.current, message.text?.trim()].filter(Boolean).join(" ").trim();
+                interimTranscriptRef.current = committedTranscriptRef.current;
                 setTranscript(committedTranscriptRef.current);
                 setInterimTranscript(committedTranscriptRef.current);
+                if (pendingFinalizeRef.current) completeStopRef.current?.(true);
               } else if (message.error || message.message_type?.endsWith("error") || message.message_type === "rate_limited") {
                 throw new Error(message.error || "Live transcription failed. Please try again.");
               }
@@ -207,7 +255,7 @@ export default function useVoiceRecognition() {
               if (sessionStarted) {
                 setError(error.message);
                 toast.error(error.message);
-                stopListening();
+                stopListening(pendingFinalizeRef.current);
               } else {
                 reject(error);
               }
@@ -219,7 +267,7 @@ export default function useVoiceRecognition() {
             if (sessionStarted) {
               setError(error.message);
               toast.error(error.message);
-              stopListening();
+              stopListening(pendingFinalizeRef.current);
             } else {
               reject(error);
             }
@@ -231,7 +279,7 @@ export default function useVoiceRecognition() {
               if (sessionStarted) {
                 setError(error.message);
                 toast.error(error.message);
-                stopListening();
+                stopListening(pendingFinalizeRef.current);
               } else {
                 reject(error);
               }
@@ -246,6 +294,8 @@ export default function useVoiceRecognition() {
         transcriptionSocketRef.current?.close();
         transcriptionSocketRef.current = null;
         audioChunkCallbackRef.current = null;
+        pendingAudioChunksRef.current = [];
+        completeStopRef.current = null;
         setIsListening(false);
         const message = captureError.response?.data?.message || captureError.message || "Could not start live transcription.";
         setError(message);
@@ -255,16 +305,16 @@ export default function useVoiceRecognition() {
     [isSupported, stopListening, stopWakeWord]
   );
 
-  // Background Wake Word Detection ("Hey Dhruv", "Dhruv", "OK Dhruv")
+  // Background wake word detection ("Hey Dhruv", "Dhruv", "OK Dhruv")
   const listenForWakeWord = useCallback(
-    (onWakeWordDetected, onWakeStatus) => {
+    (onWakeWordDetected) => {
       if (!SpeechRecognitionClass || !isSupported) return;
 
       stopWakeWord();
       stopListening();
       activeWakeRef.current = true;
+      wakeTriggeredRef.current = false;
       onWakeDetectedCallbackRef.current = onWakeWordDetected;
-      onWakeStatusCallbackRef.current = onWakeStatus;
 
       const startWakeSession = () => {
         if (!activeWakeRef.current || !SpeechRecognitionClass) return;
@@ -294,56 +344,12 @@ export default function useVoiceRecognition() {
             const cleanText = rawText.toLowerCase().replace(/[^a-z0-9\s]/gi, " ").replace(/\s+/g, " ").trim();
             const wakePattern = /\b(hey|hi|hello|ok|okay|ask)?\s*(dhruv|druv|dhruva|drew|droov|dhrub|dhru|dhroov)\b/i;
 
-            if (wakePattern.test(cleanText) && !wakeVerificationRef.current) {
-              const profile = getVoiceProfile();
-              if (!profile) {
-                if (Date.now() - lastVoicePromptRef.current > 8000) {
-                  lastVoicePromptRef.current = Date.now();
-                  onWakeStatusCallbackRef.current?.("profile-missing");
-                  toast("Set up voice match in DHRUV before using the wake phrase.", {
-                    id: "dhruv-voice-enrollment-needed",
-                  });
-                }
-                return;
-              }
-
-              const audioCapture = wakeAudioCaptureRef.current;
-              if (!audioCapture) {
-                onWakeStatusCallbackRef.current?.("capture-unavailable");
-                return;
-              }
-              wakeVerificationRef.current = true;
-              const audio = audioCapture.getRecentAudio();
+            if (wakePattern.test(cleanText) && !wakeTriggeredRef.current) {
+              wakeTriggeredRef.current = true;
               const promptAfterWake = cleanText.replace(wakePattern, "").trim();
-              const verificationToastId = "dhruv-voice-verification";
-              onWakeStatusCallbackRef.current?.("checking");
-              toast.loading("Checking your voice on this device...", { id: verificationToastId });
-
-              void (async () => {
-                try {
-                  const embedding = await createSpeakerEmbedding(audio, audioCapture.sampleRate);
-                  if (!activeWakeRef.current) return;
-                  if (!matchesVoiceProfile(embedding, profile)) {
-                    if (Date.now() - lastVoicePromptRef.current > 5000) {
-                      lastVoicePromptRef.current = Date.now();
-                      onWakeStatusCallbackRef.current?.("speaker-mismatch");
-                      toast("I couldn't match that voice to your enrolled profile.");
-                    }
-                    return;
-                  }
-                  console.log("[VoiceRecognition] Enrolled speaker matched.");
-                  playWakeChime();
-                  stopWakeWord();
-                  onWakeDetectedCallbackRef.current?.(promptAfterWake);
-                } catch (err) {
-                  console.error("[VoiceRecognition] Speaker verification failed:", err);
-                  onWakeStatusCallbackRef.current?.("verification-error");
-                  toast.error("DHRUV couldn't verify your voice. Please try again.");
-                } finally {
-                  toast.dismiss(verificationToastId);
-                  wakeVerificationRef.current = false;
-                }
-              })();
+              playWakeChime();
+              stopWakeWord();
+              onWakeDetectedCallbackRef.current?.(promptAfterWake);
             }
           };
 
@@ -389,32 +395,7 @@ export default function useVoiceRecognition() {
         }
       };
 
-      void startSpeakerAudioCapture().then((capture) => {
-        if (!activeWakeRef.current) {
-          void capture.stop();
-          return;
-        }
-        wakeAudioCaptureRef.current = capture;
-        startWakeSession();
-      }).catch((err) => {
-        console.error("[VoiceRecognition] Could not capture audio for voice match:", err);
-        if (activeWakeRef.current) {
-          activeWakeRef.current = false;
-          setIsWakeListening(false);
-          let shouldShowNotice = true;
-          try {
-            shouldShowNotice = localStorage.getItem(DHRUV_MIC_ACCESS_NOTICE_KEY) !== "true";
-            if (shouldShowNotice) localStorage.setItem(DHRUV_MIC_ACCESS_NOTICE_KEY, "true");
-          } catch {
-            // Keep the notice de-duplicated by toast ID when storage is unavailable.
-          }
-          if (shouldShowNotice) {
-            toast.error("DHRUV needs microphone access to match your enrolled voice.", {
-              id: DHRUV_MIC_ACCESS_NOTICE_KEY,
-            });
-          }
-        }
-      });
+      startWakeSession();
     },
     [isSupported, SpeechRecognitionClass, stopWakeWord, stopListening]
   );

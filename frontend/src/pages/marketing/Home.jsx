@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getStoredUser } from "../../Services/authUtils";
+import { getJobs } from "../../Services/jobService";
 import {
   ArrowRight,
   BriefcaseBusiness,
+  Clock3,
   GraduationCap,
   HeartPulse,
   Headset,
@@ -12,29 +15,95 @@ import {
   Sparkles,
   Truck,
   Utensils,
+  X,
 } from "lucide-react";
 
 const categories = [
-  { name: "Healthcare", detail: "Care, clinical & wellness", icon: HeartPulse },
-  { name: "Customer service", detail: "Support & success", icon: Headset },
-  { name: "Retail & sales", detail: "Stores, sales & service", icon: ShoppingBag },
-  { name: "Education", detail: "Teaching & learning", icon: GraduationCap },
-  { name: "Hospitality", detail: "Food, hotels & events", icon: Utensils },
-  { name: "Transportation", detail: "Driving & logistics", icon: Truck },
-  { name: "Technology", detail: "IT, product & engineering", icon: Sparkles },
-  { name: "All opportunities", detail: "Explore every possibility", icon: BriefcaseBusiness, query: "" },
+  { name: "Healthcare", detail: "Care, clinical & wellness", icon: HeartPulse, category: "healthcare" },
+  { name: "Customer service", detail: "Support & success", icon: Headset, category: "customer_service" },
+  { name: "Retail & sales", detail: "Stores, sales & service", icon: ShoppingBag, category: "retail_sales" },
+  { name: "Education", detail: "Teaching & learning", icon: GraduationCap, category: "education" },
+  { name: "Hospitality", detail: "Food, hotels & events", icon: Utensils, category: "hospitality" },
+  { name: "Transportation", detail: "Driving & logistics", icon: Truck, category: "transportation" },
+  { name: "Technology", detail: "IT, product & engineering", icon: Sparkles, category: "technology" },
+  { name: "All opportunities", detail: "Explore every possibility", icon: BriefcaseBusiness, category: "all" },
 ];
 
 function Home() {
   const navigate = useNavigate();
   const [jobQuery, setJobQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const [previewCategory, setPreviewCategory] = useState(null);
+  const [previewJobs, setPreviewJobs] = useState([]);
+  const [previewTotalJobs, setPreviewTotalJobs] = useState(0);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const closeButtonRef = useRef(null);
+  const PreviewIcon = previewCategory?.icon;
 
-  const searchJobs = (query = jobQuery, location = locationQuery) => {
+  const searchJobs = (query = jobQuery, location = locationQuery, category = "") => {
     const params = new URLSearchParams({ tab: "jobs" });
     if (query.trim()) params.set("search", query.trim());
     if (location.trim()) params.set("location", location.trim());
+    if (category) params.set("category", category);
     navigate(`/candidate-dashboard?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    if (!previewCategory) return undefined;
+    let cancelled = false;
+    setPreviewJobs([]);
+    setPreviewTotalJobs(0);
+    setPreviewLoading(true);
+    getJobs({ category: previewCategory.category, page: 1, limit: 10 })
+      .then((result) => {
+        if (!cancelled) {
+          setPreviewJobs(result?.jobs || []);
+          setPreviewTotalJobs(result?.totalJobs || result?.jobs?.length || 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPreviewJobs([]);
+          setPreviewTotalJobs(0);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setPreviewCategory(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [previewCategory]);
+
+  const openCategory = (category) => {
+    if (getStoredUser()?.role === "candidate") {
+      searchJobs("", "", category);
+      return;
+    }
+    setPreviewCategory(categories.find((item) => item.category === category));
+  };
+
+  const openPreviewJob = (job) => {
+    const params = new URLSearchParams({ tab: "jobs", category: previewCategory.category, jobId: job._id });
+    const redirectAfterLogin = `/candidate-dashboard?${params.toString()}`;
+    if (getStoredUser()?.role === "candidate") {
+      navigate(redirectAfterLogin);
+      return;
+    }
+    navigate(`/register?redirect=${encodeURIComponent(redirectAfterLogin)}`, {
+      state: { role: "candidate", redirectAfterLogin },
+    });
   };
 
   return (
@@ -97,8 +166,8 @@ function Home() {
           <p className="home-section-subtitle">Explore different fields, discover new possibilities, and find work that fits the life you want.</p>
         </div>
         <div className="home-categories-grid">
-          {categories.map(({ name, detail, icon: Icon, query = name }) => (
-            <button className="home-category-card" key={name} type="button" onClick={() => searchJobs(query, "")}>
+          {categories.map(({ name, detail, icon: Icon, category }) => (
+            <button className="home-category-card" key={name} type="button" onClick={() => openCategory(category)}>
               <span className="home-cat-icon"><Icon size={21} strokeWidth={1.8} /></span>
               <span className="home-cat-copy"><strong>{name}</strong><small>{detail}</small></span>
               <ArrowRight className="home-cat-arrow" size={18} aria-hidden="true" />
@@ -133,6 +202,102 @@ function Home() {
         <h2>There’s a next step for you.</h2>
         <button type="button" onClick={() => searchJobs("", "")}>Start your job search <ArrowRight size={18} /></button>
       </section>
+
+      {previewCategory && (
+        <div className="home-job-preview-backdrop" onClick={(event) => { if (event.target === event.currentTarget) setPreviewCategory(null); }}>
+          <section
+            className="home-job-preview"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="home-job-preview-title"
+            onKeyDown={(event) => {
+              if (event.key !== "Tab") return;
+              const buttons = event.currentTarget.querySelectorAll("button:not([disabled])");
+              const first = buttons[0];
+              const last = buttons[buttons.length - 1];
+              if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+              } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+              }
+            }}
+          >
+            <div className="home-job-preview-header">
+              <div className="home-job-preview-heading">
+                <div className="home-job-preview-category-icon"><PreviewIcon size={22} strokeWidth={1.8} /></div>
+                <span className="home-job-preview-eyebrow"><span /> A quick look at</span>
+                <h2 id="home-job-preview-title">{previewCategory.name} jobs</h2>
+                <p>Real openings picked from across SkillBridge.</p>
+                <div className="home-job-preview-meta">
+                  {!previewLoading && previewTotalJobs > 0 && <span className="home-job-preview-count"><i />{previewTotalJobs.toLocaleString()} open roles</span>}
+                  <span>Sign in to view details and apply</span>
+                </div>
+              </div>
+              <button ref={closeButtonRef} className="home-job-preview-close" type="button" aria-label="Close job preview" onClick={() => setPreviewCategory(null)}><X size={20} /></button>
+            </div>
+
+            {previewLoading ? (
+              <div className="home-job-preview-window home-job-preview-loading" role="status" aria-label={`Loading ${previewCategory.name} jobs`}>
+                {[0, 1, 2].map((index) => <div key={index} className="home-job-preview-skeleton" />)}
+              </div>
+            ) : previewJobs.length ? (
+              <div className="home-job-preview-window">
+                <div className="home-job-preview-track">
+                  {previewJobs.map((job) => (
+                    <button key={job._id} className="home-job-preview-card" type="button" onClick={() => openPreviewJob(job)}>
+                      <span className="home-job-preview-card-icon"><BriefcaseBusiness size={18} /></span>
+                      <span className="home-job-preview-card-details">
+                        <strong title={job.title}>{job.title}</strong>
+                        <span title={job.company}>{job.company || "Hiring company"}</span>
+                        <small>{job.location || "Location flexible"}</small>
+                      </span>
+                      <span className="home-job-preview-card-arrow"><ArrowRight size={18} /></span>
+                      <span className="home-job-preview-card-tags">
+                        {job.employmentType && <span><Clock3 size={12} />{job.employmentType}</span>}
+                        {job.isRemote && <span>Remote</span>}
+                        <span className="home-job-preview-card-open">Explore <ArrowRight size={12} /></span>
+                      </span>
+                    </button>
+                  ))}
+                  {previewJobs.map((job) => (
+                    <div key={`copy-${job._id}`} className="home-job-preview-card home-job-preview-card-copy" aria-hidden="true">
+                      <span className="home-job-preview-card-icon"><BriefcaseBusiness size={18} /></span>
+                      <span className="home-job-preview-card-details">
+                        <strong title={job.title}>{job.title}</strong>
+                        <span title={job.company}>{job.company || "Hiring company"}</span>
+                        <small>{job.location || "Location flexible"}</small>
+                      </span>
+                      <span className="home-job-preview-card-arrow"><ArrowRight size={18} /></span>
+                      <span className="home-job-preview-card-tags">
+                        {job.employmentType && <span><Clock3 size={12} />{job.employmentType}</span>}
+                        {job.isRemote && <span>Remote</span>}
+                        <span className="home-job-preview-card-open">Explore <ArrowRight size={12} /></span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="home-job-preview-empty">
+                <span className="home-job-preview-empty-icon"><PreviewIcon size={22} /></span>
+                <strong>No open roles just yet</strong>
+                <span>Try another field or check back soon for new {previewCategory.name.toLowerCase()} jobs.</span>
+              </div>
+            )}
+
+            <div className="home-job-preview-footer">
+              <span><strong>Your next move starts here.</strong><small>Get the full details and apply in a few clicks.</small></span>
+              <button type="button" onClick={() => {
+                const redirect = `/candidate-dashboard?${new URLSearchParams({ tab: "jobs", category: previewCategory.category })}`;
+                setPreviewCategory(null);
+                navigate(`/register?redirect=${encodeURIComponent(redirect)}`, { state: { role: "candidate", redirectAfterLogin: redirect } });
+              }}>Create a free account <ArrowRight size={16} /></button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

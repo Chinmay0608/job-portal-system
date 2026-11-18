@@ -959,19 +959,36 @@ async function ensureFullJobDescription(job) {
   let details = null;
   const sourceUrl = job.descriptionSourceUrl || job.applyUrl;
   if (sourceUrl) {
+    let atsLookupFailed = false;
     try {
       details = await fetchAtsPosting(sourceUrl, job);
-      if (!details) {
-        details = scrapeExternalPosting(
-          await fetchPosting(sourceUrl),
-          job,
-        );
-      }
     } catch (error) {
+      try {
+        const host = new URL(sourceUrl).hostname.toLowerCase();
+        atsLookupFailed =
+          host === "boards.greenhouse.io" ||
+          host === "job-boards.greenhouse.io" ||
+          host === "jobs.lever.co";
+      } catch {}
       console.warn(
         "[FullDescriptionService] Could not fetch employer posting:",
         error.message,
       );
+    }
+    // An ATS API timeout/error followed by a request to its public job page
+    // can double the loading delay and rarely returns more detail.
+    if (!details && !atsLookupFailed) {
+      try {
+        details = scrapeExternalPosting(
+          await fetchPosting(sourceUrl),
+          job,
+        );
+      } catch (error) {
+        console.warn(
+          "[FullDescriptionService] Could not fetch employer posting:",
+          error.message,
+        );
+      }
     }
   }
 
@@ -1009,6 +1026,7 @@ async function ensureFullJobDescription(job) {
 module.exports = {
   isDescriptionSnippet,
   isReferralAlertDescription,
+  resolvePublicUrl,
   ensureFullJobDescription,
   fetchAtsPosting,
   scrapeExternalPosting,

@@ -11,21 +11,32 @@ const seedAdminUser = async () => {
     }
 
     const User = require("../models/user");
+    const { generateUniqueUsername } = require("../utils/usernameUtils");
     const existingAdmin = await User.findOne({ email: adminEmail }).select("+password");
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      const adminUsername = await User.findOne({ username: "admin" }) ? await generateUniqueUsername("admin", User) : "admin";
       await User.create({
         name: "System Admin",
+        username: adminUsername,
         email: adminEmail,
         password: hashedPassword,
         role: "admin",
       });
       console.log("[Admin Seed] Created configured admin user.");
     } else {
+      let changed = false;
       const isMatch = await bcrypt.compare(adminPassword, existingAdmin.password || "");
       if (!isMatch || existingAdmin.role !== "admin") {
         existingAdmin.password = await bcrypt.hash(adminPassword, 12);
         existingAdmin.role = "admin";
+        changed = true;
+      }
+      if (!existingAdmin.username) {
+        existingAdmin.username = await User.findOne({ username: "admin" }) ? await generateUniqueUsername("admin", User) : "admin";
+        changed = true;
+      }
+      if (changed) {
         await existingAdmin.save();
         console.log("[Admin Seed] Synchronized configured admin account.");
       }

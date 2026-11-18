@@ -187,7 +187,6 @@ const ExperienceSelect = ({
         </div>
       </button>
 
-      {/* Floating Popover matching the exact screenshot design */}
       {isOpen && (
         <div
           role="listbox"
@@ -229,17 +228,21 @@ const ExperienceSelect = ({
                   role="option"
                   aria-selected={isSelected}
                   onClick={() => handleSelect(opt.value)}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between ${
+                  className={`w-full appearance-none border-0 text-left px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset ${
                     isSelected
-                      ? "bg-[#00acc1] text-slate-900 shadow-sm"
-                      : "hover:bg-slate-50 text-slate-800"
+                      ? compact
+                        ? "bg-[#b96534] text-white"
+                        : "bg-brand-500 text-white"
+                      : compact
+                        ? "bg-transparent text-slate-800 hover:bg-[#fbefdc] hover:text-[#8f4a24]"
+                        : "bg-transparent text-slate-800 hover:bg-brand-50 hover:text-brand-700"
                   }`}
                 >
                   <div className="flex items-start gap-2.5 min-w-0">
                     {/* Checkmark icon for selected option */}
                     {isSelected ? (
                       <Check
-                        className="text-slate-900 shrink-0 mt-0.5"
+                        className="shrink-0 mt-0.5"
                         size={18}
                         strokeWidth={2.75}
                         aria-hidden="true"
@@ -251,7 +254,7 @@ const ExperienceSelect = ({
                     <div className="flex flex-col min-w-0">
                       <span
                         className={`text-sm leading-tight truncate ${
-                          isSelected ? "font-semibold text-slate-900" : "font-medium text-slate-800"
+                          isSelected ? "font-semibold" : "font-medium"
                         }`}
                       >
                         {opt.label}
@@ -259,7 +262,7 @@ const ExperienceSelect = ({
                       {opt.subtitle && (
                         <span
                           className={`text-xs mt-0.5 leading-tight truncate ${
-                            isSelected ? "text-slate-800/80 font-normal" : "text-slate-400"
+                            isSelected ? "text-white/80 font-normal" : "text-slate-400"
                           }`}
                         >
                           {opt.subtitle}

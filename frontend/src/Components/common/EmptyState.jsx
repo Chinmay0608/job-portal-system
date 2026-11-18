@@ -54,7 +54,7 @@ export default function EmptyState({
           actionHref ? (
             <Link
               to={actionHref}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all duration-150 active:scale-[0.98] min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 border-0 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all duration-150 active:scale-[0.98] min-h-[44px] min-w-[44px] outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             >
               {ActionIcon && <ActionIcon className="w-4 h-4" />}
               <span>{actionText}</span>

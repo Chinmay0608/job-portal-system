@@ -50,6 +50,7 @@ const TermsOfUse = lazy(() => import("./pages/legal/TermsOfUse"));
 const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
 const Security = lazy(() => import("./pages/legal/Security"));
 const HelpCenter = lazy(() => import("./pages/legal/HelpCenter"));
+const SupportRequests = lazy(() => import("./pages/support/SupportRequests"));
 
 // ==========================================================================
 // 6. UNIVERSAL UTILITY SHIFT SHARED LAYOUT IMPORT SEGMENT
@@ -89,6 +90,8 @@ function AppContent() {
               <Route path="/candidate-dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
               <Route path="/my-applications" element={<ProtectedRoute role="candidate"><MyApplications /></ProtectedRoute>} />
               <Route path="/candidate-profile" element={<ProtectedRoute role="candidate"><CandidateProfile /></ProtectedRoute>} />
+              <Route path="/support/requests" element={<ProtectedRoute role={["candidate", "recruiter", "admin"]}><SupportRequests /></ProtectedRoute>} />
+              <Route path="/support/requests/:ticketId" element={<ProtectedRoute role={["candidate", "recruiter", "admin"]}><SupportRequests /></ProtectedRoute>} />
 
               {/* ========================================== */}
               {/* ================= ADMIN ================== */}

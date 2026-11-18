@@ -9,6 +9,7 @@ const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("express-async-handler");
 const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
 const Application = require("../models/Application");
+const { normalizeUsername, isValidUsername, generateUniqueUsername } = require("../utils/usernameUtils");
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "5d";
 const COOKIE_MAX_AGE = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
@@ -16,6 +17,7 @@ const COOKIE_MAX_AGE = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
 const formatUserDTO = (user, applicationsCount = 0) => ({
   _id: user._id,
   name: user.name,
+  username: user.username || "",
   email: user.email,
   role: user.role,
   phone: user.phone || "",
@@ -58,19 +60,42 @@ const formatUserDTO = (user, applicationsCount = 0) => ({
    REGISTER USER
 ========================== */
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
-  const normalizedEmail = email.trim().toLowerCase();
+  const { name, username, email, password, role } = req.body;
+  const normalizedEmail = String(email || "").trim().toLowerCase();
   const accountRole = role === "recruiter" ? "recruiter" : "candidate";
 
-  const existingUser = await User.findOne({ email: normalizedEmail });
-  if (existingUser) {
+  if (!normalizedEmail) {
+    res.status(400);
+    throw new Error("Email is required");
+  }
+
+  const existingEmailUser = await User.findOne({ email: normalizedEmail });
+  if (existingEmailUser) {
     res.status(400);
     throw new Error("Registration failed. Email may already be in use.");
+  }
+
+  let finalUsername = "";
+  if (username) {
+    const cleanUsername = normalizeUsername(username);
+    if (!isValidUsername(cleanUsername)) {
+      res.status(400);
+      throw new Error("Username must be between 3 and 30 characters and can only contain letters, numbers, underscores, dots, or hyphens");
+    }
+    const existingUsername = await User.findOne({ username: cleanUsername });
+    if (existingUsername) {
+      res.status(400);
+      throw new Error("Registration failed. Username is already taken.");
+    }
+    finalUsername = cleanUsername;
+  } else {
+    finalUsername = await generateUniqueUsername(name || email, User);
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
   const user = await User.create({
     name,
+    username: finalUsername,
     email: normalizedEmail,
     password: hashedPassword,
     role: accountRole,
@@ -100,18 +125,22 @@ const registerUser = asyncHandler(async (req, res) => {
    LOGIN USER
 ========================== */
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password, role: requestedRole } = req.body;
+  const { password, role: requestedRole } = req.body;
+  const rawIdentifier = (req.body.identifier || req.body.username || req.body.email || "").trim();
 
-  if (!email || !password) {
+  if (!rawIdentifier || !password) {
     res.status(400);
-    throw new Error("Email and password are required");
+    throw new Error("Email or username and password are required");
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedIdentifier = rawIdentifier.toLowerCase();
 
-  const user = await User.findOne({ email: normalizedEmail }).select(
-    "+password",
-  );
+  const user = await User.findOne({
+    $or: [
+      { email: normalizedIdentifier },
+      { username: normalizedIdentifier },
+    ],
+  }).select("+password");
 
   if (!user) {
     res.status(401);
@@ -128,6 +157,12 @@ const loginUser = asyncHandler(async (req, res) => {
   if (["candidate", "recruiter"].includes(requestedRole) && ["candidate", "recruiter"].includes(user.role) && user.role !== requestedRole) {
     res.status(403);
     throw new Error(`This account is registered as a ${user.role}. Select ${user.role} to sign in.`);
+  }
+
+  // Backfill username for existing user if missing
+  if (!user.username) {
+    user.username = await generateUniqueUsername(user.name || user.email, User);
+    await user.save();
   }
 
   const token = jwt.sign(
@@ -202,15 +237,27 @@ const googleLogin = asyncHandler(async (req, res) => {
   if (!user) {
     const randomPassword = crypto.randomBytes(32).toString("hex");
     const hashedPassword = await bcrypt.hash(randomPassword, 12);
+    const generatedUsername = await generateUniqueUsername(name || email, User);
     user = await User.create({
       name,
+      username: generatedUsername,
       email: normalizedEmail,
       password: hashedPassword,
       role: requestedRole,
     });
-  } else if (user.role !== "admin" && user.role !== requestedRole) {
-    user.role = requestedRole;
-    await user.save();
+  } else {
+    let shouldSave = false;
+    if (user.role !== "admin" && user.role !== requestedRole) {
+      user.role = requestedRole;
+      shouldSave = true;
+    }
+    if (!user.username) {
+      user.username = await generateUniqueUsername(user.name || user.email, User);
+      shouldSave = true;
+    }
+    if (shouldSave) {
+      await user.save();
+    }
   }
 
   const token = jwt.sign(

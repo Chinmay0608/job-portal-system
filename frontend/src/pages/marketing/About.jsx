@@ -22,7 +22,7 @@ function About() {
     totalJobs: 31949,
     activeJobs: 12447,
     companiesCount: 8775,
-    matchPrecision: "98.4%",
+    matchScoreRange: "0-100",
     domainsCount: "30+",
   });
 
@@ -85,8 +85,8 @@ function About() {
       icon: <Globe />,
     },
     {
-      number: platformStats.matchPrecision || "98.4%",
-      label: "AI Match Precision Score",
+      number: platformStats.matchScoreRange || "0-100",
+      label: "AI Match Score Range",
       icon: <TrendingUp />,
     },
   ];

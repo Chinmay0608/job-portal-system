@@ -64,6 +64,7 @@ function CandidateProfile() {
 
   // 2. Input Fields State
   const [name, setName] = useState(user?.name || "");
+  const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [location, setLocation] = useState(user?.location || "");
@@ -194,6 +195,7 @@ function CandidateProfile() {
     if (user) {
       setSavedCompletion(calculateCompletion(user));
       setName(user.name || "");
+      setUsername(user.username || "");
       setEmail(user.email || "");
       setPhone(user.phone || "");
       setLocation(user.location || "");
@@ -242,11 +244,26 @@ function CandidateProfile() {
       toast.error("Experience Level is required");
       return;
     }
+    const cleanUsername = username.trim().replace(/^@/, "").toLowerCase();
+    if (cleanUsername) {
+      if (cleanUsername.length < 3 || cleanUsername.length > 30) {
+        toast.error("Username must be between 3 and 30 characters");
+        return;
+      }
+      if (!/^[a-z0-9_.-]+$/.test(cleanUsername)) {
+        toast.error("Username can only contain lowercase letters, numbers, underscores, dots, or hyphens");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       const formData = new FormData();
 
       formData.append("name", name);
+      if (cleanUsername) {
+        formData.append("username", cleanUsername);
+      }
       formData.append("phone", phone);
       formData.append("location", location);
       formData.append("country", country);
@@ -717,6 +734,25 @@ function CandidateProfile() {
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                   placeholder="Your full name"
                 />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Username <span className="text-rose-600">*</span></label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 font-semibold text-sm">
+                    @
+                  </span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))}
+                    required
+                    className="w-full pl-8 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                    placeholder="unique_username"
+                  />
+                </div>
+                <p className="mt-1 text-[11px] text-slate-500">Sign in with either this username or your email.</p>
               </div>
 
               {/* Email */}

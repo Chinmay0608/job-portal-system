@@ -6,6 +6,7 @@ import StatusBadge from "../../Components/common/StatusBadge";
 import EmptyState from "../../Components/common/EmptyState";
 import { JobCardSkeleton } from "../../Components/common/SkeletonLoader";
 import undrawInterviewSvg from "../../assets/undraw_interview_yz52.svg";
+import { formatSalary } from "../../utils/salary";
 
 import { getApiBaseUrl } from "../../Services/authUtils";
 
@@ -204,7 +205,7 @@ function RecruiterApplications() {
                 </div>
                 <div className="modal-section">
                   <span className="modal-label">Salary</span>
-                  <p>{selectedApplication.job?.salary || "N/A"}</p>
+                  <p>{selectedApplication.job ? formatSalary(selectedApplication.job.salary, selectedApplication.job.salaryMin, selectedApplication.job.salaryMax, selectedApplication.job.salaryCurrency, selectedApplication.job.showSalaryRange !== false, selectedApplication.job.employmentType || selectedApplication.job.role) : "N/A"}</p>
                 </div>
               </div>
 

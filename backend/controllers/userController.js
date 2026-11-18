@@ -7,6 +7,7 @@ const { extractSkillsFromResume, extractSkillsFromBuffer, parseFullResumeFromFil
 const asyncHandler = require("express-async-handler");
 const logger = require("../utils/logger");
 const { PASSWORD_POLICY_MESSAGE, isStrongPassword } = require("../utils/passwordPolicy");
+const { normalizeUsername, isValidUsername, generateUniqueUsername } = require("../utils/usernameUtils");
 
 const cleanProfileUrl = (value) => {
   const trimmed = String(value || "").trim();
@@ -64,6 +65,7 @@ const saveSkillsToMaster = async (skills = []) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const {
     name,
+    username,
     phone,
     location,
     country,
@@ -130,6 +132,30 @@ const updateProfile = asyncHandler(async (req, res) => {
     ];
     const missingField = requiredRecruiterFields.find(([, value]) => !String(value || "").trim());
     if (missingField) return res.status(400).json({ message: `${missingField[0]} is required` });
+  }
+
+  if (username !== undefined) {
+    const cleanUsername = normalizeUsername(username);
+    if (!cleanUsername) {
+      return res.status(400).json({ message: "Username cannot be empty" });
+    }
+    if (!isValidUsername(cleanUsername)) {
+      return res.status(400).json({
+        message: "Username must be between 3 and 30 characters and can only contain letters, numbers, underscores, dots, or hyphens",
+      });
+    }
+    if (cleanUsername !== user.username) {
+      const existing = await User.findOne({
+        username: cleanUsername,
+        _id: { $ne: user._id },
+      });
+      if (existing) {
+        return res.status(400).json({ message: "Username is already taken. Please choose another." });
+      }
+      user.username = cleanUsername;
+    }
+  } else if (!user.username) {
+    user.username = await generateUniqueUsername(user.name || user.email, User);
   }
 
   user.name = name || user.name;
@@ -297,6 +323,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     user: {
       _id: user._id,
       name: user.name,
+      username: user.username || "",
       email: user.email,
       role: user.role,
       phone: user.phone,
@@ -576,6 +603,11 @@ const getProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  if (!user.username) {
+    user.username = await generateUniqueUsername(user.name || user.email, User);
+    await user.save();
+  }
+
   const userApps = await Application.find({ candidate: user._id }).populate("job", "_id");
   const orphanedIds = userApps.filter((app) => !app.job).map((app) => app._id);
   if (orphanedIds.length > 0) {
@@ -587,6 +619,7 @@ const getProfile = asyncHandler(async (req, res) => {
     user: {
       _id: user._id,
       name: user.name,
+      username: user.username || "",
       email: user.email,
       role: user.role,
       phone: user.phone || "",
@@ -650,6 +683,7 @@ const completeRecruiterOnboarding = asyncHandler(async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
+        username: user.username || "",
         email: user.email,
         role: user.role,
         companyName: user.companyName || "",
@@ -689,6 +723,7 @@ const completeRecruiterOnboarding = asyncHandler(async (req, res) => {
     user: {
       _id: user._id,
       name: user.name,
+      username: user.username || "",
       email: user.email,
       role: user.role,
       companyName: user.companyName,
@@ -750,6 +785,7 @@ const completeOnboarding = asyncHandler(async (req, res) => {
     user: {
       _id: user._id,
       name: user.name,
+      username: user.username || "",
       email: user.email,
       role: user.role,
       phone: user.phone || "",

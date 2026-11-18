@@ -541,6 +541,20 @@ export default function SupportTicketsView() {
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 whitespace-pre-wrap leading-relaxed">{selectedTicket.description}</div>
               </div>
 
+              {selectedTicket.followUpMessages?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">User Follow-up</h4>
+                  <div className="space-y-2">
+                    {selectedTicket.followUpMessages.map((item, index) => (
+                      <div key={`${item.createdAt}-${index}`} className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                        <p className="m-0 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">{item.message}</p>
+                        <p className="mb-0 mt-2 text-[11px] text-slate-500">{formatRelativeTime(item.createdAt)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Screenshot */}
               {selectedTicket.screenshotUrl && (
                 <div>

@@ -30,6 +30,7 @@ const requestOtp = async (req, res) => {
 };
 
 const confirmOtp = async (req, res) => {
+
   const request = await AccountDeletionRequest.findOne({ user: req.user.id, status: "pending" }).select("+otpHash");
   const otpHash = crypto.createHash("sha256").update(String(req.body.otp || "")).digest("hex");
   if (!request || !request.otpHash || request.otpExpires < new Date() || !crypto.timingSafeEqual(Buffer.from(otpHash), Buffer.from(request.otpHash))) return res.status(400).json({ message: "Invalid or expired verification code." });

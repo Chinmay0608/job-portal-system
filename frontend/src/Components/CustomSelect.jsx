@@ -44,7 +44,8 @@ const getCustomStyles = (borderless, mutedValue, maxMenuHeight, compact) => ({
         : compact ? '#493b2e' : '#0f172a',
     cursor: 'pointer',
     padding: '10px 14px',
-    margin: '2px 0',
+    margin: state.data?.separatorAfter ? '2px 0 8px' : '2px 0',
+    borderBottom: state.data?.separatorAfter ? '1px solid #cbd5e1' : 'none',
     borderRadius: '10px',
     fontSize: '0.875rem',
     fontWeight: state.isSelected ? '600' : '500',
@@ -57,7 +58,7 @@ const getCustomStyles = (borderless, mutedValue, maxMenuHeight, compact) => ({
   menu: (provided, state) => ({
     ...provided,
     borderRadius: compact ? '12px' : '18px',
-    border: compact ? '1px solid #ead5b7' : '1px solid #e2e8f0',
+    border: '1px solid #111827',
     boxShadow: '0 18px 34px -18px rgba(15, 23, 42, 0.3), 0 5px 12px -7px rgba(15, 23, 42, 0.16)',
     padding: '6px',
     overflow: 'hidden',

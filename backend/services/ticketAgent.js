@@ -268,6 +268,7 @@ async function _run(ticket) {
     category,
     severity,
     aiSummary: summary,
+    resolutionMessage: resolverMessage || `Your support request is ${finalStatus.replace("_", " ")}.`,
     autoResolved: finalStatus === "resolved" || finalStatus === "closed",
     status: finalStatus,
   };
@@ -305,7 +306,7 @@ async function _run(ticket) {
         title: `Support Ticket ${finalStatus === "resolved" ? "Resolved" : "Update"}: ${summary ? summary.slice(0, 80) : "Triage Complete"}`,
         message: resolverMessage || `Your support ticket #${String(ticket._id).slice(-6)} has been updated to "${finalStatus}".`,
         priority: isHighSeverity ? "high" : "normal",
-        actionUrl: "/help",
+        actionUrl: `/support/requests/${ticket._id}`,
       });
       addLog("notification_created", `recipient=${ticket.user}`);
     } catch (notifErr) {

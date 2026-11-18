@@ -11,6 +11,7 @@ import AiInterviewAssistant from "../../Components/AiInterviewAssistant";
 import { getApiBaseUrl, getStoredUser } from "../../Services/authUtils";
 import { Sparkles } from "lucide-react";
 import { isTraoEnabled } from "../../utils/envUtils";
+import { formatSalary as formatJobSalary } from "../../utils/salary";
 
 function MyApplications() {
   const navigate = useNavigate();
@@ -106,17 +107,15 @@ function MyApplications() {
   };
 
   const formatSalary = (job) => {
-    if (!job.salary) return "Not specified";
-    const raw = String(job.salary);
-    // If it's not purely numeric (already has '$' or 'k', etc), return as is
-    if (isNaN(Number(raw))) return raw;
-    
-    // Otherwise it's purely a number
-    const formattedNum = Number(raw).toLocaleString("en-US");
-    if (job.salaryCurrency === 'INR') return `₹${formattedNum}`;
-    if (job.salaryCurrency === 'USD') return `$${formattedNum}`;
-    if (job.salaryCurrency) return `${job.salaryCurrency} ${formattedNum}`;
-    return formattedNum;
+    if (!job?.salary && !job?.salaryMin) return "Not specified";
+    return formatJobSalary(
+      job.salary,
+      job.salaryMin,
+      job.salaryMax,
+      job.salaryCurrency,
+      job.showSalaryRange !== false,
+      job.employmentType || job.role,
+    );
   };
 
   const formatDate = (dateString) => {

@@ -6,6 +6,7 @@ import CustomSelect from "../../Components/CustomSelect";
 import ExperienceSelect from "../../Components/ExperienceSelect";
 import OnboardingWizard from "../../Components/OnboardingWizard";
 import { getCountryCurrency, getSalaryOptions } from "../../utils/countryCurrency";
+import { formatSalary } from "../../utils/salary";
 import { getJobs, applyJob, applyExternal, getMyApplications, toggleSaveJob, getRecommendedJobs, hideJob, getUserProfile, getFullJobDescriptionAPI, getEnglishJobDescriptionAPI } from "../../Services/jobService";
 import { CANDIDATE_WELCOME_DISMISSED_KEY, setStoredUser, getApiBaseUrl } from "../../Services/authUtils";
 import debounce from "lodash.debounce";
@@ -46,6 +47,26 @@ import {
   Grid2X2,
   PanelLeft,
 } from "lucide-react";
+
+const JOB_CATEGORY_LABELS = {
+  all: "All opportunities",
+  healthcare: "Healthcare",
+  customer_service: "Customer service",
+  retail_sales: "Retail & sales",
+  education: "Education",
+  hospitality: "Hospitality",
+  transportation: "Transportation",
+  technology: "Technology",
+};
+const JOB_CATEGORY_TERMS = {
+  healthcare: ["healthcare", "medical", "clinical", "doctor", "physician", "nurse", "nursing", "pharmacist", "pharmacy", "surgeon", "radiologist", "dentist", "therapist", "caregiver", "patient care"],
+  customer_service: ["customer service", "customer support", "customer success", "client support", "technical support", "helpdesk", "help desk", "call center", "support specialist", "service representative"],
+  retail_sales: ["retail", "sales", "cashier", "store associate", "sales associate", "sales representative", "merchandiser", "account executive", "business development"],
+  education: ["education", "teacher", "teaching", "tutor", "instructor", "educator", "professor", "lecturer", "academic", "school", "learning"],
+  hospitality: ["hospitality", "hotel", "restaurant", "food service", "catering", "chef", "cook", "barista", "event coordinator", "housekeeping", "front desk"],
+  transportation: ["transportation", "driver", "truck driver", "delivery", "logistics", "fleet", "courier", "bus driver", "dispatcher"],
+  technology: ["technology", "software", "developer", "information technology", "product", "data", "analytics", "design", "machine learning", "cybersecurity", "devops", "cloud", "qa engineer", "sre", "operations"],
+};
 
 const JOBS_PER_PAGE = 20;
 const PROFILE_NUDGE_THRESHOLD = 30;
@@ -465,33 +486,6 @@ const alignWhoWeAreHeading = (html) => {
   return doc.documentElement.textContent;
 };
 
-const formatSalary = (salaryText, min, max, currency, showRange = true) => {
-  const currencySymbol = currency === "INR" || currency === "\u20B9"
-    ? "\u20B9"
-    : currency === "EUR"
-      ? "\u20AC"
-      : currency === "GBP"
-        ? "\u00A3"
-        : "$";
-
-  if (!showRange) return typeof salaryText === "string" && isNaN(Number(salaryText)) && salaryText !== "Competitive" ? salaryText : "Competitive";
-
-  if (min && max) {
-    const formatShorthand = (num) => {
-      if (num >= 100000) return `${currencySymbol}${Number((num / 100000).toFixed(1))}L`;
-      if (num >= 1000) return `${currencySymbol}${Number((num / 1000).toFixed(1))}k`;
-      return `${currencySymbol}${num}`;
-    };
-    if (min === max) {
-      return formatShorthand(min);
-    }
-    return `${formatShorthand(min)}\u2013${formatShorthand(max)}`;
-  }
-
-  if (typeof salaryText === "string" && isNaN(Number(salaryText))) return salaryText;
-  if (!salaryText || Number(salaryText) === 0) return "Competitive";
-  return `${currencySymbol}${Number(salaryText).toLocaleString(currency === "INR" ? "en-IN" : "en-US")} a year`;
-};
 const inferExperienceFromDescription = (description = "") => {
   const text = decodeHTMLEntities(description).replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ");
   const matches = [...text.matchAll(/\b(\d+)\s*(\+|(?:-|â€“|to)\s*(\d+)\+?)?\s*years?\b/gi)]
@@ -626,6 +620,7 @@ function CandidateDashboard() {
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [submittedSearch, setSubmittedSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [locationFilter, setLocationFilter] = useState(() => new URLSearchParams(window.location.search).get("location") || "");
+  const [selectedCategory, setSelectedCategory] = useState(() => new URLSearchParams(window.location.search).get("category") || "");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
@@ -716,6 +711,19 @@ function CandidateDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const isJobsView = new URLSearchParams(location.search).get("tab") === "jobs";
+  const selectedCategoryLabel = JOB_CATEGORY_LABELS[selectedCategory] || "";
+  const clearCategoryFilter = () => {
+    setSelectedCategory("");
+    const params = new URLSearchParams(location.search);
+    params.delete("category");
+    params.set("tab", "jobs");
+    navigate(`/candidate-dashboard?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    const category = new URLSearchParams(location.search).get("category") || "";
+    setSelectedCategory((current) => current === category ? current : category);
+  }, [location.search]);
 
   const [user, setUser] = useState(() => {
     try {
@@ -762,13 +770,17 @@ function CandidateDashboard() {
   }, [isWelcomeHeaderClosing]);
 
   // Define all functions before useEffect hooks
-  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, field, page }) => {
+  const fetchJobs = async ({ searchTerm, locationTerm, experienceTerm, salaryTerm, companyTerm, sourceTerm, employmentTerm, remoteTerm, categoryTerm, field, page }) => {
     try {
       setJobLoadError("");
       setLoading(true);
-      const effectiveField = field !== undefined ? field : user?.field;
+      const activeCategory = categoryTerm !== undefined
+        ? categoryTerm
+        : new URLSearchParams(window.location.search).get("category") || "";
+      const effectiveField = activeCategory ? "All" : field !== undefined ? field : user?.field;
       const response = await getJobs({
         search: searchTerm,
+        category: activeCategory || undefined,
         location: locationTerm,
         experience: experienceTerm,
         minSalary: salaryTerm,
@@ -790,7 +802,10 @@ function CandidateDashboard() {
       setTotalPages(response?.totalPages || 1);
       setCurrentPage(response?.currentPage || 1);
 
-      setSelectedJob(null);
+      const requestedJobId = new URLSearchParams(location.search).get("jobId");
+      const requestedJob = requestedJobId && uniqueJobs.find((job) => job._id === requestedJobId);
+      if (requestedJob) handleJobSelect(requestedJob);
+      else setSelectedJob(null);
     } catch (error) {
       console.error("Error fetching jobs:", error);
       setJobLoadError("Unable to load jobs. Please check your connection and retry.");
@@ -848,6 +863,7 @@ function CandidateDashboard() {
       sourceTerm: sourceFilter,
       employmentTerm: employmentTypeFilter,
       remoteTerm: isRemoteFilter,
+      categoryTerm: selectedCategory,
       field: updatedUser?.field,
       page: 1,
     });
@@ -880,6 +896,7 @@ function CandidateDashboard() {
         sourceTerm: sourceFilter,
         employmentTerm: employmentTypeFilter,
         remoteTerm: isRemoteFilter,
+        categoryTerm: selectedCategory,
         field: currentUser?.field,
         page: currentPage,
       });
@@ -1102,10 +1119,11 @@ function CandidateDashboard() {
       sourceTerm: sourceFilter,
       employmentTerm: employmentTypeFilter,
       remoteTerm: isRemoteFilter,
+      categoryTerm: selectedCategory,
       field: user?.field,
       page: 1,
     });
-  }, [submittedSearch, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, user?.field, debouncedFetchJobs]);
+  }, [submittedSearch, locationFilter, experienceFilter, salaryFilter, companyFilter, sourceFilter, employmentTypeFilter, isRemoteFilter, selectedCategory, user?.field, debouncedFetchJobs]);
 
   const submitApplication = async (fileToSubmit) => {
     const resumeToSend = fileToSubmit || resumeFile;
@@ -1434,6 +1452,13 @@ function CandidateDashboard() {
 
   // Apply location, search, and experience filters to Recommended tab as well
   const filteredRecommended = availableRecommended.filter((job) => {
+    if (selectedCategory && selectedCategory !== "all") {
+      const jobText = [job.title, job.role, job.domain, ...(job.keywords || []), ...(job.skillsRequired || [])]
+        .join(" ")
+        .toLowerCase();
+      if (!JOB_CATEGORY_TERMS[selectedCategory]?.some((term) => jobText.includes(term))) return false;
+    }
+
     // 1. Location Filter
     if (locationFilter && !matchesLocationFilter(job.location, locationFilter)) {
       return false;
@@ -1555,6 +1580,7 @@ function CandidateDashboard() {
       locationTerm: locationFilter,
       salaryTerm: salaryFilter,
       companyTerm: companyFilter,
+      categoryTerm: selectedCategory,
       page: currentPage,
     });
   };
@@ -1784,7 +1810,9 @@ function CandidateDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
             <div>
               <p className="candidate-home-eyebrow">YOUR NEXT MOVE</p>
-              <h2 className="candidate-home-title">Find work that fits your life</h2>
+              <h2 className="candidate-home-title">
+                {selectedCategory === "all" ? "All opportunities" : selectedCategoryLabel ? `${selectedCategoryLabel} jobs` : "Find work that fits your life"}
+              </h2>
               <p className="candidate-home-subtitle">Search roles by title, skills, company, or location.</p>
             </div>
             {!loading && (
@@ -1794,6 +1822,14 @@ function CandidateDashboard() {
               </div>
             )}
           </div>
+
+          {selectedCategoryLabel && selectedCategory !== "all" && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-600">Browsing category:</span>
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-bold text-blue-800">{selectedCategoryLabel}</span>
+              <button type="button" onClick={clearCategoryFilter} className="border-0 bg-transparent px-1 py-1 font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-brand-700">Show all jobs</button>
+            </div>
+          )}
 
           <div className="candidate-search-controls">
             <div 
@@ -1809,6 +1845,13 @@ function CandidateDashboard() {
                   placeholder="Job title, keywords, or company"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      setSubmittedSearch(search.trim());
+                      setCurrentPage(1);
+                    }
+                  }}
                   readOnly={window.innerWidth <= 768}
                   className="w-full bg-transparent border-0 outline-none text-sm text-slate-900 placeholder:text-slate-400 font-medium"
                 />
@@ -1866,7 +1909,7 @@ function CandidateDashboard() {
                 <BriefcaseBusiness size={17} className="candidate-filter-prefix-icon" aria-hidden="true" />
                 <CustomSelect
                 options={[
-                  { value: "All", label: "Any job type" },
+                  { value: "All", label: "Any job type", separatorAfter: true },
                   { value: "Full-time", label: "Full-time" },
                   { value: "Internship", label: "Internship" },
                   { value: "Contract", label: "Contract" },
@@ -1890,7 +1933,7 @@ function CandidateDashboard() {
                 />
                 <span>Remote only</span>
               </label>
-              {(submittedSearch || locationFilter || experienceFilter || salaryFilter || companyFilter || sourceFilter || employmentTypeFilter !== "All" || isRemoteFilter === "true") && (
+              {(submittedSearch || locationFilter || experienceFilter || salaryFilter || companyFilter || sourceFilter || employmentTypeFilter !== "All" || isRemoteFilter === "true" || selectedCategory) && (
                 <button
                   type="button"
                   className="candidate-clear-filters"
@@ -1905,6 +1948,8 @@ function CandidateDashboard() {
                     setEmploymentTypeFilter("All");
                     setIsRemoteFilter("All");
                     setCurrentPage(1);
+                    setSelectedCategory("");
+                    navigate("/candidate-dashboard?tab=jobs");
                   }}
                 >
                   Clear filters
@@ -2030,7 +2075,7 @@ function CandidateDashboard() {
                       </span>
                       <span className="mt-3 line-clamp-2 text-sm font-extrabold leading-5 text-slate-900">{job.title}</span>
                       <span className="mt-2 flex flex-wrap gap-1.5"><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{job.employmentType || "Full-time"}</span>{job.isRemote && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Remote</span>}</span>
-                      <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
+                      <span className="mt-auto flex items-end justify-between gap-2 pt-3"><span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false, job.employmentType || job.role)}</span><span className="mt-0.5 block truncate text-[11px] text-slate-500">{job.location || "Location flexible"}</span></span><ArrowUpRight size={16} className="shrink-0 text-slate-400 transition group-hover:text-brand-600" /></span>
                     </button>
                   ))}
                 </div>
@@ -2339,6 +2384,8 @@ function CandidateDashboard() {
                     ? "Bookmark jobs while browsing to review and apply to them later."
                     : activeTab === "Recommended"
                     ? "We couldn't find any recommendations matching your current criteria or skills. Try browsing all jobs."
+                    : selectedCategoryLabel
+                    ? `We couldn't find ${selectedCategoryLabel.toLowerCase()} jobs matching your other filters. Try clearing filters to see more opportunities.`
                     : "We couldn't find any opportunities matching your criteria. Try loosening search terms or clearing filters."
                 }
                 actionText={activeTab === "Saved" || activeTab === "Recommended" ? "Browse All Jobs" : "Clear Filters"}
@@ -2355,6 +2402,8 @@ function CandidateDashboard() {
                         setSourceFilter("");
                         setEmploymentTypeFilter("All");
                         setIsRemoteFilter("All");
+                        setSelectedCategory("");
+                        navigate("/candidate-dashboard?tab=jobs");
                       }
                 }
               />
@@ -2443,7 +2492,7 @@ function CandidateDashboard() {
                           <div className="mb-2.5">
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                               <span className="text-emerald-600 font-black" aria-hidden="true">✓</span>
-                              <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false)}</span>
+                              <span>{formatSalary(job.salary, job.salaryMin, job.salaryMax, job.salaryCurrency, job.showSalaryRange !== false, job.employmentType || job.role)}</span>
                             </span>
                           </div>
                         ) : null}
@@ -2570,7 +2619,7 @@ function CandidateDashboard() {
                   </div>
                   <p className="text-xs text-slate-500 mb-1">{selectedJob.location}</p>
                   <p className="text-base font-bold text-slate-900 mb-3">
-                    {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency, selectedJob.showSalaryRange !== false)}
+                    {formatSalary(selectedJob.salary, selectedJob.salaryMin, selectedJob.salaryMax, selectedJob.salaryCurrency, selectedJob.showSalaryRange !== false, selectedJob.employmentType || selectedJob.role)}
                   </p>
                   
                   <div className="flex flex-wrap items-center gap-2 mb-4">

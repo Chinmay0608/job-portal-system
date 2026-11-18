@@ -1,3 +1,5 @@
+import { BriefcaseBusiness, UserRound, Building2, ShieldCheck } from "lucide-react";
+
 function HelpCenter() {
   const faqs = [
     {
@@ -58,7 +60,7 @@ function HelpCenter() {
         <div className="support-grid">
 
           <div className="support-card">
-            <span>💼</span>
+            <span className="support-card-icon"><BriefcaseBusiness size={28} strokeWidth={1.8} aria-hidden="true" /></span>
             <h3>Job Applications</h3>
             <p>
               Learn how to apply for jobs,
@@ -67,7 +69,7 @@ function HelpCenter() {
           </div>
 
           <div className="support-card">
-            <span>👤</span>
+            <span className="support-card-icon"><UserRound size={28} strokeWidth={1.8} aria-hidden="true" /></span>
             <h3>Account & Profile</h3>
             <p>
               Manage account settings,
@@ -76,7 +78,7 @@ function HelpCenter() {
           </div>
 
           <div className="support-card">
-            <span>🏢</span>
+            <span className="support-card-icon"><Building2 size={28} strokeWidth={1.8} aria-hidden="true" /></span>
             <h3>Recruiter Support</h3>
             <p>
               Learn how recruiters post jobs,
@@ -85,7 +87,7 @@ function HelpCenter() {
           </div>
 
           <div className="support-card">
-            <span>🔐</span>
+            <span className="support-card-icon"><ShieldCheck size={28} strokeWidth={1.8} aria-hidden="true" /></span>
             <h3>Security & Privacy</h3>
             <p>
               Learn about password recovery,

@@ -26,6 +26,24 @@ function classifyJob(job) {
   ) {
     domain = "Healthcare & Medical";
   } else if (
+    /\b(teacher|teaching|tutor|instructor|educator|professor|lecturer|academic advisor|school counselor|education)\b/.test(
+      text
+    )
+  ) {
+    domain = "Education & Training";
+  } else if (
+    /\b(hotel manager|hotel operations|restaurant manager|restaurant supervisor|executive chef|sous chef|head chef|line cook|barista|front desk agent|front office associate|housekeeping supervisor|guest services?|guest relations?|concierge|banquet (manager|server|captain)|culinary|waiter|waitress|room attendant|food and beverage|catering|kitchen (manager|staff)|spa therapist|massage therapist|loss prevention manager)\b/.test(
+      text
+    )
+  ) {
+    domain = "Hospitality & Food Service";
+  } else if (
+    /\b(transportation|driver|truck driver|delivery driver|logistics|fleet|courier|bus driver|dispatcher)\b/.test(
+      text
+    )
+  ) {
+    domain = "Transportation & Logistics";
+  } else if (
     /\b(video\s+creator|video\s+editor|video\s+producer|content\s+creator|animator|motion\s+graphics?|videographer|cinematographer|youtube|film\s+editor)\b/.test(
       text
     )

@@ -8,10 +8,25 @@ const { getEmbedding, cosineSimilarity } = require("../services/embeddingService
 const { clearCache } = require("../middleware/cacheMiddleware");
 const asyncHandler = require("express-async-handler");
 const { resolveCompanyLogo } = require("../utils/companyLogoHelper");
+const { getCategoryTitleRule } = require("../services/jobCategoryService");
 
 // Helper to escape regex characters and prevent ReDoS
 const escapeRegex = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const JOB_CATEGORY_FILTERS = {
+  all: { domains: [], terms: [] },
+  healthcare: { domains: ["Healthcare & Medical"], terms: ["healthcare", "medical", "clinical", "doctor", "physician", "nurse", "nursing", "pharmacist", "pharmacy", "surgeon", "radiologist", "dentist", "therapist", "caregiver", "patient care"] },
+  customer_service: { domains: ["Customer Support / Operations"], terms: ["customer service", "customer support", "customer success", "client support", "technical support", "helpdesk", "help desk", "call center", "support specialist", "service representative"] },
+  retail_sales: { domains: ["Marketing & Sales", "Retail & Sales"], terms: ["retail", "sales", "cashier", "store associate", "sales associate", "sales representative", "merchandiser", "account executive", "business development"] },
+  education: { domains: ["Education & Training"], terms: ["education", "teacher", "teaching", "tutor", "instructor", "educator", "professor", "lecturer", "academic", "school", "learning"] },
+  hospitality: {
+    domains: ["Hospitality & Food Service"],
+    terms: ["chef", "cook", "barista", "hotel", "restaurant", "front desk", "housekeeping", "guest service", "guest relations", "concierge", "banquet", "culinary", "waiter", "waitress", "server", "room attendant", "food and beverage", "catering", "kitchen", "spa therapist", "massage therapist", "loss prevention", "wellness consultant"],
+  },
+  transportation: { domains: ["Transportation & Logistics"], terms: ["transportation", "driver", "truck driver", "delivery driver", "logistics", "fleet", "courier", "bus driver", "dispatcher"] },
+  technology: { domains: ["Data & Analytics", "Design & Creative", "Management & Operations"], terms: ["technology", "software", "developer", "information technology", "it", "product", "data", "analytics", "design", "machine learning", "cybersecurity", "devops", "cloud", "systems engineer", "network engineer", "qa engineer", "sre"] },
 };
 
 /* ==========================
@@ -204,6 +219,7 @@ const getBaseActiveJobQuery = () => {
 const getAllJobs = asyncHandler(async (req, res) => {
   const {
     search,
+    category,
     location,
     minSalary,
     experience,
@@ -218,6 +234,11 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   const query = getBaseActiveJobQuery();
 
+  if (category && !JOB_CATEGORY_FILTERS[category]) {
+    res.status(400);
+    throw new Error("Select a valid job category.");
+  }
+
   let candidateUser = null;
   if (req.user) {
     candidateUser = await User.findById(req.user.id);
@@ -228,7 +249,7 @@ const getAllJobs = asyncHandler(async (req, res) => {
 
   // Domain / Field filter: prioritize candidate's field if browsing without explicit search
   const candidateField = field || domain || (candidateUser?.role === "candidate" ? candidateUser?.field : null);
-  if (candidateField && !search && candidateField !== "All") {
+  if (candidateField && !search && !category && candidateField !== "All") {
     const fieldLower = candidateField.toLowerCase();
     const keywords = FIELD_KEYWORDS[fieldLower] || [fieldLower];
     const fieldRegex = new RegExp(keywords.map((k) => `\\b${escapeRegex(k)}\\b`).join("|"), "i");
@@ -247,6 +268,31 @@ const getAllJobs = asyncHandler(async (req, res) => {
       delete query.$or;
     } else {
       query.$or = domainCondition.$or;
+    }
+  }
+
+  if (category) {
+    const { domains, terms } = JOB_CATEGORY_FILTERS[category];
+    if (terms.length) {
+      const termRegex = new RegExp(`\\b(?:${terms.map(escapeRegex).join("|")})\\b`, "i");
+      const domainRegex = new RegExp(`^(?:${domains.map(escapeRegex).join("|")})$`, "i");
+      query.$and ||= [];
+      const rule = getCategoryTitleRule(category);
+      if (rule) {
+        query.$and.push({ title: { $regex: rule.allow } });
+        query.$nor ||= [];
+        query.$nor.push({ title: { $regex: rule.exclude } });
+      } else {
+        query.$and.push({
+          $or: [
+            { title: { $regex: termRegex } },
+            { role: { $regex: termRegex } },
+            { keywords: { $regex: termRegex } },
+            { skillsRequired: { $regex: termRegex } },
+            ...(domains.length ? [{ domain: { $regex: domainRegex } }] : []),
+          ],
+        });
+      }
     }
   }
 
@@ -696,6 +742,9 @@ ${jobsContextBlock}
    - When the candidate asks for job recommendations, cite ONLY the real platform jobs listed above. Never hallucinate or invent jobs. If no matching jobs are listed, acknowledge this honestly and suggest profile adjustments or checking back soon.
 5. Scannable & Spoken-Word Friendly:
    - Use concise paragraphs and lightweight bullets for recommendations.
+   - Structure multi-part answers with Markdown headings, short paragraphs, and one bullet or numbered item per line.
+   - Prefer "### 1. Heading" or "## Heading" for section titles, "-" for bullets, and "1." for numbered items.
+   - Never use Markdown tables or pipe-separated columns. Format each listing as its own numbered item with one detail per line.
    - Avoid Markdown tables, LaTeX, raw HTML, or deeply nested sub-lists so the Web Speech API (useTextToSpeech) can read it aloud naturally without stumbling.
 6. Technical & Coding Questions:
    - For coding, system design, or technical questions, answer accurately, clearly, and concisely.
@@ -831,8 +880,8 @@ DHRUV: "I hear you, and it's completely valid to feel exhausted. The hiring proc
         const jobList = matchedJobs.slice(0, 3).map((j, i) => {
           const salary = j.salary && Number(j.salary) > 0 ? `$${Number(j.salary).toLocaleString()}` : "Competitive Salary";
           const skills = Array.isArray(j.skillsRequired) ? j.skillsRequired.join(", ") : (j.skillsRequired || searchKeyword || userField);
-          return `${i + 1}. ${j.title} at ${j.company} â€” ${j.location || "Remote"} â€” ${salary} â€” Skills: ${skills}`;
-        }).join("\n");
+          return `### ${i + 1}. ${j.title}\n**Company:** ${j.company}\n\n**Location:** ${j.location || "Remote"}\n\n**Salary:** ${salary}\n\n**Skills:** ${skills}`;
+        }).join("\n\n");
         return `Here are active ${searchKeyword ? searchKeyword.toUpperCase() : userField.toUpperCase()} openings on SkillBridge right now:\n\n${jobList}\n\nApply directly from the Jobs tab. Tailor your resume to highlight the required skills for the best match rate.`;
       }
       if (searchKeyword) {
@@ -1280,7 +1329,7 @@ const getPublicStats = asyncHandler(async (req, res) => {
     activeJobs: activeJobs || 12447,
     companiesCount: distinctCompanies?.length || 8775,
     applicationsCount: totalApps || 30,
-    matchPrecision: "98.4%",
+    matchScoreRange: "0-100",
     domainsCount: "30+",
   };
 

@@ -6,6 +6,7 @@ const User = require("../models/user");
 const ticketAgent = require("../services/ticketAgent");
 const { sendTicketAlertToTelegram } = require("../services/telegramService");
 const { maskPII } = require("../utils/textSanitizer");
+const { createNotification } = require("../utils/notify");
 
 // ─── POST /api/support/report — logged-in user or guest ───────────────────────
 const createTicket = asyncHandler(async (req, res) => {
@@ -107,6 +108,66 @@ const createTicket = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET /api/support/my-tickets — authenticated reporter's tickets ─────────
+const getMyTickets = asyncHandler(async (req, res) => {
+  const tickets = await SupportTicket.find({ user: req.user.id || req.user._id })
+    .select("description reportType concernReason reportedJobTitle reportedJobCompany status category resolutionMessage followUpMessages createdAt updatedAt")
+    .sort({ updatedAt: -1 })
+    .lean();
+  res.json({ tickets });
+});
+
+// ─── GET /api/support/my-tickets/:id — owner-only ticket detail ──────────────
+const getMyTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findOne({
+    _id: req.params.id,
+    user: req.user.id || req.user._id,
+  })
+    .select("description reportType concernReason reportedJobId reportedJobTitle reportedJobCompany pageUrl status category severity aiSummary resolutionMessage followUpMessages screenshotUrl createdAt updatedAt")
+    .lean();
+  if (!ticket) {
+    res.status(404);
+    throw new Error("Support request not found.");
+  }
+  res.json({ ticket });
+});
+
+// ─── POST /api/support/my-tickets/:id/messages — add reporter details ────────
+const addTicketFollowUp = asyncHandler(async (req, res) => {
+  const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
+  if (message.length < 5 || message.length > 1200) {
+    res.status(400);
+    throw new Error("Please enter between 5 and 1200 characters.");
+  }
+
+  const ticket = await SupportTicket.findOneAndUpdate(
+    { _id: req.params.id, user: req.user.id || req.user._id },
+    {
+      $push: { followUpMessages: { message: maskPII(message), createdAt: new Date() } },
+      $set: { status: "open", autoResolved: false },
+    },
+    { new: true },
+  ).select("description reportType concernReason reportedJobTitle reportedJobCompany status resolutionMessage followUpMessages createdAt updatedAt");
+
+  if (!ticket) {
+    res.status(404);
+    throw new Error("Support request not found.");
+  }
+
+  const admins = await User.find({ role: "admin" }).select("_id").lean();
+  await Promise.all(admins.map((admin) => createNotification({
+    recipient: admin._id,
+    sender: req.user.id || req.user._id,
+    type: "support_update",
+    title: "User added details to a support request",
+    message: `Ticket #${String(ticket._id).slice(-6).toUpperCase()}: ${maskPII(message).slice(0, 180)}`,
+    priority: "high",
+    actionUrl: "/admin/dashboard?tab=support",
+  })));
+
+  res.json({ ticket });
+});
+
 // ─── GET /api/support/tickets — admin only ───────────────────────────────────
 const getTicketsAdmin = asyncHandler(async (req, res) => {
   const { status, severity, category } = req.query;
@@ -131,15 +192,28 @@ const updateTicketStatus = asyncHandler(async (req, res) => {
     throw new Error("Invalid status value.");
   }
 
+  const statusMessage = `Support marked your request ${status.replace("_", " ")}.`;
   const ticket = await SupportTicket.findByIdAndUpdate(
     req.params.id,
-    { status },
+    { status, resolutionMessage: statusMessage },
     { new: true }
   ).populate("user", "name email role");
 
   if (!ticket) {
     res.status(404);
     throw new Error("Ticket not found.");
+  }
+
+  if (ticket.user?._id) {
+    await createNotification({
+      recipient: ticket.user._id,
+      sender: req.user.id || req.user._id,
+      type: "support_update",
+      title: `Support request ${status.replace("_", " ")}`,
+      message: statusMessage,
+      priority: "normal",
+      actionUrl: `/support/requests/${ticket._id}`,
+    });
   }
 
   res.json({ message: "Ticket updated", ticket });
@@ -171,6 +245,9 @@ const getTicketLog = asyncHandler(async (req, res) => {
 
 module.exports = {
   createTicket,
+  getMyTickets,
+  getMyTicket,
+  addTicketFollowUp,
   getTicketsAdmin,
   updateTicketStatus,
   deleteTicket,
