@@ -362,7 +362,7 @@ export default function AIChatWidget({
         },
       });
     }
-  }, [isVoiceRecognitionSupported, isVoiceListening, startListening, stopListening, tts, sendMessage, user?.name]);
+  }, [isVoiceRecognitionSupported, isVoiceListening, startListening, stopListening, tts, sendMessage, user]);
 
   const greetAndListen = useCallback(() => {
     stopWakeWord();

@@ -25,6 +25,7 @@ export default defineConfig([
       'react-hooks/immutability': 'warn',
       'react-hooks/use-memo': 'warn',
       'react-hooks/purity': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
     },
