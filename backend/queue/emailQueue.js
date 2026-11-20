@@ -3,13 +3,14 @@ const Redis = require("ioredis");
 const sendEmail = require("../utils/sendEmail");
 
 const REDIS_URL = process.env.REDIS_URL;
+const IS_REDIS_ENABLED = process.env.ENABLE_REDIS === "true" && Boolean(REDIS_URL);
 let emailQueue = null;
 let emailWorker = null;
 let redisConnection = null;
 
 const startEmailWindow = async () => {
-  if (!REDIS_URL) {
-    console.log("[Email Window] REDIS_URL not configured. Skipping BullMQ email worker.");
+  if (!IS_REDIS_ENABLED) {
+    console.log("[Email Window] Redis disabled or REDIS_URL not configured. Using direct synchronous email delivery.");
     return;
   }
 
@@ -32,7 +33,7 @@ const startEmailWindow = async () => {
             await sendEmail(to, subject, html);
           }
         },
-        { connection: redisConnection, autorun: true }
+        { connection: redisConnection, autorun: true, stalledInterval: 300000 }
       );
 
       emailWorker.on("completed", (job) => {
@@ -55,8 +56,13 @@ const startEmailWindow = async () => {
 const stopEmailWindow = async () => {
   try {
     if (emailWorker) {
-      console.log("[Email Window] 🛑 Closing 2-hour email window. Pausing worker to save Redis tokens.");
-      await emailWorker.pause();
+      console.log("[Email Window] 🛑 Closing 2-hour email window. Closing worker & queue connections to save Redis tokens.");
+      await emailWorker.close();
+      emailWorker = null;
+    }
+    if (emailQueue) {
+      await emailQueue.close();
+      emailQueue = null;
     }
     if (redisConnection) {
       await redisConnection.quit();

@@ -7,15 +7,16 @@ const limiterOptions = {
   max: 10, // Limit each IP to 10 requests per windowMs for auth routes
   standardHeaders: true,
   legacyHeaders: false,
+  passOnStoreError: true, // Prevent Redis quota exhaustion from crashing auth routes
   message: {
     message: "Too many authentication attempts. Please try again after 15 minutes.",
   },
 };
 
-// Only use Redis if configured, otherwise it defaults to memory store
-if (process.env.REDIS_URL) {
+// Temporary fix: Only use Redis if explicitly enabled via ENABLE_REDIS=true, otherwise default to memory store
+if (process.env.ENABLE_REDIS === "true" && process.env.REDIS_URL) {
   const redisClient = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: 1,
     retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
   });
   redisClient.on("error", (err) => {
@@ -25,7 +26,7 @@ if (process.env.REDIS_URL) {
     sendCommand: (...args) => redisClient.call(...args),
   });
 } else {
-  console.warn("No REDIS_URL found. Falling back to in-memory rate limiting.");
+  console.log("[RateLimiter] Using in-memory rate limiting (Redis bypassed).");
 }
 
 const authLimiter = rateLimit(limiterOptions);

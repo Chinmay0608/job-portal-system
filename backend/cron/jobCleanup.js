@@ -2,11 +2,11 @@ const cron = require("node-cron");
 const Job = require("../models/job");
 const Redis = require("ioredis");
 
-// Only initialize Redis client if a URL is provided
+// Only initialize Redis client if ENABLE_REDIS=true and a URL is provided
 let redisClient = null;
-if (process.env.REDIS_URL) {
+if (process.env.ENABLE_REDIS === "true" && process.env.REDIS_URL) {
   redisClient = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: 1,
     retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
   });
   redisClient.on("error", (err) => {

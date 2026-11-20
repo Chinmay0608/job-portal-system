@@ -1,11 +1,11 @@
 const Redis = require("ioredis");
 
-// Default to in-memory cache behavior if no REDIS_URL is provided, 
-// to prevent crashing environments without Redis.
+// Default to no-op/in-memory behavior unless ENABLE_REDIS=true and REDIS_URL are provided,
+// preventing Upstash command quota exhaustion.
 let redisClient = null;
-if (process.env.REDIS_URL) {
+if (process.env.ENABLE_REDIS === "true" && process.env.REDIS_URL) {
   redisClient = new Redis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: 1,
     retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 2000))
   });
   redisClient.on("error", (err) => {

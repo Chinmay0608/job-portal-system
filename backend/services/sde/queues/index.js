@@ -12,6 +12,11 @@ class QueueManager {
 
   async initialize() {
     if (this.isOnline) return;
+    if (process.env.ENABLE_REDIS !== 'true') {
+      console.log('[SDE Queues] Redis temporarily bypassed (ENABLE_REDIS is not true). SDE running in zero-Redis mode.');
+      this.isOnline = false;
+      return;
+    }
     try {
       // Setup ioredis with maxRetriesPerRequest: null as required by BullMQ
       this.connection = new Redis(REDIS_URL, {
