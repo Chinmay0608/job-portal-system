@@ -211,6 +211,8 @@ const VERIFIED_ENTERPRISE_MAP = {
   "key software services": "https://keysoftwareservices.co.in/images/keyss-logo.png",
   "keyss": "https://keysoftwareservices.co.in/images/keyss-logo.png",
   "keyss.in": "https://keysoftwareservices.co.in/images/keyss-logo.png",
+  "rypp": "https://icon.horse/icon/rypp.in",
+  "rypp.in": "https://icon.horse/icon/rypp.in",
 
   // Top Tech & Global Enterprises
   "finom": "https://icon.horse/icon/finom.co",
