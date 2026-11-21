@@ -213,6 +213,16 @@ const VERIFIED_ENTERPRISE_MAP = {
   "keyss.in": "https://keysoftwareservices.co.in/images/keyss-logo.png",
   "rypp": "https://icon.horse/icon/rypp.in",
   "rypp.in": "https://icon.horse/icon/rypp.in",
+  "matrice ai": "https://icon.horse/icon/matrice.ai",
+  "matrice": "https://icon.horse/icon/matrice.ai",
+  "mhtechin": "https://icon.horse/icon/mhtechin.com",
+  "milliman": "https://github.com/Milliman.png",
+  "nextastra": "https://icon.horse/icon/nextastra.com",
+  "nextastra technologies": "https://icon.horse/icon/nextastra.com",
+  "nasdaq": "https://icon.horse/icon/nasdaq.com",
+  "radixsol": "https://icon.horse/icon/radixsol.com",
+  "giftbooks ai": "https://icon.horse/icon/giftbooks.ai",
+  "giftbooks": "https://icon.horse/icon/giftbooks.ai",
 
   // Top Tech & Global Enterprises
   "finom": "https://icon.horse/icon/finom.co",
